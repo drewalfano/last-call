@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { shuffle, useDeck } from "../lib/deck";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
@@ -56,42 +55,49 @@ export function LastCallGame({ mode, onBack }: Props) {
   }, [advance, deck]);
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={
-          card
-            ? hasRoster
-              ? `${currentPlayer} · ${TIER_LABEL[card.intensity - 1]}`
-              : TIER_LABEL[card.intensity - 1]
-            : undefined
+    <GameScreen
+      mode={mode}
+      subtitle={
+        card
+          ? hasRoster
+            ? `${currentPlayer} · ${TIER_LABEL[card.intensity - 1]}`
+            : TIER_LABEL[card.intensity - 1]
+          : undefined
+      }
+      onBack={onBack}
+    >
+      {crossing && card && (
+        <button className="lc-tier" onClick={() => setCrossing(false)}>
+          <span className="lc-tier__label">{TIER_LABEL[card.intensity - 1]}</span>
+          <span className="lc-tier__hint">Tap to carry on</span>
+        </button>
+      )}
+      <CardBody
+        className="focal--overlay"
+        card={
+          <PromptCard
+            eyebrow={card ? WILDCARD_LABEL[card.kind] : undefined}
+            dealKey={deck.drawCount}
+            footer={
+              card && (
+                <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
+                  {[1, 2, 3].map((n) => (
+                    <span
+                      key={n}
+                      className="heat__pip"
+                      data-lit={n <= card.intensity || undefined}
+                    />
+                  ))}
+                </span>
+              )
+            }
+          >
+            {card
+              ? fillPrompt(card.text, { name: currentPlayer, other: otherPlayer() })
+              : "No cards in this deck."}
+          </PromptCard>
         }
-        onBack={onBack}
-      />
-      <div className="focal focal--overlay">
-        {crossing && card && (
-          <button className="lc-tier" onClick={() => setCrossing(false)}>
-            <span className="lc-tier__label">{TIER_LABEL[card.intensity - 1]}</span>
-            <span className="lc-tier__hint">Tap to carry on</span>
-          </button>
-        )}
-        <PromptCard
-          eyebrow={card ? WILDCARD_LABEL[card.kind] : undefined}
-          dealKey={deck.drawCount}
-          footer={
-            card && (
-              <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
-                {[1, 2, 3].map((n) => (
-                  <span key={n} className="heat__pip" data-lit={n <= card.intensity || undefined} />
-                ))}
-              </span>
-            )
-          }
-        >
-          {card
-            ? fillPrompt(card.text, { name: currentPlayer, other: otherPlayer() })
-            : "No cards in this deck."}
-        </PromptCard>
+      >
         {/* Vote cards get the real mechanic; every other kind is unchanged. */}
         {card?.kind === "vote" && (
           <VotePad round={deck.drawCount} verdict={(w) => `${w} drinks.`} />
@@ -105,7 +111,7 @@ export function LastCallGame({ mode, onBack }: Props) {
             Next player
           </button>
         </div>
-      </div>
-    </div>
+      </CardBody>
+    </GameScreen>
   );
 }

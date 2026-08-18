@@ -1,8 +1,7 @@
 import { useCallback, useRef, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { useDeck } from "../lib/deck";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
@@ -65,15 +64,17 @@ export function HotSeat({ mode, onBack }: Props) {
 
   if (phase === "pick") {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="Who's up?" onBack={onBack} />
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Hot seat</span>
-            <p className="card__prompt card__prompt--sm">
-              Pick someone. They can't leave the seat for {ROUND_LENGTH} questions.
-            </p>
-          </div>
+      <GameScreen mode={mode} subtitle="Who's up?" onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Hot seat</span>
+              <p className="card__prompt card__prompt--sm">
+                Pick someone. They can't leave the seat for {ROUND_LENGTH} questions.
+              </p>
+            </div>
+          }
+        >
           {/* With a roster this is one tap. Typing is only the fallback for a
               table that never entered names. */}
           {hasRoster ? (
@@ -110,28 +111,30 @@ export function HotSeat({ mode, onBack }: Props) {
               </button>
             </form>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </GameScreen>
     );
   }
 
   if (phase === "rotate") {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="Round over" onBack={onBack} />
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Seat's free</span>
-            <p className="card__prompt">{name} survived.</p>
-            <p className="card__meta">Pass the phone. Someone else gets in.</p>
-          </div>
+      <GameScreen mode={mode} subtitle="Round over" onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Seat's free</span>
+              <p className="card__prompt">{name} survived.</p>
+              <p className="card__meta">Pass the phone. Someone else gets in.</p>
+            </div>
+          }
+        >
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={() => setPhase("pick")}>
               New hot seat
             </button>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </GameScreen>
     );
   }
 
@@ -139,23 +142,25 @@ export function HotSeat({ mode, onBack }: Props) {
   const toGroup = q?.target === "group";
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      {/* Whose seat it is — the thing the phone is being handed over for. */}
-      <GameHeader
-        title={mode.title}
-        subtitle={`${name} · ${asked} of ${ROUND_LENGTH}`}
-        subtitleTone="content"
-        onBack={onBack}
-      />
-      <div className="focal">
-        <PromptCard
-          eyebrow={toGroup ? "Everyone but them answers" : `${name} answers`}
-          dealKey={deck.drawCount}
-          small
-          footer={toGroup ? "Vote out loud, then let them respond." : "No deflecting."}
-        >
-          {q ? q.text.replaceAll("{name}", name) : "No questions in this deck."}
-        </PromptCard>
+    /* Whose seat it is — the thing the phone is being handed over for. */
+    <GameScreen
+      mode={mode}
+      subtitle={`${name} · ${asked} of ${ROUND_LENGTH}`}
+      subtitleTone="content"
+      onBack={onBack}
+    >
+      <CardBody
+        card={
+          <PromptCard
+            eyebrow={toGroup ? "Everyone but them answers" : `${name} answers`}
+            dealKey={deck.drawCount}
+            small
+            footer={toGroup ? "Vote out loud, then let them respond." : "No deflecting."}
+          >
+            {q ? q.text.replaceAll("{name}", name) : "No questions in this deck."}
+          </PromptCard>
+        }
+      >
         {/* Group questions ask the table to vote — now they can. The person
             in the seat is excluded; they're the subject, not a candidate. */}
         {toGroup && <VotePad round={deck.drawCount} verdict={(w) => `${w} said it best.`} />}
@@ -164,7 +169,7 @@ export function HotSeat({ mode, onBack }: Props) {
             {asked >= ROUND_LENGTH ? "End round" : "Next question"}
           </button>
         </div>
-      </div>
-    </div>
+      </CardBody>
+    </GameScreen>
   );
 }

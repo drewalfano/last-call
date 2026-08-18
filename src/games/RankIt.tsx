@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck, randomItem } from "../lib/deck";
 import { buzz } from "../lib/useCountdown";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import { RANK_IT, type RankPrompt } from "../data/rankIt";
 import { useContentMode } from "../state/contentMode";
@@ -75,38 +74,39 @@ export function RankIt({ mode, onBack }: Props) {
   const hits = order.filter((item, i) => guess[i] === item).length;
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={
-          phase === "handover"
-            ? "Pass the phone"
-            : phase === "ranking"
-              ? `${ranker} — privately`
-              : phase === "guessing"
-                ? "Everyone else"
-                : "How you did"
-        }
-        onBack={onBack}
-      />
-
+    <GameScreen
+      mode={mode}
+      subtitle={
+        phase === "handover"
+          ? "Pass the phone"
+          : phase === "ranking"
+            ? `${ranker} — privately`
+            : phase === "guessing"
+              ? "Everyone else"
+              : "How you did"
+      }
+      onBack={onBack}
+    >
       {/* ---------- Hand the phone to the Ranker ---------- */}
       {phase === "handover" && (
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Ranker</span>
-            <p className="card__prompt">{ranker}</p>
-            <p className="card__meta">
-              Your list, your opinion. Nobody else looks — they get their own go
-              at guessing it after.
-            </p>
-          </div>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Ranker</span>
+              <p className="card__prompt">{ranker}</p>
+              <p className="card__meta">
+                Your list, your opinion. Nobody else looks — they get their own go
+                at guessing it after.
+              </p>
+            </div>
+          }
+        >
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={() => setPhase("ranking")}>
               I've got it
             </button>
           </div>
-        </div>
+        </CardBody>
       )}
 
       {/* ---------- Ranking, by tapping ----------
@@ -199,7 +199,6 @@ export function RankIt({ mode, onBack }: Props) {
           </div>
         </div>
       )}
-
-    </div>
+    </GameScreen>
   );
 }

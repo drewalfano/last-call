@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { PlayingCard } from "../components/PlayingCard";
 import { PlayerPicker } from "../components/VotePad";
-import { categoryStyle } from "../lib/style";
 import { deal, freshDeck, type Card } from "../lib/cards";
 import { randomItem } from "../lib/deck";
 import { resolvePool } from "../data/pools";
@@ -127,55 +126,57 @@ export function KingsCup({ mode, onBack }: Props) {
   // ---- Fourth king: the game is over ----
   if (s.finished) {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="Fourth king" onBack={onBack} />
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">King's Cup</span>
-            <p className="card__prompt">
-              {hasRoster ? `${drawer} drinks the cup.` : "Whoever drew it drinks the cup."}
-            </p>
-            <p className="card__meta">That's the game. Pour a new one.</p>
-          </div>
+      <GameScreen mode={mode} subtitle="Fourth king" onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">King's Cup</span>
+              <p className="card__prompt">
+                {hasRoster ? `${drawer} drinks the cup.` : "Whoever drew it drinks the cup."}
+              </p>
+              <p className="card__meta">That's the game. Pour a new one.</p>
+            </div>
+          }
+        >
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={restart}>
               New game
             </button>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </GameScreen>
     );
   }
 
   // ---- Opening screen ----
   if (!s.card) {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="Deal in" onBack={onBack} />
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Kings Cup</span>
-            <p className="card__prompt">Spread the deck. Draw one each, in turn.</p>
-            <p className="card__meta">The fourth king drinks the cup.</p>
-          </div>
+      <GameScreen mode={mode} subtitle="Deal in" onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Kings Cup</span>
+              <p className="card__prompt">Spread the deck. Draw one each, in turn.</p>
+              <p className="card__meta">The fourth king drinks the cup.</p>
+            </div>
+          }
+        >
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={draw}>
               Draw first card
             </button>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </GameScreen>
     );
   }
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={hasRoster ? `${drawer}'s draw` : "Draw a card"}
-        onBack={onBack}
-      />
-
+    <GameScreen
+      mode={mode}
+      subtitle={hasRoster ? `${drawer}'s draw` : "Draw a card"}
+      onBack={onBack}
+    >
       <div className="focal kc">
         <div className="kc__status">
           <span className="kc__kings" aria-label={`${s.kings} of ${TOTAL_KINGS} kings drawn`}>
@@ -253,6 +254,6 @@ export function KingsCup({ mode, onBack }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </GameScreen>
   );
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck } from "../lib/deck";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
@@ -131,16 +130,18 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "intro") {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="New round" onBack={onBack} />
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Category</span>
-            <p className="card__prompt">{category}</p>
-            <p className="card__meta">
-              Say an answer, tap its first letter, pass the phone. {TURN_SECONDS} seconds each.
-            </p>
-          </div>
+      <GameScreen mode={mode} subtitle="New round" onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Category</span>
+              <p className="card__prompt">{category}</p>
+              <p className="card__meta">
+                Say an answer, tap its first letter, pass the phone. {TURN_SECONDS} seconds each.
+              </p>
+            </div>
+          }
+        >
           <div className="actions--row">
             <button
               className="btn btn--ghost"
@@ -160,15 +161,14 @@ export function LastWord({ mode, onBack }: Props) {
               Start round
             </button>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </GameScreen>
     );
   }
 
   if (phase === "picking") {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="Pick a category" onBack={onBack} />
+      <GameScreen mode={mode} subtitle="Pick a category" onBack={onBack}>
         <CategoryPicker
           categories={categories}
           onPick={(c) => {
@@ -177,42 +177,43 @@ export function LastWord({ mode, onBack }: Props) {
           }}
           onCancel={() => setPhase("intro")}
         />
-      </div>
+      </GameScreen>
     );
   }
 
   if (phase === "lost") {
     return (
-      <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle="Time" onBack={onBack} />
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">{category}</span>
-            <p className="card__prompt">Out of time.</p>
-            <p className="card__meta">Whoever's holding the phone drinks.</p>
-          </div>
+      <GameScreen mode={mode} subtitle="Time" onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">{category}</span>
+              <p className="card__prompt">Out of time.</p>
+              <p className="card__meta">Whoever's holding the phone drinks.</p>
+            </div>
+          }
+        >
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={beginRound}>
               Next round
             </button>
           </div>
-        </div>
-      </div>
+        </CardBody>
+      </GameScreen>
     );
   }
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      {/* The category is the one thing a player has to keep in their head for
-          the whole round, so it is content rather than a state label — see
-          `subtitleTone` in GameHeader. */}
-      <GameHeader
-        title={mode.title}
-        subtitle={category}
-        subtitleTone="content"
-        note={wrapped ? "No repeats!" : undefined}
-        onBack={onBack}
-      />
+    /* The category is the one thing a player has to keep in their head for
+       the whole round, so it is content rather than a state label — see
+       `subtitleTone` in GameHeader. */
+    <GameScreen
+      mode={mode}
+      subtitle={category}
+      subtitleTone="content"
+      note={wrapped ? "No repeats!" : undefined}
+      onBack={onBack}
+    >
       <div className="focal lw">
         <div className="lw__board">
           {/* Its own row, not a centre overlay — a letter can't cover it. */}
@@ -255,6 +256,6 @@ export function LastWord({ mode, onBack }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </GameScreen>
   );
 }

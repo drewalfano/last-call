@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
-import { categoryStyle } from "../lib/style";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { randomItem, shuffle } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
 import { CategoryPicker } from "../components/CategoryPicker";
@@ -129,20 +128,19 @@ export function Imposter({ mode, onBack }: Props) {
   const labelIsLive = s.phase === "cover" || s.phase === "role";
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      {/* Which reveal you are on — the whole game is passing the phone in
-          the right order, so that one cannot be a caption. */}
-      <GameHeader
-        title={mode.title}
-        subtitle={label}
-        subtitleTone={labelIsLive ? "content" : "label"}
-        onBack={onBack}
-      />
-
+    /* Which reveal you are on — the whole game is passing the phone in
+       the right order, so that one cannot be a caption. */
+    <GameScreen
+      mode={mode}
+      subtitle={label}
+      subtitleTone={labelIsLive ? "content" : "label"}
+      onBack={onBack}
+    >
       {/* ---------- Setup ---------- */}
       {s.phase === "setup" && (
-        <div className="focal">
-          <div className="card">
+        <CardBody
+          card={
+            <div className="card">
             <span className="card__eyebrow">Players</span>
             <div className="imp-count">
               <button
@@ -170,9 +168,10 @@ export function Imposter({ mode, onBack }: Props) {
                   ? "Using your player names."
                   : `Using your ${players.length} names, then numbers.`
                 : "Add names on Home to use them here."}
-            </p>
-          </div>
-
+              </p>
+            </div>
+          }
+        >
           <p className="pick-line">
             Category · <strong>{s.category ?? "Any"}</strong>
           </p>
@@ -198,7 +197,7 @@ export function Imposter({ mode, onBack }: Props) {
               Deal roles
             </button>
           </div>
-        </div>
+        </CardBody>
       )}
 
       {/* ---------- Category picker ---------- */}
@@ -214,12 +213,15 @@ export function Imposter({ mode, onBack }: Props) {
 
       {/* ---------- Cover screen: nothing secret on it ---------- */}
       {s.phase === "cover" && (
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Pass the phone to</span>
-            <p className="card__prompt">{nameOf(currentPlayer)}</p>
-            <p className="card__meta">Don't let anyone else see the screen.</p>
-          </div>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Pass the phone to</span>
+              <p className="card__prompt">{nameOf(currentPlayer)}</p>
+              <p className="card__meta">Don't let anyone else see the screen.</p>
+            </div>
+          }
+        >
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
@@ -228,29 +230,32 @@ export function Imposter({ mode, onBack }: Props) {
               View role
             </button>
           </div>
-        </div>
+        </CardBody>
       )}
 
       {/* ---------- The role itself ---------- */}
       {s.phase === "role" && (
-        <div className="focal">
-          <div className={isImposter ? "card imp-card--imposter" : "card"}>
-            {isImposter ? (
-              <>
-                <span className="card__eyebrow">No word for you</span>
-                <p className="card__prompt">You're the Imposter</p>
-                <p className="card__meta imp-card__meta">
-                  Listen hard. Give a clue that fits. Don't get caught.
-                </p>
-              </>
-            ) : (
-              <>
-                <span className="card__eyebrow">The word is</span>
-                <p className="card__prompt">{s.word}</p>
-                <p className="card__meta">One clue each. Don't make it obvious.</p>
-              </>
-            )}
-          </div>
+        <CardBody
+          card={
+            <div className={isImposter ? "card imp-card--imposter" : "card"}>
+              {isImposter ? (
+                <>
+                  <span className="card__eyebrow">No word for you</span>
+                  <p className="card__prompt">You're the Imposter</p>
+                  <p className="card__meta imp-card__meta">
+                    Listen hard. Give a clue that fits. Don't get caught.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <span className="card__eyebrow">The word is</span>
+                  <p className="card__prompt">{s.word}</p>
+                  <p className="card__meta">One clue each. Don't make it obvious.</p>
+                </>
+              )}
+            </div>
+          }
+        >
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
@@ -268,23 +273,26 @@ export function Imposter({ mode, onBack }: Props) {
               Hide role
             </button>
           </div>
-        </div>
+        </CardBody>
       )}
 
       {/* ---------- Clues ---------- */}
       {s.phase === "ready" && (
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">Everyone ready?</span>
-            <p className="card__prompt card__prompt--sm">
-              Go round the group. One clue each about the word.
-            </p>
-            <p className="card__meta">
-              Don't make it too obvious — the Imposter is listening and has to
-              blend in. Argue it out, point at someone, and let the Imposter own
-              up. Everyone but them already knows the word.
-            </p>
-          </div>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Everyone ready?</span>
+              <p className="card__prompt card__prompt--sm">
+                Go round the group. One clue each about the word.
+              </p>
+              <p className="card__meta">
+                Don't make it too obvious — the Imposter is listening and has to
+                blend in. Argue it out, point at someone, and let the Imposter own
+                up. Everyone but them already knows the word.
+              </p>
+            </div>
+          }
+        >
           <div className="actions">
             {/* The app deals the roles and gets out of the way. It has no
                 reveal and keeps no score: everyone except the Imposter knows
@@ -293,9 +301,8 @@ export function Imposter({ mode, onBack }: Props) {
               New game
             </button>
           </div>
-        </div>
+        </CardBody>
       )}
-
-    </div>
+    </GameScreen>
   );
 }

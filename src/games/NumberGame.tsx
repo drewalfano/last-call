@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck } from "../lib/deck";
 import { useCountdown, buzz } from "../lib/useCountdown";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import { NUMBER_GAME_CATEGORIES } from "../data/numberGame";
 import { useContentMode } from "../state/contentMode";
@@ -77,13 +76,16 @@ export function NumberGame({ mode, onBack }: Props) {
   const challenger = nameAt(turn);
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
-        onBack={onBack}
-      />
-
+    <GameScreen
+      mode={mode}
+      subtitle={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
+      onBack={onBack}
+    >
+      {/* Bidding and the challenge are a readout, not a card — they keep the
+          plain column. The verdict IS a card, so it takes the slot, and its
+          category line moves below the card: nothing may sit between the
+          header and the slot, or the slot stops being a constant. */}
+      {phase !== "verdict" && (
       <div className="focal num">
         <p className="num__category">{deck.current}</p>
 
@@ -110,7 +112,9 @@ export function NumberGame({ mode, onBack }: Props) {
         {phase === "challenge" && (
           <>
             <div className="num__bid focal__center">
-              <span className="num__bid-label">{bidder} names {bid}</span>
+              <span className="num__bid-label">
+                {bidder} names {bid}
+              </span>
               <span className="num__bid-n" data-low={timer.seconds <= 5 || undefined}>
                 {timer.seconds}
               </span>
@@ -125,25 +129,31 @@ export function NumberGame({ mode, onBack }: Props) {
             </div>
           </>
         )}
+      </div>
+      )}
 
-        {/* ---------- Who drinks ---------- */}
-        {phase === "verdict" && (
-          <>
-            <div className="card focal__center">
+      {/* ---------- Who drinks ---------- */}
+      {phase === "verdict" && (
+        <CardBody
+          className="num"
+          card={
+            <div className="card">
               <span className="card__eyebrow">Did they get {bid}?</span>
               <p className="card__prompt card__prompt--sm">
                 If they did, {challenger} drinks. If they didn't, {bidder} does.
               </p>
               <p className="card__meta">The table decides what counts.</p>
             </div>
-            <div className="actions">
-              <button className="btn btn--lg btn--block" onClick={newRound}>
-                New category
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+          }
+        >
+          <p className="num__category">{deck.current}</p>
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={newRound}>
+              New category
+            </button>
+          </div>
+        </CardBody>
+      )}
+    </GameScreen>
   );
 }

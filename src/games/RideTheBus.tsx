@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { PlayingCard } from "../components/PlayingCard";
-import { categoryStyle } from "../lib/style";
 import { deal, freshDeck, SUITS, type Card, type Suit } from "../lib/cards";
 import type { ModeDef } from "../data/modes";
 import { useRoster } from "../state/roster";
@@ -149,39 +148,37 @@ export function RideTheBus({ mode, onBack }: Props) {
   const nextRider = useNextRider();
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      {/* Whose turn it is, and which round — both live. */}
-      <GameHeader
-        title={mode.title}
-        subtitle={subtitle}
-        subtitleTone="content"
-        onBack={onBack}
-      />
-
-      <div className="focal rtb">
-        {s.phase === "results" ? (
-          <>
+    /* Whose turn it is, and which round — both live. */
+    <GameScreen mode={mode} subtitle={subtitle} subtitleTone="content" onBack={onBack}>
+      {s.phase === "results" ? (
+        <CardBody
+          className="rtb"
+          card={
             <div className="card">
               <span className="card__eyebrow">Off the bus</span>
               <p className="card__prompt">
-                {s.drinks === 0 ? "Clean run. Nobody drank." : `${s.drinks} drink${s.drinks === 1 ? "" : "s"} on the way.`}
+                {s.drinks === 0
+                  ? "Clean run. Nobody drank."
+                  : `${s.drinks} drink${s.drinks === 1 ? "" : "s"} on the way.`}
               </p>
               <p className="card__meta">Hand the phone to the next rider.</p>
             </div>
-            <div className="actions">
-              <button
-                className="btn btn--lg btn--block"
-                onClick={() => {
-                  advance();
-                  restart();
-                }}
-              >
-                {hasRoster ? `Hand to ${nextRider}` : "Next player"}
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
+          }
+        >
+          <div className="actions">
+            <button
+              className="btn btn--lg btn--block"
+              onClick={() => {
+                advance();
+                restart();
+              }}
+            >
+              {hasRoster ? `Hand to ${nextRider}` : "Next player"}
+            </button>
+          </div>
+        </CardBody>
+      ) : (
+        <div className="focal rtb">
             <div className="rtb__tally">
               <span>
                 Drinks <strong>{s.drinks}</strong>
@@ -243,10 +240,9 @@ export function RideTheBus({ mode, onBack }: Props) {
                 </div>
               </div>
             )}
-          </>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </GameScreen>
   );
 }
 

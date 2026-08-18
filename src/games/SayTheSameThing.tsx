@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { Countdown } from "../components/Countdown";
 import { useDeck, shuffle } from "../lib/deck";
 import { buzz } from "../lib/useCountdown";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import { SAY_THE_SAME_THING } from "../data/sayTheSameThing";
 import { useContentMode } from "../state/contentMode";
@@ -75,45 +74,49 @@ export function SayTheSameThing({ mode, onBack }: Props) {
   }, [deck]);
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={phase === "pair" ? "Pick two" : `Attempt ${attempt}`}
-        onBack={onBack}
-      />
-
+    <GameScreen
+      mode={mode}
+      subtitle={phase === "pair" ? "Pick two" : `Attempt ${attempt}`}
+      onBack={onBack}
+    >
+      {/* The count-in takes the card's slot rather than the whole screen, so
+          the numbers land on the same spot the word just left. */}
       {phase === "counting" ? (
-        <div className="focal">
-          <Countdown key={`${round}-${attempt}`} action="Say it" onDone={said} />
-        </div>
+        <CardBody card={<Countdown key={`${round}-${attempt}`} action="Say it" onDone={said} />} />
       ) : (
-        <div className="focal">
-          <div className="card">
-            <span className="card__eyebrow">
-              {phase === "matched" ? "Matched" : attempt === 1 ? "Starting word" : "Find the middle"}
-            </span>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">
+                {phase === "matched"
+                  ? "Matched"
+                  : attempt === 1
+                    ? "Starting word"
+                    : "Find the middle"}
+              </span>
 
-            {phase === "matched" ? (
-              <>
-                <p className="card__prompt">
-                  {attempt === 1 ? "First try." : `Took ${attempt} goes.`}
-                </p>
-                <p className="card__meta">
-                  {pair[0]} and {pair[1]} are on the same wavelength. Everyone else drinks.
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="card__prompt">{deck.current ?? ""}</p>
-                <p className="card__meta">
-                  {attempt === 1
-                    ? `${pair[0]} and ${pair[1]}, say the first thing you think of — at the same time.`
-                    : "Say the word that connects your two answers. At the same time."}
-                </p>
-              </>
-            )}
-          </div>
-
+              {phase === "matched" ? (
+                <>
+                  <p className="card__prompt">
+                    {attempt === 1 ? "First try." : `Took ${attempt} goes.`}
+                  </p>
+                  <p className="card__meta">
+                    {pair[0]} and {pair[1]} are on the same wavelength. Everyone else drinks.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="card__prompt">{deck.current ?? ""}</p>
+                  <p className="card__meta">
+                    {attempt === 1
+                      ? `${pair[0]} and ${pair[1]}, say the first thing you think of — at the same time.`
+                      : "Say the word that connects your two answers. At the same time."}
+                  </p>
+                </>
+              )}
+            </div>
+          }
+        >
           {phase === "pair" && (
             <div className="actions">
               <button className="btn btn--lg btn--block" onClick={startAttempt}>
@@ -146,8 +149,8 @@ export function SayTheSameThing({ mode, onBack }: Props) {
               </button>
             </div>
           )}
-        </div>
+        </CardBody>
       )}
-    </div>
+    </GameScreen>
   );
 }

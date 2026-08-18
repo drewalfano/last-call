@@ -1,8 +1,7 @@
 import { useMemo, type ReactNode } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { useDeck } from "../lib/deck";
-import { categoryStyle } from "../lib/style";
 import { usePool, type PoolPolicy, type Pools } from "../data/pools";
 import type { ModeDef } from "../data/modes";
 import { SurvivorTracker } from "../components/Mechanics";
@@ -84,15 +83,16 @@ export function DeckGame({ mode, config, onBack }: DeckGameProps) {
   }, [currentPlayer, deck.drawCount]);
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader title={mode.title} subtitle={config.hint} onBack={onBack} />
-      <div className="focal">
-        <PromptCard
-          eyebrow={config.eyebrow}
-          dealKey={deck.drawCount}
-        >
-          {deck.current === undefined ? "No cards in this deck." : config.render(deck.current, fill)}
-        </PromptCard>
+    <GameScreen mode={mode} subtitle={config.hint} onBack={onBack}>
+      <CardBody
+        card={
+          <PromptCard eyebrow={config.eyebrow} dealKey={deck.drawCount}>
+            {deck.current === undefined
+              ? "No cards in this deck."
+              : config.render(deck.current, fill)}
+          </PromptCard>
+        }
+      >
         {deck.current !== undefined && config.afterCard?.(deck.current, deck.drawCount)}
         <p className="counter">
           {deck.position} of {deck.total}
@@ -103,7 +103,7 @@ export function DeckGame({ mode, config, onBack }: DeckGameProps) {
             {config.nextLabel}
           </button>
         </div>
-      </div>
-    </div>
+      </CardBody>
+    </GameScreen>
   );
 }

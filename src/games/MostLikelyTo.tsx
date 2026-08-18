@@ -1,10 +1,9 @@
 import { useCallback, useState } from "react";
-import { GameHeader } from "../components/GameHeader";
+import { CardBody, GameScreen } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { Countdown } from "../components/Countdown";
 import { useDeck } from "../lib/deck";
 import { buzz } from "../lib/useCountdown";
-import { categoryStyle } from "../lib/style";
 import { usePool } from "../data/pools";
 import { MOST_LIKELY_TO } from "../data/mostLikelyTo";
 import { useContentMode } from "../state/contentMode";
@@ -47,23 +46,23 @@ export function MostLikelyTo({ mode, onBack }: Props) {
   }, []);
 
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={phase === "counting" ? "Get ready" : "Most likely to…"}
-        onBack={onBack}
-      />
-
+    <GameScreen
+      mode={mode}
+      subtitle={phase === "counting" ? "Get ready" : "Most likely to…"}
+      onBack={onBack}
+    >
+      {/* The count-in takes the card's slot rather than the whole screen, so
+          the numbers land on the same spot the prompt just left. */}
       {phase === "counting" ? (
-        <div className="focal">
-          <Countdown key={deck.drawCount} action="Point" onDone={pointed} />
-        </div>
+        <CardBody card={<Countdown key={deck.drawCount} action="Point" onDone={pointed} />} />
       ) : (
-        <div className="focal">
-          <PromptCard eyebrow="Most likely to…" dealKey={deck.drawCount}>
-            {deck.current ?? "No cards in this deck."}
-          </PromptCard>
-
+        <CardBody
+          card={
+            <PromptCard eyebrow="Most likely to…" dealKey={deck.drawCount}>
+              {deck.current ?? "No cards in this deck."}
+            </PromptCard>
+          }
+        >
           {phase === "pointed" ? (
             <>
               <p className="mlt__verdict">Most fingers drinks.</p>
@@ -84,8 +83,8 @@ export function MostLikelyTo({ mode, onBack }: Props) {
               </button>
             </div>
           )}
-        </div>
+        </CardBody>
       )}
-    </div>
+    </GameScreen>
   );
 }
