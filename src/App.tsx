@@ -3,11 +3,14 @@ import { MODE_BY_ID, type ModeId } from "./data/modes";
 import { categoryStyle } from "./lib/style";
 import { Home } from "./games/Home";
 import { DeckGame, DECK_GAMES, isDeckGame, type DeckGameConfig } from "./games/DeckGame";
-import { TruthOrDare } from "./games/TruthOrDare";
 import { LastCallGame } from "./games/LastCallGame";
 import { HotSeat } from "./games/HotSeat";
 import { RideTheBus } from "./games/RideTheBus";
 import { LastWord } from "./games/LastWord";
+import { MostLikelyTo } from "./games/MostLikelyTo";
+import { SayTheSameThing } from "./games/SayTheSameThing";
+import { RankIt } from "./games/RankIt";
+import { NumberGame } from "./games/NumberGame";
 import { KingsCup } from "./games/KingsCup";
 import { Imposter } from "./games/Imposter";
 
@@ -15,7 +18,7 @@ import { Imposter } from "./games/Imposter";
  * SCREEN STATE MACHINE
  * Deliberately not a router. Nav is flat and one level deep: Home → a mode,
  * and the only way out of a mode is back to Home. Nobody bookmarks a
- * would-you-rather prompt mid-party, and a router would cost bundle size
+ * prompt mid-party, and a router would cost bundle size
  * and cold-start time for navigation this app doesn't have.
  *
  * Game state is intentionally unmounted on exit — leaving a mode ends the
@@ -147,8 +150,6 @@ function renderScreen(
   }
 
   switch (screen) {
-    case "truth-or-dare":
-      return <TruthOrDare mode={mode} onBack={goHome} />;
     case "last-call":
       return <LastCallGame mode={mode} onBack={goHome} />;
     case "hot-seat":
@@ -159,6 +160,14 @@ function renderScreen(
       return <LastWord mode={mode} onBack={goHome} />;
     case "kings-cup":
       return <KingsCup mode={mode} onBack={goHome} />;
+    case "most-likely-to":
+      return <MostLikelyTo mode={mode} onBack={goHome} />;
+    case "say-the-same-thing":
+      return <SayTheSameThing mode={mode} onBack={goHome} />;
+    case "rank-it":
+      return <RankIt mode={mode} onBack={goHome} />;
+    case "the-number-game":
+      return <NumberGame mode={mode} onBack={goHome} />;
     case "imposter":
       return <Imposter mode={mode} onBack={goHome} />;
   }

@@ -11,14 +11,15 @@
 
 export type ModeId =
   | "last-call"
+  | "imposter"
+  | "last-word"
+  | "most-likely-to"
   | "kings-cup"
   | "ride-the-bus"
-  | "last-word"
-  | "imposter"
+  | "say-the-same-thing"
+  | "rank-it"
+  | "the-number-game"
   | "drink-if"
-  | "most-likely-to"
-  | "would-you-rather"
-  | "truth-or-dare"
   | "hot-seat";
 
 export interface ModeDef {
@@ -46,6 +47,24 @@ export const MODES: ModeDef[] = [
     signature: true,
   },
   {
+    id: "imposter",
+    title: "Imposter",
+    tagline: "One of you doesn't know the word.",
+    color: "--cat-imposter",
+  },
+  {
+    id: "last-word",
+    title: "Last Word",
+    tagline: "Category, letter, pass. Don't freeze.",
+    color: "--cat-last-word",
+  },
+  {
+    id: "most-likely-to",
+    title: "Most Likely To",
+    tagline: "Count to three, then point.",
+    color: "--cat-most-likely-to",
+  },
+  {
     id: "kings-cup",
     title: "Kings Cup",
     tagline: "Draw a card, do what it says.",
@@ -58,40 +77,28 @@ export const MODES: ModeDef[] = [
     color: "--cat-ride-the-bus",
   },
   {
-    id: "last-word",
-    title: "Last Word",
-    tagline: "Category, letter, pass. Don't freeze.",
-    color: "--cat-last-word",
+    id: "say-the-same-thing",
+    title: "Say the Same Thing",
+    tagline: "Two people, one word. Keep converging.",
+    color: "--cat-say-the-same-thing",
   },
   {
-    id: "imposter",
-    title: "Imposter",
-    tagline: "One of you doesn't know the word.",
-    color: "--cat-imposter",
+    id: "rank-it",
+    title: "Rank It",
+    tagline: "Guess how they'd rank it.",
+    color: "--cat-rank-it",
+  },
+  {
+    id: "the-number-game",
+    title: "The Number Game",
+    tagline: "Bid high. Get called out.",
+    color: "--cat-the-number-game",
   },
   {
     id: "drink-if",
     title: "Drink If…",
     tagline: "No turns, no setup. Call yourself out.",
     color: "--cat-drink-if",
-  },
-  {
-    id: "most-likely-to",
-    title: "Most Likely To",
-    tagline: "Point at someone. Loudest vote wins.",
-    color: "--cat-most-likely-to",
-  },
-  {
-    id: "would-you-rather",
-    title: "Would You Rather",
-    tagline: "Two bad options. Pick one.",
-    color: "--cat-would-you-rather",
-  },
-  {
-    id: "truth-or-dare",
-    title: "Truth or Dare",
-    tagline: "Commit before you see the card.",
-    color: "--cat-truth-or-dare",
   },
   {
     id: "hot-seat",

@@ -5,17 +5,14 @@ import { useDeck } from "../lib/deck";
 import { categoryStyle } from "../lib/style";
 import { usePool, type PoolPolicy, type Pools } from "../data/pools";
 import type { ModeDef } from "../data/modes";
-import { VotePad } from "../components/VotePad";
-import { SplitVote, SurvivorTracker } from "../components/Mechanics";
+import { SurvivorTracker } from "../components/Mechanics";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { fillPrompt } from "../lib/prompts";
 import { DRINK_IF } from "../data/drinkIf";
-import { MOST_LIKELY_TO } from "../data/mostLikelyTo";
-import { WOULD_YOU_RATHER, type WyrPrompt } from "../data/wouldYouRather";
 
 /**
- * One screen, three modes.
+ * One screen, one mode — for now.
  * Would You Rather, Drink If… and Most Likely To share the same base loop —
  * reveal a card, draw the next — so they share this component and differ by
  * config below. Each layers its own mechanic on top via `afterCard`.
@@ -48,24 +45,6 @@ export interface DeckGameConfig<T> {
 
 /** Deck configs, keyed by mode id. Adding a plain deck mode is a config entry. */
 export const DECK_GAMES = {
-  "would-you-rather": {
-    pools: WOULD_YOU_RATHER,
-    eyebrow: "Would you rather…",
-    render: (p: WyrPrompt, fill) => (
-      <span className="wyr">
-        <span className="wyr__option">{fill(p.a)}</span>
-        <span className="wyr__or">or</span>
-        <span className="wyr__option">{fill(p.b)}</span>
-      </span>
-    ),
-    nextLabel: "Next",
-    hint: "Everyone picks. No abstaining.",
-    // The split IS the game; printing the pair and moving on wasted it.
-    afterCard: (p: WyrPrompt, round: number) => (
-      <SplitVote a={p.a} b={p.b} round={round} />
-    ),
-  } satisfies DeckGameConfig<WyrPrompt>,
-
   "drink-if": {
     pools: DRINK_IF,
     eyebrow: "Drink if…",
@@ -74,18 +53,6 @@ export const DECK_GAMES = {
     hint: "No turns. If it's you, drink.",
     // Optional elimination layer — hidden entirely without a roster.
     afterCard: () => <SurvivorTracker />,
-  } satisfies DeckGameConfig<string>,
-
-  "most-likely-to": {
-    pools: MOST_LIKELY_TO,
-    eyebrow: "Most likely to…",
-    render: (p: string, fill) => fill(p),
-    nextLabel: "Next",
-    hint: "Count down from three, then point.",
-    // The whole game is the vote; until now the app only printed the sentence.
-    afterCard: (_p: string, round: number) => (
-      <VotePad round={round} verdict={(w) => `${w} drinks.`} />
-    ),
   } satisfies DeckGameConfig<string>,
 
 } as const;
