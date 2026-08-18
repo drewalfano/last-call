@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { shuffle, useDeck } from "../lib/deck";
@@ -42,6 +42,21 @@ export function LastCallGame({ mode, onBack }: Props) {
   // announce it once, on the card that crosses over.
   const [lastTier, setLastTier] = useState<number | null>(null);
   const [crossing, setCrossing] = useState(false);
+  /** The pass is spent. The round ends on a card rather than reshuffling. */
+  const [finished, setFinished] = useState(false);
+
+  /**
+   * How many cards each tier holds, and how many sit before it.
+   *
+   * The deck-wide "12 of 56" could not say where a level ended, and the
+   * levels are not even thirds: safe runs 27 / 31 / 18 and 19+ runs
+   * 19 / 17 / 20. So the counter reads within the level instead, which is
+   * the only number that tells a table how much of THIS level is left.
+   */
+  const tiers = useMemo(() => {
+    const size = [1, 2, 3].map((t) => pool.filter((c) => c.intensity === t).length);
+    return { size, before: [0, size[0], size[0] + size[1]] };
+  }, [pool]);
 
   useEffect(() => {
     if (!card) return;
@@ -50,9 +65,55 @@ export function LastCallGame({ mode, onBack }: Props) {
   }, [card, lastTier]);
 
   const draw = useCallback(() => {
+    if (deck.atEnd) {
+      setFinished(true);
+      return;
+    }
     advance();
     deck.draw();
   }, [advance, deck]);
+
+  /**
+   * Leave this level early. Forward only: the mode exists to escalate, and a
+   * table that has gone chaotic does not want the warm-up prompts back.
+   */
+  const nextTier = card && card.intensity < 3 ? card.intensity + 1 : null;
+  const skipLevel = useCallback(() => {
+    if (nextTier === null) return;
+    advance();
+    deck.skipTo((c) => c.intensity === nextTier);
+  }, [advance, deck, nextTier]);
+
+  const newRound = useCallback(() => {
+    deck.reset();
+    setFinished(false);
+    setLastTier(null);
+    setCrossing(false);
+  }, [deck]);
+
+  if (finished) {
+    return (
+      <GameScreen mode={mode} onBack={onBack}>
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">That's the round</span>
+              <p className="card__prompt">No cards left.</p>
+              <p className="card__meta">
+                {"Pour another and go again — it deals from the top."}
+              </p>
+            </div>
+          }
+        >
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={newRound}>
+              New round
+            </button>
+          </div>
+        </CardBody>
+      </GameScreen>
+    );
+  }
 
   return (
     <GameScreen
@@ -106,14 +167,24 @@ export function LastCallGame({ mode, onBack }: Props) {
         {card?.kind === "vote" && (
           <VotePad round={deck.drawCount} verdict={(w) => `${w} drinks.`} />
         )}
-        <p className="counter">
-          {deck.position} of {deck.total}
-          {deck.cycle > 0 && " · new round"}
-        </p>
+        {card && (
+          <p className="counter">
+            {deck.position - tiers.before[card.intensity - 1]} of{" "}
+            {tiers.size[card.intensity - 1]}
+          </p>
+        )}
         <div className="actions">
           <button className="btn btn--lg btn--block" onClick={draw} disabled={!card}>
             Next player
           </button>
+          {/* Named by destination, not by direction. The jump is forward only
+              and the cards in between do not come back, so the table should
+              see what it is committing to before it commits. */}
+          {nextTier !== null && (
+            <button className="btn btn--ghost btn--block" onClick={skipLevel}>
+              Skip to {TIER_LABEL[nextTier - 1]}
+            </button>
+          )}
         </div>
       </CardBody>
     </GameScreen>

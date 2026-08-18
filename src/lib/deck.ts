@@ -21,6 +21,19 @@ export interface Deck<T> {
   draw: () => void;
   /** Reshuffle from scratch and deal a fresh first card. */
   reset: () => void;
+  /**
+   * Jump forward to the next card matching `match`, skipping everything
+   * between. Forward only, and never past the end of the pass — a caller
+   * that wants to know whether a match exists ahead should check the pool
+   * rather than call this and hope.
+   *
+   * Last Call uses it to leave a tier early. The cards jumped over are gone
+   * for the pass, which is the point: skipping a level is a decision about
+   * the round, not a detour that gets replayed later.
+   */
+  skipTo: (match: (card: T) => boolean) => void;
+  /** True when `current` is the last card of the pass. */
+  atEnd: boolean;
   /** 1-based position of `current` within the current pass. */
   position: number;
   /** Size of the pool. */
@@ -98,10 +111,23 @@ export function useDeck<T>(source: readonly T[], arrange?: Arrange<T>): Deck<T> 
     [],
   );
 
+  const skipTo = useCallback((match: (card: T) => boolean) => {
+    setState((prev) => {
+      for (let i = prev.index + 1; i < prev.queue.length; i++) {
+        if (match(prev.queue[i])) {
+          return { ...prev, index: i, drawCount: prev.drawCount + 1 };
+        }
+      }
+      return prev;
+    });
+  }, []);
+
   return {
     current: state.queue[state.index],
     draw,
     reset,
+    skipTo,
+    atEnd: state.queue.length > 0 && state.index === state.queue.length - 1,
     position: state.queue.length === 0 ? 0 : state.index + 1,
     total: state.queue.length,
     cycle: state.cycle,
