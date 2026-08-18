@@ -66,36 +66,40 @@ export function LastCallGame({ mode, onBack }: Props) {
       }
       onBack={onBack}
     >
-      {crossing && card && (
-        <button className="lc-tier" onClick={() => setCrossing(false)}>
-          <span className="lc-tier__label">{TIER_LABEL[card.intensity - 1]}</span>
-          <span className="lc-tier__hint">Tap to carry on</span>
-        </button>
-      )}
       <CardBody
-        className="focal--overlay"
         card={
-          <PromptCard
-            eyebrow={card ? WILDCARD_LABEL[card.kind] : undefined}
-            dealKey={deck.drawCount}
-            footer={
-              card && (
-                <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
-                  {[1, 2, 3].map((n) => (
-                    <span
-                      key={n}
-                      className="heat__pip"
-                      data-lit={n <= card.intensity || undefined}
-                    />
-                  ))}
-                </span>
-              )
-            }
-          >
-            {card
-              ? fillPrompt(card.text, { name: currentPlayer, other: otherPlayer() })
-              : "No cards in this deck."}
-          </PromptCard>
+          /* The tier interstitial covers the card and nothing else. It lives
+             in the slot because the slot is the positioned box it sizes
+             itself against — and the card's own radius is the one it wears. */
+          <>
+            {crossing && card && (
+              <button className="lc-tier" onClick={() => setCrossing(false)}>
+                <span className="lc-tier__label">{TIER_LABEL[card.intensity - 1]}</span>
+                <span className="lc-tier__hint">Tap to carry on</span>
+              </button>
+            )}
+            <PromptCard
+              eyebrow={card ? WILDCARD_LABEL[card.kind] : undefined}
+              dealKey={deck.drawCount}
+              footer={
+                card && (
+                  <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
+                    {[1, 2, 3].map((n) => (
+                      <span
+                        key={n}
+                        className="heat__pip"
+                        data-lit={n <= card.intensity || undefined}
+                      />
+                    ))}
+                  </span>
+                )
+              }
+            >
+              {card
+                ? fillPrompt(card.text, { name: currentPlayer, other: otherPlayer() })
+                : "No cards in this deck."}
+            </PromptCard>
+          </>
         }
       >
         {/* Vote cards get the real mechanic; every other kind is unchanged. */}

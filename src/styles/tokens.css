@@ -134,9 +134,11 @@
      Both reserves are pinned to the tallest variant measured on a
      screen that actually shows a card, at 375pt:
 
-     --gheader-h  120.4px — Hot Seat's question header, where a
+     --gheader-h  133.6px — Hot Seat's question header, where a
                   16-character name (roster's MAX_NAME) wraps the
-                  content line onto a second line.
+                  content line onto a second line. Re-measure this
+                  whenever --fs-2xl or .gheader__now changes size;
+                  it is two lines of that type plus the bar.
      --gfooter-h  173px — Imposter's setup: the category line, the
                   Random / Categories row and the primary button.
 
@@ -145,7 +147,7 @@
      They have nothing to hold still, and the rows are minmax()
      rather than fixed so they simply grow.
      ---------------------------------------------------------- */
-  --gheader-h: 124px;
+  --gheader-h: 138px;
   --gfooter-h: 180px;
 
   /* ----------------------------------------------------------

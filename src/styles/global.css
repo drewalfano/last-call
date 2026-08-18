@@ -309,13 +309,23 @@ button { font: inherit; color: inherit; }
   flex-direction: column;
   align-items: center;
   gap: var(--sp-1);
+  /* Centred in what the header row has left under the bar, rather than
+     tucked straight under the mode name with the rest of the row empty
+     beneath it. The bar stays pinned to the top; this floats between it
+     and the card. */
+  margin-block: auto;
 }
 
 .gheader__now {
   margin: 0;
   text-align: center;
   font-family: var(--font-display);
-  font-size: var(--fs-xl);
+  /* A step clear of the mode name above it, not one notch. At --fs-xl this
+     sat 4px off the title in the same face, weight, case and colour, so the
+     two read as one block of heading and the live line — the category, whose
+     turn it is, which reveal you are on — got lost in the name of a mode you
+     already know you are in. --fs-2xl is the size that separates them. */
+  font-size: var(--fs-2xl);
   font-weight: var(--fw-black);
   letter-spacing: var(--tracking-wide);
   line-height: var(--lh-tight);
@@ -366,27 +376,39 @@ button { font: inherit; color: inherit; }
    Screens with no card keep the plain `.focal` column above and are
    laid out by their own rules. There is nothing there to hold still.
    --------------------------------------------------------------- */
-.focal--slot {
+/* ---------------------------------------------------------------
+   THREE ROWS, AND THE MIDDLE ONE IS THE CARD.
+
+   The card row is exactly --card-size, so the card's rectangle is a
+   constant. The header and footer rows each take a minimum — their
+   tallest variant — and then split whatever is left over EQUALLY.
+   Both terms are constants for a given device, so the card's
+   position is one too.
+
+   Splitting the slack rather than giving it all to one side is what
+   puts the card near the middle of the screen and gives the header
+   room to breathe under the mode name. Give it all to the footer and
+   the card rides up under the title; give it all to the header and
+   it sinks onto the button.
+
+   `display: contents` on the wrapper so the slot and the footer are
+   rows of THIS grid rather than a nested one — the header has to
+   share the same track sizing, and it is not inside the wrapper. */
+.screen:has(.focal--slot) {
   display: grid;
   /* One column, and it has to be stated. Left implicit, the column is
      auto-sized — it shrinks to the card's own content, so a two-word prompt
      drew a narrower card than a long one. minmax(0, 1fr) pins the column to
-     the full width and lets the row scroll. */
+     the full width and lets the footer row scroll. */
   grid-template-columns: minmax(0, 1fr);
-  /* The card region takes the slack and the footer is the fixed one. Both
-     rows are constants: the header above reserves --gheader-h and this
-     footer reserves --gfooter-h, so the region left for the card is the
-     same on every screen — which is what lets the card centre in it and
-     still land on the same pixels every time.
-
-     Pinning the card itself to the top of the region instead would also
-     hold it still, but every screen would then wear the whole footer
-     reserve as dead space underneath it and the card would sit high. */
-  grid-template-rows: minmax(0, 1fr) var(--gfooter-h);
+  grid-template-rows:
+    minmax(var(--gheader-h), 1fr)
+    var(--card-size)
+    minmax(var(--gfooter-h), 1fr);
 }
 
-/* Centred in the region, both axes. The region is a constant, so this is a
-   constant too — the card's rectangle, on every screen of every game. */
+.focal--slot { display: contents; }
+
 .slot {
   position: relative;
   width: min(100%, var(--card-size));
@@ -663,4 +685,3 @@ button { font: inherit; color: inherit; }
 }
 
 /* Hosts an absolutely-positioned overlay (Last Call's tier card). */
-.focal--overlay { position: relative; }
