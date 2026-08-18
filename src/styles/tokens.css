@@ -139,8 +139,11 @@
                   content line onto a second line. Re-measure this
                   whenever --fs-2xl or .gheader__now changes size;
                   it is two lines of that type plus the bar.
-     --gfooter-h  173px — Imposter's setup: the category line, the
-                  Random / Categories row and the primary button.
+     --gfooter-h  165.5px — Hot Seat's pick screen without a roster:
+                  the name field, a suggestion chip and the primary
+                  button. Imposter's setup used to be the tallest at
+                  173, until its category line moved up to the live
+                  line and left it a plain row plus a button (136).
 
      Screens with no card — Last Word's letter grid, Kings Cup's
      play screen, Rank It's lists — are allowed to exceed both.
@@ -148,7 +151,7 @@
      rather than fixed so they simply grow.
      ---------------------------------------------------------- */
   --gheader-h: 138px;
-  --gfooter-h: 180px;
+  --gfooter-h: 172px;
 
   /* ----------------------------------------------------------
      The card is square, so one number is its width AND its height,

@@ -1324,17 +1324,6 @@
   color: color-mix(in srgb, var(--category-ink) 78%, transparent);
 }
 
-/* Current selection above the picker controls. */
-.pick-line {
-  margin: 0;
-  flex: none;
-  text-align: center;
-  font-size: var(--fs-sm);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--category-ink) 72%, transparent);
-}
-.pick-line strong { color: var(--category-ink); font-weight: var(--fw-bold); }
 
 /* ---------------- Countdown (Most Likely To, Say the Same Thing) ---------------- */
 .countdown {

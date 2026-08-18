@@ -110,17 +110,22 @@ export function Imposter({ mode, onBack }: Props) {
   const isImposter = currentPlayer === s.imposter;
 
   /**
-   * Only the reveal counter is live data. "Set up the round", "Pick a
-   * category" and "Clues" each restated the card directly under them, so
-   * they are gone and those screens carry no line at all.
+   * Two things are live here and nothing else is. Which reveal you are on,
+   * because the whole game is passing the phone in the right order. And the
+   * category on the setup screen — the same thing Last Word and the Number
+   * Game put on this line, so it reads the same way in all three.
+   *
+   * "Set up the round", "Pick a category" and "Clues" each restated the card
+   * directly under them, so those screens carry no line at all.
    */
-  const label = useMemo(
-    () =>
-      s.phase === "cover" || s.phase === "role"
-        ? `Reveal ${s.at + 1} of ${s.count}`
-        : undefined,
-    [s.phase, s.at, s.count],
-  );
+  const label = useMemo(() => {
+    if (s.phase === "cover" || s.phase === "role") {
+      return `Reveal ${s.at + 1} of ${s.count}`;
+    }
+    // Named, not bare: on this screen the value is often just "Any", and a
+    // lone "ANY" across the header says nothing about what it is answering.
+    return s.phase === "setup" ? `Category: ${s.category ?? "Any"}` : undefined;
+  }, [s.phase, s.at, s.count, s.category]);
 
   return (
     /* Which reveal you are on — the whole game is passing the phone in
@@ -162,9 +167,6 @@ export function Imposter({ mode, onBack }: Props) {
             </div>
           }
         >
-          <p className="pick-line">
-            Category · <strong>{s.category ?? "Any"}</strong>
-          </p>
           <div className="actions--row">
             <button
               className="btn btn--ghost"
