@@ -1,0 +1,406 @@
+@import "./tokens.css";
+@import "./games.css";
+
+/* ---------------- Reset ---------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  color: var(--text);
+  background: var(--shell-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+  /* Pass-the-phone: nobody should ever zoom or text-select a prompt. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p, figure { margin: 0; }
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ---------------- App shell ---------------- */
+/* Portrait, single column, centered on larger screens. */
+.app {
+  min-height: 100dvh;
+  /* Home falls back to the shell; inside a mode the pack color takes over. */
+  background: var(--category, var(--shell-bg));
+  color: var(--category-ink, var(--text));
+  transition: background var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
+}
+
+.app__frame {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin-inline: auto;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* min-height:0 lets the focal area actually shrink-to-fit the viewport
+     instead of overflowing — without it flex children refuse to go below
+     their content size and the layout stops filling the phone. */
+  min-height: 0;
+  padding: var(--sp-3) var(--sp-4) var(--action-inset);
+  animation: screen-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------------- Buttons ---------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--control-height);
+  padding: 0 var(--sp-5);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--category-ink, var(--control-bg));
+  color: var(--category, var(--control-text));
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring),
+              background var(--dur-fast) var(--ease-out),
+              opacity var(--dur-fast) var(--ease-out);
+}
+.btn:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+.btn--block { width: 100%; }
+
+.btn--primary-on-category {
+  background: var(--category-ink, var(--cat-ink));
+  color: var(--category, var(--control-bg));
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--category-ink, var(--text));
+  border-color: color-mix(in srgb, var(--category-ink, var(--text)) 45%, transparent);
+}
+
+.btn--quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--category-ink, var(--text-muted));
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+}
+
+/* Bigger type, same height — the rhythm holds. */
+.btn--lg { font-size: var(--fs-xl); padding: 0 var(--sp-6); }
+
+/* ---------------- Game header ---------------- */
+.gheader {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-3);
+}
+
+.gheader__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-target);
+  height: var(--tap-target);
+  margin-left: calc(var(--sp-2) * -1);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--category-ink, var(--text));
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.gheader__back:active { transform: scale(0.9); }
+
+.gheader__titles { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; align-items: flex-start; }
+
+.gheader__title {
+  color: var(--category-ink, var(--text));
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  line-height: var(--lh-tight);
+}
+
+.gheader__sub {
+  font-size: var(--fs-xs);
+  color: var(--category-ink, var(--text-muted));
+  opacity: 0.72;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* ---------------- Focal card (game screens) ---------------- */
+/* ---------------------------------------------------------------
+   Fixed furniture. The card starts at the top of the focal area and
+   the primary action is pinned to the bottom, so neither moves when
+   the copy above them gets longer or shorter. A player's thumb finds
+   the button in the same place in every mode, every draw.
+   --------------------------------------------------------------- */
+.focal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+/* The card is a single clean sheet on the pack color. No stack, no tray,
+   no border — the sense of a deck comes from the swap motion below, which
+   ages better than drawn-on layers. */
+/* A square card, centered on the pack color. Fixed proportions mean every
+   prompt lands in the same place on screen — nothing jumps between draws —
+   and the color reads as the field it sits on rather than as a margin. */
+.cardstage {
+  position: relative;
+  flex: none;
+  width: min(100%, 58dvh);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  /* Without this the shared rotateY flip renders as a flat squash
+     rather than a card turning over. */
+  perspective: 1400px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-3);
+  overflow: hidden;
+  padding: var(--sp-5) var(--sp-4);
+  border-radius: var(--radius-2xl);
+  background: var(--card-surface);
+  color: var(--card-ink);
+  box-shadow:
+    0 2px 6px -2px rgba(0, 0, 0, 0.22),
+    0 20px 46px -16px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+
+/* The stage has a definite size, so both cards fill it and overlap for the
+   length of a swap. */
+.cardstage > .card {
+  position: absolute;
+  inset: 0;
+}
+
+/* Intro / results screens render a card straight into the focal area rather
+   than through a stage — same square. */
+.focal > .card {
+  width: min(100%, 58dvh);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.card__eyebrow {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-pill);
+  background: var(--category, var(--surface));
+  color: var(--category-ink, var(--cat-ink));
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+
+.card__prompt {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 5.6vw, 2.1rem);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+}
+
+.card__prompt--sm { font-size: clamp(1.15rem, 4.7vw, 1.75rem); }
+
+.card__meta {
+  font-size: var(--fs-sm);
+  color: var(--card-ink-muted);
+}
+
+/* The outgoing card rides above the incoming one, so a draw reads as the
+   top card being taken off rather than a cross-fade. */
+/* Exactly the playing-card flip. Remounting on a new prompt replays it. */
+.card--dealt {
+  animation: card-flip-in var(--dur-slow) var(--ease-out) both;
+  backface-visibility: hidden;
+}
+
+/* ---------------------------------------------------------------
+   THE card animation. Every card in the app — prompt cards and the
+   playing cards in Ride the Bus and Kings Cup — turns
+   over using this one.
+
+   A full 180°: the card starts back-on and rotates to face you, so
+   the new card is literally on the back of the one before it.
+   `backface-visibility: hidden` is what sells it — through the first
+   half of the turn you're looking at the back, and the face only
+   appears as it swings past edge-on. Parents set `perspective`.
+   --------------------------------------------------------------- */
+@keyframes card-flip-in {
+  from { transform: rotateY(-180deg); }
+  to { transform: rotateY(0deg); }
+}
+
+/* Small non-card elements that still need to arrive with weight. */
+@keyframes pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-2);
+  /* Takes up the slack, which grounds it against the screen's bottom
+     padding regardless of what sits above. */
+  margin-top: auto;
+}
+
+/* ---------------------------------------------------------------
+   ONE CENTRING RULE FOR EVERY MODE.
+
+   The focal element — prompt card, felt, board, stage — takes the
+   slack with auto margins top and bottom, so it sits centred in the
+   space above the button. The button stays grounded because the focal
+   element's own bottom margin pushes everything after it down.
+
+   Exactly TWO auto margins in the column, never three, or the focal
+   element lands off-centre. That's why .actions drops its own
+   margin-top whenever a focal element is present.
+
+   A new mode adds `.focal__center` to its focal element and inherits
+   all of this. Status strips above it stay pinned under the header.
+   --------------------------------------------------------------- */
+.cardstage,
+.focal > .card,
+.focal__center {
+  margin-block: auto;
+}
+
+.focal:has(> .cardstage) .actions,
+.focal:has(> .card) .actions,
+.focal:has(.focal__center) .actions {
+  margin-top: 0;
+}
+.actions--row { display: flex; flex-direction: row; gap: var(--sp-2); }
+.actions--row > * { flex: 1; }
+
+.counter {
+  flex: none;
+  text-align: center;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--category-ink, var(--text-muted));
+  opacity: 0.7;
+}
+
+/* ---------------- Modal ---------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-5);
+  background: var(--overlay);
+  animation: fade-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  width: 100%;
+  max-width: 360px;
+  padding: var(--sp-6);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: modal-in var(--dur-base) var(--ease-spring) both;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.modal__body { font-size: var(--fs-md); color: var(--text-muted); line-height: var(--lh-normal); }
+
+/* ---------------- Utility ---------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Hosts an absolutely-positioned overlay (Last Call's tier card). */
+.focal--overlay { position: relative; }

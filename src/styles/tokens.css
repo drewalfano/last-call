@@ -1,0 +1,178 @@
+/* ============================================================
+   LAST CALL — DESIGN TOKENS
+   ------------------------------------------------------------
+   PLACEHOLDER VISUAL SYSTEM. Art direction is being decided
+   separately. Every color, typeface, radius, spacing step and
+   motion curve in the app resolves through this file.
+   Swapping the palette / type / shape language should NEVER
+   require touching a component.
+
+   Rules of the road:
+   - Components must not hard-code hex values, px radii, or
+     easing curves. Use var(--*) only.
+   - Shell theming (cream default / ink Night Mode) swaps ONLY
+     the shell + text + control tokens below.
+   - Category colors are intentionally identical across both
+     themes: they are a wayfinding cue, not decoration.
+   ============================================================ */
+
+:root {
+  /* --- Typography ------------------------------------------ */
+  --font-display: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.25rem;
+  --fs-4xl: 3rem;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+  --fw-black: 800;
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.25;
+  --lh-normal: 1.5;
+
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.14em;
+
+  /* --- Spacing --------------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+
+  /* --- Shape ----------------------------------------------- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 34px;
+  --radius-pill: 999px;
+
+  --border-width: 2px;
+
+  /* --- Layout ---------------------------------------------- */
+  --app-max-width: 480px;
+  --tap-target: 48px;
+  /* Every primary action sits exactly this far off the bottom edge. */
+  --action-inset: 20px;
+  /* One height for every action button in the app, so a thumb learns the
+     rhythm once. Applies to .btn in all its variants. */
+  --control-height: 60px;
+
+  /* --- Motion ---------------------------------------------- */
+  /* Tactile, not linear. Spring on press, physical decay on the wheel. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-instant: 90ms;
+  --dur-fast: 160ms;
+  --dur-base: 260ms;
+  --dur-slow: 460ms;
+  --dur-wheel: 4200ms;
+  --press-scale: 0.96;
+
+  /* --- Elevation ------------------------------------------- */
+  --shadow-card: 0 2px 0 0 var(--shadow-color), 0 6px 18px -8px var(--shadow-color);
+  --shadow-raised: 0 4px 0 0 var(--shadow-color), 0 14px 30px -12px var(--shadow-color);
+  --shadow-modal: 0 24px 60px -12px rgba(0, 0, 0, 0.45);
+
+  /* ==========================================================
+     APPEARANCE — DARK (default)
+     Two neutrals only: flat white and near-black. No tinted greys,
+     no navy. Appearance is now independent of the content rating —
+     see state/theme.tsx.
+     ========================================================== */
+  --shell-bg: #141414;
+  --shell-bg-alt: #1C1C1C;
+  --surface: #1F1F1F;
+  --surface-sunken: #0D0D0D;
+  --text: #FFFFFF;
+  --text-muted: #9A9A9A;
+  --text-inverse: #141414;
+  --border: #FFFFFF;
+  --border-soft: #333333;
+  --control-bg: #FFFFFF;
+  --control-text: #141414;
+  --overlay: rgba(0, 0, 0, 0.72);
+  --shadow-color: rgba(0, 0, 0, 0.62);
+  --focus-ring: #FFFFFF;
+
+  /* The prompt card: white stock, near-black ink, in both appearances. */
+  --card-surface: #FFFFFF;
+  --card-ink: #141414;
+  --card-ink-muted: #5C5C5C;
+
+  /* ----------------------------------------------------------
+     PACK COLORS — identical in both appearances and both content
+     ratings. Each ships with the ink that sits on it. Every pairing
+     below clears WCAG AA (4.5:1) for normal text against exactly two
+     inks — near-black or white — which is why no third color is
+     needed anywhere in the app.
+     ---------------------------------------------------------- */
+  --cat-last-call: #E0070F;
+  --cat-last-call-ink: #FFFFFF;          /* 4.99 */
+  --cat-kings-cup: #0F4A42;
+  --cat-kings-cup-ink: #FFFFFF;          /* 10.10 */
+  --cat-ride-the-bus: #273287;
+  --cat-ride-the-bus-ink: #FFFFFF;       /* 11.10 */
+  --cat-last-word: #E990A2;
+  --cat-last-word-ink: #141414;          /* 7.87 */
+  --cat-imposter: #CAC307;
+  --cat-imposter-ink: #141414;           /* 9.93 */
+  --cat-drink-if: #FF340C;
+  --cat-drink-if-ink: #141414;           /* 5.04 */
+  --cat-most-likely-to: #A5C0EA;
+  --cat-most-likely-to-ink: #141414;     /* 9.94 */
+  --cat-would-you-rather: #FFAE00;
+  --cat-would-you-rather-ink: #141414;   /* 9.92 */
+  --cat-truth-or-dare: #F03172;
+  --cat-truth-or-dare-ink: #141414;      /* 4.73 */
+  --cat-hot-seat: #441B07;
+  --cat-hot-seat-ink: #FFFFFF;           /* 14.94 */
+
+  /* Fallback foreground for any subtree that hasn't set --category-ink. */
+  --cat-ink: #FFFFFF;
+
+  /* Playing card faces — deliberately fixed across appearances. */
+  --card-face: #FFFFFF;
+  --card-face-ink: #141414;
+  --card-red: #E0070F;
+  --card-black: #141414;
+  --card-back: #2B2B2B;
+  --card-edge: rgba(20, 20, 20, 0.2);
+}
+
+/* ==========================================================
+   APPEARANCE — LIGHT
+   Only shell and control tokens flip. Pack colors and card stock
+   are inherited untouched.
+   ========================================================== */
+[data-theme="light"] {
+  --shell-bg: #FFFFFF;
+  --shell-bg-alt: #F4F4F4;
+  --surface: #F7F7F7;
+  --surface-sunken: #ECECEC;
+  --text: #141414;
+  --text-muted: #6B6B6B;
+  --text-inverse: #FFFFFF;
+  --border: #141414;
+  --border-soft: #DCDCDC;
+  --control-bg: #141414;
+  --control-text: #FFFFFF;
+  --overlay: rgba(20, 20, 20, 0.55);
+  --shadow-color: rgba(20, 20, 20, 0.22);
+  --focus-ring: #141414;
+}
