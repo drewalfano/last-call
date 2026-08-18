@@ -131,12 +131,16 @@ export function RankIt({ mode, onBack }: Props) {
         <div className="focal rank">
           <p className="rank__title">{prompt.title}</p>
           {/* Directly under the list it throws away, and only until the
-              Ranker has tapped something — after that the order is theirs. */}
-          {phase === "ranking" && order.length === 0 && (
-            <button className="gfoot__skip" onClick={skip}>
-              New list
-            </button>
-          )}
+              Ranker has tapped something — after that the order is theirs.
+              Always rendered, and hidden rather than removed, so the list
+              below does not jump the moment they tap. */}
+          <button
+            className="gfoot__skip"
+            data-hidden={!(phase === "ranking" && order.length === 0) || undefined}
+            onClick={skip}
+          >
+            New list
+          </button>
           <ol className="rank__list">
             {prompt.items.map((item) => {
               const at = active.indexOf(item);

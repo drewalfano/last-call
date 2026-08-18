@@ -259,19 +259,31 @@ button { font: inherit; color: inherit; }
 /* ---------------------------------------------------------------
    EXCEPT LAST WORD, WHICH KEEPS AN AUTO HEADER.
 
-   It is the one screen in the app that wants more room than a phone
-   has, and the grid is what gives way — so a header reserve is not
-   spare space there, it comes straight out of the letters. Matching
-   the other modes cost it a third of its tap target: 79px tiles
+   Its letter grid wants more room than a phone has, so a reserve
+   there is not spare space — it comes straight out of the thing you
+   are tapping, and it cost a third of the tap target: 79px tiles
    became 63 at 812pt and 45 at 667.
 
-   Nothing on this screen is waiting to be compared with another
+   Nothing on that screen is waiting to be compared with another
    screen either. You are on it for a whole round, looking at the
-   letters. The consistency the reserve buys is worth less here than
-   the twenty things you are actually tapping.
+   same twenty letters, and the consistency the reserve buys is worth
+   less than the things you are actually tapping.
+
+   Rank It has the same shape of problem and takes the opposite
+   answer: its header stays reserved and its LIST gives way instead.
+   See .rank__list.
    --------------------------------------------------------------- */
 .screen:has(.focal.lw) .gheader {
   min-height: 0;
+}
+
+/* An auto header is only as tall as its line, so a short live line makes a
+   short header and the board underneath climbs to meet it — Rank It's list
+   moved 20.5px between the ranking pass and the guessing pass purely because
+   "Everyone else" is one line and "X — privately" is two. Two lines' worth,
+   always, on the screens whose header is free to move. */
+.screen:has(.focal.lw) .gheader__now {
+  min-height: calc(var(--fs-2xl) * var(--lh-tight) * 2);
 }
 
 .gheader__bar {
@@ -574,6 +586,10 @@ button { font: inherit; color: inherit; }
               opacity var(--dur-press) ease-out;
 }
 .gfoot__skip:active { transform: scale(var(--press-scale-sm)); opacity: var(--press-dim); }
+/* Holds its space when it has nothing to offer, so whatever sits under it
+   does not move the moment it goes. `visibility` rather than opacity: it
+   leaves the tab order and the accessibility tree too. */
+.gfoot__skip[data-hidden] { visibility: hidden; pointer-events: none; }
 
 /* With a skip present the band grounds from the actions instead of the
    spacer, which is what pins the skip under the card rather than letting

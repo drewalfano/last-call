@@ -1511,9 +1511,33 @@
 /* ---------------- Rank It ---------------- */
 .focal.rank { gap: var(--sp-3); }
 
+/* ---------------------------------------------------------------
+   RESERVED, so the list does not move as it is filled in.
+
+   "Start over" only exists once something has been tapped, and the
+   primary above it is there throughout — so the block went from 60
+   to 128 on the first tap and dragged the whole list up 78.6px,
+   underneath the finger that had just tapped it.
+
+   Content sits at the BOTTOM of the reserve, so the primary stays
+   grounded and the slack opens above it.
+   --------------------------------------------------------------- */
+.focal.rank .actions {
+  min-height: calc(var(--control-height) * 2 + var(--sp-2));
+  justify-content: flex-end;
+}
+
+/* The skip's usual margin clears a card's shadow. There is no card here — it
+   sits under a title — so it only needs ordinary spacing. */
+.focal.rank .gfoot__skip { margin-top: var(--sp-3); }
+
 .rank__title {
   margin: 0;
   flex: none;
+  /* Two lines' worth, always. Prompts run from "Rank these snacks" to "Rank
+     these from most to least forgivable", and the list below cannot move
+     between one round and the next. */
+  min-height: calc(var(--fs-xl) * var(--lh-tight) * 2);
   text-align: center;
   font-family: var(--font-display);
   font-size: var(--fs-xl);
@@ -1523,25 +1547,60 @@
   color: var(--category-ink);
 }
 
+/* ---------------------------------------------------------------
+   The list is what gives way on this screen.
+
+   Everything around it is reserved so the list cannot move — the
+   header, the two-line title, the skip's slot, the two-button action
+   block — and with all of that held the five items no longer fit at
+   a fixed 60px each; the primary action went off the bottom of the
+   screen. So the list takes what is left and the items share it,
+   down to --control-md, which is the minimum touch size and the
+   token for exactly this kind of row.
+   --------------------------------------------------------------- */
 .rank__list {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--sp-2);
-  flex: none;
+  flex: 1 1 auto;
+  min-height: 0;
   margin: 0;
-  margin-block: auto;
   padding: 0;
   list-style: none;
   width: 100%;
 }
+
+/* The row's height lives here, so the button fills it exactly. It used to
+   grow while the button inside kept its own min-height, which left a 5px
+   dead band in every row — the gaps read as 13px against an 8px rule. Wants
+   --control-height, gives way to --control-md when the screen is tight. */
+.rank__list > li {
+  display: flex;
+  flex: 0 1 var(--control-height);
+  min-height: var(--control-md);
+}
+
+/* The reveal is a different list with a different job: rows of two orders
+   side by side, read rather than tapped, and their height comes from their
+   content. Sharing the space out would stretch five rows across the whole
+   screen — 86.7px each, floating apart. It centres at its natural size. */
+.rank__list--compare {
+  flex: 0 1 auto;
+  margin-block: auto;
+}
+.rank__list--compare > li { flex: none; }
 
 .rank__item {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   width: 100%;
-  min-height: var(--control-height);
-  padding: 0 var(--sp-4);
+  /* Even padding all round, so the well inside is inset the same distance
+     from the top, the bottom and the left edge. It was 0 vertical against
+     16 left, which centred the well but left it floating in from a side it
+     was nowhere near. */
+  padding: var(--sp-2);
   border: none;
   border-radius: var(--radius-lg);
   background: var(--card-surface);
@@ -1563,8 +1622,10 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 30px;
-  height: 30px;
+  /* Sized off the row rather than fixed, so the padding around it stays even
+     as the row shrinks on a short screen. */
+  height: 100%;
+  aspect-ratio: 1;
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--card-ink) 12%, transparent);
   color: var(--card-ink);
