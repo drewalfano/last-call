@@ -441,6 +441,45 @@
 
 .rtb__choices { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 .rtb__choice { flex: 1 1 40%; }
+
+/* ---------------------------------------------------------------
+   RESERVED, so the felt does not move between rounds.
+
+   Three of the four rounds ask a two-way question and fit one row of
+   choices; round four asks for a suit and needs two. The verdict is
+   shorter than either. The felt takes the slack above it, so every
+   one of those changed its height and the cards jumped 36px on the
+   way into round four — in a game whose entire content is four cards
+   you are meant to be reading.
+
+   168px is the tallest the band gets: the ask plus two rows of
+   choices, measured at 375 and again at 320, where it is the same
+   because the ask never wraps. Content sits at the BOTTOM of the
+   reserve, so the button stays grounded and the slack opens above it.
+   --------------------------------------------------------------- */
+.focal.rtb .actions {
+  min-height: 168px;
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------
+   THE SUIT BUTTONS ARE CARD STOCK.
+
+   Their labels are bare pips — no words — and a pip only has two
+   colours it can be. A .btn is filled with --category-ink, so those
+   colours were landing on whatever ink the pack happened to pair:
+   fine while Ride the Bus was navy and its ink was white, and
+   invisible the moment it turned yellow, because black pips on a
+   near-black button are black on black.
+
+   So they take the same face and edge as the cards being guessed,
+   which is what they are asking about. Pack-independent by
+   construction — the pips never sit on anything but card face again.
+   --------------------------------------------------------------- */
+.rtb__choice[data-suit] {
+  background: var(--card-face);
+  border-color: var(--card-edge);
+}
 .rtb__choice[data-suit="hearts"],
 .rtb__choice[data-suit="diamonds"] { color: var(--card-red); }
 .rtb__choice[data-suit="spades"],
