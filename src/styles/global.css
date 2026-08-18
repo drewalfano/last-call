@@ -250,7 +250,12 @@ button { font: inherit; color: inherit; }
   margin-left: calc(var(--sp-2) * -1);
   border: none;
   border-radius: var(--radius-pill);
-  background: transparent;
+  /* A well, not a bare chevron. The target was always 48px, but with nothing
+     drawn around it the only thing that looked pressable was the arrow
+     itself, which reads as a much smaller thing to aim at. A soft tint of
+     the pack's own ink shows the size of the target without competing with
+     the primary action — the same treatment the roster chip's × well uses. */
+  background: color-mix(in srgb, var(--category-ink, var(--text)) 12%, transparent);
   color: var(--category-ink, var(--text));
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out),
