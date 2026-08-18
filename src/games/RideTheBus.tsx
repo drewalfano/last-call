@@ -28,11 +28,20 @@ const BUS_TARGET = 4;
  */
 const ROUND_COST = [1, 2, 3, 4];
 
+/**
+ * Which round, then what it asks — on two lines, always.
+ *
+ * They ran together as "Round 2 · Higher or lower" and wrapped wherever the
+ * width happened to run out, so the break landed mid-question on some rounds
+ * and after the number on others. The round and the question are two
+ * different things and each gets its own line. See `white-space` on
+ * .gheader__now.
+ */
 const PHASE_LABEL: Record<Phase, string> = {
-  "red-black": "Round 1 · Red or black",
-  "higher-lower": "Round 2 · Higher or lower",
-  "inside-outside": "Round 3 · Inside or outside",
-  suit: "Round 4 · Guess the suit",
+  "red-black": "Round 1\nRed or black",
+  "higher-lower": "Round 2\nHigher or lower",
+  "inside-outside": "Round 3\nInside or outside",
+  suit: "Round 4\nGuess the suit",
   bus: "The bus",
   results: "Results",
 };
@@ -141,7 +150,10 @@ export function RideTheBus({ mode, onBack }: Props) {
   const restart = useCallback(() => setS(initialState()), []);
 
   const subtitle = useMemo(
-    () => (hasRoster && s.phase !== "results" ? `${currentPlayer} · ${PHASE_LABEL[s.phase]}` : PHASE_LABEL[s.phase]),
+    () =>
+      hasRoster && s.phase !== "results"
+        ? `${currentPlayer}\n${PHASE_LABEL[s.phase]}`
+        : PHASE_LABEL[s.phase],
     [s.phase, hasRoster, currentPlayer],
   );
   const latest = s.table[s.table.length - 1] ?? null;
