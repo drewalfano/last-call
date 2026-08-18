@@ -246,6 +246,24 @@ button { font: inherit; color: inherit; }
   min-height: var(--gheader-live-h);
 }
 
+/* ---------------------------------------------------------------
+   EXCEPT LAST WORD, WHICH KEEPS AN AUTO HEADER.
+
+   It is the one screen in the app that wants more room than a phone
+   has, and the grid is what gives way — so a header reserve is not
+   spare space there, it comes straight out of the letters. Matching
+   the other modes cost it a third of its tap target: 79px tiles
+   became 63 at 812pt and 45 at 667.
+
+   Nothing on this screen is waiting to be compared with another
+   screen either. You are on it for a whole round, looking at the
+   letters. The consistency the reserve buys is worth less here than
+   the twenty things you are actually tapping.
+   --------------------------------------------------------------- */
+.screen:has(.focal.lw) .gheader {
+  min-height: 0;
+}
+
 .gheader__bar {
   display: flex;
   align-items: center;
