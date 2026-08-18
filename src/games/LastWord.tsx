@@ -177,7 +177,11 @@ export function LastWord({ mode, onBack }: Props) {
           card={
             <div className="card">
               <span className="card__eyebrow">{category}</span>
-              <p className="card__prompt">Out of time.</p>
+              {/* The round can end two ways and the button covers both, so
+                  the card has to say which happened. `remaining` is the tell:
+                  the clock zeroes it on expiry, and a round ended by hand
+                  still has time on it. */}
+              <p className="card__prompt">{remaining <= 0 ? "Out of time." : "Round over."}</p>
               <p className="card__meta">Whoever's holding the phone drinks.</p>
             </div>
           }
@@ -234,8 +238,12 @@ export function LastWord({ mode, onBack }: Props) {
         </div>
 
         <div className="actions">
+          {/* Deliberately neutral. It was "Can't go — I drink", which named
+              only one of the two ways a turn dies — the other is repeating a
+              letter someone already used, and a table had nothing to press
+              for it. */}
           <button className="btn btn--ghost btn--block" onClick={() => setPhase("lost")}>
-            Can't go — I drink
+            End round
           </button>
         </div>
       </div>
