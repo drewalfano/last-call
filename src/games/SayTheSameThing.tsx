@@ -74,9 +74,11 @@ export function SayTheSameThing({ mode, onBack }: Props) {
   }, [deck]);
 
   return (
+    /* The attempt count is what the pair is being scored on, so it is the
+       live line. "Pick two" was not — the card says it. */
     <GameScreen
       mode={mode}
-      subtitle={phase === "pair" ? "Pick two" : `Attempt ${attempt}`}
+      subtitle={phase === "pair" ? undefined : `Attempt ${attempt}`}
       onBack={onBack}
     >
       {/* The count-in takes the card's slot rather than the whole screen, so

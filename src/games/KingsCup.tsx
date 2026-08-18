@@ -126,7 +126,7 @@ export function KingsCup({ mode, onBack }: Props) {
   // ---- Fourth king: the game is over ----
   if (s.finished) {
     return (
-      <GameScreen mode={mode} subtitle="Fourth king" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
             <div className="card">
@@ -151,7 +151,7 @@ export function KingsCup({ mode, onBack }: Props) {
   // ---- Opening screen ----
   if (!s.card) {
     return (
-      <GameScreen mode={mode} subtitle="Deal in" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
             <div className="card">

@@ -46,11 +46,7 @@ export function MostLikelyTo({ mode, onBack }: Props) {
   }, []);
 
   return (
-    <GameScreen
-      mode={mode}
-      subtitle={phase === "counting" ? "Get ready" : "Most likely to…"}
-      onBack={onBack}
-    >
+    <GameScreen mode={mode} onBack={onBack}>
       {/* The count-in takes the card's slot rather than the whole screen, so
           the numbers land on the same spot the prompt just left. */}
       {phase === "counting" ? (

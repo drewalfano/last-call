@@ -119,7 +119,7 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "intro") {
     return (
-      <GameScreen mode={mode} subtitle="New round" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
             <div className="card">
@@ -157,7 +157,7 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "picking") {
     return (
-      <GameScreen mode={mode} subtitle="Pick a category" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CategoryPicker
           categories={categories}
           onPick={(c) => {
@@ -172,7 +172,7 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "lost") {
     return (
-      <GameScreen mode={mode} subtitle="Time" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
             <div className="card">
@@ -194,14 +194,8 @@ export function LastWord({ mode, onBack }: Props) {
 
   return (
     /* The category is the one thing a player has to keep in their head for
-       the whole round, so it is content rather than a state label — see
-       `subtitleTone` in GameHeader. */
-    <GameScreen
-      mode={mode}
-      subtitle={category}
-      subtitleTone="content"
-      onBack={onBack}
-    >
+       the whole round — see GameHeader's `subtitle`. */
+    <GameScreen mode={mode} subtitle={category} onBack={onBack}>
       <div className="focal lw">
         <div className="lw__board">
           {/* Its own row, not a centre overlay — a letter can't cover it. */}

@@ -85,7 +85,6 @@ export function NumberGame({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={deck.current}
-      subtitleTone="content"
       note={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
       onBack={onBack}
     >

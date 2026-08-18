@@ -33,7 +33,6 @@ export interface DeckGameConfig<T> {
   /** Primary action label. */
   nextLabel: string;
   /** Small print under the card. */
-  hint: string;
   /**
    * Optional mechanic rendered between the card and the primary action —
    * a vote pad, a split, an elimination tracker. Receives a key that changes
@@ -49,7 +48,6 @@ export const DECK_GAMES = {
     eyebrow: "Drink if…",
     render: (p: string, fill) => fill(p),
     nextLabel: "Next",
-    hint: "No turns. If it's you, drink.",
     // Optional elimination layer — hidden entirely without a roster.
     afterCard: () => <SurvivorTracker />,
   } satisfies DeckGameConfig<string>,
@@ -83,7 +81,7 @@ export function DeckGame({ mode, config, onBack }: DeckGameProps) {
   }, [currentPlayer, deck.drawCount]);
 
   return (
-    <GameScreen mode={mode} subtitle={config.hint} onBack={onBack}>
+    <GameScreen mode={mode} onBack={onBack}>
       <CardBody
         card={
           <PromptCard eyebrow={config.eyebrow} dealKey={deck.drawCount}>

@@ -76,14 +76,16 @@ export function RankIt({ mode, onBack }: Props) {
   return (
     <GameScreen
       mode={mode}
+      /* Whose pass it is — the two ranking screens look identical and this
+         line is the only thing that says who is meant to be holding the
+         phone. "Pass the phone" and "How you did" were not that: the card
+         under them says both. */
       subtitle={
-        phase === "handover"
-          ? "Pass the phone"
-          : phase === "ranking"
-            ? `${ranker} — privately`
-            : phase === "guessing"
-              ? "Everyone else"
-              : "How you did"
+        phase === "ranking"
+          ? `${ranker} — privately`
+          : phase === "guessing"
+            ? "Everyone else"
+            : undefined
       }
       onBack={onBack}
     >

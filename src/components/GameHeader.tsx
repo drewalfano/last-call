@@ -1,47 +1,31 @@
 interface GameHeaderProps {
   title: string;
-  /** Small uppercase line under the title — usually the current sub-state. */
+  /**
+   * THE LIVE LINE — the one piece of game state a player has to hold on to:
+   * the category in Last Word and the Number Game, whose turn it is in Ride
+   * the Bus, Kings Cup and Rank It, which reveal you are on in Imposter,
+   * which attempt in Say the Same Thing, which tier in Last Call.
+   *
+   * Optional, and most screens do without it. There used to be a second,
+   * quieter kind of subtitle for a state LABEL — "New round", "Time", "Set up
+   * the round", "Who's up?" — sat beside the back button in 12px muted type.
+   * Every one of them restated the card directly underneath it, so the header
+   * spent its most legible position saying what the screen already showed,
+   * and the genuinely live lines were being styled as though they were the
+   * same kind of thing. They are gone; the bar is the mode name now.
+   */
   subtitle?: string;
   /**
-   * What the subtitle IS, which decides where it goes and how loudly it reads.
-   *
-   * "label" is the default and covers the sub-state most screens put there —
-   * "New round", "Deal in", "Time", a mode's standing hint. Those name where
-   * you are. You read one once and never look again, so it tucks under the
-   * mode name and sits back.
-   *
-   * "content" is live game data a player has to hold on to for the whole
-   * round: the category in Last Word, whose turn it is in Ride the Bus and
-   * Hot Seat, which reveal you are on in Imposter. That was styled exactly
-   * like a state label — 12px, muted, 72% opacity, squeezed beside the back
-   * button — which buried the single most important thing on the screen under
-   * the name of the mode you already know you are in.
-   *
-   * So it does not sit beside the title at all. It gets its own line, centred
-   * across the full width, at a size you can read from across a table while
-   * the phone is being passed to you.
-   */
-  subtitleTone?: "label" | "content";
-  /**
-   * A short standing rule that goes with the content line — Last Word's "No
-   * repeats". Only meaningful alongside a "content" subtitle: it qualifies
-   * what you are playing, so it hangs off that line rather than floating on
-   * its own somewhere else on the screen.
+   * A short standing rule that goes with the live line — the Number Game's
+   * phase. It qualifies what you are playing, so it hangs off that line
+   * rather than floating somewhere else on the screen.
    */
   note?: string;
   onBack: () => void;
 }
 
-/** Back-to-Home affordance plus the mode's name in its category color. */
-export function GameHeader({
-  title,
-  subtitle,
-  subtitleTone = "label",
-  note,
-  onBack,
-}: GameHeaderProps) {
-  const isContent = subtitleTone === "content" && !!subtitle;
-
+/** Back-to-Home affordance, the mode's name, and the live line under both. */
+export function GameHeader({ title, subtitle, note, onBack }: GameHeaderProps) {
   return (
     <header className="gheader">
       <div className="gheader__bar">
@@ -56,13 +40,10 @@ export function GameHeader({
             />
           </svg>
         </button>
-        <div className="gheader__titles">
-          <h1 className="gheader__title">{title}</h1>
-          {subtitle && !isContent && <span className="gheader__sub">{subtitle}</span>}
-        </div>
+        <h1 className="gheader__title">{title}</h1>
       </div>
 
-      {isContent && (
+      {subtitle && (
         <div className="gheader__live">
           <p className="gheader__now">{subtitle}</p>
           {note && <p className="gheader__note">{note}</p>}

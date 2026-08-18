@@ -149,7 +149,7 @@ export function RideTheBus({ mode, onBack }: Props) {
 
   return (
     /* Whose turn it is, and which round — both live. */
-    <GameScreen mode={mode} subtitle={subtitle} subtitleTone="content" onBack={onBack}>
+    <GameScreen mode={mode} subtitle={subtitle} onBack={onBack}>
       {s.phase === "results" ? (
         <CardBody
           className="rtb"

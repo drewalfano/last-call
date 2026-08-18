@@ -5,9 +5,8 @@ import { GameHeader } from "./GameHeader";
 
 interface GameScreenProps {
   mode: ModeDef;
-  /** Passed straight through to GameHeader. */
+  /** The live line, and its standing rule. Both passed through to GameHeader. */
   subtitle?: string;
-  subtitleTone?: "label" | "content";
   note?: string;
   onBack: () => void;
   children: ReactNode;
@@ -34,7 +33,6 @@ interface GameScreenProps {
 export function GameScreen({
   mode,
   subtitle,
-  subtitleTone,
   note,
   onBack,
   children,
@@ -44,7 +42,6 @@ export function GameScreen({
       <GameHeader
         title={mode.title}
         subtitle={subtitle}
-        subtitleTone={subtitleTone}
         note={note}
         onBack={onBack}
       />

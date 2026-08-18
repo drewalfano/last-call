@@ -109,33 +109,23 @@ export function Imposter({ mode, onBack }: Props) {
   const currentPlayer = s.order[s.at];
   const isImposter = currentPlayer === s.imposter;
 
-  const label = useMemo(() => {
-    switch (s.phase) {
-      case "setup": return "Set up the round";
-      case "picking": return "Pick a category";
-      case "cover":
-      case "role": return `Reveal ${s.at + 1} of ${s.count}`;
-      default: return "Clues";
-    }
-  }, [s.phase, s.at, s.count]);
-
   /**
-   * Only the reveal counter is live data. "Set up the round" and "Pick a
-   * category" name where you are and belong under the title like every other
-   * state label — blown up and centred, a setup screen announced itself louder
-   * than the thing it was setting up.
+   * Only the reveal counter is live data. "Set up the round", "Pick a
+   * category" and "Clues" each restated the card directly under them, so
+   * they are gone and those screens carry no line at all.
    */
-  const labelIsLive = s.phase === "cover" || s.phase === "role";
+  const label = useMemo(
+    () =>
+      s.phase === "cover" || s.phase === "role"
+        ? `Reveal ${s.at + 1} of ${s.count}`
+        : undefined,
+    [s.phase, s.at, s.count],
+  );
 
   return (
     /* Which reveal you are on — the whole game is passing the phone in
        the right order, so that one cannot be a caption. */
-    <GameScreen
-      mode={mode}
-      subtitle={label}
-      subtitleTone={labelIsLive ? "content" : "label"}
-      onBack={onBack}
-    >
+    <GameScreen mode={mode} subtitle={label} onBack={onBack}>
       {/* ---------- Setup ---------- */}
       {s.phase === "setup" && (
         <CardBody

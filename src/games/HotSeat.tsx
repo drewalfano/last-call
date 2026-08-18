@@ -64,7 +64,7 @@ export function HotSeat({ mode, onBack }: Props) {
 
   if (phase === "pick") {
     return (
-      <GameScreen mode={mode} subtitle="Who's up?" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
             <div className="card">
@@ -118,7 +118,7 @@ export function HotSeat({ mode, onBack }: Props) {
 
   if (phase === "rotate") {
     return (
-      <GameScreen mode={mode} subtitle="Round over" onBack={onBack}>
+      <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
             <div className="card">
@@ -146,7 +146,6 @@ export function HotSeat({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={`${name} · ${asked} of ${ROUND_LENGTH}`}
-      subtitleTone="content"
       onBack={onBack}
     >
       <CardBody
