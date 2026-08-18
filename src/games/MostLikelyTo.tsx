@@ -54,7 +54,18 @@ export function MostLikelyTo({ mode, onBack }: Props) {
       ) : (
         <CardBody
           card={
-            <PromptCard eyebrow="Most likely to…" dealKey={deck.drawCount}>
+            <PromptCard
+              eyebrow="Most likely to…"
+              dealKey={deck.drawCount}
+              /* The mode never said what to DO. The eyebrow and the prompt
+                 make a complete sentence, the count-in says "Point" for three
+                 seconds, and the verdict lands after — so the one screen a
+                 table actually reads while deciding never mentioned pointing
+                 at all. It says so here, and stands down once they have. */
+              footer={
+                phase === "prompt" ? "On three, everyone points at once." : undefined
+              }
+            >
               {deck.current ?? "No cards in this deck."}
             </PromptCard>
           }
