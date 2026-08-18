@@ -247,7 +247,11 @@ button { font: inherit; color: inherit; }
   justify-content: center;
   width: var(--tap-target);
   height: var(--tap-target);
-  margin-left: calc(var(--sp-2) * -1);
+  /* 20px from the screen edge, on top of .screen's own --sp-4 padding.
+     It used to pull 8px INTO that padding, which optically aligned a bare
+     chevron with the content edge — but the well has a real edge of its
+     own now, and hard against the bezel it read as clipped. */
+  margin-left: calc(var(--sp-5) - var(--sp-4));
   border: none;
   border-radius: var(--radius-pill);
   /* A well, not a bare chevron. The target was always 48px, but with nothing
