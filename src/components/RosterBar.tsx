@@ -67,7 +67,16 @@ export function RosterBar() {
             >
               {name}
               <span className="roster__chip-x" aria-hidden="true">
-                ×
+                {/* Drawn, not typed — see StepIcon in games/Imposter.tsx for why
+                    a glyph will not sit in the middle of a round well. */}
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M3 3l6 6M9 3l-6 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </span>
             </button>
           ))}

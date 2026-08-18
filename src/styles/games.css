@@ -1108,7 +1108,10 @@
 .imp-count__step {
   display: grid;
   place-items: center;
-  width: 56px;
+  /* Square, so the pill radius reads as a circle. It was 56 wide against a
+     48 tall control height, which made an oval. --control-md is the token
+     for a stepper, and using it on both axes is what keeps it round. */
+  width: var(--control-md);
   height: var(--control-md);
   border: 2px solid var(--card-ink);
   border-radius: var(--radius-pill);

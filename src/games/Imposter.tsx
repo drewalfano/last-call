@@ -149,7 +149,7 @@ export function Imposter({ mode, onBack }: Props) {
                 disabled={s.count <= MIN_PLAYERS}
                 aria-label="One fewer player"
               >
-                −
+                <StepIcon minus />
               </button>
               <span className="imp-count__n">{s.count}</span>
               <button
@@ -158,7 +158,7 @@ export function Imposter({ mode, onBack }: Props) {
                 disabled={s.count >= MAX_PLAYERS}
                 aria-label="One more player"
               >
-                +
+                <StepIcon />
               </button>
             </div>
             <p className="card__meta">
@@ -304,5 +304,25 @@ export function Imposter({ mode, onBack }: Props) {
         </CardBody>
       )}
     </GameScreen>
+  );
+}
+
+/**
+ * The stepper's − and +, drawn rather than typed.
+ *
+ * As text they were centred by their line box, not by their ink, and the
+ * display font's ascent and descent overrun a `line-height: 1` box — which
+ * dropped the baseline and left the glyph 2px below the middle of its
+ * circle. A path has no metrics to fight: it is centred because it is drawn
+ * centred. Same reason the back chevron is an svg.
+ */
+function StepIcon({ minus }: { minus?: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 12h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {!minus && (
+        <path d="M12 5v14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      )}
+    </svg>
   );
 }
