@@ -412,8 +412,11 @@ button { font: inherit; color: inherit; }
 .slot {
   position: relative;
   width: min(100%, var(--card-size));
-  height: var(--card-size);
-  margin: auto;
+  margin-inline: auto;
+  /* Bare cards deal straight into the slot rather than through a stage, so
+     the slot carries the perspective for them. Without it the entrance
+     flip below renders as a flat squash. */
+  perspective: 1400px;
 }
 
 /* ---------------------------------------------------------------
@@ -525,10 +528,22 @@ button { font: inherit; color: inherit; }
   color: var(--card-ink-muted);
 }
 
-/* The outgoing card rides above the incoming one, so a draw reads as the
-   top card being taken off rather than a cross-fade. */
-/* Exactly the playing-card flip. Remounting on a new prompt replays it. */
-.card--dealt {
+/* ---------------------------------------------------------------
+   EVERY CARD ARRIVES BY TURNING OVER.
+
+   Not just the prompt decks. Opening a mode used to cut straight to
+   a card already face-up — Imposter's setup, Kings Cup's deal-in,
+   the Number Game's bid — while the decks next door dealt theirs.
+   Any card in the slot gets the flip, so a mode opens by dealing
+   rather than by simply being there.
+
+   It replays whenever the element is remounted: on a new prompt
+   (PromptCard's dealKey) and on a phase change, which is the same
+   thing a table sees — a new card. Updating a card in place, like
+   raising a bid, is not a new card and does not replay.
+   --------------------------------------------------------------- */
+.card--dealt,
+.slot > .card {
   animation: card-flip-in var(--dur-slow) var(--ease-out) both;
   backface-visibility: hidden;
 }
