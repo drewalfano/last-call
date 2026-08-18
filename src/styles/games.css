@@ -405,6 +405,7 @@
 .rtb__tally {
   display: flex;
   flex: none;
+  margin-top: var(--status-strip-gap);
   justify-content: space-between;
   font-size: var(--fs-xs);
   letter-spacing: var(--tracking-wide);
@@ -894,6 +895,7 @@
   align-items: center;
   justify-content: space-between;
   flex: none;
+  margin-top: var(--status-strip-gap);
   font-size: var(--fs-xs);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
