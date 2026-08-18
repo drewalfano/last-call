@@ -269,7 +269,7 @@
   transform: translateZ(0);
 }
 
-/* ---------------- Pick for me ---------------- */
+/* ---------------- Pick a game for me ---------------- */
 .pick-me {
   width: 100%;
   min-height: var(--control-height);

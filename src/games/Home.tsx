@@ -61,7 +61,7 @@ export function Home({ onPick }: HomeProps) {
       <RosterBar />
 
       <button className="pick-me" onClick={pickForMe} disabled={!!picked}>
-        {picked ? "Dealing…" : "Pick for me"}
+        {picked ? "Dealing…" : "Pick a game for me"}
       </button>
 
       <nav className="home__deck" aria-label="Game modes" ref={deckRef}>

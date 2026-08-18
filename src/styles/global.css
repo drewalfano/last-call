@@ -149,8 +149,8 @@ button { font: inherit; color: inherit; }
    DISABLED IS A PALER FILL, NOT A TRANSPARENT BUTTON.
 
    `opacity` was fine while every button sat on a solid field. The
-   buttons that float over a scroller — Home's "Pick for me", the
-   picker's "Use it", the roster's add — showed the rows sliding
+   buttons that float over a scroller — Home's "Pick a game for me",
+   the picker's "Use it", the roster's add — showed the rows sliding
    past behind them, which reads as broken rather than unavailable.
 
    The mix lands on the same composite the opacity produced, so
