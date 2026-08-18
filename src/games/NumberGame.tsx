@@ -24,6 +24,8 @@ type Phase = "bidding" | "challenge" | "verdict";
 
 /** Seconds per item claimed. A bid of 7 buys 42 seconds, which is tight. */
 const SECONDS_PER_ITEM = 6;
+/** Where every round opens. Also what says whether anyone has bid yet. */
+const START_BID = 3;
 const MIN_SECONDS = 25;
 
 interface Props {
@@ -38,7 +40,7 @@ export function NumberGame({ mode, onBack }: Props) {
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("bidding");
-  const [bid, setBid] = useState(3);
+  const [bid, setBid] = useState(START_BID);
   const [turn, setTurn] = useState(0);
   /** Who owns the bid on the table right now — the one who gets challenged. */
   const [holder, setHolder] = useState<number>(0);
@@ -65,7 +67,7 @@ export function NumberGame({ mode, onBack }: Props) {
 
   const newRound = useCallback(() => {
     deck.draw();
-    setBid(3);
+    setBid(START_BID);
     setTurn(0);
     setHolder(0);
     timer.stop();
@@ -99,6 +101,14 @@ export function NumberGame({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* Only while the category is untouched. Once someone has raised,
+              the category is in play and skipping it would be a way out of a
+              bid you cannot meet rather than a way past a bad prompt. */}
+          {bid === START_BID && (
+            <button className="gfoot__skip" onClick={newRound}>
+              New category
+            </button>
+          )}
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={raise}>
               I can name {bid + 1}

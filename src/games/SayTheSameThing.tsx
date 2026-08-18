@@ -66,6 +66,15 @@ export function SayTheSameThing({ mode, onBack }: Props) {
     setPhase("counting");
   }, []);
 
+  /**
+   * A new word for the same pair. Deliberately not `nextRound`: the pair has
+   * not had a go yet, so it is the word being rejected, not them.
+   */
+  const skip = useCallback(() => {
+    deck.draw();
+    setAttempt(1);
+  }, [deck]);
+
   const nextRound = useCallback(() => {
     deck.draw();
     setAttempt(1);
@@ -119,6 +128,12 @@ export function SayTheSameThing({ mode, onBack }: Props) {
             </div>
           }
         >
+          {phase === "pair" && (
+            <button className="gfoot__skip" onClick={skip}>
+              New word
+            </button>
+          )}
+
           {phase === "pair" && (
             <div className="actions">
               <button className="btn btn--lg btn--block" onClick={startAttempt}>

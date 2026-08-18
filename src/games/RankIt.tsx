@@ -57,6 +57,18 @@ export function RankIt({ mode, onBack }: Props) {
     [],
   );
 
+  /**
+   * A new list for the same Ranker. Offered on the ranking screen and not on
+   * the handover before it, because the handover card shows the Ranker's
+   * name — the list itself is not on screen yet, and you cannot reject a
+   * prompt you have not read.
+   */
+  const skip = useCallback(() => {
+    deck.draw();
+    setOrder([]);
+    setGuess([]);
+  }, [deck]);
+
   const nextRound = useCallback(() => {
     deck.draw();
     setOrder([]);
@@ -118,6 +130,13 @@ export function RankIt({ mode, onBack }: Props) {
       {(phase === "ranking" || phase === "guessing") && (
         <div className="focal rank">
           <p className="rank__title">{prompt.title}</p>
+          {/* Directly under the list it throws away, and only until the
+              Ranker has tapped something — after that the order is theirs. */}
+          {phase === "ranking" && order.length === 0 && (
+            <button className="gfoot__skip" onClick={skip}>
+              New list
+            </button>
+          )}
           <ol className="rank__list">
             {prompt.items.map((item) => {
               const at = active.indexOf(item);
