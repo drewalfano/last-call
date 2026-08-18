@@ -563,6 +563,12 @@ button { font: inherit; color: inherit; }
 .gfoot__skip {
   align-self: center;
   flex: none;
+  /* Outlined. As bare text it read as a caption rather than as something you
+     press — it is the one control on these screens with nothing drawn around
+     it. Still the quietest thing there: a hairline of the pack's own ink,
+     not a filled pill, so it cannot compete with the action below it. */
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--category-ink, var(--text)) 30%, transparent);
   /* Clear of the card's shadow, not just of its edge. The band starts
      exactly at the card's bottom — the grid has no row gap — and the card
      throws 27px of shadow below itself (20px down, 46px blur, -16px
@@ -570,8 +576,7 @@ button { font: inherit; color: inherit; }
      rather than as a control. --sp-8 puts the text about 42px clear. */
   margin-top: var(--sp-8);
   min-height: var(--control-sm);
-  padding-inline: var(--sp-4);
-  border: none;
+  padding-inline: var(--sp-5);
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--category-ink, var(--text-muted));
