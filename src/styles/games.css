@@ -387,15 +387,15 @@
   line-height: 0.85;
 }
 
+/* Flat. The 5px diagonal stripes were wide against a 96px card and jumped
+   30% in tone, so they read as a texture laid on top rather than as a printed
+   back — busiest exactly where the cards are smallest, in Ride the Bus's row
+   of four. The white border and the shadow already say "card"; a solid ground
+   means nothing competes with the faces when they turn over, which is the
+   moment the game is about. */
 .pcard--back {
   animation: none;
-  background: repeating-linear-gradient(
-    45deg,
-    var(--card-back),
-    var(--card-back) 5px,
-    color-mix(in srgb, var(--card-back) 70%, #fff 30%) 5px,
-    color-mix(in srgb, var(--card-back) 70%, #fff 30%) 10px
-  );
+  background: var(--card-back);
   border: 3px solid var(--card-face);
 }
 
