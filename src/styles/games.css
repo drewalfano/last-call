@@ -949,7 +949,31 @@
 
 /* Slightly smaller than the app's standard playing card, which buys the
    headroom the fixed reserve below needs. */
-.kc__card .pcard { width: min(44vw, 178px); }
+/* ---------------------------------------------------------------
+   A LONE CARD STANDS 16px TALLER.
+
+   Where the card is the only one on screen — here, and Ride the Bus's
+   bus round — it is the whole subject rather than one of a row, and
+   it can afford the height.
+
+   Driven from the height rather than the width, because the height is
+   what is being added to; the 5/7 ratio derives the width from it, so
+   the card grows without distorting. The inner expression is the
+   width it used to have, times the ratio: the old height, plus the
+   bump.
+   --------------------------------------------------------------- */
+.kc__card .pcard {
+  width: auto;
+  height: calc(min(44vw, 178px) * 7 / 5 + var(--pcard-solo-bump));
+}
+
+/* Ride the Bus deals four small cards in a row for three rounds and a
+   single one for the bus. Only the lone one takes the bump — the row is
+   matched by `>`, so this cannot reach the four. */
+.rtb__felt > .pcard {
+  width: auto;
+  height: calc(min(46vw, 190px) * 7 / 5 + var(--pcard-solo-bump));
+}
 
 /* The reserved half. 182px is measured, not guessed: it's the tallest this
    region naturally gets across all thirteen ranks (Drive, with its three call

@@ -66,6 +66,11 @@
   /* --- Layout ---------------------------------------------- */
   --app-max-width: 480px;
 
+  /* How much taller a playing card stands when it is the only one on
+     screen — Kings Cup, and Ride the Bus's bus round. Added to the
+     height; the card's 5/7 ratio derives the width from it. */
+  --pcard-solo-bump: 16px;
+
   /* ----------------------------------------------------------
      THE HEIGHT ANCHOR. Paired with `black-translucent` in
      index.html — do not change one without the other.
