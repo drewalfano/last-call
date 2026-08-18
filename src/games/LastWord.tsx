@@ -36,7 +36,7 @@ export function LastWord({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   // Night supplements rather than replaces here — the safe categories are
   // still good with a rowdy table.
-  const categories = usePool(LAST_WORD_CATEGORIES, contentMode, "supplement");
+  const categories = usePool(LAST_WORD_CATEGORIES, contentMode, "lead");
   const deck = useDeck(categories);
 
   const [phase, setPhase] = useState<Phase>("intro");

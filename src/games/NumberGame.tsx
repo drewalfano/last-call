@@ -34,7 +34,7 @@ interface Props {
 export function NumberGame({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { players, hasRoster } = useRoster();
-  const pool = usePool(NUMBER_GAME_CATEGORIES, contentMode);
+  const pool = usePool(NUMBER_GAME_CATEGORIES, contentMode, "lead");
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("bidding");

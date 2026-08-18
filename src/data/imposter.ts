@@ -177,13 +177,29 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
   ],
 };
 
+/**
+ * The categories on offer, in the order they are shown.
+ *
+ * 19+ does not REPLACE the safe categories, it LEADS with the adult ones and
+ * keeps the rest underneath. This is a list you choose from by name, and
+ * swapping it out meant a table that wanted Hookups and Exes lost Foods,
+ * Countries and Animals to get them — categories that are not remotely
+ * unsuitable for a rowdy table, and that a long night runs out of clues
+ * without. The blind prompt decks still replace; you never see what you did
+ * not draw, so there is nothing to lose there. See data/pools.ts.
+ */
+function categoriesFor(mode: ContentMode): WordCategory[] {
+  if (mode === "safe") return IMPOSTER_CATEGORIES.safe;
+  return [...IMPOSTER_CATEGORIES.night, ...IMPOSTER_CATEGORIES.safe];
+}
+
 /** Flat word list for a category, or every word when no category is chosen. */
 export function wordsFor(mode: ContentMode, category: string | null): string[] {
-  const cats = IMPOSTER_CATEGORIES[mode];
+  const cats = categoriesFor(mode);
   if (!category) return cats.flatMap((c) => c.words);
   return cats.find((c) => c.name === category)?.words ?? cats.flatMap((c) => c.words);
 }
 
 export function categoryNames(mode: ContentMode): string[] {
-  return IMPOSTER_CATEGORIES[mode].map((c) => c.name);
+  return categoriesFor(mode).map((c) => c.name);
 }

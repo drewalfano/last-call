@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * LAST WORD — round categories.
- * Night policy: SUPPLEMENT.
+ * Night policy: LEAD — the 19+ categories go on top, the safe ones stay.
  * The Safe categories ("cocktails", "hangover cures") play perfectly well
  * with a rowdier crowd — nothing about them needs replacing. Night simply
  * adds a spicier set on top, so a Night round can still land on "things

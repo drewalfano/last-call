@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * THE NUMBER GAME — bidding categories.
- * Night policy: REPLACE.
+ * Night policy: LEAD — the 19+ categories go on top, the safe ones stay.
  *
  * A category works here if a confident person could plausibly claim five and a
  * show-off could claim twelve. Too narrow ("Beatles drummers") and there's no
