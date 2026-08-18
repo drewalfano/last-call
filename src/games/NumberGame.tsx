@@ -76,43 +76,47 @@ export function NumberGame({ mode, onBack }: Props) {
   const challenger = nameAt(turn);
 
   return (
+    /* The category is what everyone is bidding against and has to hold in
+       their head all round, so it belongs on the header's content line —
+       the same treatment Last Word gives its category, with the phase
+       demoted to the standing note under it. It used to sit in the body in
+       its own smaller style, which made the same kind of information look
+       like two different things between the two modes. */
     <GameScreen
       mode={mode}
-      subtitle={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
+      subtitle={deck.current}
+      subtitleTone="content"
+      note={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
       onBack={onBack}
     >
-      {/* Bidding and the challenge are a readout, not a card — they keep the
-          plain column. The verdict IS a card, so it takes the slot, and its
-          category line moves below the card: nothing may sit between the
-          header and the slot, or the slot stops being a constant. */}
-      {phase !== "verdict" && (
-      <div className="focal num">
-        <p className="num__category">{deck.current}</p>
-
-        {/* ---------- Bidding ---------- */}
-        {phase === "bidding" && (
-          <>
-            <div className="num__bid focal__center">
-              <span className="num__bid-label">Can name</span>
+      {/* ---------- Bidding ---------- */}
+      {phase === "bidding" && (
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">Can name</span>
               <span className="num__bid-n">{bid}</span>
               <span className="num__bid-who">{nameAt(turn)}'s call</span>
             </div>
-            <div className="actions">
-              <button className="btn btn--lg btn--block" onClick={raise}>
-                I can name {bid + 1}
-              </button>
-              <button className="btn btn--ghost btn--block" onClick={challenge}>
-                Prove it, {bidder}
-              </button>
-            </div>
-          </>
-        )}
+          }
+        >
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={raise}>
+              I can name {bid + 1}
+            </button>
+            <button className="btn btn--ghost btn--block" onClick={challenge}>
+              Prove it, {bidder}
+            </button>
+          </div>
+        </CardBody>
+      )}
 
-        {/* ---------- The challenge ---------- */}
-        {phase === "challenge" && (
-          <>
-            <div className="num__bid focal__center">
-              <span className="num__bid-label">
+      {/* ---------- The challenge ---------- */}
+      {phase === "challenge" && (
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">
                 {bidder} names {bid}
               </span>
               <span className="num__bid-n" data-low={timer.seconds <= 5 || undefined}>
@@ -122,20 +126,19 @@ export function NumberGame({ mode, onBack }: Props) {
                 {timer.expired ? "Time" : `${challenger} called it`}
               </span>
             </div>
-            <div className="actions">
-              <button className="btn btn--lg btn--block" onClick={() => setPhase("verdict")}>
-                {timer.expired ? "Settle it" : "Stop the clock"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+          }
+        >
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={() => setPhase("verdict")}>
+              {timer.expired ? "Settle it" : "Stop the clock"}
+            </button>
+          </div>
+        </CardBody>
       )}
 
       {/* ---------- Who drinks ---------- */}
       {phase === "verdict" && (
         <CardBody
-          className="num"
           card={
             <div className="card">
               <span className="card__eyebrow">Did they get {bid}?</span>
@@ -146,7 +149,6 @@ export function NumberGame({ mode, onBack }: Props) {
             </div>
           }
         >
-          <p className="num__category">{deck.current}</p>
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={newRound}>
               New category

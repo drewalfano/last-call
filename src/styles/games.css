@@ -1475,45 +1475,25 @@
 }
 
 /* ---------------- The Number Game ---------------- */
-.focal.num { gap: var(--sp-3); }
 
-.num__category {
-  margin: 0;
-  flex: none;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-black);
-  line-height: var(--lh-tight);
-  text-wrap: balance;
-  color: var(--category-ink);
-}
-
-/* The bid is the whole screen — it's the number everyone is arguing about, and
+/* The bid is the whole card — it's the number everyone is arguing about, and
    during a challenge the same slot becomes the clock, so the eye never has to
-   move to find what matters. */
-.num__bid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  flex: none;
-  color: var(--category-ink);
-}
-
-.num__bid-label,
+   move to find what matters. It sits on the same white square every other
+   mode deals onto: near-black on white instead of ink on the pack colour,
+   which on the paler packs was the weakest contrast in the app. */
 .num__bid-who {
   font-size: var(--fs-sm);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  opacity: 0.78;
+  color: var(--card-ink-muted);
   text-align: center;
 }
 
 .num__bid-n {
   font-family: var(--font-display);
-  font-size: clamp(6rem, 38vw, 12rem);
+  /* Capped against the card it now sits in rather than the whole viewport —
+     38vw overflowed a square that is narrower than the screen. */
+  font-size: clamp(4rem, 26vw, 8rem);
   font-weight: var(--fw-black);
   line-height: 1;
   font-variant-numeric: tabular-nums;
