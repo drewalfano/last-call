@@ -53,7 +53,7 @@ export function Home({ onPick }: HomeProps) {
       <header className="home__head">
         <div>
           <h1 className="home__wordmark">Last Call</h1>
-          <p className="home__tagline">Ten games. No wifi. No excuses.</p>
+          <p className="home__tagline">11 games. No wifi. Just play.</p>
         </div>
         <SettingsButton onOpen={() => setSettingsOpen(true)} />
       </header>
