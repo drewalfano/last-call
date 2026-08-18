@@ -420,14 +420,30 @@
 /* Timer and letters as two stacked rows. The timer used to sit in the middle
    of a ring of absolutely-positioned letters, which is exactly how it got
    overlapped; as its own row that can't happen. */
+/* ---------------------------------------------------------------
+   The one screen in the app whose content wants more room than a
+   phone has: timer ring, twenty letters, counter, button.
+
+   So the board takes the slack rather than owning a size of its own,
+   and the grid inside it is what gives way. The board used to be
+   `flex: none` with auto margins, which made the grid a CONSTANT
+   430.8px at every viewport height — its cells were sized by width
+   (four columns of square tiles) and nothing could compress them.
+   The button ran off the bottom of the screen: 16.6px past the inset
+   at 812pt, 161.6px at 667pt.
+   --------------------------------------------------------------- */
 .lw__board {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* Grid rather than a flex column, because the keys row has to be a
+     DEFINITE height: `container-type: size` reports 0 for a flex item that
+     merely stretched to fill, so 100cqh came out as zero and the grid
+     collapsed to nothing. A 1fr track is definite and resolves properly. */
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
   gap: var(--sp-4);
-  flex: none;
-  /* Owns the slack, so the board centres and the button stays grounded. */
-  margin-block: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 .focal.lw .actions { margin-top: 0; }
 
@@ -472,28 +488,62 @@
   50% { transform: scale(1.12); opacity: 0.75; }
 }
 
-/* Four across, five down. Square cells give the biggest tap target the width
-   allows — roughly 76pt against 47pt for the old ring. */
+/* Four across, five down. Square cells give the biggest tap target the space
+   allows — roughly 76pt against 47pt for the old ring.
+
+   The SPACE, not the width. `aspect-ratio` plus a cap on both axes is what
+   lets the grid answer to whichever runs out first: on a tall phone the width
+   binds and the tiles are as big as they ever were, and on a short one the
+   height binds and they shrink to fit instead of pushing the button off the
+   bottom. Rows are explicit so the five of them share that height evenly. */
+/* The space the keys get: everything the board has left once the timer has
+   taken its share. A size container, so the grid inside can measure itself
+   against that height directly — which is the only way to size a square grid
+   by whichever axis runs out first without letting the cells go oblong. */
+.lw__keys {
+  min-height: 0;
+  width: 100%;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+
 .lw__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
   gap: var(--sp-2);
-  width: 100%;
+  /* Four wide by five tall, so the grid is 4/5 as wide as it is tall: the
+     width that exactly uses the available height is 80% of it. Whichever of
+     the two is smaller wins, and the cells stay square either way. */
+  width: min(100%, calc(100cqh * 0.8));
+  aspect-ratio: 4 / 5;
 }
 
 .lw__letter {
-  aspect-ratio: 1;
+  /* No aspect-ratio of its own — the cell fills its track, and the track is
+     square because the grid's ratio makes it so. Keeping it here would have
+     re-imposed the width-driven height the grid now avoids. */
   display: grid;
   place-items: center;
+  /* The cell is square, so a pill radius makes it a circle — one shape for
+     all twenty, at every size. */
   border: var(--border-width) solid transparent;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-pill);
+  /* Without these the glyph's min-content size becomes the cell's floor, and
+     on a short screen the columns stop shrinking and go oblong. */
+  min-width: 0;
+  min-height: 0;
   /* Fixed dark chip with white letters rather than the pack's ink pair. Pale
      packs gave dark-on-dark letters that had to be read one at a time; white
      on near-black is the same everywhere, so the alphabet skims. */
   background: #141414;
   color: #FFFFFF;
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 7vw, 2.1rem);
+  /* Same size as ever while the width is what binds; the cqh term only
+     takes over on a screen short enough that the tiles have shrunk, so the
+     letter goes down with its circle instead of holding it open. */
+  font-size: min(clamp(1.6rem, 7vw, 2.1rem), 9cqh);
   font-weight: var(--fw-black);
   line-height: 1;
   cursor: pointer;

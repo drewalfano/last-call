@@ -231,19 +231,23 @@ export function LastWord({ mode, onBack }: Props) {
             <span className="lw__seconds">{seconds}</span>
           </div>
 
-          <div className="lw__grid">
-            {LETTERS.map((letter) => (
-              <button
-                key={letter}
-                className="lw__letter"
-                data-locked={used.includes(letter) || undefined}
-                disabled={used.includes(letter)}
-                onClick={() => lockLetter(letter)}
-                aria-label={`${letter}${used.includes(letter) ? " (already used)" : ""}`}
-              >
-                {letter}
-              </button>
-            ))}
+          {/* The keys take whatever height is left after the timer, and the
+              grid sizes itself against it — see .lw__keys. */}
+          <div className="lw__keys">
+            <div className="lw__grid">
+              {LETTERS.map((letter) => (
+                <button
+                  key={letter}
+                  className="lw__letter"
+                  data-locked={used.includes(letter) || undefined}
+                  disabled={used.includes(letter)}
+                  onClick={() => lockLetter(letter)}
+                  aria-label={`${letter}${used.includes(letter) ? " (already used)" : ""}`}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
