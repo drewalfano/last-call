@@ -65,6 +65,22 @@
 
   /* --- Layout ---------------------------------------------- */
   --app-max-width: 480px;
+
+  /* ----------------------------------------------------------
+     THE HEIGHT ANCHOR. Paired with `black-translucent` in
+     index.html — do not change one without the other.
+
+     Under that status-bar style the web view covers the whole
+     screen (874pt on a 17 Pro) but the LAYOUT viewport stays
+     812. `100dvh` then resolves to 874 on a scrollable screen
+     and collapses to 812 on one with nothing to scroll, so the
+     frame clips at 812 and iOS paints the page background into
+     the leftover strip — a white bar under sliced content.
+
+     `100lvh` measures the largest viewport in every state, so
+     it is stable. Same finding, same fix as trackd.
+     ---------------------------------------------------------- */
+  --screen-h: 100lvh;
   --tap-target: 48px;
   /* Every primary action sits exactly this far off the bottom edge. */
   --action-inset: 20px;

@@ -6,7 +6,7 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html, body, #root { height: 100%; }
+html, body, #root { min-height: var(--screen-h); }
 
 body {
   margin: 0;
@@ -35,7 +35,7 @@ button { font: inherit; color: inherit; }
 /* ---------------- App shell ---------------- */
 /* Portrait, single column, centered on larger screens. */
 .app {
-  min-height: 100dvh;
+  min-height: var(--screen-h);
   /* Home falls back to the shell; inside a mode the pack color takes over. */
   background: var(--category, var(--shell-bg));
   color: var(--category-ink, var(--text));
@@ -47,8 +47,8 @@ button { font: inherit; color: inherit; }
   width: 100%;
   max-width: var(--app-max-width);
   margin-inline: auto;
-  min-height: 100dvh;
-  max-height: 100dvh;
+  min-height: var(--screen-h);
+  max-height: var(--screen-h);
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top);
@@ -191,7 +191,7 @@ button { font: inherit; color: inherit; }
 .cardstage {
   position: relative;
   flex: none;
-  width: min(100%, 58dvh);
+  width: min(100%, 58lvh);
   aspect-ratio: 1;
   margin-inline: auto;
   /* Without this the shared rotateY flip renders as a flat squash
@@ -228,7 +228,7 @@ button { font: inherit; color: inherit; }
 /* Intro / results screens render a card straight into the focal area rather
    than through a stage — same square. */
 .focal > .card {
-  width: min(100%, 58dvh);
+  width: min(100%, 58lvh);
   aspect-ratio: 1;
   margin-inline: auto;
 }
