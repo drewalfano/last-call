@@ -274,11 +274,22 @@ button { font: inherit; color: inherit; }
 
 .gheader__titles { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; align-items: flex-start; }
 
+/* ---------------------------------------------------------------
+   The mode name is WAYFINDING, not content. You read it once on the
+   way in and never again — you know which game you are playing.
+
+   It was --fw-black, the same weight as the live line under it, in
+   the same face, case, colour and tracking. Two blacks a few pixels
+   apart compete no matter how much bigger one of them is, so the
+   size gap alone could not decide which to read first. Dropping the
+   name to --fw-bold lets weight and size agree instead of pulling
+   against each other.
+   --------------------------------------------------------------- */
 .gheader__title {
   color: var(--category-ink, var(--text));
   font-family: var(--font-display);
   font-size: var(--fs-lg);
-  font-weight: var(--fw-black);
+  font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   line-height: var(--lh-tight);
