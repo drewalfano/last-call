@@ -239,9 +239,6 @@ export function LastWord({ mode, onBack }: Props) {
           </div>
         </div>
 
-        <p className="counter">
-          {used.length} of {LETTERS.length} letters gone
-        </p>
         <div className="actions">
           <button className="btn btn--ghost btn--block" onClick={() => setPhase("lost")}>
             Can't go — I drink
