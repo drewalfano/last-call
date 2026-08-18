@@ -225,14 +225,25 @@ button { font: inherit; color: inherit; }
    --gheader-h — so a screen with a one-line state label leaves the
    same gap above the card as one with a two-line content line.
 
-   Scoped to screens that actually have a slot, because the reserve
-   is only there to hold the card still. Last Word's letter grid
-   fills whatever height it is given, so 28px of reserve it had no
-   use for came straight off the bottom of the screen and the button
-   lost its --action-inset.
+   It applies to any screen carrying a live line, not just the ones
+   with a slot. Without it a screen with no card jammed that line
+   12px under the mode name while the card screens gave it room to
+   breathe — the same line, in the same type, in two different
+   places depending on what was underneath it.
+
+   Screens with neither a slot nor a live line keep an auto header:
+   there is nothing to hold still and nothing to give room to, and
+   the reserve would be dead space taken from the content.
    --------------------------------------------------------------- */
 .screen:has(.focal--slot) .gheader {
   min-height: var(--gheader-h);
+}
+
+/* A live line sits in the same place whether or not there is a card under
+   it — see --gheader-live-h, which is the row a card screen works out for
+   itself. */
+.screen:has(.gheader__live) .gheader {
+  min-height: var(--gheader-live-h);
 }
 
 .gheader__bar {

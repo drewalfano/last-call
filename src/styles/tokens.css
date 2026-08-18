@@ -154,6 +154,31 @@
   --gfooter-h: 172px;
 
   /* ----------------------------------------------------------
+     WHERE THE LIVE LINE SITS, on every screen in the app.
+
+     A card screen's header row is not --gheader-h; it is that as a
+     MINIMUM, and then it takes half of whatever the card leaves
+     over. So the live line centres around 145px on a 375x812 —
+     while a screen with no card had only the minimum and put the
+     same line, in the same type, 40px higher. Two homes for one
+     thing, decided by what happened to be underneath it.
+
+     This is that computed row height, so a screen with no card can
+     reserve exactly what a card screen reserves and the line lands
+     on the same pixels either way. --gheader-h is the floor, for
+     when the card is large enough that the split falls below it.
+     ---------------------------------------------------------- */
+  --gheader-live-h: max(
+    var(--gheader-h),
+    calc(
+      (
+        var(--screen-h) - env(safe-area-inset-top, 0px) - var(--sp-3) - var(--action-inset)
+          - var(--card-size)
+      ) / 2
+    )
+  );
+
+  /* ----------------------------------------------------------
      The card is square, so one number is its width AND its height,
      and it is whichever of three limits bites first:
 
