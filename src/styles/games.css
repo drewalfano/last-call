@@ -170,7 +170,24 @@
      pale ones — Most Likely To, Last Word, Imposter — which is a line you
      read before you read the colour. */
   border: 2px solid color-mix(in srgb, var(--category) 80%, #000 20%);
-  border-radius: var(--radius-xl);
+  /* ---------------------------------------------------------------
+     ROUNDED AT THE TOP ONLY, so the deck's outer edge is a straight
+     line.
+
+     Every card overlaps the one before it, and with all four corners
+     rounded the two curves met at each seam: the card behind curved
+     IN at its bottom corner while the card in front curved in at its
+     top corner, and the shell showed through the notch between them.
+     Eleven cards, eleven notches — a scalloped edge running down both
+     sides of the deck.
+
+     Square the bottom and the card behind stays full width right
+     through the seam, so it fills the corner the card in front curves
+     away from. The rounded top still reads on every card; it just
+     reads against the colour behind it instead of against a gap. The
+     last card's bottom is cut by the display anyway.
+     --------------------------------------------------------------- */
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   background: var(--category);
   color: var(--category-ink, var(--cat-ink));
   text-align: left;
