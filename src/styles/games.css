@@ -235,11 +235,21 @@
   text-overflow: ellipsis;
 }
 
-/* The chosen card lifts clear of the stack so you can see which one it is
-   before its color takes the screen. */
+/* ---------------------------------------------------------------
+   The chosen card lifts clear of the stack so you can see which one
+   it is before its color takes the screen.
+
+   It RISES, it does not grow. The scale that used to come with the
+   lift pushed the card wider than every other card in the deck, which
+   broke the one straight edge the stack has and read as the card
+   zooming rather than being drawn out of a pile. The lift is deeper
+   now to carry the moment on its own, and the shadow under it gets
+   correspondingly longer — that pair is what says "off the stack",
+   and neither of them changes the card's size.
+   --------------------------------------------------------------- */
 .deck-card[data-picked] {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 -6px 26px -6px rgba(0, 0, 0, 0.7);
+  transform: translateY(-14px);
+  box-shadow: 0 -10px 28px -6px rgba(0, 0, 0, 0.5);
   transition: transform var(--dur-base) var(--ease-spring),
               box-shadow var(--dur-base) var(--ease-out);
 }
