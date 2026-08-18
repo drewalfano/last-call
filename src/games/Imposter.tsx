@@ -124,7 +124,9 @@ export function Imposter({ mode, onBack }: Props) {
     }
     // Named, not bare: on this screen the value is often just "Any", and a
     // lone "ANY" across the header says nothing about what it is answering.
-    return s.phase === "setup" ? `Category: ${s.category ?? "Any"}` : undefined;
+    // Its own row, so the value reads as the answer to the label rather than
+    // as the tail of a sentence — see `white-space` on .gheader__now.
+    return s.phase === "setup" ? `Category:\n${s.category ?? "Any"}` : undefined;
   }, [s.phase, s.at, s.count, s.category]);
 
   return (

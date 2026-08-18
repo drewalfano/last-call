@@ -346,6 +346,10 @@ button { font: inherit; color: inherit; }
   line-height: var(--lh-tight);
   text-transform: uppercase;
   text-wrap: balance;
+  /* An explicit break in the line is honoured — Imposter puts "Category:"
+     on its own row so the value underneath reads as the answer to it
+     rather than as the tail of a sentence. */
+  white-space: pre-line;
   color: var(--category-ink, var(--text));
 }
 
