@@ -175,9 +175,7 @@ export function KingsCup({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={hasRoster ? `${drawer}'s draw` : "Draw a card"}
-      onBack={onBack}
-    >
-      <div className="focal kc">
+      aside={
         <div className="kc__status">
           <span className="kc__kings" aria-label={`${s.kings} of ${TOTAL_KINGS} kings drawn`}>
             {Array.from({ length: TOTAL_KINGS }, (_, i) => (
@@ -188,7 +186,10 @@ export function KingsCup({ mode, onBack }: Props) {
           </span>
           <span className="kc__left">{s.deck.length} left</span>
         </div>
-
+      }
+      onBack={onBack}
+    >
+      <div className="focal kc">
         {/* Card and the copy under it form one centred block, and the block's
             lower half has a reserved height. That combination is what gets
             both things at once: the group sits centred, and because the space

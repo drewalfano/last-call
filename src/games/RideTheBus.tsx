@@ -149,7 +149,25 @@ export function RideTheBus({ mode, onBack }: Props) {
 
   return (
     /* Whose turn it is, and which round — both live. */
-    <GameScreen mode={mode} subtitle={subtitle} onBack={onBack}>
+    <GameScreen
+      mode={mode}
+      subtitle={subtitle}
+      aside={
+        s.phase !== "results" ? (
+          <div className="rtb__tally">
+            <span>
+              Drinks <strong>{s.drinks}</strong>
+            </span>
+            {s.phase === "bus" && (
+              <span>
+                Streak <strong>{s.streak}</strong> / {BUS_TARGET}
+              </span>
+            )}
+          </div>
+        ) : undefined
+      }
+      onBack={onBack}
+    >
       {s.phase === "results" ? (
         <CardBody
           className="rtb"
@@ -179,17 +197,6 @@ export function RideTheBus({ mode, onBack }: Props) {
         </CardBody>
       ) : (
         <div className="focal rtb">
-            <div className="rtb__tally">
-              <span>
-                Drinks <strong>{s.drinks}</strong>
-              </span>
-              {s.phase === "bus" && (
-                <span>
-                  Streak <strong>{s.streak}</strong> / {BUS_TARGET}
-                </span>
-              )}
-            </div>
-
             <div className="rtb__felt focal__center">
               {s.phase === "bus" ? (
                 <PlayingCard card={s.busCard} />

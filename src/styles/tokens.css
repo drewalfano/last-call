@@ -71,17 +71,6 @@
      height; the card's 5/7 ratio derives the width from it. */
   --pcard-solo-bump: 16px;
 
-  /* ----------------------------------------------------------
-     A status strip — Kings Cup's kings and cards left, Ride the
-     Bus's drinks and streak — sits 20px below the header rather
-     than the 12 the header contributes on its own. At 12 it read
-     as the last line of the header instead of as the first line
-     of the game.
-
-     Written as the TOP-UP, not the total, so it stays 20 if the
-     header's own padding is ever retuned.
-     ---------------------------------------------------------- */
-  --status-strip-gap: calc(20px - var(--sp-3));
 
   /* ----------------------------------------------------------
      THE HEIGHT ANCHOR. Paired with `black-translucent` in

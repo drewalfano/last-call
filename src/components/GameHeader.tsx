@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 interface GameHeaderProps {
   title: string;
   /**
@@ -21,11 +23,22 @@ interface GameHeaderProps {
    * rather than floating somewhere else on the screen.
    */
   note?: string;
+  /**
+   * A status strip that belongs under the live line — Kings Cup's kings and
+   * cards left, Ride the Bus's drinks and streak.
+   *
+   * It sits in the header rather than at the top of the game's own column
+   * because that is where it reads: it describes the round, not the card. It
+   * hangs 20px below the live line WITHOUT being part of what centres, so
+   * adding it cannot push the live line off the position every other mode
+   * shares. See .gheader__aside.
+   */
+  aside?: ReactNode;
   onBack: () => void;
 }
 
 /** Back-to-Home affordance, the mode's name, and the live line under both. */
-export function GameHeader({ title, subtitle, note, onBack }: GameHeaderProps) {
+export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderProps) {
   return (
     <header className="gheader">
       <div className="gheader__bar">
@@ -47,6 +60,7 @@ export function GameHeader({ title, subtitle, note, onBack }: GameHeaderProps) {
         <div className="gheader__live">
           <p className="gheader__now">{subtitle}</p>
           {note && <p className="gheader__note">{note}</p>}
+          {aside && <div className="gheader__aside">{aside}</div>}
         </div>
       )}
     </header>

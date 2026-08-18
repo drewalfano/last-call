@@ -246,6 +246,16 @@ button { font: inherit; color: inherit; }
   min-height: var(--gheader-live-h);
 }
 
+/* A header carrying a status strip needs a floor under that reserve. The
+   strip hangs out of flow, so on a short screen — where the reserve shrinks
+   with the card — there was no longer enough room below the live line to
+   hold it, and it overlapped the game by 4px at 667pt and below. 200px is
+   the live line, its 20px gap and the strip, with room to spare. Above
+   ~700pt the reserve already exceeds it and this does nothing. */
+.screen:has(.gheader__aside) .gheader {
+  min-height: max(var(--gheader-live-h), 200px);
+}
+
 /* ---------------------------------------------------------------
    EXCEPT LAST WORD, WHICH KEEPS AN AUTO HEADER.
 
@@ -349,6 +359,7 @@ button { font: inherit; color: inherit; }
 /* The content line and its rule, as one block — so the gap between them is
    theirs and not the header column's. */
 .gheader__live {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -380,6 +391,24 @@ button { font: inherit; color: inherit; }
      rather than as the tail of a sentence. */
   white-space: pre-line;
   color: var(--category-ink, var(--text));
+}
+
+/* ---------------------------------------------------------------
+   THE STATUS STRIP, 20px under the live line.
+
+   Taken OUT of flow deliberately. The live line is centred in the
+   header's reserve, so anything added to that block changes what is
+   being centred and drags the line off the position every other mode
+   shares. Hung from the block's bottom edge instead, it can sit 20px
+   under the line without the line knowing it is there.
+
+   It lands in space the reserve was leaving empty anyway — the gap
+   between the centred line and the bottom of the header.
+   --------------------------------------------------------------- */
+.gheader__aside {
+  position: absolute;
+  top: calc(100% + 20px);
+  inset-inline: 0;
 }
 
 /* The standing rule under it. Deliberately quieter than the line it qualifies

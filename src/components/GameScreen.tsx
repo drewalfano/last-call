@@ -5,9 +5,10 @@ import { GameHeader } from "./GameHeader";
 
 interface GameScreenProps {
   mode: ModeDef;
-  /** The live line, and its standing rule. Both passed through to GameHeader. */
+  /** The live line, its standing rule, and the status strip under them. */
   subtitle?: string;
   note?: string;
+  aside?: ReactNode;
   onBack: () => void;
   children: ReactNode;
 }
@@ -34,6 +35,7 @@ export function GameScreen({
   mode,
   subtitle,
   note,
+  aside,
   onBack,
   children,
 }: GameScreenProps) {
@@ -43,6 +45,7 @@ export function GameScreen({
         title={mode.title}
         subtitle={subtitle}
         note={note}
+        aside={aside}
         onBack={onBack}
       />
       {children}
