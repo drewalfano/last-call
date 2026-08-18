@@ -217,6 +217,11 @@ button { font: inherit; color: inherit; }
   flex-direction: column;
   gap: var(--sp-3);
   padding-bottom: var(--sp-3);
+  /* The header is a RESERVED ROW, not an auto one. Pinned to the tallest
+     variant any card screen can produce — see --gheader-h — so a screen with
+     a one-line state label leaves the same gap above the card as one with a
+     two-line content line. Screens with no card may still grow past it. */
+  min-height: var(--gheader-h);
 }
 
 .gheader__bar {
@@ -336,18 +341,66 @@ button { font: inherit; color: inherit; }
   min-height: 0;
 }
 
+/* ---------------------------------------------------------------
+   THE FIXED SLOT.
+
+   Two rows, and the first one is a constant: the card occupies
+   exactly --card-size, at exactly the same offset from the top of
+   the screen, on every screen of every game. Nothing above or below
+   it can move it, because neither row is sized by its contents.
+
+   The card is free to grow and shrink INSIDE the slot — a one-line
+   prompt and a four-line one both centre on the same point.
+
+   Screens with no card keep the plain `.focal` column above and are
+   laid out by their own rules. There is nothing there to hold still.
+   --------------------------------------------------------------- */
+.focal--slot {
+  display: grid;
+  grid-template-rows: var(--card-size) 1fr;
+}
+
+.slot {
+  position: relative;
+  width: min(100%, var(--card-size));
+  margin-inline: auto;
+}
+
+/* ---------------------------------------------------------------
+   Everything below the card, grounded at the bottom of the screen.
+
+   It scrolls, and that is deliberate. The vote pad and the survivor
+   tracker are the only things down here whose height is not known in
+   advance — they grow a row per three players, from 172px at four up
+   to 284px at twelve. Reserving the twelve-player case would cost
+   every screen in the app 280px of card. So the band takes the space
+   the slot leaves and scrolls past it instead, and the card stays
+   where it is either way.
+   --------------------------------------------------------------- */
+.gfoot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The band already grounds itself; a second auto margin inside it would
+   split the stack in half and leave the button floating. */
+.gfoot .actions { margin-top: 0; }
+
 /* The card is a single clean sheet on the pack color. No stack, no tray,
    no border — the sense of a deck comes from the swap motion below, which
    ages better than drawn-on layers. */
 /* A square card, centered on the pack color. Fixed proportions mean every
    prompt lands in the same place on screen — nothing jumps between draws —
    and the color reads as the field it sits on rather than as a margin. */
+/* The stage fills the slot, and the slot is what has the size. */
 .cardstage {
-  position: relative;
-  flex: none;
-  width: min(100%, 58lvh);
-  aspect-ratio: 1;
-  margin-inline: auto;
+  position: absolute;
+  inset: 0;
   /* Without this the shared rotateY flip renders as a flat squash
      rather than a card turning over. */
   perspective: 1400px;
@@ -372,20 +425,16 @@ button { font: inherit; color: inherit; }
   text-align: center;
 }
 
-/* The stage has a definite size, so both cards fill it and overlap for the
+/* The slot has a definite size, so both cards fill it and overlap for the
    length of a swap. */
-.cardstage > .card {
+.cardstage > .card,
+.slot > .card {
   position: absolute;
   inset: 0;
 }
 
-/* Intro / results screens render a card straight into the focal area rather
-   than through a stage — same square. */
-.focal > .card {
-  width: min(100%, 58lvh);
-  aspect-ratio: 1;
-  margin-inline: auto;
-}
+/* Intro / results screens render a card straight into the slot rather than
+   through a stage — same rectangle, no flip. */
 
 .card__eyebrow {
   padding: var(--sp-1) var(--sp-3);
@@ -455,28 +504,26 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------------------------------------------------------------
-   ONE CENTRING RULE FOR EVERY MODE.
+   CENTRING FOR THE SCREENS WITH NO CARD.
 
-   The focal element — prompt card, felt, board, stage — takes the
-   slack with auto margins top and bottom, so it sits centred in the
-   space above the button. The button stays grounded because the focal
-   element's own bottom margin pushes everything after it down.
+   A felt, a board, a bid readout: these take the slack with auto
+   margins top and bottom and sit centred in the space above the
+   button, which is what they did before the slot existed and still
+   the right answer for a focal element with no fixed size.
 
    Exactly TWO auto margins in the column, never three, or the focal
    element lands off-centre. That's why .actions drops its own
    margin-top whenever a focal element is present.
 
-   A new mode adds `.focal__center` to its focal element and inherits
-   all of this. Status strips above it stay pinned under the header.
+   Card screens do NOT use this. They use `.focal--slot` above, where
+   the card's rectangle is a constant rather than whatever the header
+   and the footer happened to leave over. That difference is the
+   whole point: leftover space is what was moving the card.
    --------------------------------------------------------------- */
-.cardstage,
-.focal > .card,
 .focal__center {
   margin-block: auto;
 }
 
-.focal:has(> .cardstage) .actions,
-.focal:has(> .card) .actions,
 .focal:has(.focal__center) .actions {
   margin-top: 0;
 }

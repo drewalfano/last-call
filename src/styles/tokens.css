@@ -117,6 +117,57 @@
   /* Small chips, sheet close, name pills. */
   --control-sm: 40px;
 
+  /* ----------------------------------------------------------
+     THE CARD SLOT. Three numbers that stop the card moving.
+
+     The card used to be centred in whatever space the header and
+     the footer left over, so it sat somewhere different on every
+     screen: Imposter's setup (60px header, 173px footer) put it
+     79px lower than its reveal (96px header, 60px footer). Same
+     game, same card, three positions in one flow.
+
+     So the screen is a fixed grid instead — header row, card slot,
+     footer row — and the slot is the SAME rectangle on every screen
+     of every game. The card may grow or shrink inside it; its
+     centre does not move.
+
+     Both reserves are pinned to the tallest variant measured on a
+     screen that actually shows a card, at 375pt:
+
+     --gheader-h  120.4px — Hot Seat's question header, where a
+                  16-character name (roster's MAX_NAME) wraps the
+                  content line onto a second line.
+     --gfooter-h  173px — Imposter's setup: the category line, the
+                  Random / Categories row and the primary button.
+
+     Screens with no card — Last Word's letter grid, Kings Cup's
+     play screen, Rank It's lists — are allowed to exceed both.
+     They have nothing to hold still, and the rows are minmax()
+     rather than fixed so they simply grow.
+     ---------------------------------------------------------- */
+  --gheader-h: 124px;
+  --gfooter-h: 180px;
+
+  /* ----------------------------------------------------------
+     The card is square, so one number is its width AND its height,
+     and it is whichever of three limits bites first:
+
+       1. the width the column has to give
+       2. 58lvh, the proportion the card has always been capped at
+       3. whatever the slot has left once both reserves are taken
+
+     On anything iPhone 12-sized or larger the width wins and the
+     card is exactly the size it was before. Only small screens hit
+     limit 3, and there the card shrinks rather than shoving the
+     button off the bottom.
+     ---------------------------------------------------------- */
+  --card-size: min(
+    min(100vw, var(--app-max-width)) - var(--sp-4) * 2,
+    58lvh,
+    var(--screen-h) - env(safe-area-inset-top, 0px) - var(--sp-3) - var(--action-inset)
+      - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
+  );
+
   /* --- Motion ---------------------------------------------- */
   /* Tactile, not linear. Spring on press, physical decay on the wheel. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
