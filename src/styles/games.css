@@ -165,16 +165,21 @@
   min-height: var(--card-h);
   padding: var(--sp-4) var(--sp-5);
   /* 2px stroke in a darker cut of the card's own color — an edge, not an
-     outline. */
-  border: 2px solid color-mix(in srgb, var(--category) 62%, #000 38%);
+     outline. Cut 20%, not 38%: the same recipe runs on every pack, and at 38
+     it disappeared into the dark ones while drawing a hard line around the
+     pale ones — Most Likely To, Last Word, Imposter — which is a line you
+     read before you read the colour. */
+  border: 2px solid color-mix(in srgb, var(--category) 80%, #000 20%);
   border-radius: var(--radius-xl);
   background: var(--category);
   color: var(--category-ink, var(--cat-ink));
   text-align: left;
   cursor: pointer;
   /* Cast upward, onto the card behind — a downward shadow would be hidden
-     under the next card entirely. */
-  box-shadow: 0 -3px 14px -4px rgba(0, 0, 0, 0.55);
+     under the next card entirely. Light: it only has to say one card is in
+     front of another, and at 0.55 it was doing that twice over with the
+     stroke. */
+  box-shadow: 0 -3px 14px -4px rgba(0, 0, 0, 0.35);
   transition: transform var(--dur-press) var(--ease-out);
 }
 
