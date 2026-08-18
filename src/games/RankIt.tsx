@@ -88,11 +88,13 @@ export function RankIt({ mode, onBack }: Props) {
   return (
     <GameScreen
       mode={mode}
-      /* Whose pass it is — the two ranking screens look identical and this
-         line is the only thing that says who is meant to be holding the
-         phone. "Pass the phone" and "How you did" were not that: the card
-         under them says both. */
-      subtitle={
+      /* The prompt is what everyone is holding in their head, so it takes the
+         live line — the same treatment Last Word and the Number Game give
+         theirs. Whose pass it is qualifies it, so that hangs underneath as
+         the note: the two ranking screens are otherwise identical and it is
+         the only thing saying who should be holding the phone. */
+      subtitle={phase === "revealed" ? `${hits} of ${total} right` : prompt.title}
+      note={
         phase === "ranking"
           ? `${ranker} — privately`
           : phase === "guessing"
@@ -128,20 +130,10 @@ export function RankIt({ mode, onBack }: Props) {
            the group's guess. Same interaction, different target — nobody has
            to learn a second way to order a list. */}
       {(phase === "ranking" || phase === "guessing") && (
-        <div className="focal rank">
-          <p className="rank__title">{prompt.title}</p>
-          {/* Directly under the list it throws away, and only until the
-              Ranker has tapped something — after that the order is theirs.
-              Always rendered, and hidden rather than removed, so the list
-              below does not jump the moment they tap. */}
-          <button
-            className="gfoot__skip"
-            data-hidden={!(phase === "ranking" && order.length === 0) || undefined}
-            onClick={skip}
-          >
-            New list
-          </button>
-          <ol className="rank__list">
+        <CardBody
+          className="rank"
+          card={
+            <ol className="rank__list">
             {prompt.items.map((item) => {
               const at = active.indexOf(item);
               return (
@@ -157,7 +149,19 @@ export function RankIt({ mode, onBack }: Props) {
                 </li>
               );
             })}
-          </ol>
+            </ol>
+          }
+        >
+          {/* Only until the Ranker has tapped something — after that the order
+              is theirs. Always rendered, and hidden rather than removed, so
+              nothing below it moves the moment they tap. */}
+          <button
+            className="gfoot__skip"
+            data-hidden={!(phase === "ranking" && order.length === 0) || undefined}
+            onClick={skip}
+          >
+            New list
+          </button>
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
@@ -182,7 +186,7 @@ export function RankIt({ mode, onBack }: Props) {
               </button>
             )}
           </div>
-        </div>
+        </CardBody>
       )}
 
       {/* ---------- Both orders, side by side ----------
@@ -191,11 +195,10 @@ export function RankIt({ mode, onBack }: Props) {
            group put there instead. A row that matches needs no explanation;
            a row that doesn't is the argument. */}
       {phase === "revealed" && (
-        <div className="focal rank">
-          <p className="rank__title">
-            {hits} of {total} right
-          </p>
-          <ol className="rank__list rank__list--compare">
+        <CardBody
+          className="rank"
+          card={
+            <ol className="rank__list rank__list--compare">
             {order.map((item, i) => {
               const got = guess[i];
               const hit = got === item;
@@ -211,7 +214,9 @@ export function RankIt({ mode, onBack }: Props) {
                 </li>
               );
             })}
-          </ol>
+            </ol>
+          }
+        >
           <p className="rank__rule">
             {hits === total
               ? `Nobody drinks. You know ${ranker} too well.`
@@ -222,7 +227,7 @@ export function RankIt({ mode, onBack }: Props) {
               New ranker
             </button>
           </div>
-        </div>
+        </CardBody>
       )}
     </GameScreen>
   );

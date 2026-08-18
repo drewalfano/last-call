@@ -1531,21 +1531,6 @@
    sits under a title — so it only needs ordinary spacing. */
 .focal.rank .gfoot__skip { margin-top: var(--sp-3); }
 
-.rank__title {
-  margin: 0;
-  flex: none;
-  /* Two lines' worth, always. Prompts run from "Rank these snacks" to "Rank
-     these from most to least forgivable", and the list below cannot move
-     between one round and the next. */
-  min-height: calc(var(--fs-xl) * var(--lh-tight) * 2);
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-black);
-  line-height: var(--lh-tight);
-  text-wrap: balance;
-  color: var(--category-ink);
-}
 
 /* ---------------------------------------------------------------
    The list is what gives way on this screen.
@@ -1558,6 +1543,13 @@
    down to --control-md, which is the minimum touch size and the
    token for exactly this kind of row.
    --------------------------------------------------------------- */
+/* The list takes the card's slot, so it centres on exactly the rectangle
+   every other mode deals its card onto. */
+.slot > .rank__list {
+  position: absolute;
+  inset: 0;
+}
+
 .rank__list {
   display: flex;
   flex-direction: column;
@@ -1602,7 +1594,9 @@
      was nowhere near. */
   padding: var(--sp-2);
   border: none;
-  border-radius: var(--radius-lg);
+  /* A pill, matching the round well inside it — a rounded rectangle around a
+     circle left two different curves on one row. */
+  border-radius: var(--radius-pill);
   background: var(--card-surface);
   color: var(--card-ink);
   font-family: var(--font-display);
@@ -1688,8 +1682,11 @@
   gap: var(--sp-3);
   width: 100%;
   min-height: var(--control-height);
-  padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--radius-lg);
+  /* Even all round, so the well is inset the same from the top, the bottom
+     and the left — it was 8 against 16 and the well floated in from an edge
+     it was nowhere near. Same rule as .rank__item. */
+  padding: var(--sp-2);
+  border-radius: var(--radius-pill);
   background: var(--card-surface);
   color: var(--card-ink);
   font-family: var(--font-display);
