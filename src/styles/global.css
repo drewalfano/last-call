@@ -569,6 +569,11 @@ button { font: inherit; color: inherit; }
    through a stage — same rectangle, no flip. */
 
 .card__eyebrow {
+  /* Long categories wrap in here — "Things people lie about on dating apps"
+     left "apps" alone on a second line. Balanced, so a two-line eyebrow
+     breaks into two even lines instead of a full one and an orphan. Same
+     treatment .card__prompt and .gheader__now already get. */
+  text-wrap: balance;
   padding: var(--sp-1) var(--sp-3);
   border-radius: var(--radius-pill);
   background: var(--category, var(--surface));
