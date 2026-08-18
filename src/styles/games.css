@@ -1299,20 +1299,48 @@
 }
 .picker__card:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 
-/* Inverts and spans the width, so it reads as an action rather than as one of
-   the options. It sits above the scroller, not in it — see CategoryPicker. */
+/* ---------------------------------------------------------------
+   THE GRID DEALS ITSELF OUT.
+
+   Opening the picker used to be an instant swap: one frame the card,
+   the next a full page of options. This is the app's own arrival
+   motion — the same fade, rise and slight scale as `pop` — run
+   across the grid a card at a time, so a page of categories arrives
+   the way a hand of cards does.
+
+   CLAMPED at eight. The grid scrolls, so an uncapped stagger spends
+   its later delays on cards nobody can see and holds the last
+   visible row back waiting for them. `--i` is set per card in
+   CategoryPicker and already stops counting at 8; the min() here is
+   the guard that keeps it true if that ever changes.
+   --------------------------------------------------------------- */
+.picker__card {
+  animation: picker-deal var(--dur-base) var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 22ms);
+}
+
+@keyframes picker-deal {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Same rule the launch animation follows: motion is the flourish, never the
+   thing that makes the screen usable. */
+@media (prefers-reduced-motion: reduce) {
+  .picker__card { animation: none; }
+}
+
+/* Spans the width and centres, so it still reads as the odd one out — but on
+   the same white stock as the options rather than inverted. It sits above the
+   scroller, not in it — see CategoryPicker. */
 .picker__card--custom {
   flex: none;
   width: 100%;
   justify-content: center;
   min-height: var(--control-height);
-  background: transparent;
-  border-color: var(--category-ink);
-  color: var(--category-ink);
   text-align: center;
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  box-shadow: none;
 }
 
 .picker__custom { display: flex; flex-direction: column; gap: var(--sp-3); }

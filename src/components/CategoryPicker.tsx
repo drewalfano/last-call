@@ -90,14 +90,27 @@ export function CategoryPicker({
               it. It is an action, not one of the options — and inside the
               scroller its top edge was the first thing the scroll mask faded,
               so the button arrived on screen already clipped. */}
-          <button className="picker__card picker__card--custom" onClick={() => setWriting(true)}>
+          {/* First card dealt, so the deal starts at the top of the screen and
+              runs down into the grid rather than skipping this one. */}
+          <button
+            className="picker__card picker__card--custom"
+            style={{ ["--i" as string]: 0 }}
+            onClick={() => setWriting(true)}
+          >
             Write your own
           </button>
 
           <div className="picker__scroll" onScroll={onScroll}>
             <div className="picker__grid">
-              {categories.map((c) => (
-                <button key={c} className="picker__card" onClick={() => onPick(c)}>
+              {categories.map((c, i) => (
+                <button
+                  key={c}
+                  className="picker__card"
+                  /* Stops counting at 8 — past that the delay is being spent
+                     on cards below the fold. See .picker__card in games.css. */
+                  style={{ ["--i" as string]: Math.min(i + 1, 8) }}
+                  onClick={() => onPick(c)}
+                >
                   {c}
                 </button>
               ))}
