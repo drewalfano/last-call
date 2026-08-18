@@ -43,15 +43,6 @@ export function LastWord({ mode, onBack }: Props) {
   /** Set when the group picked or wrote one; otherwise the deck's draw is used. */
   const [chosen, setChosen] = useState<string | null>(null);
   const [used, setUsed] = useState<string[]>([]);
-  /**
-   * Whether the board has been cleared at least once this round.
-   *
-   * It is the only thing that makes "No repeats" worth saying: on the first
-   * pass every letter is still up, so an answer cannot collide with anything.
-   * Once the board wraps, the table is going round a second time on the same
-   * category and repeats become the thing that ends turns.
-   */
-  const [wrapped, setWrapped] = useState(false);
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
   const primed = useRef(false);
@@ -89,7 +80,6 @@ export function LastWord({ mode, onBack }: Props) {
       else primed.current = true;
     }
     setUsed([]);
-    setWrapped(false);
     startTurn();
     setPhase("playing");
   }, [deck, startTurn, chosen]);
@@ -114,7 +104,6 @@ export function LastWord({ mode, onBack }: Props) {
        */
       if (next.length === LETTERS.length) {
         setUsed([]);
-        setWrapped(true);
         buzz([40, 50, 40]);
         startTurn();
         return;
@@ -211,7 +200,6 @@ export function LastWord({ mode, onBack }: Props) {
       mode={mode}
       subtitle={category}
       subtitleTone="content"
-      note={wrapped ? "No repeats!" : undefined}
       onBack={onBack}
     >
       <div className="focal lw">
