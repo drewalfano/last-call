@@ -8,13 +8,22 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
+    <!-- The colour iOS paints behind the status bar in an installed app, and
+         it OUTRANKS the translucent style below on iOS 16.4+. So it cannot be
+         a constant: pinned to the shell it put a near-black band (or, in light
+         appearance, a white one) above a screen flooded with a pack colour.
+         lib/appBackground.ts rewrites it to whatever screen is open, and is
+         the only thing that writes it. The value here is just the first paint,
+         before React mounts — the shell, which is what Home is. -->
     <meta name="theme-color" content="#141414" />
     <meta name="description" content="Ten pass-the-phone party games. No wifi, no accounts, no setup." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- Translucent lets the app's own background run to the top edge in both
-         appearances, which the safe-area padding on .app__frame accounts for.
-         The theme store rewrites theme-color on change. -->
+    <!-- Translucent: iOS draws no chrome of its own behind the status bar, so
+         the page's paint runs to the top edge and the icons stay light. Paired
+         with the safe-area padding on .app__frame, which keeps the HEADER out
+         from under those icons, and with --screen-h in tokens.css, which is
+         sized for the taller web view this buys. Do not change one alone. -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Last Call" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

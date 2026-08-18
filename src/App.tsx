@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MODE_BY_ID, type ModeId } from "./data/modes";
+import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
+import { useTheme } from "./state/theme";
 import { Home } from "./games/Home";
 import { DeckGame, DECK_GAMES, isDeckGame, type DeckGameConfig } from "./games/DeckGame";
 import { LastCallGame } from "./games/LastCallGame";
@@ -38,6 +40,18 @@ export default function App() {
   const [screen, setScreen] = useState<ModeId | null>(null);
   const [launch, setLaunch] = useState<Launch | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+
+  /**
+   * The colour the whole device shows, status bar included. Home is the shell;
+   * inside a mode it is that pack's colour, so the strip above the header
+   * reads as more of the same field rather than as a band on top of it.
+   *
+   * Deliberately keyed to `screen` and not to `launch`: the pack colour lands
+   * as the screen swaps, which happens underneath the opaque launch overlay,
+   * so the status bar changes colour on the one frame nothing else is visible.
+   */
+  useAppBackground(screen ? MODE_BY_ID[screen].color : SHELL_TOKEN, theme);
 
   const goHome = useCallback(() => setScreen(null), []);
 

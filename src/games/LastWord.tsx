@@ -20,9 +20,9 @@ import { CategoryPicker } from "../components/CategoryPicker";
 const LETTERS = "ABCDEFGHIJKLMNOPRSTW".split("");
 
 /** Seconds on the clock for each player's turn. */
-const TURN_SECONDS = 15;
+const TURN_SECONDS = 10;
 
-type Phase = "intro" | "picking" | "playing" | "lost" | "cleared";
+type Phase = "intro" | "picking" | "playing" | "lost";
 
 function buzz(pattern: number | number[]) {
   navigator.vibrate?.(pattern);
@@ -44,6 +44,15 @@ export function LastWord({ mode, onBack }: Props) {
   /** Set when the group picked or wrote one; otherwise the deck's draw is used. */
   const [chosen, setChosen] = useState<string | null>(null);
   const [used, setUsed] = useState<string[]>([]);
+  /**
+   * Whether the board has been cleared at least once this round.
+   *
+   * It is the only thing that makes "No repeats" worth saying: on the first
+   * pass every letter is still up, so an answer cannot collide with anything.
+   * Once the board wraps, the table is going round a second time on the same
+   * category and repeats become the thing that ends turns.
+   */
+  const [wrapped, setWrapped] = useState(false);
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
   const primed = useRef(false);
@@ -81,6 +90,7 @@ export function LastWord({ mode, onBack }: Props) {
       else primed.current = true;
     }
     setUsed([]);
+    setWrapped(false);
     startTurn();
     setPhase("playing");
   }, [deck, startTurn, chosen]);
@@ -91,8 +101,23 @@ export function LastWord({ mode, onBack }: Props) {
       const next = [...used, letter];
       setUsed(next);
       buzz(25);
+      /**
+       * The last letter does not end anything. Every letter goes back up and
+       * play carries on, on the same category.
+       *
+       * Clearing the bank used to be a win state with its own screen, which
+       * had the game finishing at the exact moment a table had hit its stride.
+       * It is not the app's call: a round ends when someone runs out of time
+       * or says they cannot go, and both of those are the players' to make.
+       * All the app does here is deal the board again — with a longer buzz, so
+       * whoever is holding the phone feels the wrap rather than wondering why
+       * every letter came back.
+       */
       if (next.length === LETTERS.length) {
-        setPhase("cleared");
+        setUsed([]);
+        setWrapped(true);
+        buzz([40, 50, 40]);
+        startTurn();
         return;
       }
       startTurn();
@@ -127,7 +152,7 @@ export function LastWord({ mode, onBack }: Props) {
               Random
             </button>
             <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
-              All categories
+              Categories
             </button>
           </div>
           <div className="actions">
@@ -156,20 +181,15 @@ export function LastWord({ mode, onBack }: Props) {
     );
   }
 
-  if (phase === "lost" || phase === "cleared") {
-    const cleared = phase === "cleared";
+  if (phase === "lost") {
     return (
       <div className="screen" style={categoryStyle(mode.color)}>
-        <GameHeader title={mode.title} subtitle={cleared ? "Bank cleared" : "Time"} onBack={onBack} />
+        <GameHeader title={mode.title} subtitle="Time" onBack={onBack} />
         <div className="focal">
           <div className="card">
             <span className="card__eyebrow">{category}</span>
-            <p className="card__prompt">{cleared ? "You cleared the whole bank." : "Out of time."}</p>
-            <p className="card__meta">
-              {cleared
-                ? "Nobody drinks. That basically never happens."
-                : "Whoever's holding the phone drinks."}
-            </p>
+            <p className="card__prompt">Out of time.</p>
+            <p className="card__meta">Whoever's holding the phone drinks.</p>
           </div>
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={beginRound}>
@@ -183,7 +203,16 @@ export function LastWord({ mode, onBack }: Props) {
 
   return (
     <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader title={mode.title} subtitle={category} onBack={onBack} />
+      {/* The category is the one thing a player has to keep in their head for
+          the whole round, so it is content rather than a state label — see
+          `subtitleTone` in GameHeader. */}
+      <GameHeader
+        title={mode.title}
+        subtitle={category}
+        subtitleTone="content"
+        note={wrapped ? "No repeats!" : undefined}
+        onBack={onBack}
+      />
       <div className="focal lw">
         <div className="lw__board">
           {/* Its own row, not a centre overlay — a letter can't cover it. */}

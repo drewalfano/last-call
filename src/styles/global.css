@@ -6,7 +6,24 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html, body, #root { min-height: var(--screen-h); }
+/* ---------------------------------------------------------------
+   EVERY LAYER IS THE SAME COLOUR.
+
+   `.app` floods with the pack colour, but it is the fourth element
+   down. Under a translucent status bar and `viewport-fit=cover`
+   there are three chances for a different colour to show through:
+   the safe-area strips, an overscroll bounce, and whatever iOS
+   paints outside the layout viewport. Painting html / body / #root
+   from the same token closes all three at once — see
+   lib/appBackground.ts, which is what writes `--app-bg`.
+
+   The fallback matters: `--app-bg` only exists once React has
+   mounted, so the shell colour covers the first paint.
+   --------------------------------------------------------------- */
+html, body, #root {
+  min-height: var(--screen-h);
+  background: var(--app-bg, var(--shell-bg));
+}
 
 body {
   margin: 0;
@@ -14,7 +31,6 @@ body {
   font-size: var(--fs-md);
   line-height: var(--lh-normal);
   color: var(--text);
-  background: var(--shell-bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
@@ -27,9 +43,31 @@ body {
 h1, h2, h3, p, figure { margin: 0; }
 button { font: inherit; color: inherit; }
 
+/* ---------------------------------------------------------------
+   NO FOCUS RING, APP-WIDE — and it is a deliberate trade, not an
+   oversight, so it is written down here rather than left to be
+   rediscovered.
+
+   A focus ring exists for keyboard navigation. This is a
+   pass-the-phone game installed to an iOS home screen: there is no
+   keyboard to tab with, the only input is a thumb, and every control
+   already answers a touch with the shared press. What the ring did
+   instead was fire on TAP — WebKit resolves `:focus-visible` for a
+   touch on some elements — so the primary action on a screen sat
+   inside a hard 3px ring after you pressed it, which read as an
+   error state rather than as focus.
+
+   `:focus` is included because clearing only `:focus-visible` leaves
+   the browser's own default ring to take over.
+
+   If this ever ships anywhere with a keyboard, this is the rule to
+   put back, ideally behind `@media (hover: hover) and (pointer: fine)`
+   so it returns for pointers and stays gone on touch. The
+   `--focus-ring` token is kept in tokens.css for exactly that.
+   --------------------------------------------------------------- */
+:focus,
 :focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
+  outline: none;
 }
 
 /* ---------------- App shell ---------------- */
@@ -51,8 +89,15 @@ button { font: inherit; color: inherit; }
   max-height: var(--screen-h);
   display: flex;
   flex-direction: column;
+  /* Top only. The background is allowed under the status bar — that is the
+     whole point of `black-translucent` — but the HEADER is not, so the frame
+     starts below the icons.
+
+     No `padding-bottom: env(safe-area-inset-bottom)`, deliberately. `.screen`
+     already ends on a flat `--action-inset`, which is sized to clear the home
+     indicator on its own; having both put the grounded button 54pt off the
+     bottom edge instead of 20. See the note on `--action-inset`. */
   padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .screen {
@@ -90,12 +135,36 @@ button { font: inherit; color: inherit; }
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
-              background var(--dur-fast) var(--ease-out),
-              opacity var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
+              background var(--dur-fast) var(--ease-out);
 }
-.btn:active:not(:disabled) { transform: scale(var(--press-scale)); }
-.btn:disabled { opacity: 0.4; cursor: default; }
+/* Scale AND dim. See the press note in tokens.css. */
+.btn:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-dim);
+}
+
+/* ---------------------------------------------------------------
+   DISABLED IS A PALER FILL, NOT A TRANSPARENT BUTTON.
+
+   `opacity` was fine while every button sat on a solid field. The
+   buttons that float over a scroller — Home's "Pick for me", the
+   picker's "Use it", the roster's add — showed the rows sliding
+   past behind them, which reads as broken rather than unavailable.
+
+   The mix lands on the same composite the opacity produced, so
+   nothing moves visually: the fill blends toward whatever the
+   button is sitting on, and the label follows it.
+
+   Controls on solid ground keep their opacity — they have nothing
+   to reveal. That exception is noted where it applies.
+   --------------------------------------------------------------- */
+.btn:disabled {
+  background: color-mix(in srgb, var(--category-ink, var(--control-bg)) 40%, var(--category, var(--shell-bg)));
+  color: var(--category, var(--control-text));
+  cursor: default;
+}
 
 .btn--block { width: 100%; }
 
@@ -118,16 +187,42 @@ button { font: inherit; color: inherit; }
   text-transform: uppercase;
 }
 
+/* ---------------------------------------------------------------
+   A button that floats over scrolling content rather than sitting on
+   a strip of its own.
+
+   Solid in the pack colour, and that is the whole point of the
+   variant: a ghost or translucent button over white card stock shows
+   the card edges straight through its label. Its own field plus a
+   shadow is what separates it from what is passing behind it.
+   --------------------------------------------------------------- */
+.btn--float {
+  background: var(--category, var(--surface));
+  color: var(--category-ink, var(--text));
+  border-color: color-mix(in srgb, var(--category-ink, var(--text)) 35%, transparent);
+  box-shadow: 0 6px 22px -8px rgba(0, 0, 0, 0.55);
+}
+
 /* Bigger type, same height — the rhythm holds. */
 .btn--lg { font-size: var(--fs-xl); padding: 0 var(--sp-6); }
 
 /* ---------------- Game header ---------------- */
+/* A column of at most two rows: the bar, and — only when the screen has live
+   game data to show — a centred line under it. With one child the gap never
+   applies, so every screen that shows a plain state label is spaced exactly as
+   it was before the content line existed. */
 .gheader {
   display: flex;
   flex: none;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}
+
+.gheader__bar {
+  display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding-bottom: var(--sp-3);
 }
 
 .gheader__back {
@@ -142,9 +237,15 @@ button { font: inherit; color: inherit; }
   background: transparent;
   color: var(--category-ink, var(--text));
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.gheader__back:active { transform: scale(0.9); }
+/* The deeper scale is the icon-sized one — same absolute travel as a
+   full-width button gets from 0.97. */
+.gheader__back:active {
+  transform: scale(var(--press-scale-sm));
+  opacity: var(--press-dim);
+}
 
 .gheader__titles { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; align-items: flex-start; }
 
@@ -158,12 +259,65 @@ button { font: inherit; color: inherit; }
   line-height: var(--lh-tight);
 }
 
+/* A state label. It names where you are, so it sits back. */
 .gheader__sub {
   font-size: var(--fs-xs);
   color: var(--category-ink, var(--text-muted));
   opacity: 0.72;
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------
+   THE LINE THAT SAYS WHAT YOU ARE PLAYING.
+
+   Its own row, centred on the full width rather than tucked beside
+   the back button, and set at the size of the thing it actually is:
+   the category, the player whose turn it is, the reveal you are on.
+   A phone being handed across a table has to answer "what am I
+   doing" before it answers anything else.
+
+   No border and no fill, deliberately. Every bordered pill in the
+   app is something you press, and this is the one piece of furniture
+   on the screen that must not read as tappable. Weight and centring
+   carry it instead.
+
+   `text-wrap: balance` because these run from "Movies" to "Things
+   you pack for a holiday" — a long one should break into two even
+   lines rather than one full line and an orphan.
+   --------------------------------------------------------------- */
+/* The content line and its rule, as one block — so the gap between them is
+   theirs and not the header column's. */
+.gheader__live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.gheader__now {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--category-ink, var(--text));
+}
+
+/* The standing rule under it. Deliberately quieter than the line it qualifies
+   — you need to be told once, and then it is just there. */
+.gheader__note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--category-ink, var(--text-muted));
+  opacity: 0.72;
 }
 
 /* ---------------- Focal card (game screens) ---------------- */
@@ -326,8 +480,27 @@ button { font: inherit; color: inherit; }
 .focal:has(.focal__center) .actions {
   margin-top: 0;
 }
+/* ---------------------------------------------------------------
+   Two actions sharing a row, each taking half the width.
+
+   `white-space: nowrap` is the guard that was missing: a label too
+   long for half a phone wrapped to two lines INSIDE a pill whose
+   height is fixed, so the type overflowed its own button. "All
+   categories" did exactly that at 375pt. Labels in this row have to
+   be short enough to sit on one line — the rule now makes a label
+   that isn't visibly wrong at authoring time rather than silently
+   breaking the control.
+   --------------------------------------------------------------- */
 .actions--row { display: flex; flex-direction: row; gap: var(--sp-2); }
-.actions--row > * { flex: 1; }
+.actions--row > * { flex: 1; min-width: 0; }
+/* Half the width, so the label steps down a size and loses some of its side
+   padding. Same height as a full-width action — the height is the rhythm and
+   does not move; the type is what has to fit. */
+.actions--row > .btn {
+  white-space: nowrap;
+  font-size: var(--fs-md);
+  padding-inline: var(--sp-3);
+}
 
 .counter {
   flex: none;

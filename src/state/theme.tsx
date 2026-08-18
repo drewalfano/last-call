@@ -74,12 +74,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [preference]);
 
+  // Appearance sets the attribute and stops there. The `theme-color` meta used
+  // to be written here too, from a hard-coded pair of hexes — which pinned the
+  // status bar to the SHELL while the screen behind it was flooded with a pack
+  // colour, and duplicated two values that already live in tokens.css. It has a
+  // single owner now: `useAppBackground`, which knows which screen is open.
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    // Keep the installed-app status bar in step with the shell.
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", theme === "light" ? "#FFFFFF" : "#141414");
   }, [theme]);
 
   const setPreference = useCallback((p: ThemePreference) => setPreferenceState(p), []);

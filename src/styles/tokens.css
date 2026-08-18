@@ -78,15 +78,44 @@
      the leftover strip — a white bar under sliced content.
 
      `100lvh` measures the largest viewport in every state, so
-     it is stable. Same finding, same fix as trackd.
+     it is the anchor that holds — but ONLY where the web view
+     is the whole screen, which is to say installed. In a browser
+     TAB the large viewport runs behind Safari's toolbars, and a
+     bottom-grounded button anchored to it hides underneath them.
+     So: small viewport by default, large one when standalone.
+     Same finding, same fix as trackd.
      ---------------------------------------------------------- */
-  --screen-h: 100lvh;
+  --screen-h: 100svh;
   --tap-target: 48px;
-  /* Every primary action sits exactly this far off the bottom edge. */
+  /* Every primary action sits exactly this far off the bottom edge.
+
+     A FLAT inset, deliberately not safe-area-inset-bottom. That inset
+     is 34pt and is sized for content running edge to edge; a grounded
+     control only has to clear the home indicator, which occupies about
+     the bottom 13pt, so 20px clears it with room to spare. Adding both
+     put the button 54pt up and it read as floating. If this ever turns
+     out tight on a device, raise this number — do not reinstate the
+     inset on .app__frame. */
   --action-inset: 20px;
-  /* One height for every action button in the app, so a thumb learns the
-     rhythm once. Applies to .btn in all its variants. */
+
+  /* ----------------------------------------------------------
+     CONTROL HEIGHTS — three, and only three.
+
+     There were eight (74, 64, 60, 56, 46, 42, 40, 38, 36), each
+     arrived at locally, which is why no two rows of controls in
+     the app agreed with each other. Matching the height of the
+     control beside it is what makes a pair read as ONE control.
+
+     --control-md is --tap-target on purpose: the middle tier and
+     the minimum touch size are the same number, so the mid-size
+     control is never accidentally under it.
+     ---------------------------------------------------------- */
+  /* Primary and secondary actions. A thumb learns the rhythm once. */
   --control-height: 60px;
+  /* Chips, pickers, segmented options, steppers. */
+  --control-md: 48px;
+  /* Small chips, sheet close, name pills. */
+  --control-sm: 40px;
 
   /* --- Motion ---------------------------------------------- */
   /* Tactile, not linear. Spring on press, physical decay on the wheel. */
@@ -98,7 +127,22 @@
   --dur-base: 260ms;
   --dur-slow: 460ms;
   --dur-wheel: 4200ms;
-  --press-scale: 0.96;
+
+  /* ----------------------------------------------------------
+     THE PRESS. One curve, one duration, one scale, one dip —
+     everywhere something is pressable.
+
+     Scale alone is easy to miss on a small control against a
+     flat field; the dip is what makes the press read as physical
+     rather than as a wobble. 120ms is short enough that the
+     control is already back by the time the finger lifts.
+     ---------------------------------------------------------- */
+  --dur-press: 120ms;
+  --press-scale: 0.97;
+  --press-dim: 0.85;
+  /* Icon-sized controls take a deeper scale — the same absolute travel
+     on a 40px target as 0.97 gives a 60px one. Dip is unchanged. */
+  --press-scale-sm: 0.92;
 
   /* --- Elevation ------------------------------------------- */
   --shadow-card: 0 2px 0 0 var(--shadow-color), 0 6px 18px -8px var(--shadow-color);
@@ -124,6 +168,8 @@
   --control-text: #141414;
   --overlay: rgba(0, 0, 0, 0.72);
   --shadow-color: rgba(0, 0, 0, 0.62);
+  /* Unused while the app is touch-only — see the note on `:focus` in
+     global.css, which is the one rule that would consume it. */
   --focus-ring: #FFFFFF;
 
   /* The prompt card: white stock, near-black ink, in both appearances. */
@@ -174,6 +220,15 @@
   --card-black: #141414;
   --card-back: #2B2B2B;
   --card-edge: rgba(20, 20, 20, 0.2);
+}
+
+/* ----------------------------------------------------------------
+   Installed, the web view is the whole screen, so the anchor is the
+   large viewport. In a browser TAB it stays `svh`: there the small
+   viewport is the area actually visible with the toolbars showing.
+   ---------------------------------------------------------------- */
+@media (display-mode: standalone) {
+  :root { --screen-h: 100lvh; }
 }
 
 /* ==========================================================

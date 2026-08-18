@@ -4,7 +4,10 @@
    ============================================================ */
 
 /* ---------------- Home ---------------- */
-.home { overflow-y: auto; }
+/* No bottom inset: Home has no grounded button to clear, and the deck is meant
+   to run right to the edge of the display. --action-inset is for screens that
+   ground an action against the bottom, which Home does not. */
+.home { overflow-y: auto; padding-bottom: 0; }
 
 .home__head {
   display: flex;
@@ -40,10 +43,17 @@
   background: transparent;
   color: var(--text);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
               border-color var(--dur-base) var(--ease-out);
 }
-.settings-btn:active { transform: scale(0.9) rotate(35deg); }
+/* The twist is this control's own, and it stays — it is the one press in the
+   app that says what the button DOES. The scale and the dip underneath it are
+   the shared ones. */
+.settings-btn:active {
+  transform: scale(var(--press-scale-sm)) rotate(35deg);
+  opacity: var(--press-dim);
+}
 .settings-btn:hover { border-color: var(--text-muted); }
 
 /* ---------------- Settings sheet ---------------- */
@@ -74,8 +84,8 @@
 .sheet__close {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: var(--control-sm);
+  height: var(--control-sm);
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -113,7 +123,7 @@
 .segmented--three { grid-template-columns: repeat(3, 1fr); }
 
 .segmented__opt {
-  min-height: 42px;
+  min-height: var(--control-md);
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -137,7 +147,13 @@
      in, so this leaves the same breathing room below it as the 18px above. */
   --peek: 84px;
   --card-h: 124px;
-  padding-bottom: var(--sp-4);
+  /* Nothing below the deck, deliberately. The cards run to the bottom edge of
+     the display and the last one is cut by it — that IS the deck: a stack you
+     are looking down at, which continues past the screen. A fade band was
+     tried here and removed; softening the cut made the deck look like it was
+     dissolving rather than continuing. `.home` drops its own bottom inset for
+     the same reason. */
+  padding-bottom: 0;
 }
 
 .deck-card {
@@ -159,14 +175,18 @@
   /* Cast upward, onto the card behind — a downward shadow would be hidden
      under the next card entirely. */
   box-shadow: 0 -3px 14px -4px rgba(0, 0, 0, 0.55);
-  transition: transform var(--dur-fast) var(--ease-spring);
+  transition: transform var(--dur-press) var(--ease-out);
 }
 
 .deck-card:not(:first-child) {
   margin-top: calc(var(--peek) - var(--card-h));
 }
 
-/* Lifts out of the stack on press, the way you'd slide one card free. */
+/* Lifts out of the stack on press, the way you'd slide one card free.
+   The ONE press in the app that is not scale-and-dim, and deliberately: these
+   cards overlap, so a scale would slide a card under its neighbour, and a card
+   that dims as it comes toward you reads backwards. It takes the shared
+   duration and curve, which is the part that has to match. */
 .deck-card:active { transform: translateY(-4px); }
 
 .deck-card__title {
@@ -232,10 +252,16 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
               border-color var(--dur-base) var(--ease-out);
 }
-.pick-me:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.pick-me:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-dim);
+}
+/* Keeps its opacity: it scrolls WITH the page rather than floating over it,
+   so there is nothing passing behind it to show through. */
 .pick-me:disabled { opacity: 0.55; cursor: default; }
 
 /* ---------------- Last Call (intensity pips) ---------------- */
@@ -270,7 +296,7 @@
 .chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; }
 
 .chip {
-  min-height: 40px;
+  min-height: var(--control-sm);
   padding: var(--sp-2) var(--sp-4);
   border: var(--border-width) solid color-mix(in srgb, var(--category-ink) 45%, transparent);
   border-radius: var(--radius-pill);
@@ -279,9 +305,10 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.chip:active { transform: scale(var(--press-scale)); }
+.chip:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 
 /* ---------------- Playing cards ---------------- */
 .pcard {
@@ -473,11 +500,14 @@
   box-shadow:
     0 3px 0 -1px color-mix(in srgb, var(--category) 35%, #000 65%),
     0 8px 14px -10px rgba(0, 0, 0, 0.5);
-  transition: transform var(--dur-fast) var(--ease-spring),
-              opacity var(--dur-base) var(--ease-out),
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
               background var(--dur-base) var(--ease-out);
 }
-.lw__letter:active:not(:disabled) { transform: translateY(2px) scale(0.96); }
+.lw__letter:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-dim);
+}
 
 /* Locked letters stay visible — the group needs to see what's gone. */
 .lw__letter[data-locked] {
@@ -505,10 +535,11 @@
   color: var(--text);
   text-align: left;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
               border-color var(--dur-base) var(--ease-out);
 }
-.roster__prompt:active { transform: scale(var(--press-scale)); }
+.roster__prompt:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 .roster__prompt:hover { border-color: var(--text-muted); }
 
 .roster__prompt-label {
@@ -524,21 +555,80 @@
 .roster {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  /* One gap for the whole column. Every row is a real row with real height —
+     see RosterBar, which stopped rendering the empty ones — so this spacing
+     is honest and the tile is symmetric in every state. */
+  gap: var(--sp-3);
   padding: var(--sp-3);
   margin-bottom: var(--sp-3);
   border: var(--border-width) solid var(--border-soft);
   border-radius: var(--radius-lg);
 }
 
+/* The tile says what it is, and Clear sits at the end of that line rather
+   than under the field. A destructive action belongs beside the thing it
+   destroys, not below the control you use most. */
+.roster__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  /* The label is type, not a control, so the row is set by the button in it.
+     Reserving that height keeps the header the same whether Clear is showing
+     or not — the tile must not resize when the last name is removed. */
+  min-height: var(--control-sm);
+  /* Optical inset: the label is flush type where the rows below are pills
+     with their own inner padding, so it needs a nudge to line up with them. */
+  padding-left: var(--sp-2);
+}
+
+.roster__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* A pill, not a text link. Everything else pressable in the app is a shape
+   you can aim at, and this was the one underlined-looking exception. Ghost
+   rather than filled: it is destructive, so it should be findable without
+   competing with Add. */
+.roster__clear {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: var(--control-sm);
+  padding: 0 var(--sp-3);
+  border: var(--border-width) solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
+              border-color var(--dur-base) var(--ease-out);
+}
+.roster__clear:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+.roster__clear:hover { border-color: var(--text-muted); }
+
 .roster__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 
+/* --control-sm, and the tier matters. A name pill is a label you can dismiss,
+   not a control you aim at — at --control-md it carried 48px of height around
+   a 14px name, which made two players fill a third of Home. */
 .roster__chip {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  min-height: 36px;
-  padding: 0 var(--sp-3);
+  min-height: var(--control-sm);
+  padding: 0 var(--sp-2) 0 var(--sp-3);
   border: none;
   border-radius: var(--radius-pill);
   background: var(--control-bg);
@@ -547,17 +637,31 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.roster__chip:active { transform: scale(0.92); }
+.roster__chip:active { transform: scale(var(--press-scale-sm)); opacity: var(--press-dim); }
+
+/* The × reads as part of the pill rather than as punctuation after the name:
+   its own round well, sized so the whole chip is still one tap target. */
+.roster__chip-x {
+  display: grid;
+  place-items: center;
+  width: var(--sp-5);
+  height: var(--sp-5);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--control-text) 12%, transparent);
+  font-size: var(--fs-sm);
+  line-height: 1;
+}
 
 .roster__add { display: flex; gap: var(--sp-2); }
 
 .roster__input {
   flex: 1;
   min-width: 0;
-  min-height: 40px;
-  padding: 0 var(--sp-3);
+  min-height: var(--control-md);
+  padding: 0 var(--sp-4);
   border: var(--border-width) solid var(--border-soft);
   border-radius: var(--radius-pill);
   background: transparent;
@@ -569,9 +673,11 @@
 }
 .roster__input::placeholder { color: var(--text-muted); }
 
+/* Matches the field's height exactly. That is what makes the pair read as one
+   control rather than as a button dropped in beside a field. */
 .roster__go {
-  min-height: 40px;
-  padding: 0 var(--sp-4);
+  min-height: var(--control-md);
+  padding: 0 var(--sp-5);
   border: none;
   border-radius: var(--radius-pill);
   background: var(--control-bg);
@@ -582,19 +688,19 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
+              background var(--dur-fast) var(--ease-out);
 }
-.roster__go:disabled { opacity: 0.4; cursor: default; }
-
-.roster__clear {
-  align-self: flex-start;
-  padding: var(--sp-1) 0;
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  font-size: var(--fs-xs);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  cursor: pointer;
+.roster__go:active:not(:disabled) { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+/* A paler FILL, not a transparent button. At 40% opacity the white pill
+   composited to a muddy grey that read as broken rather than as unavailable;
+   this lands on the shell instead, which is the colour it is actually sitting
+   on. Same reasoning as `.btn:disabled`. */
+.roster__go:disabled {
+  background: color-mix(in srgb, var(--control-bg) 28%, var(--shell-bg));
+  color: color-mix(in srgb, var(--control-text) 55%, var(--shell-bg));
+  cursor: default;
 }
 
 /* ---------------- Vote pad ---------------- */
@@ -615,7 +721,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  min-height: 46px;
+  min-height: var(--control-md);
   padding: 0 var(--sp-3);
   border: var(--border-width) solid color-mix(in srgb, var(--category-ink) 40%, transparent);
   border-radius: var(--radius-pill);
@@ -625,11 +731,12 @@
   font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
               background var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
-.votepad__player:active { transform: scale(0.94); }
+.votepad__player:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 
 /* A vote fills the chip — countable at a glance from across a table. */
 .votepad__player[data-voted] {
@@ -848,7 +955,7 @@
 }
 
 .survivor__player {
-  min-height: 38px;
+  min-height: var(--control-sm);
   padding: 0 var(--sp-2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -861,9 +968,10 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
   cursor: pointer;
-  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.survivor__player:active { transform: scale(0.93); }
+.survivor__player:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 /* Out, not gone — the table still wants to see who fell. */
 .survivor__player[data-out] { opacity: 0.4; text-decoration: line-through; }
 
@@ -951,7 +1059,7 @@
   display: grid;
   place-items: center;
   width: 56px;
-  height: 56px;
+  height: var(--control-md);
   border: 2px solid var(--card-ink);
   border-radius: var(--radius-pill);
   background: transparent;
@@ -961,9 +1069,15 @@
   font-weight: var(--fw-black);
   line-height: 1;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring), opacity var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.imp-count__step:active:not(:disabled) { transform: scale(0.88); }
+.imp-count__step:active:not(:disabled) {
+  transform: scale(var(--press-scale-sm));
+  opacity: var(--press-dim);
+}
+/* Solid ground — this sits on the white card stock, never over a scroller,
+   so opacity has nothing to reveal. See the note on `.btn:disabled`. */
 .imp-count__step:disabled { opacity: 0.25; cursor: default; }
 
 .imp-count__n {
@@ -987,25 +1101,133 @@
   gap: var(--sp-3);
 }
 
-/* The grid scrolls, not the screen — the Back button stays grounded. */
+/* ---------------------------------------------------------------
+   THE BUTTON FLOATS OVER THE CARDS.
+
+   The grid used to stop short of the bottom edge to leave a strip of
+   pack colour for the Back button to sit on, and the cards were cut
+   flat on that line. Two attempts at softening the cut failed for the
+   same reason: a band painted over the strip also covers the button,
+   and the button is the only control on the screen.
+
+   So the strip is gone. The scroller runs PAST the screen's bottom
+   inset — hence the negative margin — and the cards run off the edge
+   of the display, which is what a grid of options should do. The Back
+   button comes back up over them as a solid pill.
+
+   The fade moves to the TOP, where it is actually needed: cards
+   scrolling up under the header dissolve instead of being sliced by
+   it. Nothing is painted over the button, because nothing is painted.
+   --------------------------------------------------------------- */
+.picker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--sp-3);
+  margin-bottom: calc(var(--action-inset) * -1);
+}
+
+/* The ramp's length is written by the scroll handler — 0 at rest, so the mask
+   is a no-op and the first row of cards is untouched, growing as content goes
+   under the top edge. See `onScroll` in CategoryPicker for why it is a length
+   rather than an on/off. */
 .picker__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-ramp, 0px));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-ramp, 0px));
+}
+
+/* Grounded against the bottom of the display rather than sitting in the
+   column, so it clears the home indicator by --action-inset exactly like
+   every other primary action in the app. */
+.picker > .actions {
+  position: absolute;
+  inset-inline: 0;
+  bottom: var(--action-inset);
+  z-index: 5;
+}
+
+/* ---------------------------------------------------------------
+   PROGRESSIVE BLUR UNDER THE BUTTON.
+
+   Three stacked SIBLINGS, not one filter with a mask. Each sits on
+   top of the last and re-blurs its output, so the radii compound
+   downward into a ramp; one filter with a gradient mask leaves a
+   seam where the mask crosses halfway, and a few independent bands
+   at fixed radii read flat because the eye finds the seams.
+
+   Blur ONLY — no colour scrim, deliberately. A scrim over this strip
+   is what greyed the Back button out in an earlier attempt. The
+   button sits above this in the stack and stays fully opaque; all
+   this does is give the cards passing behind it somewhere to recede
+   to, which is the depth being asked for.
+
+   Three layers is the cap, and it is a performance number: every
+   backdrop-filter costs the compositor its own snapshot-and-blur of
+   the region behind it, every frame, over a live scroller.
+   --------------------------------------------------------------- */
+.picker__depth {
+  position: absolute;
+  /* Out past the screen's own gutters, so the blur runs edge to edge of the
+     display rather than stopping at the width of the tiles — a band that ends
+     on the column's edge draws a line exactly where it is trying not to.
+     `.screen` pads by --sp-4 horizontally; this gives that back. */
+  inset-inline: calc(var(--sp-4) * -1);
+  bottom: 0;
+  height: calc(var(--control-height) + var(--action-inset) * 2);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.picker__depth > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* Radii are deliberately mild — the effect should read as content receding,
+   not as frosted glass. The windows stop short of the top so the mildest
+   layer never blurs a card that is nowhere near the button. */
+.picker__depth > span:nth-child(1) {
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 34%, transparent 78%);
+  mask-image: linear-gradient(to top, #000 0%, #000 34%, transparent 78%);
+}
+.picker__depth > span:nth-child(2) {
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 16%, transparent 54%);
+  mask-image: linear-gradient(to top, #000 0%, #000 16%, transparent 54%);
+}
+.picker__depth > span:nth-child(3) {
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 30%);
+  mask-image: linear-gradient(to top, #000 0%, transparent 30%);
 }
 
 .picker__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--sp-2);
-  padding-bottom: var(--sp-2);
+  /* Reserves the floating button and the gaps either side of it, so the last
+     row can be scrolled clear of it rather than resting underneath. */
+  padding-bottom: calc(var(--control-height) + var(--action-inset) * 2);
 }
 
 .picker__card {
   display: flex;
   align-items: center;
-  min-height: 74px;
+  /* A card, not a control — its height comes from two lines of a category
+     name. Derived from the scale rather than added to it, so it still moves
+     with the tokens instead of being a fourth number. */
+  min-height: calc(var(--control-md) * 1.5);
   padding: var(--sp-3);
   border: 2px solid transparent;
   border-radius: var(--radius-lg);
@@ -1019,15 +1241,18 @@
   text-wrap: balance;
   cursor: pointer;
   box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.25);
-  transition: transform var(--dur-fast) var(--ease-spring);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.picker__card:active { transform: scale(0.95); }
+.picker__card:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 
-/* Custom spans the row and inverts, so it reads as an action among options. */
+/* Inverts and spans the width, so it reads as an action rather than as one of
+   the options. It sits above the scroller, not in it — see CategoryPicker. */
 .picker__card--custom {
-  grid-column: 1 / -1;
+  flex: none;
+  width: 100%;
   justify-content: center;
-  min-height: 60px;
+  min-height: var(--control-height);
   background: transparent;
   border-color: var(--category-ink);
   color: var(--category-ink);
@@ -1161,10 +1386,10 @@
   font-weight: var(--fw-bold);
   text-align: left;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-spring),
-              opacity var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
-.rank__item:active { transform: scale(0.98); opacity: 0.85; }
+.rank__item:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 
 /* An unranked row keeps its slot number blank rather than collapsing, so the
    list doesn't reflow as it fills — the items must stay where the Ranker's

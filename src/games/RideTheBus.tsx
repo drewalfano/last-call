@@ -150,7 +150,13 @@ export function RideTheBus({ mode, onBack }: Props) {
 
   return (
     <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader title={mode.title} subtitle={subtitle} onBack={onBack} />
+      {/* Whose turn it is, and which round — both live. */}
+      <GameHeader
+        title={mode.title}
+        subtitle={subtitle}
+        subtitleTone="content"
+        onBack={onBack}
+      />
 
       <div className="focal rtb">
         {s.phase === "results" ? (

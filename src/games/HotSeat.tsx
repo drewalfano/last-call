@@ -140,7 +140,13 @@ export function HotSeat({ mode, onBack }: Props) {
 
   return (
     <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader title={mode.title} subtitle={`${name} · ${asked} of ${ROUND_LENGTH}`} onBack={onBack} />
+      {/* Whose seat it is — the thing the phone is being handed over for. */}
+      <GameHeader
+        title={mode.title}
+        subtitle={`${name} · ${asked} of ${ROUND_LENGTH}`}
+        subtitleTone="content"
+        onBack={onBack}
+      />
       <div className="focal">
         <PromptCard
           eyebrow={toGroup ? "Everyone but them answers" : `${name} answers`}

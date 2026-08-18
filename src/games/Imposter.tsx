@@ -120,9 +120,24 @@ export function Imposter({ mode, onBack }: Props) {
     }
   }, [s.phase, s.at, s.count]);
 
+  /**
+   * Only the reveal counter is live data. "Set up the round" and "Pick a
+   * category" name where you are and belong under the title like every other
+   * state label — blown up and centred, a setup screen announced itself louder
+   * than the thing it was setting up.
+   */
+  const labelIsLive = s.phase === "cover" || s.phase === "role";
+
   return (
     <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader title={mode.title} subtitle={label} onBack={onBack} />
+      {/* Which reveal you are on — the whole game is passing the phone in
+          the right order, so that one cannot be a caption. */}
+      <GameHeader
+        title={mode.title}
+        subtitle={label}
+        subtitleTone={labelIsLive ? "content" : "label"}
+        onBack={onBack}
+      />
 
       {/* ---------- Setup ---------- */}
       {s.phase === "setup" && (
@@ -174,7 +189,7 @@ export function Imposter({ mode, onBack }: Props) {
               className="btn btn--ghost"
               onClick={() => setS((prev) => ({ ...prev, phase: "picking" }))}
             >
-              All categories
+              Categories
             </button>
           </div>
 
