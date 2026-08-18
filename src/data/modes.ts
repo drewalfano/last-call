@@ -77,16 +77,16 @@ export const MODES: ModeDef[] = [
     color: "--cat-ride-the-bus",
   },
   {
-    id: "say-the-same-thing",
-    title: "Say the Same Thing",
-    tagline: "Two people, one word. Keep converging.",
-    color: "--cat-say-the-same-thing",
-  },
-  {
     id: "rank-it",
     title: "Rank It",
     tagline: "Guess how they'd rank it.",
     color: "--cat-rank-it",
+  },
+  {
+    id: "say-the-same-thing",
+    title: "Say the Same Thing",
+    tagline: "Two people, one word. Keep converging.",
+    color: "--cat-say-the-same-thing",
   },
   {
     id: "the-number-game",
