@@ -1673,6 +1673,37 @@
    against a particular pack. */
 .num__bid-n[data-low] { animation: pulse 600ms var(--ease-in-out) infinite; }
 
+/* ---------------------------------------------------------------
+   THE REVEAL: EVERY ITEM SLIDES OUT OF THE SPOT YOU PUT IT IN.
+
+   The list arrives in the Ranker's real order, and each row starts
+   at the row the GROUP guessed it into — `--rows-off` is that
+   distance, in rows, set per item in RankIt. So the answer assembles
+   itself out of the group's attempt rather than just replacing it,
+   and how far a row travels is how wrong it was.
+
+   The ones they got right travel nothing, which is what makes the
+   moment read: they are already home while everything else is still
+   moving. Staggered from the top so the eye can follow it.
+
+   The offset is a row plus a gap — `100%` of the row's own height,
+   so it stays right if the row's height ever changes.
+   --------------------------------------------------------------- */
+@keyframes rank-settle {
+  from { transform: translateY(calc(var(--rows-off, 0) * (100% + var(--sp-2)))); }
+  to { transform: none; }
+}
+
+.rank__list--compare .rank__row {
+  animation: rank-settle var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 6) * 45ms);
+}
+
+/* Motion is the flourish, never the thing that makes the screen readable. */
+@media (prefers-reduced-motion: reduce) {
+  .rank__list--compare .rank__row { animation: none; }
+}
+
 /* ---------------- Rank It: the comparison ---------------- */
 .rank__list--compare { gap: var(--sp-2); }
 
@@ -1704,7 +1735,20 @@
   color: var(--category-ink);
 }
 
-.rank__cols { display: flex; flex-direction: column; min-width: 0; }
+.rank__cols { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+/* The tell for a row they got right. The row already turns the pack colour,
+   but that reads as decoration until something names it — and on the paler
+   packs the difference between a hit and a miss was a change of background
+   you had to compare two rows to notice. */
+.rank__tick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--control-md);
+  margin-right: var(--sp-1);
+  color: var(--category-ink);
+}
 
 .rank__actual {
   font-size: var(--fs-lg);

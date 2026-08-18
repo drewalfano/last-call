@@ -202,14 +202,40 @@ export function RankIt({ mode, onBack }: Props) {
             {order.map((item, i) => {
               const got = guess[i];
               const hit = got === item;
+              /* How far this item travels to reach its real place: the row it
+                 was guessed into, minus the row it belongs in. The reveal
+                 animates from there, so every item slides out of the position
+                 the group put it in — and the ones they got right have
+                 nowhere to go, which is the tell. */
+              const rowsOff = guess.indexOf(item) - i;
               return (
                 <li key={item}>
-                  <span className="rank__row" data-hit={hit || undefined}>
+                  <span
+                    className="rank__row"
+                    data-hit={hit || undefined}
+                    style={{
+                      ["--rows-off" as string]: rowsOff,
+                      ["--i" as string]: Math.min(i, 6),
+                    }}
+                  >
                     <span className="rank__pos">{i + 1}</span>
                     <span className="rank__cols">
                       <span className="rank__actual">{item}</span>
                       {!hit && <span className="rank__guess">you said {got}</span>}
                     </span>
+                    {hit && (
+                      <span className="rank__tick" aria-label="you got this one right">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path
+                            d="M5 13l4.5 4.5L19 7"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    )}
                   </span>
                 </li>
               );
