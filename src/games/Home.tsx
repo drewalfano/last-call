@@ -111,20 +111,35 @@ const RING_PATH = RING_RAMP.length * RING_SPAN;
  * Both ends of the ramp meet at the bottom midpoint, so without this the line
  * springs into existence already at full strength and is cut off at full
  * strength — a bright nick appearing and vanishing on one spot. Holding the
- * pieces nearest each end below full opacity turns that into a swell: the
- * line gathers as it leaves the bottom and thins back out as it returns.
+ * pieces nearest each end below full turns that into a swell: the line
+ * gathers as it leaves the bottom and thins back out as it returns.
  *
- * Smoothstep rather than a straight ramp, so the brightness eases off its
- * ceiling instead of turning a corner — a linear taper still reads as an
- * edge, just a slanted one. Over EDGE_PIECES of a 321-piece ring that is
- * about 100px at each end, which is the width the swell needs to be read as
- * one rather than noticed as a fade.
+ * EDGE_FLOOR is why it does not go all the way to zero, and it is not a
+ * softening of the softening. At zero the bottom midpoint is the one place on
+ * the button that NEVER takes colour — not dim at the start and bright later,
+ * but permanently unlit, because the ceiling is a property of where a piece
+ * is rather than of when. A dead notch, sitting exactly where the eye is
+ * drawn to watch the line arrive.
+ *
+ * Sliding the birth point sideways does not fix that: the dim stretch is
+ * centred on wherever the birth point is, so it slides with it. Only lifting
+ * the floor fixes it. At EDGE_FLOOR the midpoint is lit enough to read as
+ * part of the line — the bloom carries it further — while still arriving far
+ * below the body's full strength, which is all the softness was ever for.
+ *
+ * EDGE_PIECES comes down to suit: with a floor to start from, the climb to
+ * full has less distance to cover, and a shorter ramp keeps the dim stretch
+ * from spreading across the whole bottom edge. Smoothstep rather than a
+ * straight ramp, so the brightness eases off its ceiling instead of turning
+ * a corner — a linear taper still reads as an edge, just a slanted one.
  */
-const EDGE_PIECES = 40;
+const EDGE_PIECES = 24;
+const EDGE_FLOOR = 0.35;
 
 function edgeOpacity(i: number): number {
   const t = Math.min(1, Math.min(i, RING_RAMP.length - 1 - i) / EDGE_PIECES);
-  return +(t * t * (3 - 2 * t)).toFixed(3);
+  const eased = t * t * (3 - 2 * t);
+  return +(EDGE_FLOOR + (1 - EDGE_FLOOR) * eased).toFixed(3);
 }
 
 /**
