@@ -13,6 +13,50 @@ interface HomeProps {
 const REVEAL_MS = 480;
 
 /**
+ * How much of the button's edge the travelling line covers, as a divisor of
+ * the perimeter — 3 is a third of the way round.
+ */
+const RING_SPAN = 3;
+
+/**
+ * Sub-segments per pack. This is what turns eleven flat colours into a
+ * gradient that follows the path.
+ *
+ * An svg stroke CAN take a gradient, but a `linearGradient` maps to the
+ * bounding box rather than along the stroke: the line would be one colour on
+ * the left cap, a sweep across the top, and mirrored on the way back. There
+ * is no paint server that runs along a path. So the ramp is built out of
+ * abutting pieces instead, each a `color-mix` between the pack it is leaving
+ * and the pack it is heading for — enough of them that the steps close up and
+ * read as a blend.
+ *
+ * Six is the number where banding stops being visible at the size this
+ * actually draws: a third of a ~870px perimeter is ~290px, over 66 pieces,
+ * so each is ~4px. Dropping this to 1 is the whole way back to eleven hard
+ * bands, which is the same design with the blending turned off.
+ */
+const RING_STEPS = 6;
+
+/**
+ * The eleven packs in dealing order, blended into each other and closing the
+ * loop back onto the first — so the streak has no seam at either end.
+ */
+const RING_RAMP = MODES.flatMap((mode, i) => {
+  const next = MODES[(i + 1) % MODES.length];
+  return Array.from(
+    { length: RING_STEPS },
+    (_, step) =>
+      // oklab, not srgb: mixing saturated hues in srgb dips through grey at
+      // the midpoint, which on this ramp put a dull band between every pair.
+      `color-mix(in oklab, var(${mode.color}) ${
+        100 - (step * 100) / RING_STEPS
+      }%, var(${next.color}))`,
+  );
+});
+
+const RING_PATH = RING_RAMP.length * RING_SPAN;
+
+/**
  * Whether the deck has already dealt itself out this session.
  *
  * Module scope, not state: Home is unmounted every time you open a mode and
@@ -77,7 +121,56 @@ export function Home({ onPick }: HomeProps) {
       <RosterBar />
 
       <button className="pick-me" onClick={pickForMe} disabled={!!picked}>
-        {picked ? "Dealing…" : "Pick a game for me"}
+        {/* One line running round the button's grey edge, a third of the way
+            round, graded through all eleven packs — see .pick-me__ring. The
+            grey stroke is the button's own border and stays put; this only
+            travels over it. */}
+        <svg
+          className="pick-me__ring"
+          style={{ ["--path" as string]: RING_PATH }}
+          aria-hidden="true"
+        >
+          <defs>
+            {/* The bloom, done as ONE filter on the whole group rather than a
+                second blurred copy of the line — 66 more rects and 66 more
+                animations to light the first 66 is a lot of machinery for a
+                soft edge. feMerge lays the blur down twice under the sharp
+                original, which is what gives it a centre bright enough to
+                read as a glow rather than as the line being out of focus.
+
+                The region is generous on purpose: a filter clips to its own
+                box, and a stdDeviation of 4 carries roughly 12px, which is
+                well outside a 60px-tall bounding box. Cropping it would put
+                a straight edge across the bloom. */}
+            <filter
+              id="pick-me-glow"
+              x="-25%"
+              y="-150%"
+              width="150%"
+              height="400%"
+              colorInterpolationFilters="sRGB"
+            >
+              <feGaussianBlur stdDeviation="4" result="bloom" />
+              <feMerge>
+                <feMergeNode in="bloom" />
+                <feMergeNode in="bloom" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <g filter="url(#pick-me-glow)">
+            {RING_RAMP.map((colour, i) => (
+              <rect
+                key={i}
+                pathLength={RING_PATH}
+                style={{ stroke: colour, ["--seg" as string]: i }}
+              />
+            ))}
+          </g>
+        </svg>
+        <span className="pick-me__label">
+          {picked ? "Dealing…" : "Pick a game for me"}
+        </span>
       </button>
 
       <nav

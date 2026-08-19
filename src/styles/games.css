@@ -366,7 +366,57 @@
 }
 
 /* ---------------- Pick a game for me ---------------- */
+/* ---------------------------------------------------------------
+   THE ONE BUTTON THAT HAS TO ASK.
+
+   Every other control on Home is a card you already want; this one is
+   an invitation to let the app choose, which nothing about a plain
+   outlined pill says. So the grey pill keeps its outline, and one
+   short line runs round it, on loop: the eleven packs in dealing
+   order, butted hard against each other, a fifth of the way round the
+   button end to end.
+
+   WHY AN SVG AND NOT A BORDER. Three earlier attempts are worth
+   naming, because each looks reasonable written down and wrong on the
+   screen.
+
+   A gradient in the border — the two-background padding-box /
+   border-box trick — BLENDS. Eleven packs melting into each other is
+   a smear the length of the button: no mode is its own colour
+   anywhere, which is the exact opposite of what the edge is for.
+
+   A conic gradient, hard stops or not, maps colour to ANGLE. On a
+   pill 356 wide by 60 tall the angle swings fastest where the edge
+   runs nearest the centre, so the arcs come out wildly unequal —
+   several crushed into the middle of the bottom edge, the rest
+   stretched round the caps.
+
+   And colouring the WHOLE edge, however cleanly, makes the button
+   shout. It sits above a stack of eleven already-saturated cards; a
+   full rainbow ring competes with the deck it is offering to pick
+   from. A short line moving over a grey pill reads as one thing in
+   motion rather than as another coloured object.
+
+   A stroked path has none of these problems. `pathLength`
+   renormalises the perimeter to MODES.length * RING_SPAN units at any
+   button size, so `stroke-dasharray: 1px ...` is exactly one mode's
+   share of the line, and offsetting each arc by its own index butts
+   all eleven into one contiguous streak. Equal lengths, hard stops,
+   and it follows the pill exactly because it IS the pill.
+
+   Nothing is measured and no script runs: the geometry is CSS, so the
+   line re-fits on rotation and at the tablet's taller control height
+   on its own.
+
+   UNITS MATTER HERE. The offsets are `px`, not bare numbers. With no
+   viewBox one user unit IS one css pixel, so they mean the same
+   thing — but `stroke-dashoffset` is a <length> in CSS, and a
+   unitless -55 is invalid where the equivalent SVG attribute would
+   have been fine. It does not throw; the keyframe is simply dropped
+   and the line sits still, which is a stubborn thing to debug.
+   --------------------------------------------------------------- */
 .pick-me {
+  position: relative;
   width: 100%;
   min-height: var(--control-height);
   margin-bottom: var(--sp-4);
@@ -384,6 +434,77 @@
               opacity var(--dur-press) ease-out,
               border-color var(--dur-base) var(--ease-out);
 }
+
+.pick-me__label { position: relative; }
+
+.pick-me__ring {
+  position: absolute;
+  /* NEGATIVE, and by exactly the border width. An absolutely positioned
+     child is offset from its containing block's PADDING box, so `inset: 0`
+     would stop inside the grey stroke and the colours would run alongside
+     it rather than over it. -2px starts the svg on the border box, which is
+     the ring we are tracing.
+
+     The size has to be SPELLED OUT, and this is the one thing here that
+     does not behave the way the rest of layout does: an svg is a REPLACED
+     element, so setting all four insets does not stretch it. With `width`
+     left auto it falls back to the replaced default — 300x150 — and
+     positions that, which is a wrong ring that still draws a perfectly
+     convincing coloured line, just not on the button's edge. 100% of the
+     padding box plus the two borders is the border box. */
+  inset: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  /* No viewBox, deliberately: without one the svg's user units ARE css
+     pixels, so the rect below can be sized in percentages and calc()
+     against the button itself. A viewBox would scale the stroke and pull
+     the caps out of round as the button changes width. */
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pick-me__ring rect {
+  /* Geometry as CSS rather than attributes, so it can reference the same
+     token the button's height comes from — the pill's radius is half its
+     height, and that height is 60 on a phone and 84 on a tablet. Inset by
+     half the stroke width so the 2px line lands exactly on the 2px border
+     rather than straddling its outer edge. */
+  x: 1px;
+  y: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  rx: calc(var(--control-height) / 2);
+  ry: calc(var(--control-height) / 2);
+  fill: none;
+  stroke-width: 2;
+  /* One unit shown, the rest of the lap hidden. --path is MODES.length *
+     RING_SPAN, set from Home.tsx alongside the pathLength it has to match. */
+  stroke-dasharray: 1px calc(var(--path) * 1px - 1px);
+  stroke-dashoffset: calc(var(--seg) * -1px);
+  /* Butt caps, which is the default and the whole point — a round or square
+     cap would overhang into the next mode's share and the stops would stop
+     being hard. */
+  stroke-linecap: butt;
+  /* Slow on purpose. This sits on the screen the app opens to and never
+     stops, so it has to be the kind of movement you notice once and then
+     read past — at anything quicker it is a loading spinner, and a
+     permanent loading spinner on a home screen is a bug. */
+  animation: pick-me-deal 9s linear infinite;
+}
+
+/* Exactly one lap, so every arc lands where it started and the loop has no
+   seam to catch. */
+@keyframes pick-me-deal {
+  to { stroke-dashoffset: calc(var(--seg) * -1px - var(--path) * 1px); }
+}
+
+/* Motion is the flourish, never the thing that makes the screen usable —
+   the same rule the launch animation and the picker's deal follow. Stopped,
+   the line is still there; it just holds still at the top of the pill. */
+@media (prefers-reduced-motion: reduce) {
+  .pick-me__ring rect { animation: none; }
+}
+
 .pick-me:active:not(:disabled) {
   transform: scale(var(--press-scale));
   opacity: var(--press-dim);
