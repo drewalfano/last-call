@@ -508,7 +508,7 @@ function renderScreen(
   closing: ModeId | null,
 ) {
   if (screen === null) {
-    return <Home onPick={open} returning={closing} settleAfter={CLOSE_MS} />;
+    return <Home onPick={open} returning={closing} />;
   }
 
   const mode = MODE_BY_ID[screen];

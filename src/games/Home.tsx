@@ -18,14 +18,6 @@ interface HomeProps {
    * measured is a moving target.
    */
   returning?: ModeId | null;
-  /**
-   * How long the colour takes to contract, so the card knows when to drop.
-   *
-   * Passed rather than shared through a module, because the number belongs to
-   * the animation App is running and Home only has to agree with it. A
-   * constant in a third file would be a third place to change.
-   */
-  settleAfter?: number;
 }
 
 
@@ -245,7 +237,7 @@ let dealt = false;
  * The whole app's table of contents, dealt as a stack of overlapping cards.
  * Every mode is one tap away — no menus, no settings page.
  */
-export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
+export function Home({ onPick, returning }: HomeProps) {
   /** True only on the first Home of the session. Claims it as it reads it. */
   const [dealing] = useState(() => {
     const first = !dealt;
@@ -294,16 +286,9 @@ export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
    * overlay and tells Home how long it will be; the two only have to agree on
    * one number, which is why it arrives as a prop.
    */
-  const [held, setHeld] = useState<ModeId | null>(returning ?? null);
-  /**
-   * The card on its way DOWN, which is a different state from being held up.
-   *
-   * It exists only so the fall can have a transition of its own. Without it
-   * the card takes `.deck-card`'s, which is the press — 120ms on a curve
-   * built to be over before you see it — and the drop snapped rather than
-   * settled. See .deck-card[data-settling].
-   */
+  /** The card that is on its way DOWN — see .deck-card[data-settling]. */
   const [settling, setSettling] = useState<ModeId | null>(null);
+  const wasReturning = useRef<ModeId | null>(null);
   const deckRef = useRef<HTMLElement>(null);
   const timer = useRef<number>(undefined);
   const raf = useRef<number>(undefined);
@@ -430,14 +415,25 @@ export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
    * that has already stopped. That was the fault with every version of this
    * before the card was allowed to move at all.
    */
+  /**
+   * THE CARD FALLS WHEN THE COLOUR GOES, ON THE SAME SIGNAL.
+   *
+   * Home used to time this itself: App said how long the contraction would
+   * take and a timeout here dropped the card when it was up. Two independent
+   * clocks aimed at the same instant, which is a race — a frame either way
+   * and you get the card sitting raised with nothing over it, or starting to
+   * fall while the colour is still on it. Right on the seam between the two
+   * halves, which is the one place it shows.
+   *
+   * There is no second clock now. App retires the overlay and `returning`
+   * goes null in the same commit, so the colour leaving and the card being
+   * released are not two events that agree — they are one event.
+   */
   useEffect(() => {
-    if (!held) return;
-    const t = window.setTimeout(() => {
-      setHeld(null);
-      setSettling(held);
-    }, settleAfter);
-    return () => window.clearTimeout(t);
-  }, [held, settleAfter]);
+    const previous = wasReturning.current;
+    wasReturning.current = returning ?? null;
+    if (previous && !returning) setSettling(previous);
+  }, [returning]);
 
   /* And released again once it is down, so the card goes back to carrying
      nothing but its press. SETTLE_MS is --dur-base; the two only have to
@@ -599,7 +595,7 @@ export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
             /* Held up while the closing colour lands on it, then dropped —
                and the fall is its own state, because it needs its own
                transition. See .deck-card[data-settling]. */
-            data-returning={held === mode.id || undefined}
+            data-returning={returning === mode.id || undefined}
             data-settling={settling === mode.id || undefined}
             className="deck-card"
             /* Counted from the BOTTOM of the deck, so the deal runs upward —
