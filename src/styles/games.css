@@ -86,6 +86,16 @@
   text-transform: uppercase;
 }
 
+/* The one control in the app that answered a touch with nothing.
+
+   Every other pressable thing here — the back well, the roster chip, the
+   stepper, the letter tiles, the deck — takes the shared press, and this was
+   missed rather than exempted: it is a --control-sm well in a sheet, which is
+   exactly the shape .gheader__back and .roster__chip already cover.
+
+   The icon-sized scale, not the full-width one. --press-scale-sm gives a 40px
+   target the same absolute travel that 0.97 gives a 60px button, which is the
+   rule stated on the token. */
 .sheet__close {
   display: grid;
   place-items: center;
@@ -98,7 +108,10 @@
   font-size: var(--fs-2xl);
   line-height: 1;
   cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
 }
+.sheet__close:active { transform: scale(var(--press-scale-sm)); opacity: var(--press-dim); }
 
 .setting { display: flex; flex-direction: column; gap: var(--sp-3); }
 
