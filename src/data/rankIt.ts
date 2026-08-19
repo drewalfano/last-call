@@ -51,7 +51,7 @@ export const RANK_IT: Pools<RankPrompt> = {
   ],
   night: [
     { title: "Rank these red flags, worst first", items: ["Still texts their ex", "No friends", "Rude to staff", "Won't stop talking about work", "Second phone"] },
-    { title: "Rank these from worst to least bad", items: ["Getting ghosted", "Being cheated on", "A public breakup", "Meeting their parents too early", "Finding an old photo"] },
+    { title: "Rank these dating disasters, worst first", items: ["Getting ghosted", "Being cheated on", "A public breakup", "Meeting their parents too early", "Finding an old photo"] },
     { title: "Rank these dating app sins", items: ["No photos", "Only group photos", "Gym mirror selfie", "Fish", "One-word bio"] },
     { title: "Rank these places to hook up", items: ["Their place", "Your place", "A hotel", "A car", "A festival tent"] },
     { title: "Rank these first-date spots", items: ["Bar", "Dinner", "Coffee", "A walk", "Their place"] },
