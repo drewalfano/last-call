@@ -30,6 +30,20 @@
   --fs-3xl: 2.25rem;
   --fs-4xl: 3rem;
 
+  /* ----------------------------------------------------------
+     THE PROMPT. The largest thing on any screen, and the only
+     piece of type whose JOB changes with the device: on a phone
+     it is read by whoever is holding it; on a tablet propped on a
+     table it is read by everyone at once, from up to three feet
+     away. That is a different size, not merely a bigger one.
+
+     A ramp of its own rather than a step on --fs-*, because it
+     tracks the viewport continuously and the steps do not. Here so
+     that no component has to know the numbers.
+     ---------------------------------------------------------- */
+  --fs-prompt: clamp(1.35rem, 5.6vw, 2.1rem);
+  --fs-prompt-sm: clamp(1.15rem, 4.7vw, 1.75rem);
+
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-bold: 700;
@@ -101,6 +115,22 @@
      ---------------------------------------------------------- */
   --app-max-width: 480px;
 
+  /* ----------------------------------------------------------
+     THE READING COLUMN, which is not the frame.
+
+     On a phone these are one number and this token does nothing.
+     On a tablet they part company, and the split is the point: the
+     FRAME is how wide the app may be — Home's deck, the category
+     grid, anything laid out as a board. The COLUMN is how wide a
+     CARD may be, and a card is a thing people read, so it stops
+     well short of the frame.
+
+     Keep them as one number and you must choose which to get
+     wrong: a 480px card in a 1024pt display, or a category grid
+     locked to the width of a paperback.
+     ---------------------------------------------------------- */
+  --content-max: var(--app-max-width);
+
   /* How much taller a playing card stands when it is the only one on
      screen — Kings Cup, and Ride the Bus's bus round. Added to the
      height; the card's 5/7 ratio derives the width from it. */
@@ -158,6 +188,24 @@
      ---------------------------------------------------------- */
   /* Primary and secondary actions. A thumb learns the rhythm once. */
   --control-height: 60px;
+  /* ----------------------------------------------------------
+     THE GROUNDED PRIMARY ACTION — which on a phone is simply the
+     top tier, and therefore the same number.
+
+     It exists because the three tiers are a RATIO system: two
+     controls of the same height read as one control, which is the
+     property that makes a row of them cohere. On a tablet exactly
+     ONE control should get the big arm's-length treatment — the
+     action at the bottom that everybody reaches for — and scaling
+     --control-height to get it scales chips, steppers, category
+     cards and list rows with it, because every one of those
+     derives from the same tiers. A 108px category card holding one
+     word in 18px type is not a bigger control; it is a broken one.
+
+     Hung off .btn--lg, which every mode already uses for exactly
+     one button per screen.
+     ---------------------------------------------------------- */
+  --action-height: var(--control-height);
   /* Chips, pickers, segmented options, steppers. */
   --control-md: 48px;
   /* Small chips, sheet close, name pills. */
@@ -218,7 +266,7 @@
     var(--gheader-h),
     calc(
       var(--screen-h) / 2 - var(--safe-top) - var(--sp-3)
-        - var(--card-size) / 2
+        - var(--slot-h) / 2
     )
   );
 
@@ -236,11 +284,34 @@
      button off the bottom.
      ---------------------------------------------------------- */
   --card-size: min(
-    min(100vw, var(--app-max-width)) - var(--sp-4) * 2,
+    min(100vw, var(--content-max)) - var(--sp-4) * 2,
     58lvh,
     var(--screen-h) - var(--safe-top) - var(--sp-3) - var(--action-inset)
       - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
   );
+
+  /* ----------------------------------------------------------
+     THE SLOT'S HEIGHT — the same number as its width, here.
+
+     --card-size is one value doing two jobs: how wide the slot is
+     and how tall. On a phone that is right and deliberate, because
+     the card is square and there is only one number to have.
+
+     On a tablet it is a trap, and an expensive one. The third term
+     of --card-size is a HEIGHT budget: whatever the screen has
+     left once both reserves and both insets are taken. Feed a
+     squeezed height into a value that also sets the width and a
+     short landscape screen does not get a short card — it gets a
+     small one. Measured at 1194x834 with the tablet reserves in
+     place: the budget came to 222px, so a card with 668px of
+     column available to it was drawn 222px wide, and Imposter's
+     stepper row, which needs about 312, overflowed and was clipped
+     by the card's own overflow:hidden.
+
+     So height gets its own name. Identical here; they part company
+     at the tablet breakpoint and nowhere else.
+     ---------------------------------------------------------- */
+  --slot-h: var(--card-size);
 
   /* --- Motion ---------------------------------------------- */
   /* Tactile, not linear. Spring on press, physical decay on the wheel. */
@@ -363,6 +434,167 @@
    ---------------------------------------------------------------- */
 @media (display-mode: standalone) {
   :root { --screen-h: 100lvh; }
+}
+
+/* ================================================================
+   TABLET — the breakpoint is documented at the top of this file.
+
+   ONE FACT DRIVES THE WHOLE BLOCK: the device is not held, it is
+   propped. Three to six people are around it reading the same
+   screen at the same time, from twelve inches to three feet, with
+   a drink in one hand. Nothing here is "the phone, bigger" — the
+   reading distance changed, so the type changed; the input went
+   from a held thumb to whoever's arm is nearest, so ONE target
+   changed a great deal and the rest changed a little.
+
+   Every mode inherits from here. That is the point of it being
+   here: eleven modes were not touched to make this happen.
+   ================================================================ */
+@media (min-width: 640px) and (min-height: 600px) {
+  :root {
+    /* --- Layout ------------------------------------------- */
+    /* The frame opens up; the reading column does not follow it
+       all the way. 700px is about fourteen words of prompt to a
+       line at the size below — a line you take in at a glance
+       rather than track across. */
+    --app-max-width: 980px;
+    --content-max: 700px;
+
+    /* ------------------------------------------------------
+       THE FLAT 20px DOES NOT SURVIVE THE CROSSING.
+
+       It was measured against an iPhone's home indicator, which
+       occupies about the bottom 13pt; 20px clears it with room to
+       spare and still reads as grounded rather than floating.
+
+       iPadOS reports safe-area-inset-bottom: 20px in BOTH
+       orientations, so that same flat 20px puts a primary action's
+       bottom edge exactly ON the indicator. Measured on Last
+       Call's screen in landscape: the skip button ended at y=1004
+       in a 1024pt viewport — nothing clipped, but sitting
+       underneath something, which looks the same from across a
+       table. It is also where a sleeve or the base of a glass ends
+       up when the thing is lying near-flat, which is the posture
+       this entire block is for.
+       ------------------------------------------------------ */
+    --action-inset: calc(28px + env(safe-area-inset-bottom, 0px));
+
+    /* --- Touch -------------------------------------------- */
+    /* 44pt is the floor for a thumb on a phone you are holding. It
+       is not the floor for an arm reaching across a table, at an
+       angle, by someone who has been drinking.
+
+       THE GROUNDED ACTION DOUBLES. The three tiers take a notch
+       and keep their ratios. That split is the whole reason
+       --action-height exists: the button at the bottom is the one
+       thing reached for from a seat away and can afford to be
+       enormous, while the tiers beneath it are aimed at
+       deliberately — chips, steppers, category cards, list rows —
+       and doubling those turns a page of options into a wall of
+       empty boxes.
+
+       The close button's well is the one small control that does
+       double, because it is an icon and the WELL is the target,
+       not the glyph. */
+    --action-height: 120px;
+    --control-height: 84px;
+    --control-md: 64px;
+    --control-sm: 52px;
+    --tap-target: 96px;
+
+    /* --- Type --------------------------------------------- */
+    /* The prompt leads and the furniture follows at a distance. It
+       has to: it is the one line the whole table reads at once,
+       and if the headings scale with it the screen becomes a wall
+       of type with a sentence buried in it.
+
+       The vh term keeps landscape honest — a 1366pt-wide board
+       asks for 87px on width alone, in a viewport with no height
+       to spend on it. Expect to come back to these two numbers
+       after a few evenings on a real device; the cap sat at 72px
+       first and read as shouting. */
+    --fs-prompt: clamp(2.5rem, min(6.4vw, 6vh), 4rem);
+    --fs-prompt-sm: clamp(1.95rem, min(5vw, 4.7vh), 3.125rem);
+
+    --fs-xs: 0.875rem;
+    --fs-sm: 1rem;
+    --fs-md: 1.125rem;
+    --fs-lg: 1.375rem;
+    --fs-xl: 2rem;
+    --fs-2xl: 2.5rem;
+    --fs-3xl: 3.25rem;
+    --fs-4xl: 4.5rem;
+
+    /* --- The slot, on two axes ---------------------------- */
+    /* WIDTH comes from the column and nothing else. It must not be
+       able to see the height budget — see --slot-h in the base
+       block for what happened when it could. The gutter is --sp-6
+       because that is what .screen pads by at this size.
+
+       HEIGHT is capped at the tallest card the type can actually
+       produce: four lines of prompt at the clamp's ceiling, an
+       eyebrow, a meta line and the padding, which comes to about
+       78% of the column. The card shrink-wraps inside this, so
+       every pixel of slot it does not use comes back as dead band
+       around it — a square 652px slot holding a 285px card is
+       183px of nothing above and below. Long prompts still fill
+       it; short ones stop floating in the middle of a square. */
+    --card-size: calc(min(100vw, var(--content-max)) - var(--sp-6) * 2);
+    --slot-h: min(
+      calc(var(--card-size) * 0.78),
+      58lvh,
+      var(--screen-h) - var(--safe-top) - var(--sp-6) - var(--action-inset)
+        - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
+    );
+
+    /* --- The two reserves --------------------------------- */
+    /* Same job as on a phone — the tallest variant each row can
+       produce — re-measured against the controls and type above.
+
+       --gheader-h: the bar at its 96px well, the 12px gap, two
+       lines of a 40px live line, and the padding under it:
+       96 + 12 + 88 + 12 = 208, with a little over.
+
+       --gfooter-h: a counter, a gap, the grounded action and a
+       secondary beneath it: 22 + 16 + 120 + 8 + 84 = 250, which is
+       Last Call's main screen. Anything taller scrolls, exactly as
+       it does on a phone.
+
+       BOTH ARE CAPPED AGAINST VIEWPORT HEIGHT, and that is not
+       decoration. Flat, they came to 480px of furniture on an
+       834pt landscape screen and left 250px for the card — chrome
+       outweighing the thing it frames two to one. The vh terms
+       only bite below about 900pt of height, which is to say in
+       landscape on an 11" and a mini, and there they hand the
+       difference back to the card. Landscape still wants a
+       composition of its own; this only stops it collapsing. */
+    --gheader-h: min(216px, 24vh);
+    --gfooter-h: min(264px, 33vh);
+
+    /* ------------------------------------------------------
+       WHERE THE LIVE LINE SITS — re-derived, because the rows
+       beneath it are shared out differently here.
+
+       On a phone the card is centred in the frame and the footer
+       takes what is left, so this is half the screen minus half
+       the slot. On a tablet the FOOTER is the fixed one and the
+       header takes the slack — see the grid in global.css — so the
+       same line is the screen minus the slot, the footer and both
+       insets.
+
+       These two must agree exactly, or the live line lands in one
+       place on a card screen and another on a screen with no card,
+       which is the thing this token exists to prevent. Change the
+       grid rows and change this in the same edit.
+       ------------------------------------------------------ */
+    --gheader-live-h: max(
+      var(--gheader-h),
+      calc(
+        var(--screen-h) - var(--safe-top) - var(--sp-6) - var(--action-inset)
+          - var(--slot-h) - var(--gfooter-h)
+      )
+    );
+  }
 }
 
 /* ==========================================================

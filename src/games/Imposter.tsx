@@ -138,6 +138,10 @@ export function Imposter({ mode, onBack }: Props) {
       mode={mode}
       subtitle={label}
       hideHeader={s.phase === "picking"}
+      /* The one screen in this game nobody else may read. The cover screen
+         before it is safe by construction — a name and a warning, nothing
+         more — so only the role itself opts out. */
+      isPrivate={s.phase === "role"}
       onBack={onBack}
     >
       {/* ---------- Setup ---------- */}

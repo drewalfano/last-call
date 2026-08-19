@@ -71,7 +71,9 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------------- App shell ---------------- */
-/* Portrait, single column, centered on larger screens. */
+/* A single column, centred, in either orientation. How wide the column may be
+   is --app-max-width; on a tablet the card inside it stops short of the frame.
+   See --content-max in tokens.css. */
 .app {
   min-height: var(--screen-h);
   /* Home falls back to the shell; inside a mode the pack color takes over. */
@@ -208,8 +210,21 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 6px 22px -8px rgba(0, 0, 0, 0.55);
 }
 
-/* Bigger type, same height — the rhythm holds. */
-.btn--lg { font-size: var(--fs-xl); padding: 0 var(--sp-6); }
+/* ---------------------------------------------------------------
+   --lg IS THE SCREEN'S PRIMARY ACTION.
+
+   Every mode uses it for exactly one button per screen — the one
+   that gets on with the game — which makes it the hook the
+   grounded height hangs off. On a phone --action-height IS
+   --control-height, so this is what it has always been: bigger
+   type, same height, the rhythm holds. On a tablet it becomes the
+   single control allowed to be enormous. See --action-height.
+   --------------------------------------------------------------- */
+.btn--lg {
+  min-height: var(--action-height);
+  font-size: var(--fs-xl);
+  padding: 0 var(--sp-6);
+}
 
 /* ---------------- Game header ---------------- */
 /* A column of at most two rows: the bar, and — only when the screen has live
@@ -441,6 +456,50 @@ button { font: inherit; color: inherit; }
   opacity: 0.72;
 }
 
+/* ---------------------------------------------------------------
+   TABLET: THE BAR STOPS BEING A PHONE'S BAR.
+
+   The mode name is wayfinding — read once on the way in, never
+   again — which is why on a phone it is the quietest heading on
+   screen and a step below the live line in both size and weight.
+   That reasoning was about a 480px column where the two sit a few
+   pixels apart and compete for one glance.
+
+   With 980px of bar they are not competing: the name is hard left,
+   the live line is centred a row below, and distance is what keeps
+   them apart rather than contrast. So the name can be read at the
+   size the rest of the screen is now set at. It keeps --fw-bold
+   against the live line's --fw-black, which is the half of the
+   original argument that still applies.
+
+   ONE INSET, ALL THREE EDGES. The phone's 12 top / 16 sides is a
+   deliberate asymmetry — the top is already held off by the status
+   bar's safe area, so it needs less of its own. That does not
+   survive the jump in scale: against a 96px well and a 32px name,
+   12px above and 16px beside read as no inset at all, and both
+   ends of the bar looked pinned to the display rather than placed
+   in it. Equal on all three, so the name and the close button sit
+   in the corners of ONE square inset instead of two different
+   ones. The back button's extra 4px — which existed to push it
+   20px clear of a 16px gutter — comes off with it, or the right
+   edge lands 4px further out than the left.
+
+   The X itself is a fixed 24px in the markup, and a 24px glyph in
+   a 96px well reads as a mis-drawn button rather than a big one.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .screen { padding: var(--sp-6) var(--sp-6) var(--action-inset); }
+
+  .gheader__title { font-size: var(--fs-xl); }
+
+  .gheader__back { margin-right: 0; }
+
+  .gheader__back svg {
+    width: 38px;
+    height: 38px;
+  }
+}
+
 /* ---------------- Focal card (game screens) ---------------- */
 /* ---------------------------------------------------------------
    Fixed furniture. The card starts at the top of the focal area and
@@ -516,7 +575,7 @@ button { font: inherit; color: inherit; }
           - var(--card-size) / 2
       )
     )
-    var(--card-size)
+    var(--slot-h)
     minmax(var(--gfooter-h), 1fr);
 }
 
@@ -690,13 +749,13 @@ button { font: inherit; color: inherit; }
 
 .card__prompt {
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 5.6vw, 2.1rem);
+  font-size: var(--fs-prompt);
   font-weight: var(--fw-bold);
   line-height: var(--lh-snug);
   text-wrap: balance;
 }
 
-.card__prompt--sm { font-size: clamp(1.15rem, 4.7vw, 1.75rem); }
+.card__prompt--sm { font-size: var(--fs-prompt-sm); }
 
 .card__meta {
   font-size: var(--fs-sm);
@@ -737,6 +796,77 @@ button { font: inherit; color: inherit; }
 @keyframes card-flip-in {
   from { transform: rotateY(-180deg); }
   to { transform: rotateY(0deg); }
+}
+
+/* ---------------------------------------------------------------
+   TABLET: THE CARD STOPS FILLING ITS SLOT.
+
+   The slot is a square and the card filled it, which is right on a
+   phone where that square is 358px and two lines of prompt very
+   nearly fill it anyway. Blow the square up and the same two lines
+   sit in the upper middle with the bottom half empty — which does
+   not read as a layout choice, it reads as something that failed
+   to load.
+
+   So the HEIGHT shrink-wraps and the width does not. The width was
+   never the problem: the column is already capped well short of
+   the frame by --content-max, and a card that keeps the column's
+   width stays recognisably the same object it is on a phone. Only
+   the vertical was lying about how much content there is.
+
+   `top: 0; bottom: 0` with an auto block margin is what centres
+   it — the card's middle stays on the slot's middle, so a one-line
+   prompt and a four-line one still centre on the same point, and
+   the flip still has two cards occupying one box to turn between.
+   The min-height is the floor that keeps it a card; without it a
+   two-word prompt draws a letterbox strip.
+
+   The padding is MORE on the sides than the top, which is the way
+   round a phone cannot afford. Horizontal padding is what sets the
+   line length, and 64px type running to within 24px of the stock's
+   edge reads as text poured in rather than set.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .cardstage > .card,
+  .slot > .card {
+    height: fit-content;
+    min-height: 42%;
+    max-height: 100%;
+    margin-block: auto;
+    padding: var(--sp-6) var(--sp-10);
+  }
+}
+
+/* ---------------------------------------------------------------
+   THE TWO SCREENS THAT MUST NOT BE READABLE ACROSS THE TABLE.
+
+   Everything else in this app is read aloud or shows public state,
+   so scaling it up for a shared board is a straight win. Two
+   screens are the exception, and for them the board treatment is
+   not a smaller win — it breaks the game outright:
+
+     Imposter's role screen — the word, or the news that you do not
+       have one. The screen says "Don't let anyone else see the
+       screen" and the type would then be set for everyone to.
+     Rank It's private pass — one player's order, which the rest of
+       the table is about to spend the round guessing.
+
+   They keep the phone's prompt size and the phone's column width
+   inside the tablet's slot, so the card comes out portrait and
+   modest in the middle of a large screen — the right shape for
+   something you angle away from people.
+
+   Deliberately NOT a --slot-h override: that would move the slot,
+   and the live line is positioned against it. The slot stays; the
+   card inside it narrows.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .screen--private {
+    --fs-prompt: clamp(1.35rem, 5.6vw, 2.1rem);
+    --fs-prompt-sm: clamp(1.15rem, 4.7vw, 1.75rem);
+  }
+
+  .screen--private .slot { width: min(100%, 448px); }
 }
 
 /* Small non-card elements that still need to arrive with weight. */
@@ -799,6 +929,70 @@ button { font: inherit; color: inherit; }
   white-space: nowrap;
   font-size: var(--fs-md);
   padding-inline: var(--sp-3);
+}
+
+/* ---------------------------------------------------------------
+   TABLET: THE HEADER TAKES THE SLACK, NOT THE FOOTER.
+
+   A phone has no slack worth arguing about. A 13" iPad in portrait
+   has 1366pt of it, and `minmax(--gfooter-h, 1fr)` gives every
+   pixel to the footer — which pins the card to one end of the
+   screen and the button to the other. Measured before this change:
+   279px of nothing between the card and the primary action. The
+   two read as repelling each other rather than as one block.
+
+   So the rows swap jobs. The FOOTER becomes the constant, at
+   exactly its reserve; the HEADER takes the leftovers. The card
+   slides down to sit near the button, the air ends up above the
+   card where it costs nothing, and the primary action stays
+   exactly where it was — grounded on --action-inset, where a hand
+   reaches.
+
+   The card lands a little below true centre as a result, which is
+   the right way round: optical centre sits slightly high of
+   geometric centre, so a card pushed past it reads as centred
+   where the same card with a void beneath it does not.
+
+   A FIXED footer row also keeps the slot a constant, which is the
+   entire reason this grid exists. Size the footer to its own
+   content and the card moves every time a screen swaps a
+   one-button footer for a two-button one. Anything taller than the
+   reserve scrolls — see .gfoot, which was built for that.
+
+   --gheader-live-h in tokens.css is this same arithmetic, for
+   screens with no card row to inherit it from. Change one, change
+   the other, in the same edit.
+
+   AND THE FOOTER BELONGS TO THE COLUMN, NOT THE FRAME. --block on
+   a button means the full width of what contains it, and on a
+   phone that is the same 448px the card gets, so the button lands
+   under the card's edges and the two read as one object. Once the
+   frame opens to 980 and the column stays at 700 those are
+   different numbers, and the button ran 140px past the card on
+   each side — a control visibly wider than the thing it acts on,
+   with its ends out where nobody is sitting. The whole band takes
+   the CARD's width; everything in it inherits.
+
+   --card-size, not --content-max: the column is a cap, and on a
+   744pt-wide mini the gutters bite before the cap does, so the
+   card comes out 652 while the column is still nominally 700. Cap
+   the band at the column and it sat 44px wider than the card on
+   exactly that device. The card's own width is the number that is
+   true everywhere.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .screen:has(.focal--slot) {
+    grid-template-rows:
+      minmax(var(--gheader-h), 1fr)
+      var(--slot-h)
+      var(--gfooter-h);
+  }
+
+  .gfoot,
+  .focal > .actions {
+    width: min(100%, var(--card-size));
+    margin-inline: auto;
+  }
 }
 
 .counter {

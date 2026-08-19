@@ -308,6 +308,48 @@
               box-shadow var(--dur-base) var(--ease-out);
 }
 
+/* ---------------------------------------------------------------
+   TABLET: THE DECK GROWS WITH THE FRAME.
+
+   --peek and --card-h are two hand-measured numbers, and the
+   recipe behind them is written on --peek: content ends 65px into
+   the card, and the peek leaves the same breathing room under it
+   as the 16px above. Both are therefore wrong the moment the type
+   changes, and the tablet ramp changes it.
+
+   Left alone, the frame went from 480 to 980 while the slabs
+   stayed 124px tall, so eleven near-square cards became eleven
+   letterbox strips with the title pinned to the top-left of a wide
+   empty field. The deck stopped reading as a stack of cards and
+   started reading as a list of coloured bars.
+
+   Re-measured, same recipe: 24 top padding + a 44px title + 2 + a
+   27px tagline = 97, plus the same breathing room under it.
+
+   The deck still runs the full width of the frame and off the
+   bottom edge. That is deliberate and unchanged — see --peek — and
+   it is why this is a size change rather than a column cap.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .home__head { padding-block: var(--sp-4) var(--sp-6); }
+
+  .home__deck {
+    --peek: 128px;
+    --card-h: 188px;
+  }
+
+  .deck-card {
+    gap: var(--sp-1);
+    padding: var(--sp-6) var(--sp-8);
+  }
+
+  /* The card is 980px wide now. A 22px title on it read as a label
+     on a slab rather than as the name of a game. */
+  .deck-card__title { font-size: var(--fs-2xl); }
+  .deck-card__star { font-size: var(--fs-lg); }
+  .deck-card__tagline { font-size: var(--fs-md); }
+}
+
 /* The picked color expands from the card out to the whole screen. The mode
    behind it is already flooded in that color, so this lands on a continuous
    field instead of a cut. */
@@ -1656,6 +1698,61 @@
 }
 
 
+
+/* ---------------------------------------------------------------
+   TABLET: MORE COLUMNS, AND THE CARDS SIZED FROM THEIR TYPE.
+
+   Two columns is what fits a phone. Left alone on a tablet it put
+   94 categories into a 448px strip — 47 rows of scrolling with
+   more than half the display empty either side. The frame is
+   --app-max-width, so this could only land once that opened up.
+
+   Three at 640, four at 1100. Four earlier puts "Things you'd hide
+   before someone comes over" onto four lines; these cards carry
+   real sentences, not labels, so a column has to stay wide enough
+   for two.
+
+   AND THE HEIGHT COMES FROM THE TYPE. The base rule derives it
+   from --control-md, and its comment has always said why: the
+   height is two lines of a category name, derived from the scale
+   rather than added to it. That multiplier is only ever as right
+   as the type inside it. Scale the box and leave the type at 18px
+   and you get a tall card with one short word floating in it, hard
+   against a 12px left edge — the box grew, the thing the box is
+   FOR did not. So at this size it is stated as what it always
+   meant: two lines of the card's own type, plus its padding.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .picker__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-3);
+  }
+
+  .picker__card {
+    font-size: var(--fs-lg);
+    min-height: calc(var(--fs-lg) * var(--lh-tight) * 2 + var(--sp-4) * 2);
+    padding: var(--sp-4) var(--sp-5);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Not a card — the one action up here, spanning the grid to say
+     so. It keeps --control-height, which is the ordinary tier and
+     NOT the grounded action's: at 120px it was a white slab two
+     category rows deep with four small words adrift in it. */
+  .picker__card--custom {
+    /* Restated because the type-led min-height above is declared after
+       the base --custom rule and would otherwise win the tie by 4px,
+       quietly detaching this button from the control scale. */
+    min-height: var(--control-height);
+    font-size: var(--fs-lg);
+  }
+
+  .picker__heading { font-size: var(--fs-2xl); }
+}
+
+@media (min-width: 1100px) and (min-height: 600px) {
+  .picker__grid { grid-template-columns: repeat(4, 1fr); }
+}
 
 /* ---------------- Countdown (Most Likely To, Say the Same Thing) ---------------- */
 .countdown {

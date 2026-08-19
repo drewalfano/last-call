@@ -20,6 +20,20 @@ interface GameScreenProps {
    * one. So the picker gets no header, no chevron, and one way out.
    */
   hideHeader?: boolean;
+  /**
+   * This screen holds something ONE person is meant to read.
+   *
+   * Imposter's role and Rank It's private pass, and nothing else in the
+   * app — every other screen is read aloud or shows public state. On a
+   * tablet the whole point of the type ramp is that the table reads the
+   * card together, which on these two is the failure mode rather than the
+   * feature. Keeps the phone's prompt size and column width inside the
+   * tablet's slot. See .screen--private in global.css.
+   *
+   * `isPrivate`, not `private`, because `private` is a reserved word in
+   * strict mode and every module here is one.
+   */
+  isPrivate?: boolean;
   onBack: () => void;
   children: ReactNode;
 }
@@ -48,11 +62,15 @@ export function GameScreen({
   note,
   aside,
   hideHeader,
+  isPrivate,
   onBack,
   children,
 }: GameScreenProps) {
   return (
-    <div className="screen" style={categoryStyle(mode.color)}>
+    <div
+      className={isPrivate ? "screen screen--private" : "screen"}
+      style={categoryStyle(mode.color)}
+    >
       {!hideHeader && (
         <GameHeader
           title={mode.title}

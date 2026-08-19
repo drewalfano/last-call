@@ -117,6 +117,11 @@ export function RankIt({ mode, onBack }: Props) {
             ? "Everyone else"
             : undefined
       }
+      /* The Ranker's own order, which the rest of the table is about to
+         spend the round guessing. The guessing pass next door is the
+         opposite — it WANTS everyone reading it — and the two screens are
+         otherwise identical, which is exactly why this is worth marking. */
+      isPrivate={phase === "ranking"}
       onBack={onBack}
     >
       {/* ---------- Hand the phone to the Ranker ---------- */}
