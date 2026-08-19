@@ -109,11 +109,13 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             bundle at build time, so a stale bundle shows a stale stamp and
             the question answers itself.
 
-            The commit is what settles it: it changes on every push without
-            anyone remembering to bump a number, so it can be compared against
-            the last commit on main. The version is just the friendly half. */}
+            Dated rather than numbered, because "is this current" is really
+            "is this today" — no release number to remember to bump and no
+            chance of it confidently stating the wrong answer. The commit
+            beside it pins the exact build, separates two pushes on the same
+            day, and can be checked against the last commit on main. */}
         <p className="sheet__build">
-          Version {__APP_VERSION__} · build {__BUILD_COMMIT__}
+          Build {__BUILT_ON__} · {__BUILD_COMMIT__}
         </p>
       </div>
     </div>

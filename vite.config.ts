@@ -1,5 +1,4 @@
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -28,12 +27,22 @@ const base = process.env.VITE_BASE ?? "/";
  * happily serve a build from days ago. A stamp baked into that same stale
  * bundle is stale with it, and says so.
  *
- * The version is the one to read aloud; the commit is the one that settles
- * an argument, because it changes on EVERY push with nobody having to
- * remember to bump anything. GITHUB_SHA is what Actions builds from — the
- * git call is the local fallback, and "dev" covers a tarball with no repo.
+ * DATED, NOT NUMBERED. A semver like 1.5.0 is a promise about compatibility
+ * made to people integrating against you, and there is nobody on the other
+ * end of that promise here: this ships to one phone, continuously, on every
+ * push to main. What it would actually be is a number somebody has to
+ * remember to bump — and the one time it got forgotten it would state the
+ * wrong answer confidently, which is worse than having no answer at all.
+ *
+ * A date needs no discipline and answers the real question on sight. "Is this
+ * current" becomes "is this today", with nothing to look up and nothing to
+ * remember. The commit sits beside it for the times that is not enough: it
+ * pins the exact build, tells two pushes on the same day apart, and can be
+ * checked against the last commit on main. GITHUB_SHA is what Actions builds
+ * from, so a deployed app stamps the commit it was deployed from; the git
+ * call is the local fallback and "dev" covers a tarball with no repo.
  */
-const version = JSON.parse(readFileSync("./package.json", "utf8")).version as string;
+const builtOn = new Date().toISOString().slice(0, 10);
 
 const commit = (() => {
   if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7);
@@ -54,7 +63,7 @@ const commit = (() => {
 export default defineConfig({
   base,
   define: {
-    __APP_VERSION__: JSON.stringify(version),
+    __BUILT_ON__: JSON.stringify(builtOn),
     __BUILD_COMMIT__: JSON.stringify(commit),
   },
   plugins: [
