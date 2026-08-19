@@ -295,8 +295,8 @@
   --cat-imposter-ink: #FFFFFF;           /* 10.10 */
   --cat-drink-if: #B9A3E3;
   --cat-drink-if-ink: #141414;           /* 8.26 */
-  --cat-most-likely-to: #EB376D;
-  --cat-most-likely-to-ink: #141414;     /* 4.65 */
+  --cat-most-likely-to: #E43E70;
+  --cat-most-likely-to-ink: #141414;     /* 4.58 */
   --cat-say-the-same-thing: #A5C0EA;
   --cat-say-the-same-thing-ink: #141414; /* 9.94 */
   --cat-rank-it: #CAC307;
@@ -304,8 +304,8 @@
   /* The one hue the supplied swatch sheet didn't cover. Muted rather than
      saturated like the rest, which flips which ink works: near-black clears AA
      at 4.57 where white only reaches 4.03. */
-  --cat-the-number-game: #F54119;
-  --cat-the-number-game-ink: #141414;    /* 4.96 */
+  --cat-the-number-game: #EE4620;
+  --cat-the-number-game-ink: #141414;    /* 4.85 */
   --cat-hot-seat: #441B07;
   --cat-hot-seat-ink: #FFFFFF;           /* 14.94 */
 
