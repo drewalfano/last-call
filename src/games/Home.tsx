@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
@@ -9,8 +9,6 @@ interface HomeProps {
   onPick: (id: ModeId, rect?: { top: number; left: number; right: number; bottom: number }) => void;
 }
 
-/** How long the chosen card sits highlighted before it opens. */
-const REVEAL_MS = 480;
 
 /**
  * The ramp spans the WHOLE perimeter now — one piece per unit, all the way
@@ -105,6 +103,44 @@ const RING_RAMP = [
 const RING_PATH = RING_RAMP.length * RING_SPAN;
 
 /**
+ * Picking for you happens in two beats, and the first one exists so you can
+ * see the app decide.
+ *
+ * RING_MS is that beat: the button says "Dealing…", the line races round it,
+ * and NOTHING else moves. It has to come first because the reveal scrolls the
+ * chosen card into view, and on a deck eleven cards long that carries the
+ * button off the top of the screen — so the flourish that says the app is
+ * choosing used to be dragged out of sight the instant it started.
+ *
+ * REVEAL_MS is the second: the card is brought into view and lifted, then
+ * opened.
+ *
+ * Both are derived rather than chosen, because they are timed against the
+ * sweep and a hand-set pair drifts the moment either side is retuned. The
+ * sweep's own numbers live here too and reach the stylesheet as custom
+ * properties, so this file is the only place the tap flourish is described.
+ *
+ * OPEN_THROUGH is how far into the lap the mode opens, and it is deliberately
+ * short of the end: the line should still be travelling when the pack colour
+ * takes the screen. Letting it finish first leaves a beat where the button is
+ * done and nothing has happened yet, which reads as the app hesitating rather
+ * than dealing.
+ *
+ * Four fifths, not three quarters. At 0.75 the mode arrived while the line
+ * still had a visible quarter of the ring to cover, which is not "still
+ * travelling" so much as interrupted. A fifth left is enough to read as
+ * unfinished without being enough to feel cut off.
+ */
+const OPEN_THROUGH = 0.8;
+const PICK_STEP_MS = 3;
+const PICK_LIFE_MS = 340;
+const PICK_SWEEP_MS = (RING_RAMP.length - 1) * PICK_STEP_MS + PICK_LIFE_MS;
+
+const OPEN_AT = Math.round(PICK_SWEEP_MS * OPEN_THROUGH);
+const RING_MS = Math.round(OPEN_AT * 0.58);
+const REVEAL_MS = OPEN_AT - RING_MS;
+
+/**
  * How brightly each piece is allowed to burn, by how close it sits to the
  * point the line is born and dies.
  *
@@ -197,10 +233,21 @@ export function Home({ onPick }: HomeProps) {
       onPick(mode.id);
       return;
     }
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
     setPicked(mode.id);
-    timer.current = window.setTimeout(() => openCard(mode.id, el), REVEAL_MS);
+    // Beat one: the ring, on a screen that is holding still.
+    timer.current = window.setTimeout(() => {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      // Beat two: which card it landed on, and then the card itself.
+      timer.current = window.setTimeout(() => openCard(mode.id, el), REVEAL_MS);
+    }, RING_MS);
   }, [picked, onPick, openCard]);
+
+  /**
+   * Whichever beat is pending when Home goes, goes with it. Both share the one
+   * ref, so clearing it once is enough — and it matters more now the wait is a
+   * chain: a timer that outlived the screen would open a mode nobody asked for.
+   */
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   return (
     <div className="screen home">
@@ -221,7 +268,11 @@ export function Home({ onPick }: HomeProps) {
             travels over it. */}
         <svg
           className="pick-me__ring"
-          style={{ ["--path" as string]: RING_PATH }}
+          style={{
+            ["--path" as string]: RING_PATH,
+            ["--pick-step" as string]: PICK_STEP_MS,
+            ["--pick-life" as string]: PICK_LIFE_MS,
+          }}
           aria-hidden="true"
         >
           <defs>

@@ -512,9 +512,17 @@
 /* The same shape squeezed into the window the button is still on screen:
    the reveal holds for 480ms and the launch overlay covers everything by
    about 700. */
+/* Both numbers come from Home.tsx, because the reveal is timed against this
+   lap and a pair set by hand in two files drifts the moment either moves.
+
+   Tapping used to open the mode 480ms later while the lap needed 591ms, so
+   the one sweep triggered on purpose was the one nobody ever saw — cut off
+   mid-travel by the screen it was announcing. Home now holds still for
+   RING_MS first, and the mode opens three quarters of the way through this,
+   so the line is still running as the pack colour takes over. */
 .pick-me__ring g[data-sweep="pick"] > rect {
-  animation: pick-me-piece-lap 175ms linear both;
-  animation-delay: calc(var(--seg) * 1.3ms);
+  animation: pick-me-piece-lap calc(var(--pick-life, 340) * 1ms) linear both;
+  animation-delay: calc(var(--seg) * var(--pick-step, 3) * 1ms);
 }
 
 /* Up fast, out slow — a hard leading edge with the fade trailing behind
