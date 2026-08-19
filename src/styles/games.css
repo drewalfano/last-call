@@ -492,37 +492,52 @@
 /* Dark at rest, so the button settles back to a plain grey pill. */
 .pick-me__ring g > rect { opacity: 0; }
 
-/* 4ms between pieces across 320 of them is 1.28s for the head to get all
-   the way round, and holding each lit for 515ms makes the band ~128
-   pieces, a bit under half the ring. 1.8s from first spark to last one
-   out — a touch quicker than the sweep it replaces.
+/* Every number here is set in Home.tsx and arrives as a custom property, so
+   the sweep, the two beats of the reveal, and the moment the ring is taken
+   out of the DOM are all derived from one place.
 
-   Held back until the wordmark has landed AND had a beat to settle.
-   --dur-base is `screen-in` itself, the animation that carries LAST CALL in
-   — there is no separate one on .home__wordmark, so that token is the
-   entrance and the wait cannot drift out of step with it. --dur-fast on top
-   is the pause: starting the instant the title stopped moving read as the
-   two being one event, and they are not. Both in tokens rather than a round
-   number, so retuning the entrance retunes this with it. */
+   --step is 1 for the line and HALO_EVERY for the coarse copy the glow is
+   drawn from, which is what keeps a blurred piece over the eight sharp ones
+   it stands for rather than racing them.
+
+   Held back by --dur-base + --dur-fast: the first is `screen-in`, the
+   animation that carries LAST CALL in, and the second is a beat after it,
+   because starting the instant the title stopped moving read as the two
+   being one event. */
 .pick-me__ring g[data-sweep="deal"] > rect {
-  animation: pick-me-piece-deal 515ms linear both;
-  animation-delay: calc(var(--dur-base) + var(--dur-fast) + var(--seg) * 4ms);
+  animation: pick-me-piece-deal calc(var(--deal-life) * 1ms) linear both;
+  animation-delay: calc(
+    var(--dur-base) + var(--dur-fast) + var(--seg) * var(--step, 1) * var(--deal-step) * 1ms
+  );
 }
 
-/* The same shape squeezed into the window the button is still on screen:
-   the reveal holds for 480ms and the launch overlay covers everything by
-   about 700. */
-/* Both numbers come from Home.tsx, because the reveal is timed against this
-   lap and a pair set by hand in two files drifts the moment either moves.
+/* The group fades as a whole, on top of the pieces lighting one by one.
 
-   Tapping used to open the mode 480ms later while the lap needed 591ms, so
-   the one sweep triggered on purpose was the one nobody ever saw — cut off
-   mid-travel by the screen it was announcing. Home now holds still for
-   RING_MS first, and the mode opens three quarters of the way through this,
-   so the line is still running as the pack colour takes over. */
+   The pieces alone could only ever switch on: the first of them arrives at
+   its full ceiling in a twelfth of its life, which however faint that ceiling
+   is still reads as something appearing rather than something fading in. This
+   is the fade the eye was looking for — one animation on the group, so it
+   costs nothing per piece, and it wraps the whole sweep so the line comes out
+   of nothing and goes back into nothing. */
+.pick-me__ring g[data-sweep="deal"] {
+  animation: pick-me-veil calc(var(--deal-total) * 1ms) linear both;
+  animation-delay: calc(var(--dur-base) + var(--dur-fast));
+}
+
+.pick-me__ring g[data-sweep="pick"] {
+  animation: pick-me-veil calc(var(--pick-total) * 1ms) linear both;
+}
+
+@keyframes pick-me-veil {
+  0% { opacity: 0; }
+  16% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 .pick-me__ring g[data-sweep="pick"] > rect {
-  animation: pick-me-piece-lap calc(var(--pick-life, 340) * 1ms) linear both;
-  animation-delay: calc(var(--seg) * var(--pick-step, 3) * 1ms);
+  animation: pick-me-piece-lap calc(var(--pick-life) * 1ms) linear both;
+  animation-delay: calc(var(--seg) * var(--step, 1) * var(--pick-step) * 1ms);
 }
 
 /* Up fast, out slow — a hard leading edge with the fade trailing behind
@@ -569,7 +584,8 @@
   rx: calc(var(--control-height) / 2);
   ry: calc(var(--control-height) / 2);
   fill: none;
-  stroke-width: 2;
+  /* 2 for the line; the halo goes wider because a blur thins what it spreads. */
+  stroke-width: var(--stroke, 2);
   /* One piece shown, the rest of the lap hidden. --path is the ramp length
      times RING_SPAN, set from Home.tsx alongside the pathLength it matches.
 

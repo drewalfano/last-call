@@ -132,9 +132,42 @@ const RING_PATH = RING_RAMP.length * RING_SPAN;
  * unfinished without being enough to feel cut off.
  */
 const OPEN_THROUGH = 0.8;
+/**
+ * How long the ring waits for the wordmark. Matches --dur-base + --dur-fast,
+ * the tokens the stylesheet still uses for the delay itself; it is repeated
+ * here only so the unmount below can be timed against it.
+ */
+const DEAL_DELAY_MS = 420;
+
+const DEAL_STEP_MS = 4;
+const DEAL_LIFE_MS = 515;
+const DEAL_SWEEP_MS = (RING_RAMP.length - 1) * DEAL_STEP_MS + DEAL_LIFE_MS;
+
 const PICK_STEP_MS = 3;
 const PICK_LIFE_MS = 340;
 const PICK_SWEEP_MS = (RING_RAMP.length - 1) * PICK_STEP_MS + PICK_LIFE_MS;
+
+/**
+ * THE GLOW IS FED A COARSER LINE THAN THE ONE YOU SEE.
+ *
+ * Everything used to sit inside the filter — all 321 pieces — which meant
+ * that every frame the browser rasterised 321 full-perimeter dashed paths
+ * into an offscreen buffer and then blurred the result. An svg filter is not
+ * GPU-accelerated on iOS, so that is the whole stutter.
+ *
+ * The blur is still a real blur; it is just given less to chew on. A coarse
+ * copy drawn from every HALO_EVERY-th piece goes through the filter, and the
+ * sharp line is drawn separately, outside it, where it costs nothing but its
+ * own paint. Forty-one paths into the buffer instead of 321.
+ *
+ * This is not the flat stacked-stroke halo that got tried and binned — that
+ * one had no blur at all, which is why it read as bands of colour. What the
+ * coarseness costs is colour detail inside the bloom, and a bloom is the one
+ * place that cannot matter: blurring is the destruction of exactly that
+ * detail. Eight pieces get averaged into one and then smeared 12px.
+ */
+const HALO_EVERY = 8;
+const HALO_RAMP = RING_RAMP.filter((_, i) => i % HALO_EVERY === 0);
 
 const OPEN_AT = Math.round(PICK_SWEEP_MS * OPEN_THROUGH);
 const RING_MS = Math.round(OPEN_AT * 0.58);
@@ -208,6 +241,20 @@ export function Home({ onPick }: HomeProps) {
     return first;
   });
   const [picked, setPicked] = useState<ModeId | null>(null);
+  /**
+   * The ring is in the DOM only while it has something to do.
+   *
+   * This is the difference between an animation costing something and a
+   * SCREEN costing something. Left mounted, several hundred stroked paths sit
+   * on Home for the rest of the session, and every repaint pays for them —
+   * scrolling the deck, and the launch expansion that plays while Home is
+   * still mounted underneath it. That is why the lag was never confined to
+   * the button: the button was making the whole screen expensive to draw.
+   *
+   * Unmounted once the sweep is spent, Home costs exactly what it did before
+   * any of this existed.
+   */
+  const [sweeping, setSweeping] = useState(dealing);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const deckRef = useRef<HTMLElement>(null);
   const timer = useRef<number>(undefined);
@@ -249,6 +296,13 @@ export function Home({ onPick }: HomeProps) {
    */
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  // Retire the ring the moment its last piece has gone out.
+  useEffect(() => {
+    if (!sweeping) return;
+    const t = window.setTimeout(() => setSweeping(false), DEAL_DELAY_MS + DEAL_SWEEP_MS);
+    return () => window.clearTimeout(t);
+  }, [sweeping]);
+
   return (
     <div className="screen home">
       <header className="home__head">
@@ -266,103 +320,112 @@ export function Home({ onPick }: HomeProps) {
             round, graded through all eleven packs — see .pick-me__ring. The
             grey stroke is the button's own border and stays put; this only
             travels over it. */}
-        <svg
-          className="pick-me__ring"
-          style={{
-            ["--path" as string]: RING_PATH,
-            ["--pick-step" as string]: PICK_STEP_MS,
-            ["--pick-life" as string]: PICK_LIFE_MS,
-          }}
-          aria-hidden="true"
-        >
-          <defs>
-            {/* The bloom, done as ONE filter on the whole group rather than a
-                second blurred copy of the line — another 176 rects to light
-                the first 176 is a lot of machinery for a soft edge. feMerge
-                lays the blur down twice under the sharp original, which is
-                what gives it a centre bright enough to read as a glow rather
-                than as the line being out of focus.
-
-                The region is sized to the blur and not a pixel further, and
-                that is a frame-rate decision rather than a tidiness one. An
-                svg filter is not GPU-accelerated on iOS and its cost tracks
-                the AREA it recomputes every frame far more than the detail
-                inside it. This box used to be -25%/-150%/150%/400%, which on
-                a 358x60 button is about 537x240 — six times the area needed
-                to hold a stdDeviation of 4, whose bloom reaches roughly 12px.
-
-                Now it is that 12px plus a little, in each direction: ~394x94,
-                a third of what it was. Trim it further and the blur meets the
-                edge of its own box, which draws a straight line across the
-                glow — the one thing the old generous numbers were guarding
-                against. */}
-            <filter
-              id="pick-me-glow"
-              x="-5%"
-              y="-28%"
-              width="110%"
-              height="156%"
-              colorInterpolationFilters="sRGB"
-            >
-              <feGaussianBlur stdDeviation="4" result="bloom" />
-              <feMerge>
-                <feMergeNode in="bloom" />
-                <feMergeNode in="bloom" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* OUTSIDE ONLY. The bloom is a blur, so half of it lands inside
-                the pill, where it washes across the label and reads as the
-                button being lit from within rather than as an edge that
-                glows. This punches the button's own interior out of it.
-
-                The hole is the PADDING box — the pill inset by the 2px
-                border. The sharp line sits in that border band, so it comes
-                through untouched; everything the blur threw further inward
-                is cut at the inner edge of the stroke. Masking cannot soften
-                that boundary, but it does not need to: the line's own colour
-                sits right on it.
-
-                userSpaceOnUse with a region matching the filter's — a mask
-                defaults to a box 10% around the object, which would crop the
-                outward bloom the filter just drew. Matching rather than
-                exceeding it: a mask region is another buffer the compositor
-                allocates, and there is nothing to keep out past the point
-                the blur itself stops. */}
-            <mask
-              id="pick-me-outside"
-              maskUnits="userSpaceOnUse"
-              x="-5%"
-              y="-28%"
-              width="110%"
-              height="156%"
-            >
-              <rect className="pick-me__mask-all" />
-              <rect className="pick-me__mask-hole" />
-            </mask>
-          </defs>
-          {/* Sweeps once when the deck deals itself in, once more when you
-              tap, and holds still the rest of the time — see .pick-me__ring.
-              Undefined is the resting state, not a third animation. */}
-          <g
-            data-sweep={picked ? "pick" : dealing ? "deal" : undefined}
-            filter="url(#pick-me-glow)"
-            mask="url(#pick-me-outside)"
+        {(picked || sweeping) && (
+          <svg
+            className="pick-me__ring"
+            style={{
+              ["--deal-step" as string]: DEAL_STEP_MS,
+              ["--deal-life" as string]: DEAL_LIFE_MS,
+              ["--deal-total" as string]: DEAL_SWEEP_MS,
+              ["--pick-step" as string]: PICK_STEP_MS,
+              ["--pick-life" as string]: PICK_LIFE_MS,
+              ["--pick-total" as string]: PICK_SWEEP_MS,
+            }}
+            aria-hidden="true"
           >
-            {RING_RAMP.map((colour, i) => (
-              <rect
-                key={i}
-                pathLength={RING_PATH}
-                style={{
-                  stroke: colour,
-                  ["--seg" as string]: i,
-                  ["--edge" as string]: edgeOpacity(i),
-                }}
-              />
-            ))}
-          </g>
-        </svg>
+            <defs>
+              {/* Blur only — no SourceGraphic in the merge, because the sharp
+                  line is no longer inside this filter. Laid down twice for a
+                  centre bright enough to read as light rather than as
+                  something out of focus.
+
+                  The region is sized to the blur and not a pixel further, and
+                  that is a frame-rate decision rather than a tidiness one: an
+                  svg filter is not GPU-accelerated on iOS and its cost tracks
+                  the AREA it recomputes every frame. It was -25%/-150%/150%/
+                  400%, about 537x240 on a 358x60 button — six times what a
+                  stdDeviation of 4 needs, whose bloom reaches roughly 12px.
+                  Trim it below that and the blur meets the edge of its own
+                  box, which draws a straight line across the glow. */}
+              <filter
+                id="pick-me-glow"
+                x="-5%"
+                y="-28%"
+                width="110%"
+                height="156%"
+                colorInterpolationFilters="sRGB"
+              >
+                <feGaussianBlur stdDeviation="4" result="bloom" />
+                <feMerge>
+                  <feMergeNode in="bloom" />
+                  <feMergeNode in="bloom" />
+                </feMerge>
+              </filter>
+
+              {/* The bloom is a blur, so half of it lands inside the pill,
+                  where it washes over the label and reads as the button lit
+                  from within. This punches the interior out of it. The hole is
+                  the PADDING box, so the 2px band the line occupies survives
+                  and only what the blur threw further in is cut. */}
+              <mask
+                id="pick-me-outside"
+                maskUnits="userSpaceOnUse"
+                x="-5%"
+                y="-28%"
+                width="110%"
+                height="156%"
+              >
+                <rect className="pick-me__mask-all" />
+                <rect className="pick-me__mask-hole" />
+              </mask>
+            </defs>
+
+            {/* Into the filter: a coarse copy, one piece per HALO_EVERY. */}
+            <g
+              className="pick-me__halo"
+              data-sweep={picked ? "pick" : "deal"}
+              style={{
+                ["--path" as string]: HALO_RAMP.length,
+                ["--step" as string]: HALO_EVERY,
+                ["--stroke" as string]: 3,
+              }}
+              filter="url(#pick-me-glow)"
+              mask="url(#pick-me-outside)"
+            >
+              {HALO_RAMP.map((colour, j) => (
+                <rect
+                  key={j}
+                  pathLength={HALO_RAMP.length}
+                  style={{
+                    stroke: colour,
+                    ["--seg" as string]: j,
+                    ["--edge" as string]: edgeOpacity(j * HALO_EVERY),
+                  }}
+                />
+              ))}
+            </g>
+
+            {/* Outside it: the line you actually read, at full resolution and
+                costing nothing but its own paint. */}
+            <g
+              className="pick-me__line"
+              data-sweep={picked ? "pick" : "deal"}
+              style={{ ["--path" as string]: RING_PATH }}
+            >
+              {RING_RAMP.map((colour, i) => (
+                <rect
+                  key={i}
+                  pathLength={RING_PATH}
+                  style={{
+                    stroke: colour,
+                    ["--seg" as string]: i,
+                    ["--edge" as string]: edgeOpacity(i),
+                  }}
+                />
+              ))}
+            </g>
+          </svg>
+        )}
         <span className="pick-me__label">
           {picked ? "Dealing…" : "Pick a game for me"}
         </span>
