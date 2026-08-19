@@ -186,11 +186,28 @@ export function RankIt({ mode, onBack }: Props) {
         <CardBody
           className="rank"
           card={
-            <ol className="rank__list">
-            {prompt.items.map((item) => {
+            /* KEYED ON THE PHASE, so the list deals again when the phone
+               changes hands.
+
+               The Ranker's pass and the group's pass are the same markup, and
+               without a key React keeps every row mounted straight through the
+               handover: the positions blank themselves, the note under the
+               title changes from "X — privately" to "Everyone else", and
+               nothing else moves. The one screen in the app two different
+               people use back to back was the one that never said it had
+               changed hands.
+
+               A key is all it takes, because the deal on `li` below is a mount
+               animation — the same trick Say the Same Thing uses on its bare
+               card, and for the same reason. It costs nothing on a tap: only
+               the phase changes this key, so ordering the list does not
+               re-deal it. */
+            <ol className="rank__list" key={phase}>
+            {prompt.items.map((item, i) => {
               const at = active.indexOf(item);
               return (
-                <li key={item}>
+                /* Its place in the cascade. See .rank__list > li in games.css. */
+                <li key={item} style={{ ["--i" as string]: i }}>
                   <button
                     className="rank__item"
                     data-ranked={at >= 0 || undefined}

@@ -2870,6 +2870,55 @@
   min-height: var(--control-md);
 }
 
+/* ---------------------------------------------------------------
+   THE LIST DEALS ITSELF OUT.
+
+   This list sits in `.slot` — the same rectangle every other mode
+   deals a card onto, taken by `position: absolute; inset: 0` above.
+   But it is not a `.card`, so `.slot > .card`'s flip does not reach
+   it, and it was the one thing in the app landing on that rectangle
+   in a single frame: five rows simply there, on a screen you have
+   just been handed.
+
+   `picker-deal`, NOT `card-flip-in`. These are a page of tappable
+   options and that is exactly what the picker's cards are; turning
+   them over as one object would claim they are a card, which is the
+   thing they deliberately are not.
+
+   ON THE `li`, NOT THE BUTTON — the one place this differs from the
+   picker, and only because the picker has no wrapper to use. Its
+   cards are direct grid children, so it animates the control itself
+   and needs `backwards` to keep a settled `transform: none` from
+   outranking the press. Here the row and the control are two
+   elements, so the deal and `.rank__item:active` live on different
+   ones and cannot fight at all. `backwards` is kept anyway: the
+   from-state still has to be held through the stagger delay, and
+   there is no reason for this to be the one stagger in the app
+   written differently.
+
+   35ms, where the picker takes 22 and the deck 30. Fewer rows want a
+   bigger step, or the cascade is over before it reads as one: four
+   or five items here (see data/rankIt.ts) against a picker page of
+   eight, so 35ms puts the last row away at ~140ms — about the same
+   window the picker's eight cards fill at 22.
+
+   Scoped OFF the reveal. `.rank__list--compare` is the same list
+   class doing a different job and already carries `rank-settle`,
+   where every row slides out of the spot the group guessed it into.
+   Two animations on one element is the last thing that screen needs.
+   --------------------------------------------------------------- */
+.rank__list:not(.rank__list--compare) > li {
+  animation: picker-deal var(--dur-base) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+/* Delayed, so it needs its own block — the global rule zeroes
+   animation-duration but not animation-delay, and `backwards` would hold the
+   last row at opacity 0 for 140ms before it appeared. */
+@media (prefers-reduced-motion: reduce) {
+  .rank__list:not(.rank__list--compare) > li { animation: none; }
+}
+
 /* The reveal is a different list with a different job: rows of two orders
    side by side, read rather than tapped, and their height comes from their
    content. Sharing the space out would stretch five rows across the whole
