@@ -2351,6 +2351,45 @@
   gap: var(--sp-4);
 }
 
+/* ---------------------------------------------------------------
+   AND THE LIST DEALS, BECAUSE IT IS THE PICKER'S SCREEN.
+
+   This borrows the category picker's shell wholesale — the same
+   scroller, the same top fade, the same progressive blur under the
+   same floating Back — and said so twenty lines up. It borrowed
+   everything except the arrival: the picker's cards deal themselves
+   out and these thirteen rows simply appeared.
+
+   `picker-deal` and its 22ms step, unchanged, so the two screens
+   that share a shell also share the way they arrive.
+
+   CLAMPED AT 8, which is the picker's number and its reasoning
+   too: the list scrolls, and an uncapped stagger spends its later
+   delays on rows nobody can see while holding the last visible one
+   back waiting for them. Nine or ten rows fit a phone; the eight
+   here is a floor on that, not a measurement of it.
+
+   THE ROW, NOT THE CARD — and the rule below is what makes the
+   distinction matter. `.kc-rules .pcard` turns its flip OFF on
+   purpose, because thirteen cards turning over at once while you
+   are trying to read them is noise. That still holds. This deals
+   the ROW the card is sitting in, so the list arrives without any
+   of the thirteen faces doing anything. Do not remove that
+   `animation: none` to make this work; it is what this is careful
+   to stay compatible with.
+   --------------------------------------------------------------- */
+.kc-rules__row {
+  animation: picker-deal var(--dur-base) var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 22ms);
+}
+
+/* Delayed, so it needs its own block — the global rule zeroes
+   animation-duration but not animation-delay, and `backwards` would hold the
+   last staggered row at opacity 0 for 176ms before it appeared. */
+@media (prefers-reduced-motion: reduce) {
+  .kc-rules__row { animation: none; }
+}
+
 /* The real card, not a number in a box — smaller than Ride the Bus deals
    them, because thirteen of these are a list rather than a hand. */
 .kc-rules .pcard {

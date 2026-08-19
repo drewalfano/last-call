@@ -157,8 +157,11 @@ export function KingsCup({ mode, onBack }: Props) {
         <div className="picker">
           <div className="picker__scroll" onScroll={fadeOnScroll}>
             <ol className="kc-rules">
-              {RULE_FACES.map(({ rule, card }) => (
-                <li key={rule.rank} className="kc-rules__row">
+              {RULE_FACES.map(({ rule, card }, i) => (
+                /* Its place in the cascade. Stops counting at 8, past which
+                   the delay is being spent on rows below the fold — the same
+                   clamp the picker's cards use. See .kc-rules__row. */
+                <li key={rule.rank} className="kc-rules__row" style={{ ["--i" as string]: i }}>
                   <PlayingCard card={card} small />
                   <span className="kc-rules__body">
                     <span className="kc-rules__label">{rule.label}</span>
