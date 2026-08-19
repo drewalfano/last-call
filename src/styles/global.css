@@ -136,7 +136,7 @@ button { font: inherit; color: inherit; }
      instead of overflowing — without it flex children refuse to go below
      their content size and the layout stops filling the phone. */
   min-height: 0;
-  padding: var(--sp-3) var(--sp-4) var(--action-inset);
+  padding: var(--gutter) var(--gutter) var(--action-inset);
   animation: screen-in var(--dur-base) var(--ease-out) both;
 }
 
@@ -359,12 +359,14 @@ button { font: inherit; color: inherit; }
   justify-content: center;
   width: var(--tap-target);
   height: var(--tap-target);
-  /* Pushed to the far right of the bar, 20px off the screen edge on top of
-     .screen's own --sp-4 padding. The mode name keeps the left to itself and
-     stays on the content edge, where it lines up with everything dealt below
-     it — the same alignment the wordmark and the deck share on Home. */
+  /* Pushed to the far right of the bar and no further: the well ends on the
+     content edge, which --gutter already holds 20px off the display. It used
+     to carry 4px of its own to reach that number over a 16px gutter — one
+     control patching a screen-wide inset from the inside. The mode name keeps
+     the left to itself and sits on that same edge, where it lines up with
+     everything dealt below it — the alignment the wordmark and the deck share
+     on Home. */
   margin-left: auto;
-  margin-right: calc(var(--sp-5) - var(--sp-4));
   border: none;
   border-radius: var(--radius-pill);
   /* A well, not a bare chevron. The target was always 48px, but with nothing
@@ -630,27 +632,21 @@ button { font: inherit; color: inherit; }
    against the live line's --fw-black, which is the half of the
    original argument that still applies.
 
-   ONE INSET, ALL THREE EDGES. The phone's 12 top / 16 sides is a
-   deliberate asymmetry — the top is already held off by the status
-   bar's safe area, so it needs less of its own. That does not
-   survive the jump in scale: against a 96px well and a 32px name,
-   12px above and 16px beside read as no inset at all, and both
-   ends of the bar looked pinned to the display rather than placed
-   in it. Equal on all three, so the name and the close button sit
-   in the corners of ONE square inset instead of two different
-   ones. The back button's extra 4px — which existed to push it
-   20px clear of a 16px gutter — comes off with it, or the right
-   edge lands 4px further out than the left.
+   THE INSET COMES FROM --gutter AND IS NOT RESTATED HERE. The
+   phone was 12 top / 16 sides on the theory that the status bar's
+   safe area already holds the top off, and the close button then
+   carried 4px of its own to reach 20 off the right edge — three
+   figures for one inset. It is one number now, and this block does
+   not touch it: tokens.css opens it from 20 to 24 at this
+   breakpoint, because against a 96px well and a 32px name the
+   phone's inset reads as no inset at all and both ends of the bar
+   look pinned to the display rather than placed in it.
 
    The X itself is a fixed 24px in the markup, and a 24px glyph in
    a 96px well reads as a mis-drawn button rather than a big one.
    --------------------------------------------------------------- */
 @media (min-width: 640px) and (min-height: 600px) {
-  .screen { padding: var(--sp-6) var(--sp-6) var(--action-inset); }
-
   .gheader__title { font-size: var(--fs-xl); }
-
-  .gheader__back { margin-right: 0; }
 
   .gheader__back svg {
     width: 38px;
@@ -729,7 +725,7 @@ button { font: inherit; color: inherit; }
     minmax(
       var(--gheader-h),
       calc(
-        var(--screen-h) / 2 - var(--safe-top) - var(--sp-3)
+        var(--screen-h) / 2 - var(--safe-top) - var(--gutter)
           - var(--card-size) / 2
       )
     )
@@ -1128,8 +1124,8 @@ button { font: inherit; color: inherit; }
    the size of the footer.
 
    So this is the phone's own arithmetic — half the screen minus
-   half the slot — restated with the tablet's --sp-6 top padding in
-   place of --sp-3. Same shape, different gutter.
+   half the slot — over the same --gutter, which is the one number
+   that opens from 20 to 24 at this breakpoint.
 
    --gheader-live-h in tokens.css is this same formula, for screens
    with no card row to inherit it from. Change one, change the
@@ -1154,7 +1150,7 @@ button { font: inherit; color: inherit; }
       minmax(
         var(--gheader-h),
         calc(
-          var(--screen-h) / 2 - var(--safe-top) - var(--sp-6)
+          var(--screen-h) / 2 - var(--safe-top) - var(--gutter)
             - var(--slot-h) / 2
         )
       )
@@ -1201,7 +1197,7 @@ button { font: inherit; color: inherit; }
       minmax(
         var(--gheader-h),
         calc(
-          var(--screen-h) / 2 - var(--safe-top) - var(--sp-6)
+          var(--screen-h) / 2 - var(--safe-top) - var(--gutter)
             - var(--slot-h) / 2
         )
       )

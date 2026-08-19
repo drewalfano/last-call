@@ -113,6 +113,21 @@
      stale; CSS re-evaluates for free. Nothing in this app reads
      window.innerWidth into state, and nothing should start.
      ---------------------------------------------------------- */
+  /* ----------------------------------------------------------
+     THE GUTTER. How far content sits from the edge of the
+     display, stated once for every screen in the app: `.screen`
+     pads by it, --card-size subtracts it, and anything meant to
+     run edge to edge gives it back as a negative inset.
+
+     It used to be two numbers and a patch — 12 top, 16 sides,
+     and a 4px margin on the close button so that ONE control
+     reached 20px off the right edge. Three figures for a single
+     inset, which is why no two screens agreed about where the
+     edge was. It is 20 everywhere now, and the close button's
+     patch came off with the change.
+     ---------------------------------------------------------- */
+  --gutter: var(--sp-5);
+
   --app-max-width: 480px;
 
   /* ----------------------------------------------------------
@@ -265,7 +280,7 @@
   --gheader-live-h: max(
     var(--gheader-h),
     calc(
-      var(--screen-h) / 2 - var(--safe-top) - var(--sp-3)
+      var(--screen-h) / 2 - var(--safe-top) - var(--gutter)
         - var(--slot-h) / 2
     )
   );
@@ -299,9 +314,9 @@
      button off the bottom.
      ---------------------------------------------------------- */
   --card-size: min(
-    min(100vw, var(--content-max)) - var(--sp-4) * 2,
+    min(100vw, var(--content-max)) - var(--gutter) * 2,
     58lvh,
-    var(--screen-h) - var(--safe-top) - var(--sp-3) - var(--action-inset)
+    var(--screen-h) - var(--safe-top) - var(--gutter) - var(--action-inset)
       - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
   );
 
@@ -475,6 +490,11 @@
     --app-max-width: 980px;
     --content-max: 700px;
 
+    /* The one inset opens up with the frame. Everything that reads
+       the gutter — the screens, the card, the picker's blur band —
+       moves with it, and nothing has to be told twice. */
+    --gutter: var(--sp-6);
+
     /* ------------------------------------------------------
        THE FLAT 20px DOES NOT SURVIVE THE CROSSING.
 
@@ -543,8 +563,8 @@
     /* --- The slot, on two axes ---------------------------- */
     /* WIDTH comes from the column and nothing else. It must not be
        able to see the height budget — see --slot-h in the base
-       block for what happened when it could. The gutter is --sp-6
-       because that is what .screen pads by at this size.
+       block for what happened when it could. The gutter term is
+       --gutter, which is what .screen pads by at any size.
 
        HEIGHT is capped at the tallest card the type can actually
        produce: four lines of prompt at the clamp's ceiling, an
@@ -554,7 +574,7 @@
        around it — a square 652px slot holding a 285px card is
        183px of nothing above and below. Long prompts still fill
        it; short ones stop floating in the middle of a square. */
-    --card-size: calc(min(100vw, var(--content-max)) - var(--sp-6) * 2);
+    --card-size: calc(min(100vw, var(--content-max)) - var(--gutter) * 2);
     --slot-h: min(
       /* ------------------------------------------------------
          THE CARD IS SQUARE, as it is on a phone.
@@ -575,7 +595,7 @@
          ------------------------------------------------------ */
       var(--card-size),
       58lvh,
-      var(--screen-h) - var(--safe-top) - var(--sp-6) - var(--action-inset)
+      var(--screen-h) - var(--safe-top) - var(--gutter) - var(--action-inset)
         - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
     );
 
@@ -628,7 +648,7 @@
     --gheader-live-h: max(
       var(--gheader-h),
       calc(
-        var(--screen-h) / 2 - var(--safe-top) - var(--sp-6)
+        var(--screen-h) / 2 - var(--safe-top) - var(--gutter)
           - var(--slot-h) / 2
       )
     );
