@@ -191,15 +191,20 @@ button { font: inherit; color: inherit; }
    A button that floats over scrolling content rather than sitting on
    a strip of its own.
 
-   Solid in the pack colour, and that is the whole point of the
-   variant: a ghost or translucent button over white card stock shows
-   the card edges straight through its label. Its own field plus a
-   shadow is what separates it from what is passing behind it.
+   It takes the primary fill — the pack's INK, not the pack's colour —
+   plus a shadow. Filling it with the pack colour put it in the same
+   paint as the field it floats over, so on the picker, where it is
+   the only way out, it read as part of the background with an
+   outline drawn on. The ink is the one value guaranteed to carry
+   against that field, because every pack pairs the two for contrast.
+
+   A ghost or translucent button is the thing to avoid here: over
+   white card stock the card edges show straight through its label.
+   Its own solid field plus the shadow is what separates it from what
+   is passing behind it.
    --------------------------------------------------------------- */
 .btn--float {
-  background: var(--category, var(--surface));
-  color: var(--category-ink, var(--text));
-  border-color: color-mix(in srgb, var(--category-ink, var(--text)) 35%, transparent);
+  border-color: transparent;
   box-shadow: 0 6px 22px -8px rgba(0, 0, 0, 0.55);
 }
 
