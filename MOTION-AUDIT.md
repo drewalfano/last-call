@@ -599,6 +599,66 @@ Splitting them would have put a commit on the branch that changed nothing observ
 **12 needs a decision from you before I write it** — see the counter-indications.
 My recommendation is the fade.
 
+### Parked: contracting the close back into the Home card
+
+Attempted, not shipped. `git stash list` → *"WIP: contract mode-close into the
+Home card"*. `main` behaviour is unchanged: the close is still the `--dur-fast`
+fade from `da90be0`.
+
+**What was built.** 380ms, `LAUNCH_EASE`, contracting to the card's rect —
+measured rather than remembered, since Home mounts under the opaque overlay and
+the real card is in the DOM before anything is visible. Three geometry
+corrections were needed and all three were found by measuring:
+
+- **Drift.** Home is mid-`screen-in` (a 10px translate) when the effect runs, so
+  a plain rect aimed the landing 4.6px low, by a different amount every close.
+- **The tail.** The deck overlaps: a card's box is 124px but only 87px is on
+  screen. Landing on the full box painted pack colour over the top 37px of the
+  neighbouring card.
+- **The corners.** Deck cards are `28px 28px 0 0` — square-bottomed — against the
+  overlay's `round 22px`.
+
+**Why it was parked.** All three were real and all three were fixable, and the
+thing still read as janky, because none of them was the actual problem:
+
+> **The overlay is a flat field of colour. It is not the card.** No title, no
+> tagline, no 2px stroke. That costs nothing on the way *in*, because it leaves
+> the card on the first frame and you never see the two together. Contracting is
+> the same object with the failure inverted — it comes to rest exactly on the
+> card and *holds* there on `fill: forwards`, so the last thing on screen is a
+> blank red slab where a card with writing on it should be. Then it unmounts and
+> the writing snaps in.
+
+A tail cross-fade was half-written when this was parked, and it would have hidden
+the symptom. It does not fix the cause.
+
+**How Apple does it, which is the note to start from.** iOS's zoom transition
+(SwiftUI's `NavigationTransition.zoom`, UIKit's zoom options) differs on every
+point that matters here:
+
+1. **The real content is in flight.** The source view itself morphs into the
+   destination — there is no colour proxy, so there is never a frame showing a
+   shape with nothing in it.
+2. **Source and destination cross-fade** while a shared geometry interpolates.
+   Neither is ever the only thing on screen.
+3. **Corner radius morphs continuously** from source to destination.
+4. **Spring-driven, not a fixed-duration bezier**, so it answers to gesture
+   velocity rather than a number.
+5. **Interruptible.** It can be grabbed mid-flight and reversed.
+
+The gap is (1). An opaque rectangle is structurally the wrong primitive for a
+contraction, and no amount of easing or geometry fixes that. Two ways forward
+when this is picked up:
+
+- **(a) Give the overlay the card's content.** Render the deck card's markup —
+  title, tagline, stroke — inside the overlay and cross-fade it against the mode
+  screen. Contained, and it makes the open better too.
+- **(b) FLIP the real card.** Animate the actual `.deck-card` node, which needs
+  Home to stay mounted behind modes. Truer to Apple, and a much larger change to
+  the state machine in `App.tsx`.
+
+**(a) first.** It is the smaller change and it addresses the cause.
+
 ### Phase 5 — optional, lower value  ⏸ not started
 
 | # | Commit | Files | Size | Finding |
