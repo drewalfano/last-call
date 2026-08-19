@@ -217,32 +217,50 @@
    into a toll you pay all night. Home decides which it is; see
    `dealt` in games/Home.tsx.
 
-   UPWARD, from the bottom of the deck. That is not only how it
-   reads better — it is what stops the deal exposing the thing the
-   squared bottoms were hiding. Each card is covered by the one
-   BELOW it in the stack, so dealing downward meant a card rose into
-   place while nothing covered its bottom edge yet, flashing the flat
-   cut we went to some trouble to hide. Dealt upward, the covering
-   card is always already there.
+   UPWARD, FROM OFF THE BOTTOM OF THE DISPLAY, and fully opaque.
+
+   The deck starts empty. Each card begins a whole viewport low —
+   below the cut edge, out of sight — and rides up into its slot,
+   bottom card first. What arrives is a card, not a hint of one.
+
+   NO OPACITY IN THIS ANIMATION AT ALL. A card that fades up is a
+   window: for the length of the fade you look straight through it
+   to the squared bottom of the card behind, which is the one thing
+   the whole stack is built to hide. That flat cut showing through
+   the card in front of it was the fade, every time.
+
+   Opaque only works because of the paint order. A card is drawn
+   UNDER every card after it in the deck, so a card still in transit
+   — still low — is behind the entire stack below it. The only place
+   its squared bottom can stick out is below the last card, and the
+   last card's bottom is off the end of the display. So the cut is
+   never in open air at any point in the deal.
+
+   No scale either: a card scaled down is narrower than the stack,
+   and its shrunk sides expose the edges of the cards it is meant to
+   be flush with.
+
+   46ms, and --ease-out over --ease-glide. The travel here is the
+   height of the screen rather than a nudge, so the curve wants to
+   land the card rather than glide it, and the stagger has to be
+   wide enough that eleven cards read as eleven arrivals instead of
+   one wave. Last card home just past a second — the longest thing
+   in the app, and the only one that only ever plays once.
 
    Same `backwards` as the picker, and for the same reason: these
    cards carry a press lift AND a pick lift, both transforms, and a
    filled animation would sit on top of both.
    --------------------------------------------------------------- */
 @keyframes deck-deal {
-  from { opacity: 0; transform: translateY(28px) scale(0.98); }
+  from { transform: translateY(100dvh); }
 }
 
-/* 30ms, not 45. Only the bottom six cards are on screen at 812pt and the
-   rest are below the fold, so a slower stagger spends its opening beats
-   somewhere nobody can see and the visible deal starts late. */
+/* Bottom of the stack first — `--i` counts up from the last card; see
+   Home.tsx. That order is what keeps every bottom edge covered: the card
+   that hides this one's bottom is already in place before it lands. */
 .home__deck--dealing .deck-card {
-  /* --ease-glide, not --ease-out: these should look like they are sliding
-     into the stack, and --ease-out finishes the distance too early to read
-     as travel. --dur-slow for the same reason — long enough to follow a card
-     down, short enough that the last one is home inside 800ms. */
-  animation: deck-deal var(--dur-slow) var(--ease-glide) backwards;
-  animation-delay: calc(var(--i, 0) * 30ms);
+  animation: deck-deal 620ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 46ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2951,3 +2969,4 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
+
