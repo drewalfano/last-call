@@ -16,8 +16,9 @@ import type { ContentMode } from "../state/contentMode";
  *                material is still perfectly good with a rowdier crowd
  *                and the Night cards are additive.
  *
- *   "lead"       Night is Safe with the Night entries in FRONT. This is
- *                the policy for CATEGORIES, in every mode that has them.
+ *   "lead"       Night LEADS Safe — in front, but interleaved rather than
+ *                stacked. This is the policy for CATEGORIES, in every mode
+ *                that has them.
  *
  *                Replacing a category list is wrong: flipping to 19+ made
  *                every familiar category disappear, so a table that wanted
@@ -46,6 +47,29 @@ export interface Pools<T> {
   night: readonly T[];
 }
 
+/**
+ * Night in front, with Safe entries sprinkled through it.
+ *
+ * A straight concatenation put every adult category above every ordinary one,
+ * so the top of a 19+ list was a solid block of the same register — you
+ * scrolled past a wall of hookups and exes before reaching Foods. One safe
+ * entry every `every` night ones breaks that up without burying the adult
+ * ones, which are still what a table switched the mode on for.
+ *
+ * Deterministic, deliberately. This is a list people browse and come back to;
+ * shuffling it would move an option someone was reaching for, and useDeck
+ * shuffles anyway wherever the order is actually dealt from.
+ */
+export function lead<T>(night: readonly T[], safe: readonly T[], every = 2): T[] {
+  const out: T[] = [];
+  let s = 0;
+  night.forEach((item, i) => {
+    out.push(item);
+    if ((i + 1) % every === 0 && s < safe.length) out.push(safe[s++]);
+  });
+  return out.concat(safe.slice(s));
+}
+
 export function resolvePool<T>(
   pools: Pools<T>,
   mode: ContentMode,
@@ -56,7 +80,7 @@ export function resolvePool<T>(
     case "supplement":
       return [...pools.safe, ...pools.night];
     case "lead":
-      return [...pools.night, ...pools.safe];
+      return lead(pools.night, pools.safe);
     default:
       return pools.night;
   }

@@ -1,4 +1,5 @@
 import type { ContentMode } from "../state/contentMode";
+import { lead } from "./pools";
 
 /**
  * IMPOSTER — secret words, grouped into categories.
@@ -181,7 +182,8 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
  * The categories on offer, in the order they are shown.
  *
  * 19+ does not REPLACE the safe categories, it LEADS with the adult ones and
- * keeps the rest underneath. This is a list you choose from by name, and
+ * keeps the rest — sprinkled through them rather than stacked underneath, so
+ * the top of the list is not a solid block of the same register. This is a list you choose from by name, and
  * swapping it out meant a table that wanted Hookups and Exes lost Foods,
  * Countries and Animals to get them — categories that are not remotely
  * unsuitable for a rowdy table, and that a long night runs out of clues
@@ -190,7 +192,7 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
  */
 function categoriesFor(mode: ContentMode): WordCategory[] {
   if (mode === "safe") return IMPOSTER_CATEGORIES.safe;
-  return [...IMPOSTER_CATEGORIES.night, ...IMPOSTER_CATEGORIES.safe];
+  return lead(IMPOSTER_CATEGORIES.night, IMPOSTER_CATEGORIES.safe);
 }
 
 /** Flat word list for a category, or every word when no category is chosen. */
