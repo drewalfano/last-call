@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 interface GameHeaderProps {
   title: string;
@@ -64,10 +64,59 @@ interface GameHeaderProps {
    that starts 10px high and never touches opacity — stall it at frame
    one and the worst case is a category 10px off, still legible. See
    `live-in` in global.css.
+
+   THE JUMP IS ANIMATED AGAIN NOW, and not here. Nothing moves the
+   line: the reserve underneath it does. Ending a round swaps
+   .focal.lw for .focal--slot, which flips a :has() selector and takes
+   .gheader from 0 to --gheader-live-h, and the line is centred in
+   that box. Transitioning the box carries the line with it.
+
+   That is the difference from the FLIP and the whole reason it is
+   safe. A FLIP is a correction applied on top of a finished layout,
+   so its frame one is a lie that persists if nothing paints. A
+   transition IS the layout, interpolated: every frame is a height the
+   header could correctly have, and a stalled one snaps between two
+   right answers. See `.gheader` in global.css.
    --------------------------------------------------------------- */
+
+/**
+ * How long a departing live line is kept on screen. Short: the screen under it
+ * has already changed, so this is a line leaving, not a beat being held.
+ */
+const LEAVE_MS = 160;
 
 /** Back-to-Home affordance, the mode's name, and the live line under both. */
 export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderProps) {
+  /**
+   * THE LINE LEAVES AS WELL AS ARRIVES.
+   *
+   * `subtitle` going undefined used to take the line off screen between two
+   * frames. Every mode that hands the category back — Letter Rip returning to
+   * its intro from a finished round is the one you see most — lost it with a
+   * cut while everything around it moved.
+   *
+   * So the last line is held for a moment and animated out. What matters is
+   * that the HOLD is a timeout and not an animation event: a timeout fires
+   * whether or not anything painted, so a stalled animation costs the exit and
+   * nothing else. Waiting on `animationend` would leave the OLD category on a
+   * screen already showing a new one, which is the failure this file's FLIP
+   * note is about — and worse here, because a line that lies is worse than a
+   * line that jumps.
+   */
+  const [leaving, setLeaving] = useState<string | null>(null);
+  const last = useRef(subtitle);
+
+  useEffect(() => {
+    const previous = last.current;
+    last.current = subtitle;
+    if (subtitle !== undefined || previous === undefined) return;
+    setLeaving(previous);
+    const t = window.setTimeout(() => setLeaving(null), LEAVE_MS);
+    return () => window.clearTimeout(t);
+  }, [subtitle]);
+
+  const line = subtitle ?? leaving;
+
   return (
     <header className="gheader">
       <div className="gheader__bar">
@@ -92,9 +141,9 @@ export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderP
         </button>
       </div>
 
-      {subtitle && (
-        <div className="gheader__live">
-          <p className="gheader__now">{subtitle}</p>
+      {line && (
+        <div className="gheader__live" data-leaving={subtitle === undefined || undefined}>
+          <p className="gheader__now">{line}</p>
           {note && <p className="gheader__note">{note}</p>}
           {aside && <div className="gheader__aside">{aside}</div>}
         </div>

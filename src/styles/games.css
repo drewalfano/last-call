@@ -1199,10 +1199,52 @@
   from { opacity: 0; scale: 0.72; }
 }
 
+/* ---------------------------------------------------------------
+   AND THE WAY OUT.
+
+   The entrance is staggered because it is an arrival being read —
+   clock first, then the bank filling in, then the way out of the
+   round. The exit is not: the round is over and the table is waiting
+   on the verdict, so everything leaves together and quickly. A
+   stagger here would be twenty tiles taking their time about news
+   that has already broken.
+
+   Shorter than it arrives, and back the way it came — the same
+   scales, so the board collapses toward the middle it grew out of
+   rather than doing something new on the way out.
+
+   `forwards`, not `backwards`: this one has to HOLD its end state.
+   The board is still mounted for the beat after the animation
+   finishes, and without the fill it would snap back to full opacity
+   for that frame — which is the flash this is meant to remove.
+   --------------------------------------------------------------- */
+.focal.lw[data-leaving] .lw__timer {
+  animation: lw-ring-out var(--dur-fast) var(--ease-out) forwards;
+}
+
+.focal.lw[data-leaving] .lw__letter {
+  animation: lw-key-out var(--dur-fast) var(--ease-out) forwards;
+}
+
+.focal.lw[data-leaving] .actions {
+  animation: fade-in var(--dur-fast) var(--ease-out) reverse forwards;
+}
+
+@keyframes lw-ring-out {
+  to { opacity: 0; scale: 0.9; }
+}
+
+@keyframes lw-key-out {
+  to { opacity: 0; scale: 0.72; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lw__timer,
   .lw__letter,
-  .focal.lw .actions { animation: none; }
+  .focal.lw .actions,
+  .focal.lw[data-leaving] .lw__timer,
+  .focal.lw[data-leaving] .lw__letter,
+  .focal.lw[data-leaving] .actions { animation: none; }
 }
 
 /* ================================================================

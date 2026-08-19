@@ -263,6 +263,33 @@ button { font: inherit; color: inherit; }
   flex-direction: column;
   gap: var(--sp-3);
   padding-bottom: var(--sp-3);
+  /* ---------------------------------------------------------------
+     THE RESERVE CHANGES SIZE SMOOTHLY, WHICH IS HOW THE LIVE LINE
+     MOVES WITHOUT BEING ANIMATED.
+
+     Letter Rip ends a round by swapping .focal.lw for .focal--slot,
+     which flips the :has() selectors below and takes this box from 0
+     to --gheader-live-h in one frame. The category, centred in it,
+     jumped 48px. That jump is the one the note in GameHeader.tsx is
+     about: it was animated once with a FLIP, and a FLIP measures the
+     line's old SCREEN position and animates from it, so frame one is
+     the element where it used to be. On a surface that defers
+     painting the animation stopped on frame one and stayed — the
+     category parked behind the letter grid for a whole round, layout
+     right and paint wrong, permanently.
+
+     Transitioning the reserve cannot fail that way, because it is
+     not a correction applied on top of the layout — it IS the
+     layout, interpolated. Frame one is the height the header
+     correctly has now and the last frame is the height it correctly
+     has next. If it never runs, the box snaps between two right
+     answers, which is precisely what it did before this line
+     existed.
+
+     --ease-glide, not --ease-out: this is travel to be followed, not
+     an arrival to be landed. See the note beside the tokens.
+     --------------------------------------------------------------- */
+  transition: min-height var(--dur-base) var(--ease-glide);
 }
 
 /* ---------------------------------------------------------------
@@ -468,8 +495,28 @@ button { font: inherit; color: inherit; }
   from { translate: 0 -10px; }
 }
 
+/* Going the other way, and it CAN take opacity where the entrance cannot.
+
+   The entrance leaves opacity alone because a stalled frame would hold the
+   line at nothing and read as a category that never arrived. An exit has the
+   opposite failure: it is removed by a timeout in GameHeader whether or not
+   this ever paints, so the worst a stall costs is the line vanishing without
+   the fade — which is exactly what it did before. Nothing is left behind and
+   nothing lingers wrong. */
+.gheader__live[data-leaving] {
+  animation: live-out var(--dur-fast) var(--ease-out) forwards;
+}
+
+@keyframes live-out {
+  to {
+    translate: 0 -10px;
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .gheader__live { animation: none; }
+  .gheader__live,
+  .gheader__live[data-leaving] { animation: none; }
 }
 
 .gheader__now {

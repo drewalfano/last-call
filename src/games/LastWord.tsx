@@ -21,6 +21,13 @@ const LETTERS = "ABCDEFGHIJKLMNOPRSTW".split("");
 /** Seconds on the clock for each player's turn. */
 const TURN_SECONDS = 10;
 
+/**
+ * How long the letter board is kept on screen after a round ends, so it can
+ * leave rather than blink out. A beat, not a pause — the table is waiting on
+ * the verdict.
+ */
+const BOARD_LEAVE_MS = 180;
+
 type Phase = "intro" | "picking" | "playing" | "lost";
 
 function buzz(pattern: number | number[]) {
@@ -54,6 +61,21 @@ export function LastWord({ mode, onBack }: Props) {
    * what changes it.
    */
   const [played, setPlayed] = useState(false);
+  /**
+   * The board on its way out.
+   *
+   * A round ended by cutting straight to the verdict: twenty letter tiles and
+   * a clock vanished between two frames while the card underneath flipped in,
+   * so the busiest screen in the app was the only one that left without a
+   * word. The board is held for a beat and animated out first.
+   *
+   * The hold is a timeout, not an animation event — the same rule the live
+   * line's exit follows. A stalled animation then costs the exit and nothing
+   * else; waiting on `animationend` would strand a dead letter grid over a
+   * finished round.
+   */
+  const [leaving, setLeaving] = useState(false);
+  const exit = useRef<number>(undefined);
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
   /**
@@ -63,6 +85,17 @@ export function LastWord({ mode, onBack }: Props) {
    * table played a category it had never seen.
    */
   const pending = useRef(true);
+
+  /** Ends the round, but lets the board go first. */
+  const endRound = useCallback(() => {
+    setLeaving(true);
+    exit.current = window.setTimeout(() => {
+      setLeaving(false);
+      setPhase("lost");
+    }, BOARD_LEAVE_MS);
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(exit.current), []);
 
   const startTurn = useCallback(() => {
     deadline.current = performance.now() + TURN_SECONDS * 1000;
@@ -78,7 +111,7 @@ export function LastWord({ mode, onBack }: Props) {
       const left = deadline.current - performance.now();
       if (left <= 0) {
         setRemaining(0);
-        setPhase("lost");
+        endRound();
         buzz([90, 60, 180]);
         return;
       }
@@ -87,7 +120,7 @@ export function LastWord({ mode, onBack }: Props) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [phase]);
+  }, [phase, endRound]);
 
   const beginRound = useCallback(() => {
     // A hand-picked category sticks for its round; otherwise advance the deck,
@@ -231,7 +264,12 @@ export function LastWord({ mode, onBack }: Props) {
                   the clock zeroes it on expiry, and a round ended by hand
                   still has time on it. */}
               <p className="card__prompt">{remaining <= 0 ? "Out of time." : "Round over."}</p>
-              <p className="card__meta">Whoever's holding the phone drinks.</p>
+              {/* Not "whoever's holding the phone". That is only the same
+                  person while the phone is being passed hand to hand, and
+                  plenty of tables leave it face up in the middle and lean in.
+                  Whose turn it was is the fact the round actually ended on,
+                  and it is true however the phone is being played. */}
+              <p className="card__meta">Whoever's turn it was drinks.</p>
             </div>
           }
         >
@@ -275,7 +313,7 @@ export function LastWord({ mode, onBack }: Props) {
     /* The category is the one thing a player has to keep in their head for
        the whole round — see GameHeader's `subtitle`. */
     <GameScreen mode={mode} subtitle={category} onBack={onBack}>
-      <div className="focal lw">
+      <div className="focal lw" data-leaving={leaving || undefined}>
         <div className="lw__board">
           {/* Its own row, not a centre overlay — a letter can't cover it. */}
           <div className="lw__timer" data-low={seconds <= 3 || undefined}>
@@ -321,7 +359,7 @@ export function LastWord({ mode, onBack }: Props) {
               only one of the two ways a turn dies — the other is repeating a
               letter someone already used, and a table had nothing to press
               for it. */}
-          <button className="btn btn--ghost btn--block" onClick={() => setPhase("lost")}>
+          <button className="btn btn--ghost btn--block" onClick={endRound}>
             End round
           </button>
         </div>
