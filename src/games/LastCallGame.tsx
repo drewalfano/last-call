@@ -5,7 +5,6 @@ import { shuffle, useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
-import { VotePad } from "../components/VotePad";
 import { useRoster } from "../state/roster";
 import { fillPrompt } from "../lib/prompts";
 import { LAST_CALL, WILDCARD_LABEL, type Wildcard } from "../data/lastCall";
@@ -166,6 +165,9 @@ export function LastCallGame({ mode, onBack }: Props) {
             <PromptCard
               eyebrow={card ? WILDCARD_LABEL[card.kind] : undefined}
               dealKey={deck.drawCount}
+              /* A vote card says how it settles, and then the table settles
+                 it. See the note on the pad below. */
+              footer={card?.kind === "vote" ? "Most votes drinks." : undefined}
             >
               {card
                 ? fillPrompt(card.text, { name: currentPlayer, other: otherPlayer() })
@@ -174,10 +176,14 @@ export function LastCallGame({ mode, onBack }: Props) {
           </>
         }
       >
-        {/* Vote cards get the real mechanic; every other kind is unchanged. */}
-        {card?.kind === "vote" && (
-          <VotePad round={deck.drawCount} verdict={(w) => `${w} drinks.`} />
-        )}
+        {/* No vote pad. A vote card used to deal a roster of tappable
+            names, a reveal button and a running tally under the prompt —
+            three controls and a hidden state machine for something a
+            table does in two seconds by pointing at each other, stacked
+            between the card and the primary action. The card carries the
+            outcome instead: the prompt says who to vote on, the footer
+            says most votes drinks, and Next player is the only thing to
+            press. */}
         {card && (
           <p className="counter">
             {deck.position - tiers.before[card.intensity - 1]} of{" "}

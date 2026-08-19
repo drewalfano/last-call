@@ -6,7 +6,7 @@ import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
 import { HOT_SEAT } from "../data/hotSeat";
-import { VotePad, PlayerPicker } from "../components/VotePad";
+import { PlayerPicker } from "../components/VotePad";
 import { useRoster } from "../state/roster";
 
 /** Questions per hot seat before the phone rotates to someone new. */
@@ -174,9 +174,11 @@ export function HotSeat({ mode, onBack }: Props) {
         <button className="gfoot__skip" onClick={swap} disabled={!q}>
           New question
         </button>
-        {/* Group questions ask the table to vote — now they can. The person
-            in the seat is excluded; they're the subject, not a candidate. */}
-        {toGroup && <VotePad round={deck.drawCount} verdict={(w) => `${w} said it best.`} />}
+        {/* A group question asks the table to vote, and the table votes —
+            out loud, as the card's footer says. It used to deal a pad of
+            names with a reveal and a tally, which is a lot of screen and a
+            hidden state machine for a show of hands, on a screen whose
+            whole point is one person being asked about by everyone else. */}
         <div className="actions">
           <button className="btn btn--lg btn--block" onClick={advance}>
             {asked >= ROUND_LENGTH ? "End round" : "Next question"}
