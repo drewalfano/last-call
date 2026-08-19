@@ -826,6 +826,29 @@ button { font: inherit; color: inherit; }
    line length, and 64px type running to within 24px of the stock's
    edge reads as text poured in rather than set.
    --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   THE PROMPT ANSWERS TO THE SLOT AS WELL AS THE VIEWPORT.
+
+   --fs-prompt is sized against the screen, which is the right
+   input for "how far away is this being read from". It is not the
+   right input for "does it fit". At 1133x744 the slot is 252px
+   tall and a four-line Drink If prompt at 44.6px came to 271 — so
+   the card, which clips, cut the last line off. A prompt losing
+   words is the one failure this whole exercise cannot ship.
+
+   So the viewport sets the ambition and the slot sets the ceiling,
+   and the smaller wins. 12cqh only bites where the slot is short:
+   it costs a few points at 13" and takes 44.6px down to 30 at mini
+   landscape, which is the difference between a readable card and a
+   truncated one.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .slot:has(.card) { container-type: size; }
+
+  .slot:has(.card) .card__prompt { font-size: min(var(--fs-prompt), 12cqh); }
+  .slot:has(.card) .card__prompt--sm { font-size: min(var(--fs-prompt-sm), 10cqh); }
+}
+
 @media (min-width: 640px) and (min-height: 600px) {
   .cardstage > .card,
   .slot > .card {
