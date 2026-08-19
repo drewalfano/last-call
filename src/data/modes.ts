@@ -65,6 +65,12 @@ export const MODES: ModeDef[] = [
     color: "--cat-most-likely-to",
   },
   {
+    id: "rank-it",
+    title: "Rank It",
+    tagline: "Guess how they'd rank it.",
+    color: "--cat-rank-it",
+  },
+  {
     id: "kings-cup",
     title: "Kings Cup",
     tagline: "Draw a card, do what it says.",
@@ -75,12 +81,6 @@ export const MODES: ModeDef[] = [
     title: "Ride the Bus",
     tagline: "Four rounds, then try to get off the bus.",
     color: "--cat-ride-the-bus",
-  },
-  {
-    id: "rank-it",
-    title: "Rank It",
-    tagline: "Guess how they'd rank it.",
-    color: "--cat-rank-it",
   },
   {
     id: "say-the-same-thing",
