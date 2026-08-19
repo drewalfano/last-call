@@ -92,7 +92,7 @@ export const KINGS_CUP_RULES: KingsCupRule[] = [
   {
     rank: 9,
     label: "Drive",
-    text: "Vroom passes it on. Skrrt sends it back. Skeet skips the next player. You can't skrrt a skrrt. Hesitate or call it wrong and you drink.",
+    text: "Vroom passes it on. Skrrt sends it back. Skeet skips the next player. No skrrting a skrrt. Hesitate or slip up and drink.",
     effect: "drive",
   },
   {
