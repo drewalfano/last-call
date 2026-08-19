@@ -232,7 +232,11 @@
    rest are below the fold, so a slower stagger spends its opening beats
    somewhere nobody can see and the visible deal starts late. */
 .home__deck--dealing .deck-card {
-  animation: deck-deal var(--dur-base) var(--ease-out) backwards;
+  /* --ease-glide, not --ease-out: these should look like they are sliding
+     into the stack, and --ease-out finishes the distance too early to read
+     as travel. --dur-slow for the same reason — long enough to follow a card
+     down, short enough that the last one is home inside 800ms. */
+  animation: deck-deal var(--dur-slow) var(--ease-glide) backwards;
   animation-delay: calc(var(--i, 0) * 30ms);
 }
 
