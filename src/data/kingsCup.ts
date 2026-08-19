@@ -73,7 +73,7 @@ export const KINGS_CUP_RULES: KingsCupRule[] = [
   },
   {
     rank: 6,
-    label: "Girls",
+    label: "Chicks",
     text: "All the girls drink.",
     effect: "none",
   },
