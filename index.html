@@ -2,13 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Phone-first, no pinch zoom: this is a pass-the-phone game, and
-         viewport-fit=cover lets the shell paint under the notch. Both
+    <!-- Phone-first, no pinch zoom: this is a pass-the-phone game. Both
          orientations — the manifest no longer asks for a portrait lock, and
-         a tablet propped on a table is as likely to be landscape as not. -->
+         a tablet propped on a table is as likely to be landscape as not.
+
+         NO viewport-fit=cover, and that is the whole point of this line.
+         `cover` is what pushes the web view out into the unsafe areas so the
+         shell can paint under the notch, and it is therefore also what puts
+         page content up against the top edge — which is the surface iOS 26
+         applies its scroll edge effect to, blurring and dimming everything
+         within ~100px of the top on every screen of the installed app. It is
+         drawn over the web view, so no stylesheet reaches it, and there is no
+         web equivalent of scrollEdgeEffectStyle(.hard) to turn it off. The
+         previous attempt — handing the status bar back to iOS with
+         `default` — did not help on its own, because the tag only governs the
+         BAR while `cover` governs whether the page is under it at all.
+
+         Without cover the view stays inside the safe area and there is no
+         page edge up there to act on. The strip is still the pack's colour,
+         because theme-color paints it and appBackground.ts rewrites that per
+         screen. Both companions self-correct as before: --safe-top is
+         env(safe-area-inset-top, 0px) and goes to 0 once the viewport stops
+         extending under the bar, and --screen-h is 100svh/100lvh.
+
+         The one real cost, if this stays: --action-inset is a flat 20px
+         chosen to clear the home indicator itself, and without cover the
+         system has already inset the view past it — so grounded buttons now
+         sit about 20px higher off the bottom than they were drawn to. Worth
+         trimming if this is kept, but not before it is known to work. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
     />
     <!-- The colour iOS paints behind the status bar in an installed app, and
          it OUTRANKS the translucent style below on iOS 16.4+. So it cannot be
