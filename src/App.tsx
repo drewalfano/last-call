@@ -244,7 +244,32 @@ export default function App() {
         const r = card.getBoundingClientRect();
         const under = card.nextElementSibling?.getBoundingClientRect().top;
         const bottom = Math.min(r.bottom, under ?? r.bottom) - drift;
-        const radius = getComputedStyle(card).borderRadius;
+        /* ROUNDED ON ALL FOUR, THE WHOLE WAY, AND IT NEVER SQUARES OFF.
+
+           The card's own radius is `28px 28px 0 0` — square at the bottom —
+           and contracting to that value was the obvious thing to do. It is
+           wrong, and it took a while to see why it had ever looked right: the
+           earlier build hid it. A gradient was dissolving the bottom edge
+           away before the radius had finished squaring, so the sharp corners
+           were never on screen. Take the gradient out and there they are.
+
+           Nothing has to square off, because nothing is ever seen. The
+           overlay's bottom edge is clamped to where the NEXT card covers this
+           one, so a rounded bottom corner opens a notch onto the target card
+           itself — the same colour, at the same moment. The card's square
+           corners are hidden behind its neighbour in exactly the same way,
+           which is what .deck-card's own comment is about.
+
+           It also removes a moving part. The radius was interpolating from
+           28px to 0 on two corners across the contraction, which is one more
+           thing changing on one more clock in an animation that already has
+           too many. A constant is not a simplification here, it is the
+           correct value.
+
+           And it is right for the last card in the deck too, which is rounded
+           on all four and has nothing in front of it.
+           --------------------------------------------------------------- */
+        const radius = "28px";
 
         /* The card is RAISED right now — Home lifted it on mount, without a
            transition, precisely so this measurement is of where the colour
@@ -476,7 +501,12 @@ export default function App() {
           className="launch"
           style={{
             ...categoryStyle(MODE_BY_ID[closing].color),
-            clipPath: "inset(0px round 0px)",
+            /* Rounded, not the launch's square. The contraction below starts
+               from a rounded clip, so a square one here is a different shape
+               for the frame between this painting and the animation taking
+               over — one frame of hard corners before they round off. The
+               launch ENDS at full screen, so square is right for that one. */
+            clipPath: "inset(0px round 28px)",
           }}
           aria-hidden="true"
         />
