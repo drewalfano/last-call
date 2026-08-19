@@ -42,10 +42,18 @@ export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderP
   return (
     <header className="gheader">
       <div className="gheader__bar">
-        <button className="gheader__back" onClick={onBack} aria-label="Back to home">
+        <h1 className="gheader__title">{title}</h1>
+
+        {/* An X, not a chevron. Opening a mode is a presentation, not a push:
+            App expands the tapped card's colour over the whole screen, and
+            leaving unmounts the game and ends the round. There is no previous
+            page to go back to — you are closing something. A chevron promised
+            a step backwards and delivered a dismiss, which is also why it was
+            so easy to hit by reflex and lose a round to. */}
+        <button className="gheader__back" onClick={onBack} aria-label="Close game">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-              d="M15 5l-7 7 7 7"
+              d="M6 6l12 12M18 6L6 18"
               stroke="currentColor"
               strokeWidth="2.5"
               strokeLinecap="round"
@@ -53,7 +61,6 @@ export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderP
             />
           </svg>
         </button>
-        <h1 className="gheader__title">{title}</h1>
       </div>
 
       {subtitle && (

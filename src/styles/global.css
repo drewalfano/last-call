@@ -303,11 +303,12 @@ button { font: inherit; color: inherit; }
   justify-content: center;
   width: var(--tap-target);
   height: var(--tap-target);
-  /* 20px from the screen edge, on top of .screen's own --sp-4 padding.
-     It used to pull 8px INTO that padding, which optically aligned a bare
-     chevron with the content edge — but the well has a real edge of its
-     own now, and hard against the bezel it read as clipped. */
-  margin-left: calc(var(--sp-5) - var(--sp-4));
+  /* Pushed to the far right of the bar, 20px off the screen edge on top of
+     .screen's own --sp-4 padding. The mode name keeps the left to itself and
+     stays on the content edge, where it lines up with everything dealt below
+     it — the same alignment the wordmark and the deck share on Home. */
+  margin-left: auto;
+  margin-right: calc(var(--sp-5) - var(--sp-4));
   border: none;
   border-radius: var(--radius-pill);
   /* A well, not a bare chevron. The target was always 48px, but with nothing
