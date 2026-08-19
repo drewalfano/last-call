@@ -299,7 +299,9 @@ export function Home({ onPick }: HomeProps) {
   // Retire the ring the moment its last piece has gone out.
   useEffect(() => {
     if (!sweeping) return;
-    const t = window.setTimeout(() => setSweeping(false), DEAL_DELAY_MS + DEAL_SWEEP_MS);
+    // A margin past the last frame, so the unmount can never be what ends the
+    // animation. Landing on the same millisecond is a race the fade can lose.
+    const t = window.setTimeout(() => setSweeping(false), DEAL_DELAY_MS + DEAL_SWEEP_MS + 250);
     return () => window.clearTimeout(t);
   }, [sweeping]);
 

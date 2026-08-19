@@ -528,10 +528,24 @@
   animation: pick-me-veil calc(var(--pick-total) * 1ms) linear both;
 }
 
+/* The hold ends at 58%, not 84%, and that is the difference between a fade
+   and a blink.
+
+   The pieces retract on their own once the head stops: everything still lit
+   dies within one piece-life of each other, so the ink on the ring collapses
+   near the end whatever the group does. Measured on the tap sweep, it fell
+   from 69 to 19 — nearly three quarters of it — BEFORE the old 84% mark, so
+   the veil was fading something that had already gone and the steep part of
+   the exit was left bare.
+
+   Overlapping the retraction instead of following it is what smooths it. The
+   cost is that the last stretch of travel is slightly dimmer than the middle,
+   which is the right thing to spend: a line that is on its way out should be
+   dimming. */
 @keyframes pick-me-veil {
   0% { opacity: 0; }
-  16% { opacity: 1; }
-  84% { opacity: 1; }
+  14% { opacity: 1; }
+  58% { opacity: 1; }
   100% { opacity: 0; }
 }
 
