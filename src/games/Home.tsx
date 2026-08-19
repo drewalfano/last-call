@@ -232,16 +232,25 @@ export function Home({ onPick }: HomeProps) {
                 what gives it a centre bright enough to read as a glow rather
                 than as the line being out of focus.
 
-                The region is generous on purpose: a filter clips to its own
-                box, and a stdDeviation of 4 carries roughly 12px, which is
-                well outside a 60px-tall bounding box. Cropping it would put
-                a straight edge across the bloom. */}
+                The region is sized to the blur and not a pixel further, and
+                that is a frame-rate decision rather than a tidiness one. An
+                svg filter is not GPU-accelerated on iOS and its cost tracks
+                the AREA it recomputes every frame far more than the detail
+                inside it. This box used to be -25%/-150%/150%/400%, which on
+                a 358x60 button is about 537x240 — six times the area needed
+                to hold a stdDeviation of 4, whose bloom reaches roughly 12px.
+
+                Now it is that 12px plus a little, in each direction: ~394x94,
+                a third of what it was. Trim it further and the blur meets the
+                edge of its own box, which draws a straight line across the
+                glow — the one thing the old generous numbers were guarding
+                against. */}
             <filter
               id="pick-me-glow"
-              x="-25%"
-              y="-150%"
-              width="150%"
-              height="400%"
+              x="-5%"
+              y="-28%"
+              width="110%"
+              height="156%"
               colorInterpolationFilters="sRGB"
             >
               <feGaussianBlur stdDeviation="4" result="bloom" />
@@ -264,16 +273,19 @@ export function Home({ onPick }: HomeProps) {
                 that boundary, but it does not need to: the line's own colour
                 sits right on it.
 
-                userSpaceOnUse with a region to match the filter's — a mask
+                userSpaceOnUse with a region matching the filter's — a mask
                 defaults to a box 10% around the object, which would crop the
-                outward bloom the filter just drew. */}
+                outward bloom the filter just drew. Matching rather than
+                exceeding it: a mask region is another buffer the compositor
+                allocates, and there is nothing to keep out past the point
+                the blur itself stops. */}
             <mask
               id="pick-me-outside"
               maskUnits="userSpaceOnUse"
-              x="-25%"
-              y="-150%"
-              width="150%"
-              height="400%"
+              x="-5%"
+              y="-28%"
+              width="110%"
+              height="156%"
             >
               <rect className="pick-me__mask-all" />
               <rect className="pick-me__mask-hole" />
