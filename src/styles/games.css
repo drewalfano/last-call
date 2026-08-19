@@ -428,6 +428,35 @@
   transition: none;
 }
 
+/* ---------------------------------------------------------------
+   THE DROP GETS ITS OWN CLOCK, AND IT BADLY NEEDED ONE.
+
+   Taking `data-returning` off is what starts the fall, and with no
+   rule of its own the transition that governed it was `.deck-card`'s
+   — `transform var(--dur-press) var(--ease-out)`. That is the BUTTON
+   PRESS: 120ms on a curve tuned to be over before you have seen it.
+   Measured, the card covered its 14px in about 90ms and then sat
+   there for the rest of the beat. It was not settling into the deck,
+   it was snapping down, because it was borrowing the transition that
+   exists for a thumb going down on a card.
+
+   --dur-base on --ease-glide, and the curve is the point. tokens.css
+   describes --ease-glide as being for motion that reads as TRAVEL
+   rather than as arrival, where --ease-out is "~95% done by the
+   halfway point, so the movement itself is over before you have seen
+   it". A card lowering itself into a slot is travel. It is also the
+   reason not to reach for --ease-spring here, which is what the lift
+   uses: a spring overshoots, and something being put back down should
+   not bounce past where it belongs.
+
+   The shadow comes with it on the same clock, so the card's lift and
+   its weight land together instead of one chasing the other.
+   --------------------------------------------------------------- */
+.deck-card[data-settling] {
+  transition: transform var(--dur-base) var(--ease-glide),
+              box-shadow var(--dur-base) var(--ease-glide);
+}
+
 /* NOTHING HIDES THE WRITING, and taking that out is what separates the two
    halves of the close.
 

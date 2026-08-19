@@ -223,6 +223,15 @@ function edgeOpacity(i: number): number {
 }
 
 /**
+ * How long the returning card takes to lower itself into the slot.
+ *
+ * Matches --dur-base, which is what .deck-card[data-settling] transitions on.
+ * A number here because a timeout cannot read a custom property, and the two
+ * only have to agree to the frame.
+ */
+const SETTLE_MS = 260;
+
+/**
  * Whether the deck has already dealt itself out this session.
  *
  * Module scope, not state: Home is unmounted every time you open a mode and
@@ -286,6 +295,15 @@ export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
    * one number, which is why it arrives as a prop.
    */
   const [held, setHeld] = useState<ModeId | null>(returning ?? null);
+  /**
+   * The card on its way DOWN, which is a different state from being held up.
+   *
+   * It exists only so the fall can have a transition of its own. Without it
+   * the card takes `.deck-card`'s, which is the press — 120ms on a curve
+   * built to be over before you see it — and the drop snapped rather than
+   * settled. See .deck-card[data-settling].
+   */
+  const [settling, setSettling] = useState<ModeId | null>(null);
   const deckRef = useRef<HTMLElement>(null);
   const timer = useRef<number>(undefined);
   const raf = useRef<number>(undefined);
@@ -414,9 +432,22 @@ export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
    */
   useEffect(() => {
     if (!held) return;
-    const t = window.setTimeout(() => setHeld(null), settleAfter);
+    const t = window.setTimeout(() => {
+      setHeld(null);
+      setSettling(held);
+    }, settleAfter);
     return () => window.clearTimeout(t);
   }, [held, settleAfter]);
+
+  /* And released again once it is down, so the card goes back to carrying
+     nothing but its press. SETTLE_MS is --dur-base; the two only have to
+     agree to the frame, and the attribute outstaying the transition by a
+     little costs nothing while ending early would cut the fall short. */
+  useEffect(() => {
+    if (!settling) return;
+    const t = window.setTimeout(() => setSettling(null), SETTLE_MS);
+    return () => window.clearTimeout(t);
+  }, [settling]);
 
   // Retire the ring the moment its last piece has gone out.
   useEffect(() => {
@@ -565,8 +596,11 @@ export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
             key={mode.id}
             data-mode={mode.id}
             data-picked={revealed === mode.id || undefined}
-            /* Held up while the closing colour lands on it, then dropped. */
+            /* Held up while the closing colour lands on it, then dropped —
+               and the fall is its own state, because it needs its own
+               transition. See .deck-card[data-settling]. */
             data-returning={held === mode.id || undefined}
+            data-settling={settling === mode.id || undefined}
             className="deck-card"
             /* Counted from the BOTTOM of the deck, so the deal runs upward —
                see .home__deck--dealing. */
