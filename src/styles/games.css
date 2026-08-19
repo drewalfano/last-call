@@ -2022,6 +2022,50 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* ---------------------------------------------------------------
+   TABLET: THE COUNT-IN IS THE BOARD MOMENT.
+
+   This is the strongest thing the app does on a shared screen —
+   everyone acting on the same beat is the mechanic, not decoration
+   — and it was rendering at the same 14rem it uses on a phone,
+   which on a 13" is a numeral occupying a fifth of the height with
+   most of the display empty around it.
+
+   It stays IN THE CARD'S SLOT, deliberately. MostLikelyTo's own
+   comment says why: the numbers should land on the spot the prompt
+   just left. Taking the count-in full-screen would make it a
+   different screen rather than the same card counting down.
+
+   So the numeral is sized against the slot instead of the
+   viewport. 88cqh gives it essentially the whole slot height while
+   leaving room for the descender-free digits to breathe, and the
+   vmin term keeps a wide-but-short landscape from asking for a
+   numeral taller than the screen. Whichever is smaller wins.
+
+   The action word takes a much smaller fraction than the numeral —
+   "SAY IT" is six characters where "3" is one, and matching their
+   heights would run the word off both edges of the card.
+
+   The slot becomes a size container only when a countdown is in
+   it. `contain: size` would otherwise apply to every card screen
+   in the app, and Rank It renders a scrolling list into this same
+   box; there is no reason to change its containment to size a
+   numeral two modes over.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .slot:has(.countdown) { container-type: size; }
+
+  .countdown {
+    /* 46vh was a phone's way of claiming most of the screen. In a
+       slot with a definite height it is just overflow. */
+    min-height: 0;
+    height: 100%;
+  }
+
+  .countdown__n { font-size: min(46vmin, 88cqh); }
+  .countdown__word { font-size: min(18vmin, 30cqh); }
+}
+
 /* ---------------- Most Likely To ---------------- */
 .mlt__verdict {
   margin: 0;
