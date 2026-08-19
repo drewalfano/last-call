@@ -52,12 +52,12 @@ transition: transform var(--dur-press) var(--ease-out),
 :active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 ```
 
-— is written out **fourteen times**, at `global.css:157`, `:373`, `:817` and
-`games.css:51`, `:433`, `:783`, `:1132`, `:1449`, `:1539`, `:1639`, `:1712`,
-`:1753`, `:2141`, `:2445`, `:2783`. There is no `.pressable` utility. Every copy
-is identical apart from which scale token it picks, and the one control in the app
-with no press feedback at all (finding **F**) was missed precisely because there is
-no shared class to forget to apply.
+— is written out across **eighteen distinct selectors** (sixteen at the time of the
+audit; `.sheet__close` and `.segmented__opt` were added by findings **F** and **G**).
+There is no `.pressable` utility. Most copies are identical apart from which scale
+token they pick, and the one control in the app with no press feedback at all
+(finding **F**) was missed precisely because there is no shared class to forget to
+apply.
 
 `prefers-reduced-motion` is likewise handled in **eight separate blocks**
 (`global.css:531`, `:1279`; `games.css:248`, `:677`, `:1241`, `:1921`, `:2483`,
@@ -348,11 +348,11 @@ deliberate and correct, and this proposal animates the *row*, not the card.
 is real feedback for the meaningful case. Tapping the option that is *already*
 selected produces nothing. 4 lines if taken.
 
-#### H. The press recipe is copied fourteen times
+#### H. The press recipe is copied across eighteen selectors
 
 Not a visual defect; a maintenance one, and the direct cause of **F**. A
 `.pressable` / `.pressable--sm` pair of rules, adopted incrementally, would collapse
-it. **Do not rewrite all fourteen in one commit** — it is a large mechanical diff
+it. **Do not rewrite all eighteen in one commit** — it is a large mechanical diff
 across two stylesheets with no user-visible change, and it should land after the
 findings that do have one.
 
@@ -671,21 +671,46 @@ attempted. D3's stated blocker — that it must not be mixed with behaviour chan
 no longer applies now that every behaviour change is landed, so it could now be done
 as the isolated commit D3 described.
 
-Worth knowing before it is: the fourteen presses are **not** uniform, so this is not
-a find-and-replace. They fall into four groups.
+Worth knowing before it is: the eighteen presses are **not** uniform, so this is not
+a find-and-replace. Fourteen collapse cleanly into two groups. **Four cannot**, and
+one of those four will not announce itself.
 
-- `--press-scale` + `--press-dim` (7): `.btn`, `.chip`, `.lw__letter`,
-  `.votepad__player`, `.picker__card`, `.rank__item`, `.roster__go`, `.pick-me`
-- `--press-scale-sm` + `--press-dim` (5): `.gheader__back`, `.roster__chip`,
-  `.stepper__step`, `.gfoot__skip`, `.sheet__close`
-- **Genuine exceptions (3)**: `.settings-btn` adds `rotate(35deg)` — the one press in
-  the app that says what the button *does*; `.deck-card` uses `translateY(-4px)` and
-  no dim, because the cards overlap and a scale slides one under its neighbour while
-  a dimming card reads as moving away from you; `.segmented__opt` takes scale with no
-  dim, because dimming the pressed option fights the fill that carries its state.
+- `--press-scale` + `--press-dim` (9): `.btn`, `.chip`, `.pick-me`, `.picker__card`,
+  `.rank__item`, `.roster__prompt`, `.roster__clear`, `.roster__go`,
+  `.votepad__player`
+- `--press-scale-sm` + `--press-dim` (5): `.gheader__back`, `.gfoot__skip`,
+  `.roster__chip`, `.sheet__close`, `.stepper__step`
 
-So a shared pair of classes covers twelve, and three keep bespoke rules with their
-reasoning intact. That is a real simplification and not a total one.
+The four exceptions, each for a written reason:
+
+1. **`.settings-btn`** — `scale(var(--press-scale-sm)) rotate(35deg)`. The gear
+   turns. It is the one press in the app that says what the button *does*.
+2. **`.deck-card`** — `translateY(-4px)`, no scale and no dim. The cards overlap, so
+   a scale slides one under its neighbour, and a card that dims as it comes toward
+   you reads backwards.
+3. **`.segmented__opt`** — scale, no dim. Dimming the pressed option fights the fill
+   that carries the control's state, and on the already-selected option it reads as
+   the setting being switched off.
+4. **`.lw__letter` — the one that will bite.** At phone size it is a plain
+   `scale()`. At the tablet ring breakpoint the letters are placed by a `--place`
+   transform and the press *composes* with it:
+   `transform: var(--place) scale(var(--press-scale))`. A shared class setting
+   `transform: scale(...)` **overwrites the placement and collapses all twenty
+   letters onto the centre of the board on every tap** — and only above
+   `min-width: 640px and min-height: 950px`, so it is invisible at the size anyone
+   would check first. This is the same trap `lw-key-in` documents for its own
+   animation, which is why that one animates the `scale` property rather than
+   `transform`.
+
+So a shared pair of classes covers fourteen, and four keep bespoke rules with their
+reasoning intact. A real simplification, not a total one.
+
+**The eight reduced-motion blocks are a different question, and my recommendation
+there is to leave them distributed.** They are not duplication — each names
+different selectors, and they exist because the global nuke zeroes
+`animation-duration` but not `animation-delay`. Collecting them into one block would
+move each rule away from the animation it disables, and in this codebase every
+animation has its reasoning written beside it. Consolidating would cost that.
 
 ### What Phase 4 actually cost
 
@@ -776,14 +801,14 @@ decision rather than an oversight.
 
 ### D3 — Press-recipe and reduced-motion consolidation: **deferred, not declined.**
 
-Findings **H** (fourteen duplicated press recipes) and the eight separate
+Findings **H** (eighteen duplicated press recipes) and the eight separate
 `prefers-reduced-motion` blocks are out of scope for this work. Consolidating them
 is a mechanical refactor across two stylesheets with its own regression risk, and it
 must not be mixed with behaviour changes. It stays available as its own piece of
 work.
 
 Consequence for anything below: **new rules follow the existing convention.** A new
-press writes the recipe out in full like the other fourteen; a new staggered or
+press writes the recipe out in full like the other eighteen; a new staggered or
 delayed animation gets its own reduced-motion block. Do not start a shared class
 partway through.
 
