@@ -45,7 +45,13 @@ export function LastWord({ mode, onBack }: Props) {
   const [used, setUsed] = useState<string[]>([]);
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
-  const primed = useRef(false);
+  /**
+   * True while `deck.current` is a category the table has been shown on the
+   * intro card but hasn't played yet — a fresh deck deals one face-up, and
+   * Random deals another. Without it, Start round drew a second time and the
+   * table played a category it had never seen.
+   */
+  const pending = useRef(true);
 
   const startTurn = useCallback(() => {
     deadline.current = performance.now() + TURN_SECONDS * 1000;
@@ -73,16 +79,29 @@ export function LastWord({ mode, onBack }: Props) {
   }, [phase]);
 
   const beginRound = useCallback(() => {
-    // A hand-picked category sticks for its round; otherwise advance the deck.
-    // A fresh deck already has one face-up, so the first round doesn't draw.
+    // A hand-picked category sticks for its round; otherwise advance the deck,
+    // unless one is already face-up and unplayed.
     if (!chosen) {
-      if (primed.current) deck.draw();
-      else primed.current = true;
+      if (!pending.current) deck.draw();
+      pending.current = false;
     }
     setUsed([]);
     startTurn();
     setPhase("playing");
   }, [deck, startTurn, chosen]);
+
+  /**
+   * Deal a category and show it, rather than dealing straight into a round.
+   * The table reads it off the intro card and starts when it's ready — same
+   * landing the picker uses, so both ways of changing category end up in the
+   * same place.
+   */
+  const drawRandom = useCallback(() => {
+    setChosen(null);
+    deck.draw();
+    pending.current = true;
+    setPhase("intro");
+  }, [deck]);
 
   const lockLetter = useCallback(
     (letter: string) => {
@@ -122,7 +141,12 @@ export function LastWord({ mode, onBack }: Props) {
       <GameScreen mode={mode} onBack={onBack}>
         <CardBody
           card={
-            <div className="card">
+            /* Keyed on the category, so a new one TURNS OVER rather than
+               swapping its text in place. `.slot > .card` already carries the
+               flip every other mode's cards deal on — it replays on remount,
+               and without a key React was reusing this element and Random was
+               a silent text substitution on a card that never moved. */
+            <div className="card" key={chosen ?? `deck-${deck.drawCount}`}>
               <span className="card__eyebrow">Category</span>
               <p className="card__prompt">{category}</p>
               <p className="card__meta">
@@ -132,13 +156,7 @@ export function LastWord({ mode, onBack }: Props) {
           }
         >
           <div className="actions--row">
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                setChosen(null);
-                deck.draw();
-              }}
-            >
+            <button className="btn btn--ghost" onClick={drawRandom}>
               Random
             </button>
             <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
@@ -174,11 +192,18 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "lost") {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
+      /* The category stays in the header, exactly where the round left it —
+         see GameHeader's `subtitle`. It spent a turn in the eyebrow, which is
+         a slot for a short fixed label: "Things you'd hide before someone
+         comes over" doesn't fit one line of a chip on a phone, so the chip
+         stretched the width of the card and the text floated in the middle of
+         it with 55px of pink either side. A pill can't shrink to its own
+         wrapped lines in CSS — it fills what it's given — so the fix is to
+         stop asking a label chip to carry a sentence. */
+      <GameScreen mode={mode} subtitle={category} onBack={onBack}>
         <CardBody
           card={
             <div className="card">
-              <span className="card__eyebrow">{category}</span>
               {/* The round can end two ways and the button covers both, so
                   the card has to say which happened. `remaining` is the tell:
                   the clock zeroes it on expiry, and a round ended by hand
@@ -188,6 +213,19 @@ export function LastWord({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* The same two ways out the intro card offers. Next round is the
+              path a table usually wants — but a hand-picked category sticks
+              to it, and a category gets mined dry at exactly the moment a
+              round ends. Until now this screen's only exit was to play it
+              again, or to leave the mode entirely by the chevron. */}
+          <div className="actions--row">
+            <button className="btn btn--ghost" onClick={drawRandom}>
+              Random
+            </button>
+            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
+              Categories
+            </button>
+          </div>
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={beginRound}>
               Next round
