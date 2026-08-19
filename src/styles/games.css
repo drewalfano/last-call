@@ -411,6 +411,12 @@
 
 .pcard--sm { width: min(19vw, 84px); padding: var(--sp-1) var(--sp-2); }
 
+/* The rank carries more of the face on a small card than on a large one. At
+   the shared 22cqw it is the thing you are trying to read at the size it is
+   hardest to — Ride the Bus lays four of these out and the rank is the whole
+   question. */
+.pcard--sm .pcard__corner { font-size: 26cqw; }
+
 .pcard__corner {
   align-self: flex-start;
   font-family: var(--font-display);
