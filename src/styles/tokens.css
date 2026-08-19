@@ -91,6 +91,11 @@
      So: small viewport by default, large one when standalone.
      Same finding, same fix as trackd.
      ---------------------------------------------------------- */
+  /* The strip the status bar and the island sit in. Read once, here, so
+     every layout that has to account for it uses the same figure — and so it
+     can be overridden to test a device's geometry in a browser, where the
+     real env() is always zero. */
+  --safe-top: env(safe-area-inset-top, 0px);
   --screen-h: 100svh;
   --tap-target: 48px;
   /* Every primary action sits exactly this far off the bottom edge.
@@ -177,10 +182,8 @@
   --gheader-live-h: max(
     var(--gheader-h),
     calc(
-      (
-        var(--screen-h) - env(safe-area-inset-top, 0px) - var(--sp-3) - var(--action-inset)
-          - var(--card-size)
-      ) / 2
+      var(--screen-h) / 2 - var(--safe-top) - var(--sp-3)
+        - var(--card-size) / 2
     )
   );
 
@@ -200,7 +203,7 @@
   --card-size: min(
     min(100vw, var(--app-max-width)) - var(--sp-4) * 2,
     58lvh,
-    var(--screen-h) - env(safe-area-inset-top, 0px) - var(--sp-3) - var(--action-inset)
+    var(--screen-h) - var(--safe-top) - var(--sp-3) - var(--action-inset)
       - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
   );
 

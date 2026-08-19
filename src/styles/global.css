@@ -97,7 +97,7 @@ button { font: inherit; color: inherit; }
      already ends on a flat `--action-inset`, which is sized to clear the home
      indicator on its own; having both put the grounded button 54pt off the
      bottom edge instead of 20. See the note on `--action-inset`. */
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-top);
 }
 
 .screen {
@@ -496,8 +496,26 @@ button { font: inherit; color: inherit; }
      drew a narrower card than a long one. minmax(0, 1fr) pins the column to
      the full width and lets the footer row scroll. */
   grid-template-columns: minmax(0, 1fr);
+  /* The header row is COMPUTED, not an equal share of the slack.
+
+     An equal split centres the card in the frame's content box — and that
+     box starts below the notch, because .app__frame pads the safe-area inset
+     off the top and nothing off the bottom. So the card came out half the
+     inset low: 25.5px on a device with a 59px island, 280px of air above it
+     against 229 below. Invisible in a browser, where the inset is zero.
+
+     This puts the card's top at exactly half the screen minus half the card,
+     whatever the inset is, and lets the footer take the remainder so the
+     primary action stays grounded. --gheader-h is still the floor, for the
+     short screens where that much header cannot be spared. */
   grid-template-rows:
-    minmax(var(--gheader-h), 1fr)
+    minmax(
+      var(--gheader-h),
+      calc(
+        var(--screen-h) / 2 - var(--safe-top) - var(--sp-3)
+          - var(--card-size) / 2
+      )
+    )
     var(--card-size)
     minmax(var(--gfooter-h), 1fr);
 }
