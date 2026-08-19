@@ -97,7 +97,19 @@ export function SayTheSameThing({ mode, onBack }: Props) {
       ) : (
         <CardBody
           card={
-            <div className="card">
+            /* KEYED, or the card never turns over.
+               Every other mode deals through PromptCard, which remounts on
+               its `dealKey`. This one renders a bare card, so React kept the
+               same element and swapped the text inside it — skipping to a
+               new word, or landing on the match, changed the writing on a
+               card that never moved, while the rest of the app dealt. The
+               flip is a mount animation; this is what gives it a mount.
+               Keyed on the four things this screen is about: which word,
+               which pair, which attempt, which phase. */
+            <div
+              className="card"
+              key={`${deck.drawCount}-${round}-${attempt}-${phase}`}
+            >
               <span className="card__eyebrow">
                 {phase === "matched"
                   ? "Matched"
