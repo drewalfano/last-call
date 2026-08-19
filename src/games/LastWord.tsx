@@ -256,7 +256,11 @@ export function LastWord({ mode, onBack }: Props) {
          wrapped lines in CSS — it fills what it's given — so the fix is to
          stop asking a label chip to carry a sentence. */
       <GameScreen mode={mode} subtitle={category} onBack={onBack}>
+        {/* `lw-over` is only here so the stylesheet can tell this screen from
+            the playing one and slide the category down into it — see
+            `live-drop`. It carries no layout of its own. */}
         <CardBody
+          className="lw-over"
           card={
             <div className="card">
               {/* The round can end two ways and the button covers both, so

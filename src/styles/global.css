@@ -263,33 +263,6 @@ button { font: inherit; color: inherit; }
   flex-direction: column;
   gap: var(--sp-3);
   padding-bottom: var(--sp-3);
-  /* ---------------------------------------------------------------
-     THE RESERVE CHANGES SIZE SMOOTHLY, WHICH IS HOW THE LIVE LINE
-     MOVES WITHOUT BEING ANIMATED.
-
-     Letter Rip ends a round by swapping .focal.lw for .focal--slot,
-     which flips the :has() selectors below and takes this box from 0
-     to --gheader-live-h in one frame. The category, centred in it,
-     jumped 48px. That jump is the one the note in GameHeader.tsx is
-     about: it was animated once with a FLIP, and a FLIP measures the
-     line's old SCREEN position and animates from it, so frame one is
-     the element where it used to be. On a surface that defers
-     painting the animation stopped on frame one and stayed — the
-     category parked behind the letter grid for a whole round, layout
-     right and paint wrong, permanently.
-
-     Transitioning the reserve cannot fail that way, because it is
-     not a correction applied on top of the layout — it IS the
-     layout, interpolated. Frame one is the height the header
-     correctly has now and the last frame is the height it correctly
-     has next. If it never runs, the box snaps between two right
-     answers, which is precisely what it did before this line
-     existed.
-
-     --ease-glide, not --ease-out: this is travel to be followed, not
-     an arrival to be landed. See the note beside the tokens.
-     --------------------------------------------------------------- */
-  transition: min-height var(--dur-base) var(--ease-glide);
 }
 
 /* ---------------------------------------------------------------
@@ -495,6 +468,47 @@ button { font: inherit; color: inherit; }
   from { translate: 0 -10px; }
 }
 
+/* ---------------------------------------------------------------
+   THE CATEGORY TRAVELS TO THE ROUND-OVER SCREEN.
+
+   Ending a round in Letter Rip drops it 48px. The line does not
+   move — the reserve under it does: .focal.lw is swapped for
+   .focal--slot, which flips a :has() selector and takes .gheader from
+   0 to --gheader-live-h, and auto margins re-centre the line in the
+   taller box.
+
+   Two ways to animate that were tried before this one. A FLIP, which
+   measures the line's old SCREEN position and animates from it —
+   frame one is the element where it used to be, so a surface that
+   defers painting leaves the category parked behind the letter grid
+   for the whole round. And a transition on the reserve itself, which
+   is honest layout but depends on a :has() recalculation starting a
+   transition in the same frame a whole subtree is replaced, and did
+   not fire.
+
+   This is the form the entrance already uses and the only one with no
+   way to be wrong: the layout SNAPS, exactly as it always did, and a
+   relative translate makes the line appear to arrive from where it
+   just was. The end state is 0 — the correct position — so a stall at
+   frame one leaves it 48px high, which is where it was a moment ago,
+   still legible, with the layout underneath already right.
+
+   48px is measured on a two-line category and is deliberately a fixed
+   number rather than a computed one. The true drop is half the
+   difference between the reserve and the header's content, so it runs
+   from ~33px on a three-line category to ~64px on a one-liner. A
+   measurement is what a FLIP is; a constant that is a little wrong at
+   the START of a 260ms slide is not something anyone can see, and it
+   cannot fail.
+   --------------------------------------------------------------- */
+.screen:has(.focal.lw-over) .gheader__live {
+  animation: live-drop var(--dur-base) var(--ease-glide) both;
+}
+
+@keyframes live-drop {
+  from { translate: 0 -48px; }
+}
+
 /* Going the other way, and it CAN take opacity where the entrance cannot.
 
    The entrance leaves opacity alone because a stalled frame would hold the
@@ -516,7 +530,8 @@ button { font: inherit; color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   .gheader__live,
-  .gheader__live[data-leaving] { animation: none; }
+  .gheader__live[data-leaving],
+  .screen:has(.focal.lw-over) .gheader__live { animation: none; }
 }
 
 .gheader__now {
