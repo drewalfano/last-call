@@ -7,7 +7,12 @@
 /* No bottom inset: Home has no grounded button to clear, and the deck is meant
    to run right to the edge of the display. --action-inset is for screens that
    ground an action against the bottom, which Home does not. */
-.home { overflow-y: auto; padding-bottom: 0; }
+/* `.screen.home`, not `.home`. Both are one class, and games.css is imported
+   ahead of global.css, so a bare `.home` loses the tie to `.screen` and the
+   padding-bottom below it never applied — leaving a 20px band of shell under
+   the last card at the end of the scroll, with its squared bottom edge sat on
+   top of it. The deck is meant to run off the display, not stop short of it. */
+.screen.home { overflow-y: auto; padding-bottom: 0; }
 
 .home__head {
   display: flex;
@@ -243,6 +248,11 @@
 @media (prefers-reduced-motion: reduce) {
   .home__deck--dealing .deck-card { animation: none; }
 }
+
+/* The last card is the only one with nothing on top of it, so it is the only
+   one whose bottom is ever seen — rounded, to meet the curve of the display
+   it ends against rather than cutting a straight line across it. */
+.deck-card:last-child { border-radius: var(--radius-xl); }
 
 .deck-card:not(:first-child) {
   margin-top: calc(var(--peek) - var(--card-h));
