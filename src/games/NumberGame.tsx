@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
+import { Stepper } from "../components/Stepper";
 import { useDeck } from "../lib/deck";
 import { useCountdown, buzz } from "../lib/useCountdown";
 import { usePool } from "../data/pools";
@@ -20,13 +21,26 @@ import type { ModeDef } from "../data/modes";
  * "uhh… Shake It Off?" counts.
  */
 
-type Phase = "bidding" | "challenge" | "verdict";
+type Phase = "count" | "bidding" | "challenge" | "verdict";
 
 /** Seconds per item claimed. A bid of 7 buys 42 seconds, which is tight. */
 const SECONDS_PER_ITEM = 6;
 /** Where every round opens. Also what says whether anyone has bid yet. */
 const START_BID = 3;
 const MIN_SECONDS = 25;
+
+/**
+ * How big the table can be when nobody entered names.
+ *
+ * Two is the real floor — the game is one person bidding and another calling
+ * it, so a table of one has nobody to prove anything to. Eight is where
+ * passing a phone round a bar table stops being a game and starts being
+ * admin; Imposter caps at ten because it only goes round once, and this one
+ * goes round all night.
+ */
+const MIN_SEATS = 2;
+const MAX_SEATS = 8;
+const DEFAULT_SEATS = 4;
 
 interface Props {
   mode: ModeDef;
@@ -35,19 +49,50 @@ interface Props {
 
 export function NumberGame({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
-  const { players, hasRoster } = useRoster();
+  const { players } = useRoster();
   const pool = usePool(NUMBER_GAME_CATEGORIES, contentMode, "lead");
   const deck = useDeck(pool);
 
-  const [phase, setPhase] = useState<Phase>("bidding");
+  const [seats, setSeats] = useState(DEFAULT_SEATS);
+  /**
+   * Names skip the picker entirely. Asked once, on entry, and only when the
+   * app has no idea how many of you there are — see the note on `newRound`
+   * for why it is never asked again.
+   */
+  const [phase, setPhase] = useState<Phase>(() => (players.length ? "bidding" : "count"));
   const [bid, setBid] = useState(START_BID);
   const [turn, setTurn] = useState(0);
   /** Who owns the bid on the table right now — the one who gets challenged. */
   const [holder, setHolder] = useState<number>(0);
 
+  /**
+   * THE TABLE. One entry per seat, named or not.
+   *
+   * The bug this replaced was a fork: with names, the bid cycled through the
+   * roster; without them, the label was built straight off the bid index and
+   * there was no roster length to wrap against, so the fourth raise at a
+   * table of three asked Player 4 to prove it. There is no unnamed path any
+   * more — the picker fills in the seats the names would have, so everything
+   * downstream reads one length and one list.
+   */
+  const table = useMemo(
+    () => (players.length ? players : Array.from({ length: seats }, () => "")),
+    [players, seats],
+  );
+
+  /**
+   * Seat `i`, wrapped, by name if it has one.
+   *
+   * Blank-tolerant per seat rather than wholesale, so a table that entered
+   * some names and not others reads "Drew, Sam, Player 3" instead of falling
+   * all the way back to numbers.
+   */
   const nameAt = useCallback(
-    (i: number) => (hasRoster && players.length ? players[i % players.length] : `Player ${i + 1}`),
-    [hasRoster, players],
+    (i: number) => {
+      const seat = i % table.length;
+      return table[seat] || `Player ${seat + 1}`;
+    },
+    [table],
   );
 
   const timer = useCountdown(MIN_SECONDS, () => buzz([90, 60, 180]));
@@ -96,10 +141,47 @@ export function NumberGame({ mode, onBack }: Props) {
        like two different things between the two modes. */
     <GameScreen
       mode={mode}
-      subtitle={deck.current}
+      /* The picker runs before the first category is shown — the header's
+         live line has nothing to carry yet, and putting the category up
+         there would hand the table something to argue about before it has
+         told the app how many of them there are. */
+      subtitle={phase === "count" ? undefined : deck.current}
       note={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
       onBack={onBack}
     >
+      {/* ---------- How many of you ---------- */}
+      {phase === "count" && (
+        <CardBody
+          card={
+            <div className="card">
+              <span className="card__eyebrow">How many playing?</span>
+              <Stepper
+                value={seats}
+                min={MIN_SEATS}
+                max={MAX_SEATS}
+                onChange={setSeats}
+                noun="player"
+              />
+              <p className="card__meta">
+                The bid goes round the table, so it has to know where the table
+                ends. Add names on Home and it uses those instead.
+              </p>
+            </div>
+          }
+        >
+          {/* One control, one tap. The count has a sane default and a range
+              of seven, so there is nothing here worth a confirm step — the
+              only wrong answer is the one you can go back and change, and
+              you cannot, which is exactly why this screen is a single
+              decision and not a settings page. */}
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={() => setPhase("bidding")}>
+              Start
+            </button>
+          </div>
+        </CardBody>
+      )}
+
       {/* ---------- Bidding ---------- */}
       {phase === "bidding" && (
         <CardBody
