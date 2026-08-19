@@ -64,6 +64,41 @@
   --border-width: 2px;
 
   /* --- Layout ---------------------------------------------- */
+  /* ----------------------------------------------------------
+     THE TABLET BREAKPOINT, written down once:
+
+       @media (min-width: 640px) and (min-height: 600px)
+
+     There is no way to name a media query in plain CSS, so the
+     literal is repeated wherever it is needed. This is the note it
+     is repeating FROM — change the reasoning here, then grep for
+     `640px` and change every copy together.
+
+     BOTH axes, and the height is the one doing the real work. A
+     landscape iPhone is 932pt wide (16 Pro Max) — wider than an
+     iPad mini in portrait — and giving it 76pt buttons and 72px
+     type in 430pt of height would bury the game under its own
+     furniture. Width alone cannot tell the two apart; height can,
+     because no phone in any orientation reaches 600.
+
+     What it catches, and what it deliberately does not:
+       744x1133  iPad mini portrait          tablet
+       834x1194  iPad 11" portrait           tablet
+      1024x1366  iPad 13" portrait           tablet
+      1133x744   iPad mini landscape         tablet
+      1366x1024  iPad 13" landscape          tablet
+       678x1024  iPad landscape, half split  tablet
+       507x1366  iPad portrait, half split   phone  (a narrow
+                 column should read as a phone, whatever it is on)
+       932x430   iPhone 16 Pro Max landscape phone
+       430x932   iPhone 16 Pro Max portrait  phone
+
+     It is a media query and nothing else on purpose. Split View
+     and Stage Manager resize the window mid-session with no
+     reload, so anything that reads a width in JS and keeps it goes
+     stale; CSS re-evaluates for free. Nothing in this app reads
+     window.innerWidth into state, and nothing should start.
+     ---------------------------------------------------------- */
   --app-max-width: 480px;
 
   /* How much taller a playing card stands when it is the only one on

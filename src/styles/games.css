@@ -1655,6 +1655,62 @@
   color: color-mix(in srgb, var(--category-ink) 78%, transparent);
 }
 
+/* ---------------------------------------------------------------
+   TABLET: THE BUTTON STOPS FLOATING.
+
+   Floating was the right answer to a phone's problem. A phone is
+   too short to spend 100px of a browsing screen on a strip that
+   holds one control, so the scroller takes the whole height and
+   Back comes back up over it.
+
+   A tablet has that 100px many times over, and there the float is
+   all cost: the button covers a row of options at every scroll
+   position except the very last one. The reserve underneath the
+   grid is real — scrolled to the end, the final row clears the
+   button by --action-inset exactly — but nobody sees the end of a
+   94-item list, so what the screen shows almost always is a footer
+   sitting on top of content. On a phone that reads as a control
+   floating over a list. At 1024pt, with the list in a 448px strip
+   and half the display empty, it reads as a bug.
+
+   So the button goes back into the flow, and everything that
+   existed to make floating survivable goes with it: the negative
+   margin running the scroller past the screen's bottom inset, the
+   reserve at the foot of the list, the progressive blur, and the
+   button's own shadow. Nothing is painted over anything, so there
+   is nothing to soften.
+
+   The top scroll fade stays. Content still passes under the top
+   edge, which is the thing that fade was for.
+
+   Kings Cup's rulebook is built on this same shell — see its
+   `rulesOpen` screen — so it is fixed by the same rule.
+
+   Column count is NOT here. Three columns in a 448px strip is
+   worse than two, and the strip is --app-max-width, which belongs
+   to the token cascade rather than to this screen.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  /* Ran the scroller past the screen's inset so the cards could
+     bleed off the display edge. Back in the flow, that inset is
+     what the button stands on. */
+  .picker { margin-bottom: 0; }
+
+  .picker > .actions { position: static; }
+
+  /* --float is a fill plus a shadow, for a control that has to
+     separate itself from whatever is passing behind it. Nothing
+     passes behind it now. The fill stays; the shadow was the part
+     doing the separating. */
+  .picker > .actions .btn--float { box-shadow: none; }
+
+  .picker__depth { display: none; }
+
+  /* Both reserves existed for the button to sit in. */
+  .picker__grid,
+  .kc-rules { padding-bottom: 0; }
+}
+
 
 /* ---------------- Countdown (Most Likely To, Say the Same Thing) ---------------- */
 .countdown {
