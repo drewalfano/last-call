@@ -53,6 +53,15 @@ export function HotSeat({ mode, onBack }: Props) {
     [pullQuestion],
   );
 
+  /**
+   * A different question for the same seat. Deliberately not `advance`: they
+   * have not answered yet, so it is the question being rejected, not their
+   * turn — the count stays where it is.
+   */
+  const swap = useCallback(() => {
+    deck.draw();
+  }, [deck]);
+
   const advance = useCallback(() => {
     if (asked >= ROUND_LENGTH) {
       setPhase("rotate");
@@ -88,7 +97,7 @@ export function HotSeat({ mode, onBack }: Props) {
               }}
             >
               <input
-                className="text-input"
+                className="text-input text-input--quiet"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Their name"
@@ -160,6 +169,11 @@ export function HotSeat({ mode, onBack }: Props) {
           </PromptCard>
         }
       >
+        {/* Rejecting the question, not the turn — so it sits under the card
+            it throws away rather than beside the action that spends one. */}
+        <button className="gfoot__skip" onClick={swap} disabled={!q}>
+          New question
+        </button>
         {/* Group questions ask the table to vote — now they can. The person
             in the seat is excluded; they're the subject, not a candidate. */}
         {toGroup && <VotePad round={deck.drawCount} verdict={(w) => `${w} said it best.`} />}

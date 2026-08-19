@@ -379,6 +379,26 @@
 }
 .text-input::placeholder { color: var(--card-ink-muted); }
 
+/* On the flooded pack color, sitting in the same stack as the primary
+   action. As a filled white pill it was a second button — same shape, same
+   fill, 8px away from the real one — and half-width only traded that for a
+   centred pill that lined up with nothing. So: full width, so its edges agree
+   with the button below it, and a hairline of the pack's own ink instead of a
+   fill, which is how every other control on this color reads. */
+.text-input--quiet {
+  min-height: var(--control-md);
+  padding: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-3);
+  border-color: color-mix(in srgb, var(--category-ink) 40%, transparent);
+  background: transparent;
+  color: var(--category-ink);
+  caret-color: var(--category-ink);
+  font-size: var(--fs-md);
+}
+.text-input--quiet::placeholder {
+  color: color-mix(in srgb, var(--category-ink) 55%, transparent);
+}
+
 .chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; }
 
 .chip {
