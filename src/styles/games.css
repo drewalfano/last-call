@@ -762,6 +762,189 @@
   cursor: default;
 }
 
+/* ================================================================
+   LAST WORD AT TABLET — the ring comes back, where it fits.
+
+   The ring predates this repo. It was replaced by a 4x5 grid for
+   two reasons, both of them phone reasons, and both written down
+   at .lw__grid: the tap targets came out at 47pt against the
+   grid's 76, and the timer sat in the middle of a ring of
+   absolutely-positioned letters, which is exactly how it ended up
+   overlapped.
+
+   GEOMETRY. 20 bubbles at 18° apart. The chord between neighbouring
+   centres is 2R·sin(9°) = 0.31287R, which has to hold one bubble
+   plus a gap; at a gap of 12% of a bubble that makes the bubble
+   0.27935R, the ring's outer diameter 2.27935R, and therefore:
+
+       bubble        12.26% of the ring's diameter
+       clear centre  75.49% of it
+
+   REASON ONE IS GONE at every size that gets a ring — 82pt at the
+   smallest of them, up to 114pt on a 13" in portrait, against a
+   44pt floor. REASON TWO is fixed by construction: the timer is
+   sized as a FRACTION of the ring (62% inside a 75% well) rather
+   than clamped independently, so nothing can grow into anything.
+
+   AND THE RING IS THE LESS EFFICIENT SHAPE, which is worth saying
+   plainly. A 5x4 grid at 13" landscape would give 161pt tiles
+   against the ring's 82: a ring spends its entire interior on the
+   timer. That is the trade, and it is a good one only because tap
+   size has stopped being scarce. At 82pt+ the bubbles are past
+   comfortable, so the surplus buys the ring's shape and a 500-700px
+   timer at the optical centre of a board three feet away. At 47pt
+   it bought nothing, which is why it was cut. Nothing about the
+   ring changed; the screen did.
+
+   WHERE IT STOPS. The ring is square, so its diameter is whichever
+   of the board's two axes is smaller, and in landscape that is
+   always the height. Below about 950pt of viewport height the ring
+   drops under 590px and the bubbles under 72pt — worse than the
+   grid it replaced. So: ring at 950 and above, which is every
+   portrait tablet and a 13" in landscape; a bank below it.
+   ================================================================ */
+@media (min-width: 640px) and (min-height: 950px) {
+  /* ---------------------------------------------------------------
+     The board becomes a 1fr TRACK, not a stretched flex item.
+
+     This is the trap .lw__keys already documents twenty lines up,
+     and it catches anything that wants to measure itself against
+     this box: `container-type: size` reports 0 for the block axis
+     of a flex item that has merely stretched to fill, because the
+     used height is not a definite one at the time container units
+     resolve. Measured here before the fix — 100cqw came back as
+     720 and 100cqh as 0, so the ring collapsed to nothing while
+     looking, in the stylesheet, entirely correct.
+
+     A 1fr grid track IS definite. Same fix, same reason.
+     --------------------------------------------------------------- */
+  .focal.lw {
+    /* The phone's 12px was set between a grid of tiles and a
+       button. Between a 600px ring and a 120px action it is not a
+       gap, it is a collision. */
+    gap: var(--sp-8);
+    display: grid;
+    /* Stated, for the same reason .screen:has(.focal--slot) states
+       it: left implicit the single column is auto-sized, so it
+       shrinks to its content. The board came out 181px wide inside
+       a 720px screen, and the ring — which takes the smaller of the
+       two axes — sized itself off that. */
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+  }
+
+  /* One cell, everything stacked in it. The timer and the keys are
+     siblings in the markup — the ring needs them concentric, and
+     a single-cell grid does that without touching the DOM. */
+  .lw__board {
+    container-type: size;
+    display: grid;
+    grid-template-rows: none;
+    place-items: center;
+    gap: 0;
+    /* ------------------------------------------------------
+       THE RING'S DIAMETER, declared on the common ANCESTOR.
+
+       It lived on .lw__keys first, and the timer is that
+       element's SIBLING, so it inherited nothing and its
+       calc() fell back — a 24px timer in a 668px ring.
+
+       Declaring it here is also why the container units work:
+       a container cannot query itself, but a custom property
+       is substituted where it is USED, and every user of this
+       one is a descendant of this box. So 100cqh resolves
+       against .lw__board for all of them.
+       The 4% haircut is clearance, not caution. When the board is
+       height-bound the ring meets its top and bottom edges exactly,
+       and the bottom edge is where END ROUND is — bubbles landing
+       flush against a button read as one crowded object rather
+       than a board with an action under it.
+       ------------------------------------------------------ */
+    --ring-d: calc(min(100cqw, 100cqh) * 0.96);
+  }
+  .lw__board > * { grid-area: 1 / 1; }
+
+  /* The square the ring is drawn in: whichever axis the board has
+     less of. cq units, because the board's size comes from the flex
+     column above it and is not knowable any other way. */
+  .lw__keys {
+    position: relative;
+    width: var(--ring-d);
+    height: var(--ring-d);
+    /* It was a size container for the grid's benefit; the ring
+       measures against the board instead. */
+    container-type: normal;
+    display: block;
+  }
+
+  .lw__grid {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: auto;
+    aspect-ratio: auto;
+    gap: 0;
+  }
+
+  /* Centred on the ring's centre first, then swung out to its own
+     angle. The counter-rotation is what keeps the glyph upright —
+     without it the alphabet runs round the rim like a coin. */
+  .lw__letter {
+    --place:
+      rotate(calc(var(--i) * 18deg))
+      translateY(calc(var(--ring-d) * -0.43873))
+      rotate(calc(var(--i) * -18deg));
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--ring-d) * 0.12257);
+    height: calc(var(--ring-d) * 0.12257);
+    margin: calc(var(--ring-d) * -0.061285);
+    transform: var(--place);
+    /* Sized off the bubble, not the viewport. A 33.6px glyph in a
+       114px circle is the same mistake the category cards made:
+       the box grew and the thing the box is for did not. */
+    font-size: calc(var(--ring-d) * 0.0539);
+  }
+  /* Composed, or the press would throw away the placement. */
+  .lw__letter:active:not(:disabled) {
+    transform: var(--place) scale(var(--press-scale));
+  }
+
+  /* Inside a 75.5% well, so it cannot be reached by a bubble at any
+     size. This is the number the whole table watches, and it now
+     sits at the optical centre of the board rather than stacked
+     above it in a 140px ring. */
+  .lw__timer {
+    width: calc(var(--ring-d) * 0.62);
+    height: calc(var(--ring-d) * 0.62);
+  }
+  .lw__seconds { font-size: calc(var(--ring-d) * 0.16); }
+}
+
+/* ---------------------------------------------------------------
+   LANDSCAPE, TOO SHORT FOR A RING: the bank goes wide instead.
+
+   Four columns by five rows is a portrait shape, and on a screen
+   with 388px of board height and 932 of width it is the wrong way
+   round — the grid is bound by the height it hasn't got while the
+   width goes spare. Ten by two turns that around: same twenty
+   letters, laid along the axis this screen actually has, at about
+   82pt a tile against the 64 the 4x5 manages here.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) and (max-height: 949px) {
+  .lw__grid {
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    /* Ten wide by two tall — five times as wide as it is high. */
+    width: min(100%, calc(100cqh * 5));
+    aspect-ratio: 5;
+  }
+
+  /* The tile is what grew; the glyph goes with it. */
+  .lw__letter { font-size: min(clamp(1.6rem, 7vw, 3.25rem), 26cqh); }
+}
+
 /* ---------------- Roster (Home) ---------------- */
 /* Collapsed by default: setup must never be the first thing you meet. */
 .roster__prompt {

@@ -223,10 +223,14 @@ export function LastWord({ mode, onBack }: Props) {
               grid sizes itself against it — see .lw__keys. */}
           <div className="lw__keys">
             <div className="lw__grid">
-              {LETTERS.map((letter) => (
+              {LETTERS.map((letter, i) => (
                 <button
                   key={letter}
                   className="lw__letter"
+                  /* Its place on the ring, at the sizes that get one — 20
+                     letters, 18° apart, A at the top going clockwise. The
+                     grid ignores it. See .lw__ring in games.css. */
+                  style={{ ["--i" as string]: i }}
                   data-locked={used.includes(letter) || undefined}
                   disabled={used.includes(letter)}
                   onClick={() => lockLetter(letter)}
