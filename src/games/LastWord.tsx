@@ -54,16 +54,6 @@ export function LastWord({ mode, onBack }: Props) {
    * what changes it.
    */
   const [played, setPlayed] = useState(false);
-  /**
-   * Where the picker was opened from, so it goes back there.
-   *
-   * It always returned to the intro, which was fine while that was the only
-   * place it opened from. Sent back there from the round-over screen it would
-   * skip the very gate this is for — arriving somewhere Start round is already
-   * live, having never shown the table what it picked in the place they asked
-   * for it.
-   */
-  const pickerFrom = useRef<Phase>("intro");
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
   /**
@@ -124,14 +114,14 @@ export function LastWord({ mode, onBack }: Props) {
     pending.current = true;
     setPlayed(false);
     /**
-     * Stays on the round-over screen when that is where it was tapped. It used
-     * to land on the intro from either, so that both ways of changing category
-     * ended in the same place — but that was written when the round-over
-     * screen had nothing to unlock. Now it has: the header swaps to the new
-     * category and Next round comes alive under your thumb, which is one tap
-     * fewer than being sent to the intro to press Start round instead.
+     * Always the intro, from either screen. That is where the category is a
+     * CARD — dealt, turned over, the thing you are looking at — and the header
+     * carries it only while it is in play or has just ended. Changing the
+     * category on the round-over screen instead left it as a line of header
+     * text that quietly swapped, which is the same information demoted to a
+     * caption at the exact moment it becomes the point again.
      */
-    setPhase((p) => (p === "lost" ? "lost" : "intro"));
+    setPhase("intro");
   }, [deck]);
 
   const lockLetter = useCallback(
@@ -190,13 +180,7 @@ export function LastWord({ mode, onBack }: Props) {
             <button className="btn btn--ghost" onClick={drawRandom}>
               Random
             </button>
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                pickerFrom.current = phase;
-                setPhase("picking");
-              }}
-            >
+            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
               Categories
             </button>
           </div>
@@ -220,9 +204,9 @@ export function LastWord({ mode, onBack }: Props) {
           onPick={(c) => {
             setChosen(c);
             setPlayed(false);
-            setPhase(pickerFrom.current);
+            setPhase("intro");
           }}
-          onCancel={() => setPhase(pickerFrom.current)}
+          onCancel={() => setPhase("intro")}
         />
       </GameScreen>
     );
@@ -260,22 +244,20 @@ export function LastWord({ mode, onBack }: Props) {
             <button className="btn btn--ghost" onClick={drawRandom}>
               Random
             </button>
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                pickerFrom.current = phase;
-                setPhase("picking");
-              }}
-            >
+            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
               Categories
             </button>
           </div>
           <div className="actions">
-            {/* Locked until the category changes — see `played`. Disabled
-                rather than hidden: the table needs to see that carrying on is
-                a thing this screen does, and that the two buttons above it are
-                what unlock it. A missing button would just look like the
-                round had nowhere to go. */}
+            {/* Locked once the category has been played — see `played`.
+
+                In practice that means locked whenever this screen is on, since
+                both ways of unlocking it leave for the intro, where the button
+                is Start round instead. It is kept, and disabled rather than
+                removed, because it is the thing the table reaches for: seeing
+                it greyed with Random and Categories live above it says "not
+                that one again, pick another" in a way an absent button
+                cannot. */}
             <button
               className="btn btn--lg btn--block"
               onClick={beginRound}
