@@ -21,12 +21,34 @@
     <meta name="description" content="Ten pass-the-phone party games. No wifi, no accounts, no setup." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- Translucent: iOS draws no chrome of its own behind the status bar, so
-         the page's paint runs to the top edge and the icons stay light. Paired
-         with the safe-area padding on .app__frame, which keeps the HEADER out
-         from under those icons, and with --screen-h in tokens.css, which is
-         sized for the taller web view this buys. Do not change one alone. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- `default`, not `black-translucent`, and it is iOS 26 that decided it.
+         Translucent used to mean iOS drew no chrome of its own: the page's
+         paint ran to the top edge and the icons stayed light. iOS 26 gives
+         an installed web app the system scroll-edge treatment instead, and
+         blurs and dims everything within ~100px of the top — the wordmark on
+         Home, every mode's title, the picker headings. It is drawn OVER the
+         web view, so no stylesheet can reach it: audited, the entire Home DOM
+         has exactly one filter on it and that one is on the "pick a game for
+         me" ring, 282px down. Confirmed platform-side too, by opening the same
+         build in a normal Safari tab, where it does not happen at all.
+
+         `default` hands the status bar back to iOS, so there is no page edge
+         under it for the effect to act on. The strip stays the pack's colour
+         because `theme-color` above is what paints it and appBackground.ts
+         rewrites that on every screen — which is also why this costs less
+         than the old note here feared. Its two companions turn out to need no
+         hand edit: --safe-top is `env(safe-area-inset-top, 0px)`, which goes
+         to 0 on its own once the viewport stops extending under the bar, and
+         --screen-h is 100svh/100lvh, which resizes to the shorter web view by
+         itself. Both were already written in units that follow.
+
+         What to watch, because iOS picks the status bar's TEXT colour and the
+         page cannot: the clock and icons on the darkest packs — Odd One Out,
+         Kings Cup, Hot Seat and Last Call. If iOS reads theme-color and goes
+         light on those, this is strictly better. If it forces dark text, the
+         fallback is `black`, which keeps the icons light at the cost of a
+         permanent black strip instead of the pack's colour. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Last Call" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
