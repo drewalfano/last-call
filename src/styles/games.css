@@ -463,7 +463,38 @@
   pointer-events: none;
 }
 
-.pick-me__ring rect {
+/* ONE animation for the whole ramp, not one per piece.
+
+   At sixteen steps a pack the line is 161 pieces, and giving each its own
+   `animation` is 161 animation objects doing identical work off the same
+   clock. Instead the group animates a single registered custom property and
+   every piece reads it: the offsets still differ, because each piece adds its
+   own index, but there is one thing running. `@property` is what makes it
+   possible at all — an unregistered custom property has no type, so the
+   browser cannot interpolate it and the line would jump a whole piece at a
+   time rather than travel. */
+@property --pick-me-spin {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: true;
+}
+
+.pick-me__ring g {
+  animation: pick-me-deal 9s linear infinite;
+}
+
+/* Exactly one lap, so every piece lands where it started and the loop has no
+   seam to catch. */
+@keyframes pick-me-deal {
+  to { --pick-me-spin: var(--path); }
+}
+
+/* `g > rect`, not `rect`. The mask's own two rects are also rects inside this
+   svg, and a bare `.pick-me__ring rect` outranks a lone `.pick-me__mask-all`
+   on specificity — so the mask got handed the ramp's geometry and `fill:
+   none`, which makes a mask that shows nothing and takes the whole line with
+   it. Scoping to the ramp group keeps the two sets of rects apart. */
+.pick-me__ring g > rect {
   /* Geometry as CSS rather than attributes, so it can reference the same
      token the button's height comes from — the pill's radius is half its
      height, and that height is 60 on a phone and 84 on a tablet. Inset by
@@ -477,41 +508,77 @@
   ry: calc(var(--control-height) / 2);
   fill: none;
   stroke-width: 2;
-  /* One unit shown, the rest of the lap hidden. --path is MODES.length *
-     RING_SPAN, set from Home.tsx alongside the pathLength it has to match. */
-  stroke-dasharray: 1px calc(var(--path) * 1px - 1px);
-  stroke-dashoffset: calc(var(--seg) * -1px);
-  /* Butt caps, which is the default and the whole point — a round or square
-     cap would overhang into the next mode's share and the stops would stop
-     being hard. */
+  /* One piece shown, the rest of the lap hidden. --path is the ramp length
+     times RING_SPAN, set from Home.tsx alongside the pathLength it matches.
+
+     --dash is deliberately MORE than the 1 unit each piece owns. At exactly
+     1 the pieces butt edge to edge, and every one of those 160 joins is an
+     antialiased seam between two nearly identical colours — which is most of
+     what stopped the ramp reading as smooth. Six tenths of a unit of overlap
+     costs nothing visible between neighbours that close in hue, and there is
+     no seam left to see. The gap makes up the difference so the pattern
+     still repeats exactly once per lap. */
+  --dash: 1.6;
+  stroke-dasharray:
+    calc(var(--dash) * 1px)
+    calc((var(--path) - var(--dash)) * 1px);
+  /* Each piece sits one unit further along than the last, and the group's
+     --pick-me-spin carries all of them round together. */
+  stroke-dashoffset: calc((var(--seg) + var(--pick-me-spin)) * -1px);
+  /* Butt caps. A round or square cap would overhang the piece's own share and
+     bulge the line where two colours meet. */
   stroke-linecap: butt;
-  /* Slow on purpose. This sits on the screen the app opens to and never
-     stops, so it has to be the kind of movement you notice once and then
-     read past — at anything quicker it is a loading spinner, and a
-     permanent loading spinner on a home screen is a bug. */
-  animation: pick-me-deal 9s linear infinite;
 }
 
-/* Exactly one lap, so every arc lands where it started and the loop has no
-   seam to catch. */
-@keyframes pick-me-deal {
-  to { stroke-dashoffset: calc(var(--seg) * -1px - var(--path) * 1px); }
+/* ---------------- The glow's inside edge ----------------
+   White shows, black hides. The full field, with the button's own interior
+   punched out of it — see the mask in Home.tsx for why. */
+.pick-me__mask-all {
+  x: -100px;
+  y: -100px;
+  width: calc(100% + 200px);
+  height: calc(100% + 200px);
+  fill: #fff;
+}
+
+.pick-me__mask-hole {
+  /* The padding box: the pill inset by its 2px border. The line lives in
+     that border band and so survives; only what the blur threw further in
+     is cut. */
+  x: 2px;
+  y: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  rx: calc(var(--control-height) / 2);
+  ry: calc(var(--control-height) / 2);
+  fill: #000;
 }
 
 /* Motion is the flourish, never the thing that makes the screen usable —
    the same rule the launch animation and the picker's deal follow. Stopped,
    the line is still there; it just holds still at the top of the pill. */
 @media (prefers-reduced-motion: reduce) {
-  .pick-me__ring rect { animation: none; }
+  .pick-me__ring g { animation: none; }
 }
 
 .pick-me:active:not(:disabled) {
   transform: scale(var(--press-scale));
   opacity: var(--press-dim);
 }
-/* Keeps its opacity: it scrolls WITH the page rather than floating over it,
-   so there is nothing passing behind it to show through. */
-.pick-me:disabled { opacity: 0.55; cursor: default; }
+/* Dealing. The LABEL dims and the line does not.
+
+   The dim used to sit on the button, which took the line down with it — and
+   the line is the one part of this control that is not unavailable. It is the
+   thing actually happening: it has just wound up to eight times speed because
+   the deck is being dealt. Fading it said the opposite of what it was doing.
+   The words are what stopped being true — you cannot pick again while a pick
+   is in flight — so the words are what go quiet.
+
+   Keeps its opacity rather than mixing a fill: this scrolls WITH the page
+   rather than floating over it, so there is nothing passing behind to show
+   through. */
+.pick-me:disabled { cursor: default; }
+.pick-me:disabled .pick-me__label { opacity: 0.55; }
 
 /* ---------------- Last Call (intensity pips) ---------------- */
 /* Centred, because they live in the header's status strip now — which spans

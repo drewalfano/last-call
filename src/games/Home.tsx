@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
@@ -14,9 +14,22 @@ const REVEAL_MS = 480;
 
 /**
  * How much of the button's edge the travelling line covers, as a divisor of
- * the perimeter — 3 is a third of the way round.
+ * the perimeter — 2 is half the way round.
+ *
+ * This is a legibility number, not a taste one. The eleven packs are not
+ * merely many, they swing hard in LIGHTNESS: Imposter's dark teal, Kings
+ * Cup's navy and Hot Seat's near-black brown sit between eight bright ones.
+ * At a third of the perimeter each pack held ~26px, so the line crossed a
+ * full dark-to-light cycle every ~50px and read as blotchy however many
+ * blend steps it was cut into — the roughness was the palette, not the
+ * resolution. Half the perimeter gives each pack ~40px, which is enough for
+ * a dark one to arrive as part of a ramp rather than as a gap in the line.
+ *
+ * The other lever, if this ever needs to be short again, is evening out the
+ * lightness of the ramp — but that stops the colours being the packs, which
+ * is the entire point of it.
  */
-const RING_SPAN = 3;
+const RING_SPAN = 2;
 
 /**
  * Sub-segments per pack. This is what turns eleven flat colours into a
@@ -30,29 +43,43 @@ const RING_SPAN = 3;
  * and the pack it is heading for — enough of them that the steps close up and
  * read as a blend.
  *
- * Six is the number where banding stops being visible at the size this
- * actually draws: a third of a ~870px perimeter is ~290px, over 66 pieces,
- * so each is ~4px. Dropping this to 1 is the whole way back to eleven hard
- * bands, which is the same design with the blending turned off.
+ * Sixteen, which is more than it sounds. A third of a ~870px perimeter is
+ * ~290px of line: at six steps each piece was ~4px and the ramp still read as
+ * a row of tiny flat bands rather than a blend. At sixteen they are ~1.6px,
+ * under the width at which the eye separates them.
+ *
+ * The count is free in the way that matters — see .pick-me__ring, where the
+ * whole ramp moves on ONE animation rather than one each — so the only real
+ * cost is DOM nodes. Dropping this to 1 is the whole way back to eleven hard
+ * bands: the same design with the blending turned off.
  */
-const RING_STEPS = 6;
+const RING_STEPS = 16;
 
 /**
- * The eleven packs in dealing order, blended into each other and closing the
- * loop back onto the first — so the streak has no seam at either end.
+ * The eleven packs blended into each other, in the order they sit on Home —
+ * Last Call's red at one end, Hot Seat's brown at the other.
+ *
+ * Ten transitions, NOT eleven. It used to wrap the last pack back round to
+ * the first so the streak had no ends, which sounds tidy and puts a colour on
+ * the line that is not in the app: brown mixed toward red lands on a dark
+ * muddy red, sitting after the brown as if there were a twelfth game. The
+ * line has ends now. They are the first and last cards of the deck.
  */
-const RING_RAMP = MODES.flatMap((mode, i) => {
-  const next = MODES[(i + 1) % MODES.length];
-  return Array.from(
-    { length: RING_STEPS },
-    (_, step) =>
-      // oklab, not srgb: mixing saturated hues in srgb dips through grey at
-      // the midpoint, which on this ramp put a dull band between every pair.
-      `color-mix(in oklab, var(${mode.color}) ${
-        100 - (step * 100) / RING_STEPS
-      }%, var(${next.color}))`,
-  );
-});
+const RING_RAMP = [
+  ...MODES.slice(0, -1).flatMap((mode, i) =>
+    Array.from(
+      { length: RING_STEPS },
+      (_, step) =>
+        // oklab, not srgb: mixing saturated hues in srgb dips through grey at
+        // the midpoint, which put a dull band between every pair.
+        `color-mix(in oklab, var(${mode.color}) ${
+          100 - (step * 100) / RING_STEPS
+        }%, var(${MODES[i + 1].color}))`,
+    ),
+  ),
+  // Lands on the last pack itself rather than stopping just short of it.
+  `var(${MODES[MODES.length - 1].color})`,
+];
 
 const RING_PATH = RING_RAMP.length * RING_SPAN;
 
@@ -80,7 +107,28 @@ export function Home({ onPick }: HomeProps) {
   const [picked, setPicked] = useState<ModeId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const deckRef = useRef<HTMLElement>(null);
+  const ringRef = useRef<SVGGElement>(null);
   const timer = useRef<number>(undefined);
+
+  /**
+   * The line winds up while the deck is dealing.
+   *
+   * `playbackRate` rather than a shorter `animation-duration` under
+   * `:disabled`, which was the obvious way and is wrong: duration is what
+   * maps elapsed time onto progress, so changing it re-maps where the
+   * animation already IS and the line teleports to a different point on the
+   * loop at the exact moment you are watching it. Setting the rate keeps the
+   * current time and only changes what happens next, so it reads as the thing
+   * accelerating from wherever it had got to.
+   *
+   * Nothing to clean up: the element unmounts with Home, and it is set back
+   * to 1 rather than left fast in case a deal is ever cancelled.
+   */
+  useEffect(() => {
+    const spin = ringRef.current?.getAnimations()[0];
+    // Absent under prefers-reduced-motion, where the line does not run at all.
+    if (spin) spin.playbackRate = picked ? 8 : 1;
+  }, [picked]);
 
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
@@ -132,11 +180,11 @@ export function Home({ onPick }: HomeProps) {
         >
           <defs>
             {/* The bloom, done as ONE filter on the whole group rather than a
-                second blurred copy of the line — 66 more rects and 66 more
-                animations to light the first 66 is a lot of machinery for a
-                soft edge. feMerge lays the blur down twice under the sharp
-                original, which is what gives it a centre bright enough to
-                read as a glow rather than as the line being out of focus.
+                second blurred copy of the line — another 176 rects to light
+                the first 176 is a lot of machinery for a soft edge. feMerge
+                lays the blur down twice under the sharp original, which is
+                what gives it a centre bright enough to read as a glow rather
+                than as the line being out of focus.
 
                 The region is generous on purpose: a filter clips to its own
                 box, and a stdDeviation of 4 carries roughly 12px, which is
@@ -157,8 +205,35 @@ export function Home({ onPick }: HomeProps) {
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
+
+            {/* OUTSIDE ONLY. The bloom is a blur, so half of it lands inside
+                the pill, where it washes across the label and reads as the
+                button being lit from within rather than as an edge that
+                glows. This punches the button's own interior out of it.
+
+                The hole is the PADDING box — the pill inset by the 2px
+                border. The sharp line sits in that border band, so it comes
+                through untouched; everything the blur threw further inward
+                is cut at the inner edge of the stroke. Masking cannot soften
+                that boundary, but it does not need to: the line's own colour
+                sits right on it.
+
+                userSpaceOnUse with a region to match the filter's — a mask
+                defaults to a box 10% around the object, which would crop the
+                outward bloom the filter just drew. */}
+            <mask
+              id="pick-me-outside"
+              maskUnits="userSpaceOnUse"
+              x="-25%"
+              y="-150%"
+              width="150%"
+              height="400%"
+            >
+              <rect className="pick-me__mask-all" />
+              <rect className="pick-me__mask-hole" />
+            </mask>
           </defs>
-          <g filter="url(#pick-me-glow)">
+          <g ref={ringRef} filter="url(#pick-me-glow)" mask="url(#pick-me-outside)">
             {RING_RAMP.map((colour, i) => (
               <rect
                 key={i}
