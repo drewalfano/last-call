@@ -54,7 +54,7 @@ export const MODES: ModeDef[] = [
   },
   {
     id: "last-word",
-    title: "Last Word",
+    title: "Letter Rip",
     tagline: "Category, letter, pass. Don't freeze.",
     color: "--cat-last-word",
   },
