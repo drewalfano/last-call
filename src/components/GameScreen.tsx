@@ -9,6 +9,17 @@ interface GameScreenProps {
   subtitle?: string;
   note?: string;
   aside?: ReactNode;
+  /**
+   * Drop the header entirely and give the screen over to its content.
+   *
+   * For the category picker, which is a full page of choices reached from
+   * inside a round. It has a Back of its own, at the bottom, that returns to
+   * the round — but the header's chevron sits above it going somewhere quite
+   * different, all the way out to Home, abandoning the round on the way. Two
+   * backs on one screen, the more obvious-looking one being the destructive
+   * one. So the picker gets no header, no chevron, and one way out.
+   */
+  hideHeader?: boolean;
   onBack: () => void;
   children: ReactNode;
 }
@@ -36,18 +47,21 @@ export function GameScreen({
   subtitle,
   note,
   aside,
+  hideHeader,
   onBack,
   children,
 }: GameScreenProps) {
   return (
     <div className="screen" style={categoryStyle(mode.color)}>
-      <GameHeader
-        title={mode.title}
-        subtitle={subtitle}
-        note={note}
-        aside={aside}
-        onBack={onBack}
-      />
+      {!hideHeader && (
+        <GameHeader
+          title={mode.title}
+          subtitle={subtitle}
+          note={note}
+          aside={aside}
+          onBack={onBack}
+        />
+      )}
       {children}
     </div>
   );

@@ -132,7 +132,14 @@ export function Imposter({ mode, onBack }: Props) {
   return (
     /* Which reveal you are on — the whole game is passing the phone in
        the right order, so that one cannot be a caption. */
-    <GameScreen mode={mode} subtitle={label} onBack={onBack}>
+    /* The picker takes the whole screen: its chevron would leave the round
+       entirely and its own Back goes where you actually mean. */
+    <GameScreen
+      mode={mode}
+      subtitle={label}
+      hideHeader={s.phase === "picking"}
+      onBack={onBack}
+    >
       {/* ---------- Setup ---------- */}
       {s.phase === "setup" && (
         <CardBody

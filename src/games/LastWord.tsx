@@ -157,7 +157,9 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "picking") {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
+      /* No header: its chevron would leave the round entirely, and the
+         picker's own Back goes where you actually mean. */
+      <GameScreen mode={mode} hideHeader onBack={onBack}>
         <CategoryPicker
           categories={categories}
           onPick={(c) => {
