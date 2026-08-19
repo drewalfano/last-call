@@ -89,16 +89,38 @@ const CLOSE_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
  * though it had been drawn and were being put back — and clears as it lands.
  * Then, and only then, the card drops into the slot.
  *
- * They ran together once: the overlay followed the card down while
- * dissolving, and the writing came up underneath it on a third clock. The
- * arrival and the settle were happening on top of each other and neither read
- * as a thing of its own.
+ * THIS WINDOW IS THE GHOST, which is why it is short. For as long as the
+ * colour is partly transparent it is sitting exactly on the card, so what you
+ * see through it is that card's own writing at reduced contrast — white text
+ * read through half a card's worth of its own colour comes out grey. It looks
+ * like a smear left behind by the movement and it is nothing of the kind; it
+ * is a cross-fade between two things that occupy the same rectangle. The only
+ * cure is to spend less time in the middle of it.
+ *
+ * 55ms, down from 120. Long enough that the card is not revealed in a single
+ * frame — which is a pop, and worse — and short enough that the ghost is over
+ * before it registers as a state the screen was in.
  *
  * The drop itself is not timed here. It is the card's, and the card is
- * Home's — `settleAfter` tells it when the colour will be gone, and
- * .deck-card[data-returning] owns how it falls.
+ * Home's — .deck-card[data-settling] owns how it falls, and Home releases it
+ * on the same signal that retires this overlay.
  */
-const DISSOLVE_FROM_MS = 200;
+const DISSOLVE_FROM_MS = 265;
+
+/**
+ * AND IT HOLDS ITS COLOUR RATHER THAN COASTING DOWN THROUGH THE MIDDLE.
+ *
+ * Linear spends the same time at every alpha, so half the window is spent
+ * somewhere around half transparent — which is precisely where the writing
+ * underneath reads worst. Weighted to the end, the field stays near solid for
+ * most of the window and then goes, so the values that ghost are passed
+ * through quickly instead of being sat in.
+ *
+ * Not a token: --ease-in is the app's `cubic-bezier(0.65, 0, 0.35, 1)`, which
+ * is symmetrical and eases out again at the end — the opposite of what this
+ * needs.
+ */
+const DISSOLVE_EASE = "cubic-bezier(0.7, 0, 1, 1)";
 
 /**
  * How long the overlay is given before it is retired regardless.
@@ -358,7 +380,7 @@ export default function App() {
         el.animate([{ opacity: 1 }, { opacity: 0 }], {
           duration: CLOSE_MS - DISSOLVE_FROM_MS,
           delay: DISSOLVE_FROM_MS,
-          easing: "linear",
+          easing: DISSOLVE_EASE,
           fill: "forwards",
         });
       } else {
