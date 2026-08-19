@@ -101,6 +101,20 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         </section>
+
+        {/* Not decoration, and not an about box. This exists because an
+            installed app can serve a build from days ago — everything is
+            precached so it opens with no signal, and iOS only looks for a new
+            service worker on a cold launch. Both values are baked into the
+            bundle at build time, so a stale bundle shows a stale stamp and
+            the question answers itself.
+
+            The commit is what settles it: it changes on every push without
+            anyone remembering to bump a number, so it can be compared against
+            the last commit on main. The version is just the friendly half. */}
+        <p className="sheet__build">
+          Version {__APP_VERSION__} · build {__BUILD_COMMIT__}
+        </p>
       </div>
     </div>
   );

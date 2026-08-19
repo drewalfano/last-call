@@ -1,3 +1,5 @@
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -16,6 +18,33 @@ import { VitePWA } from "vite-plugin-pwa";
 const base = process.env.VITE_BASE ?? "/";
 
 /**
+ * WHAT BUILD AM I LOOKING AT.
+ *
+ * Both halves are read at BUILD time and baked into the bundle, which is the
+ * only thing that makes them worth showing. The question they answer is not
+ * "what did we ship" — it is "is this phone running it". An installed app
+ * precaches every asset so it opens in a bar with no signal, and iOS only
+ * checks for a new service worker on a cold launch, so a home screen icon can
+ * happily serve a build from days ago. A stamp baked into that same stale
+ * bundle is stale with it, and says so.
+ *
+ * The version is the one to read aloud; the commit is the one that settles
+ * an argument, because it changes on EVERY push with nobody having to
+ * remember to bump anything. GITHUB_SHA is what Actions builds from — the
+ * git call is the local fallback, and "dev" covers a tarball with no repo.
+ */
+const version = JSON.parse(readFileSync("./package.json", "utf8")).version as string;
+
+const commit = (() => {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7);
+  try {
+    return execSync("git rev-parse --short=7 HEAD").toString().trim();
+  } catch {
+    return "dev";
+  }
+})();
+
+/**
  * VITE_SINGLE_FILE marks a standalone-preview build. The PWA plugin stays on
  * (its virtual module has to resolve either way) but main.tsx skips the
  * service-worker registration, and the inliner strips the manifest link — so
@@ -24,6 +53,10 @@ const base = process.env.VITE_BASE ?? "/";
 
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __BUILD_COMMIT__: JSON.stringify(commit),
+  },
   plugins: [
     react(),
     VitePWA({
