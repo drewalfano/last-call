@@ -37,26 +37,39 @@ export function RosterBar() {
     <div className="roster">
       <div className="roster__head">
         <span className="roster__title">Who's playing?</span>
-        {/* Only once there is something to clear. An always-present control
-            that does nothing most of the time is furniture, not an action. */}
-        {hasRoster && (
-          <button
-            className="roster__clear"
-            onClick={() => {
-              clear();
-              setOpen(false);
-            }}
-            aria-label="Clear all players"
-          >
-            Clear
-          </button>
-        )}
+        {/* Rendered always, hidden until there is something to clear —
+            `visibility`, so it leaves the tab order and the accessibility
+            tree exactly as if it were not here, which is what an
+            always-present control that does nothing would otherwise cost.
+            The same trick .gfoot__skip uses, for the same reason: what it
+            buys is that the row keeps its height, so the label beside it and
+            the field under it do not shift when the first name lands. */}
+        <button
+          className="roster__clear"
+          data-hidden={!hasRoster || undefined}
+          onClick={() => {
+            clear();
+            setOpen(false);
+          }}
+          aria-label="Clear all players"
+        >
+          Clear
+        </button>
       </div>
 
-      {/* Rendered only when it has content. An empty flex child still consumes
-          the column's gap, which left the collapsed tile 8px heavier at the
-          top than the bottom — the field looked off-centre in its own box. */}
-      {hasRoster && (
+      {/* THE ROW THAT OPENS.
+
+          Always mounted, and collapsed to nothing by the wrapper rather than
+          unmounted, because a row that is not there cannot animate on its way
+          in. Adding the first name used to relayout the whole tile in one
+          frame: the row appeared at full height, the field jumped 48px down
+          the screen and Clear blinked into existence beside a label that had
+          just moved. Now the wrapper opens, and everything below it is
+          carried down by that one continuous height rather than by a reflow.
+
+          It measures its own contents — see .roster__chipwrap — so it works
+          the same for one name as for a set that wraps onto three lines. */}
+      <div className="roster__chipwrap" data-open={hasRoster || undefined}>
         <div className="roster__chips">
           {players.map((name) => (
             <button
@@ -81,7 +94,7 @@ export function RosterBar() {
             </button>
           ))}
         </div>
-      )}
+      </div>
 
       <form
         className="roster__add"

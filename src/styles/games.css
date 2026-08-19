@@ -1147,13 +1147,14 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  /* No reserved height. It used to hold --control-sm so the row would not
-     change size when Clear went away, which never bought anything: Clear and
-     the chips are rendered by the same `hasRoster` test, so the row below
-     this one unmounts in the same beat and the tile resizes regardless. All
-     the reserve did was keep 40px of empty band above the field on the one
-     state where there is nothing to clear. The row is set by Clear when Clear
-     is there, and by the label when it is not. */
+  /* Reserved, and the reason is the label rather than the tile. Clear is now
+     always in the row and merely hidden, so this height is what it would be
+     anyway — but stating it keeps the row honest if that ever changes. What
+     it buys: "Who's playing?" is centred against a row of constant height, so
+     the first name landing does not shove the label up the screen on its way
+     past. The tile's own height still changes, and is supposed to; it just
+     changes in one place now, below this row. */
+  min-height: var(--control-sm);
   /* Optical inset: the label is flush type where the rows below are pills
      with their own inner padding, so it needs a nudge to line up with them. */
   padding-left: var(--sp-2);
@@ -1195,7 +1196,79 @@
 .roster__clear:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 .roster__clear:hover { border-color: var(--text-muted); }
 
-.roster__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* Out of the tab order and the accessibility tree, exactly as if it were not
+   rendered — see .gfoot__skip[data-hidden], which does the same thing for the
+   same reason. It fades and shrinks slightly rather than blinking: it arrives
+   at the moment the row below it opens, and two different kinds of appearing
+   in one beat is what read as a glitch.
+
+   `visibility` is the one property that must NOT interpolate, so it is
+   switched at the far end of the transition on the way out and immediately on
+   the way in — which is what the differing delays below do. */
+.roster__clear {
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-base) var(--ease-glide),
+              border-color var(--dur-base) var(--ease-out),
+              visibility 0s;
+}
+.roster__clear[data-hidden] {
+  visibility: hidden;
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-glide),
+              transform var(--dur-base) var(--ease-glide),
+              visibility 0s var(--dur-base);
+}
+
+/* ---------------------------------------------------------------
+   THE ROW THAT OPENS, AND WHAT IT IS MEASURING.
+
+   `grid-template-rows: 0fr -> 1fr` rather than a height, because the
+   height is not a number anyone can write down: one name is a 40px
+   row and six names wrap onto three of them. A grid row given `1fr`
+   with one child sizes to that child's content, and the browser can
+   interpolate between the two — so the row opens to exactly what it
+   holds, and keeps working when a seventh name pushes it a line
+   taller. The child needs `min-height: 0` and `overflow: hidden` or
+   it refuses to be squashed below its content and the whole thing
+   collapses to nothing visually while still taking the space.
+
+   The negative margin is the tile's own gap. .roster lays out three
+   children with `gap`, and the gap does not care that the middle one
+   is zero tall — closed, it contributes 8px above AND 8px below where
+   the tile wants 8px total. So the wrapper cancels one of them while
+   it is shut, and gives it back on the way open. It has to animate on
+   the same clock as the rows, or the tile arrives 8px short and
+   settles late.
+   --------------------------------------------------------------- */
+.roster__chipwrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-bottom: calc(var(--sp-2) * -1);
+  /* --ease-glide, not --ease-out, and tokens.css says why: --ease-out is 95%
+     done by the halfway point, which is right for something arriving and
+     wrong for something travelling. This row is travelling, and it is towing
+     the field and everything under it down the screen — on --ease-out the
+     tile lurched most of the way in the first 50ms and then crept the last
+     four pixels, which is what read as a jump with a tail rather than as an
+     opening. Evenly spread, the eye can follow it. */
+  transition: grid-template-rows var(--dur-base) var(--ease-glide),
+              margin-bottom var(--dur-base) var(--ease-glide);
+}
+
+.roster__chipwrap[data-open] {
+  grid-template-rows: 1fr;
+  margin-bottom: 0;
+}
+
+.roster__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-height: 0;
+  overflow: hidden;
+}
 
 /* --control-sm, and the tier matters. A name pill is a label you can dismiss,
    not a control you aim at — at --control-md it carried 48px of height around
@@ -1218,6 +1291,28 @@
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out),
               opacity var(--dur-press) ease-out;
+}
+/* Only the name being added plays this. The chips are keyed by name, so
+   React leaves the existing ones mounted and only the new element gets a
+   mount to animate — add a fourth player and the three already there hold
+   perfectly still while the fourth arrives.
+
+   NOT `pop`, which is the app's standing entrance for a small element
+   arriving on a surface that is holding still. This one arrives on a row
+   that is itself opening downward, and `pop` lifts it 8px upward on a spring
+   that overshoots — so the chip travelled up while the row it sits in
+   travelled down, on a different curve, over a different duration. Three
+   disagreements in one 260ms window, which is all "choppy" ever is.
+
+   So: no vertical move at all, because the row already supplies it, and no
+   overshoot. A fade with the faintest scale, on the shorter duration, so the
+   name has settled by the time the row finishes and the last thing you see
+   is one motion rather than two. */
+.roster__chip { animation: roster-chip-in var(--dur-fast) var(--ease-glide) backwards; }
+
+@keyframes roster-chip-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
 }
 .roster__chip:active { transform: scale(var(--press-scale-sm)); opacity: var(--press-dim); }
 
