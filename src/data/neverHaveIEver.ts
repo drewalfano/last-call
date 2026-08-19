@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * NEVER HAVE I EVER
- * Night policy: REPLACE.
+ * Night policy: SUPPLEMENT — the 19+ cards join the safe ones.
  * Statements complete "NEVER HAVE I EVER…".
  *
  * No longer a mode of its own — as a plain deck it played identically to

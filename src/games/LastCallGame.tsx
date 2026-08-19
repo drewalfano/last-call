@@ -33,7 +33,7 @@ const TIER_LABEL = ["Warming up", "Getting personal", "Last call"] as const;
 export function LastCallGame({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { currentPlayer, otherPlayer, advance, hasRoster } = useRoster();
-  const pool = usePool(LAST_CALL, contentMode);
+  const pool = usePool(LAST_CALL, contentMode, "supplement");
   const deck = useDeck<Wildcard>(pool, escalating);
   const card = deck.current;
 

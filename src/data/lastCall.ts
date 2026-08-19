@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * LAST CALL — the app's namesake wildcard mode.
- * Night policy: REPLACE.
+ * Night policy: SUPPLEMENT — the 19+ cards join the safe ones, tier by tier.
  *
  * Unlike every other mode, the player doesn't know what *type* of prompt
  * is coming. Each card carries a `kind` (shown as the card eyebrow) and an

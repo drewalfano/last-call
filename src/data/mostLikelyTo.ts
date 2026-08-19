@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * MOST LIKELY TO
- * Night policy: REPLACE.
+ * Night policy: SUPPLEMENT — the 19+ cards join the safe ones.
  * Same reasoning as Drink If — the adult version is a different accusation,
  * not a cruder wording of the same one.
  *

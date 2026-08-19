@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * DRINK IF…
- * Night policy: REPLACE.
+ * Night policy: SUPPLEMENT — the 19+ cards join the safe ones.
  * The Safe deck is self-deprecating and social; the Night deck is about
  * sex, hookups and the people actually in the room. Mixing them would
  * blunt both, so Night swaps the deck out wholesale.

@@ -22,7 +22,7 @@ interface Props {
 export function HotSeat({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { hasRoster } = useRoster();
-  const pool = usePool(HOT_SEAT, contentMode);
+  const pool = usePool(HOT_SEAT, contentMode, "supplement");
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("pick");

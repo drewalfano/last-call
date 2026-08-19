@@ -107,7 +107,7 @@ export function KingsCup({ mode, onBack }: Props) {
       if (rule.effect === "category") {
         extra = randomItem(resolvePool(LAST_WORD_CATEGORIES, contentMode, "supplement"));
       } else if (rule.effect === "never-have-i-ever") {
-        extra = randomItem(resolvePool(NEVER_HAVE_I_EVER, contentMode));
+        extra = randomItem(resolvePool(NEVER_HAVE_I_EVER, contentMode, "supplement"));
       }
 
       return {

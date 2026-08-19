@@ -69,7 +69,7 @@ interface DeckGameProps {
 export function DeckGame({ mode, config, onBack }: DeckGameProps) {
   const { mode: contentMode } = useContentMode();
   const { currentPlayer, otherPlayer } = useRoster();
-  const pool = usePool(config.pools, contentMode, config.policy ?? "replace");
+  const pool = usePool(config.pools, contentMode, config.policy ?? "supplement");
   const deck = useDeck(pool);
 
   // Resolved once per card, not per render — otherPlayer() picks at random, so

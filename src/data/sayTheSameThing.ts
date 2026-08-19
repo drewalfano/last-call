@@ -4,11 +4,9 @@ import type { Pools } from "./pools";
  * SAY THE SAME THING — opening prompts.
  * Night policy: LEAD — the 19+ prompts go on top, the safe ones stay.
  *
- * These were REPLACE while they were a blind draw, on the reasoning in
- * pools.ts that you never see the card you did not draw. The mode has a
- * picker now, so the table reads the whole list — and flipping to 19+ was
- * deleting forty-four openers in front of them to add thirty-two. Switching
- * content mode adds to what is there; it does not take the previous set away.
+ * LEAD rather than supplement because this is the one prompt pool a player
+ * READS — the picker lays all of it out — so the order of the list is
+ * something a table sees and the adult entries belong at the top of it.
  *
  * A prompt only works if it's broad enough that two people will almost
  * certainly say different things first, but narrow enough that they can

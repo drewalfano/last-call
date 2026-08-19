@@ -4,43 +4,48 @@ import type { ContentMode } from "../state/contentMode";
 /**
  * CONTENT POOL PLUMBING
  * ---------------------------------------------------------------
- * Every prompt-based game ships two pools. How Night relates to Safe
- * is a per-game decision, documented at the top of each data file:
+ * Every prompt-based game ships two pools. Flipping the content mode
+ * ADDS the other one. It never takes the first one away.
  *
- *   "replace"    Night swaps the Safe pool out entirely. Used where the
- *                adult version of the game is a genuinely different set
- *                of questions rather than a spicier phrasing of the same
- *                ones — which is most modes.
- *
- *   "supplement" Night is Safe plus extra cards. Used where the Safe
- *                material is still perfectly good with a rowdier crowd
- *                and the Night cards are additive.
+ *   "supplement" Night is Safe plus the adult cards. The order is left to
+ *                whatever deals it — every consumer of this shuffles.
  *
  *   "lead"       Night LEADS Safe — in front, but interleaved rather than
- *                stacked. This is the policy for CATEGORIES, in every mode
- *                that has them.
+ *                stacked. Same contents as supplement; this one also makes
+ *                a claim about ORDER, so it is for the pools a player
+ *                READS: Imposter's, Last Word's, Rank It's and Say the Same
+ *                Thing's pickers.
  *
- *                Replacing a category list is wrong: flipping to 19+ made
- *                every familiar category disappear, so a table that wanted
- *                a couple of rowdier options lost Foods, Countries and
- *                Animals to get them — categories nothing about a rowdy
- *                table makes unsuitable, and ones a long night runs out of
- *                material without. Leading keeps the whole list and puts
- *                the adult categories where they are seen first.
+ *                A straight concatenation put every adult entry above every
+ *                ordinary one, so the top of a 19+ list was a solid block of
+ *                the same register — you scrolled past a wall of hookups and
+ *                exes before reaching Foods. Leading breaks that up without
+ *                burying the adult entries, which are still what the table
+ *                switched the mode on for.
  *
- *                The ordering only shows where the player reads the list —
- *                Imposter's and Last Word's pickers. The Number Game draws
- *                its category blind from a shuffled deck, so there it is
- *                the KEEPING that matters, not the order.
+ * There is deliberately no third option that drops the Safe pool.
  *
- *                Prompts are not categories and still replace. You never
- *                see the card you did not draw, so a swapped deck costs a
- *                blind draw nothing.
+ * It used to exist, as "replace", and it was the default: Night swapped Safe
+ * out entirely, on the reasoning that a blind draw never shows you the card
+ * it did not deal, so nothing visibly disappeared. That reasoning was wrong
+ * about what a table wants and only ever looked right because the loss was
+ * invisible. Nothing about a rowdy crowd makes "Countries", "Fast food" or a
+ * warm-up question unsuitable — a Night deck that threw out the entire Safe
+ * pool halved the material available to a mode on the longest night of the
+ * week, to make room for cards it could simply have had as well.
+ *
+ * It went wrong visibly in Say the Same Thing, where the same pool gained a
+ * picker: flipping to 19+ deleted forty-four openers in front of the table to
+ * add thirty-two. The bug was never the picker. It was the policy.
+ *
+ * So: two policies, both additive, and no way to spell the third. A mode
+ * chooses between them on one question — does a player read this list, or is
+ * it dealt blind?
  *
  * Night prompts are written as different questions, not as vulgar
  * rewrites of the Safe ones.
  */
-export type PoolPolicy = "replace" | "supplement" | "lead";
+export type PoolPolicy = "supplement" | "lead";
 
 export interface Pools<T> {
   safe: readonly T[];
@@ -50,11 +55,8 @@ export interface Pools<T> {
 /**
  * Night in front, with Safe entries sprinkled through it.
  *
- * A straight concatenation put every adult category above every ordinary one,
- * so the top of a 19+ list was a solid block of the same register — you
- * scrolled past a wall of hookups and exes before reaching Foods. One safe
- * entry every `every` night ones breaks that up without burying the adult
- * ones, which are still what a table switched the mode on for.
+ * One safe entry every `every` night ones, which is what keeps the top of the
+ * list from reading as a solid block of one register.
  *
  * Deterministic, deliberately. This is a list people browse and come back to;
  * shuffling it would move an option someone was reaching for, and useDeck
@@ -73,17 +75,10 @@ export function lead<T>(night: readonly T[], safe: readonly T[], every = 2): T[]
 export function resolvePool<T>(
   pools: Pools<T>,
   mode: ContentMode,
-  policy: PoolPolicy = "replace",
+  policy: PoolPolicy = "supplement",
 ): readonly T[] {
   if (mode === "safe") return pools.safe;
-  switch (policy) {
-    case "supplement":
-      return [...pools.safe, ...pools.night];
-    case "lead":
-      return lead(pools.night, pools.safe);
-    default:
-      return pools.night;
-  }
+  return policy === "lead" ? lead(pools.night, pools.safe) : [...pools.safe, ...pools.night];
 }
 
 /**
@@ -94,7 +89,7 @@ export function resolvePool<T>(
 export function usePool<T>(
   pools: Pools<T>,
   mode: ContentMode,
-  policy: PoolPolicy = "replace",
+  policy: PoolPolicy = "supplement",
 ): readonly T[] {
   return useMemo(() => resolvePool(pools, mode, policy), [pools, mode, policy]);
 }

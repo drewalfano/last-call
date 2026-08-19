@@ -30,7 +30,7 @@ interface Props {
 
 export function MostLikelyTo({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
-  const pool = usePool(MOST_LIKELY_TO, contentMode);
+  const pool = usePool(MOST_LIKELY_TO, contentMode, "supplement");
   const deck = useDeck(pool);
   const [phase, setPhase] = useState<Phase>("prompt");
 

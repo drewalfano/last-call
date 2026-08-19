@@ -2,7 +2,7 @@ import type { Pools } from "./pools";
 
 /**
  * HOT SEAT
- * Night policy: REPLACE.
+ * Night policy: SUPPLEMENT — the 19+ cards join the safe ones.
  *
  * Each question is aimed at one of two targets:
  *   "seat"  — the person in the hot seat answers it themselves
