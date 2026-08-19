@@ -43,6 +43,27 @@ export function LastWord({ mode, onBack }: Props) {
   /** Set when the group picked or wrote one; otherwise the deck's draw is used. */
   const [chosen, setChosen] = useState<string | null>(null);
   const [used, setUsed] = useState<string[]>([]);
+  /**
+   * Whether the category on screen has already been played.
+   *
+   * The round-over screen used to offer Next round as its one-tap exit, which
+   * replayed the category the table had just spent a round on. Nobody wants
+   * that: the letters they reached for are the ones already gone, and if they
+   * genuinely do want it again it is two taps through Categories. So the
+   * button is locked until the category changes, and Random or Categories is
+   * what changes it.
+   */
+  const [played, setPlayed] = useState(false);
+  /**
+   * Where the picker was opened from, so it goes back there.
+   *
+   * It always returned to the intro, which was fine while that was the only
+   * place it opened from. Sent back there from the round-over screen it would
+   * skip the very gate this is for — arriving somewhere Start round is already
+   * live, having never shown the table what it picked in the place they asked
+   * for it.
+   */
+  const pickerFrom = useRef<Phase>("intro");
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
   /**
@@ -86,6 +107,7 @@ export function LastWord({ mode, onBack }: Props) {
       pending.current = false;
     }
     setUsed([]);
+    setPlayed(true);
     startTurn();
     setPhase("playing");
   }, [deck, startTurn, chosen]);
@@ -100,7 +122,16 @@ export function LastWord({ mode, onBack }: Props) {
     setChosen(null);
     deck.draw();
     pending.current = true;
-    setPhase("intro");
+    setPlayed(false);
+    /**
+     * Stays on the round-over screen when that is where it was tapped. It used
+     * to land on the intro from either, so that both ways of changing category
+     * ended in the same place — but that was written when the round-over
+     * screen had nothing to unlock. Now it has: the header swaps to the new
+     * category and Next round comes alive under your thumb, which is one tap
+     * fewer than being sent to the intro to press Start round instead.
+     */
+    setPhase((p) => (p === "lost" ? "lost" : "intro"));
   }, [deck]);
 
   const lockLetter = useCallback(
@@ -159,7 +190,13 @@ export function LastWord({ mode, onBack }: Props) {
             <button className="btn btn--ghost" onClick={drawRandom}>
               Random
             </button>
-            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
+            <button
+              className="btn btn--ghost"
+              onClick={() => {
+                pickerFrom.current = phase;
+                setPhase("picking");
+              }}
+            >
               Categories
             </button>
           </div>
@@ -182,9 +219,10 @@ export function LastWord({ mode, onBack }: Props) {
           categories={categories}
           onPick={(c) => {
             setChosen(c);
-            setPhase("intro");
+            setPlayed(false);
+            setPhase(pickerFrom.current);
           }}
-          onCancel={() => setPhase("intro")}
+          onCancel={() => setPhase(pickerFrom.current)}
         />
       </GameScreen>
     );
@@ -222,12 +260,27 @@ export function LastWord({ mode, onBack }: Props) {
             <button className="btn btn--ghost" onClick={drawRandom}>
               Random
             </button>
-            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
+            <button
+              className="btn btn--ghost"
+              onClick={() => {
+                pickerFrom.current = phase;
+                setPhase("picking");
+              }}
+            >
               Categories
             </button>
           </div>
           <div className="actions">
-            <button className="btn btn--lg btn--block" onClick={beginRound}>
+            {/* Locked until the category changes — see `played`. Disabled
+                rather than hidden: the table needs to see that carrying on is
+                a thing this screen does, and that the two buttons above it are
+                what unlock it. A missing button would just look like the
+                round had nowhere to go. */}
+            <button
+              className="btn btn--lg btn--block"
+              onClick={beginRound}
+              disabled={played}
+            >
               Next round
             </button>
           </div>
