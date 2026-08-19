@@ -125,6 +125,30 @@ export function LastCallGame({ mode, onBack }: Props) {
             : TIER_LABEL[card.intensity - 1]
           : undefined
       }
+      /* ------------------------------------------------------------
+         THE INTENSITY PIPS BELONG TO THE LEVEL, NOT THE CARD.
+
+         They sat in the card's footer, under the prompt, which made
+         them read as a property of that one card — and at board size,
+         three 3px dashes at the foot of a 64px prompt are the smallest
+         thing on the screen carrying some of the most useful state.
+
+         What they actually qualify is the live line directly above:
+         WARMING UP, GETTING PERSONAL, LAST CALL. This is the status
+         strip's exact job — see .gheader__aside — and it hangs 20px
+         under the live line without being part of what centres it, so
+         adding them cannot move the line off the position every other
+         mode shares.
+         ------------------------------------------------------------ */
+      aside={
+        card ? (
+          <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
+            {[1, 2, 3].map((n) => (
+              <span key={n} className="heat__pip" data-lit={n <= card.intensity || undefined} />
+            ))}
+          </span>
+        ) : undefined
+      }
       onBack={onBack}
     >
       <CardBody
@@ -142,19 +166,6 @@ export function LastCallGame({ mode, onBack }: Props) {
             <PromptCard
               eyebrow={card ? WILDCARD_LABEL[card.kind] : undefined}
               dealKey={deck.drawCount}
-              footer={
-                card && (
-                  <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
-                    {[1, 2, 3].map((n) => (
-                      <span
-                        key={n}
-                        className="heat__pip"
-                        data-lit={n <= card.intensity || undefined}
-                      />
-                    ))}
-                  </span>
-                )
-              }
             >
               {card
                 ? fillPrompt(card.text, { name: currentPlayer, other: otherPlayer() })

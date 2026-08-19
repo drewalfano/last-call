@@ -393,7 +393,15 @@
 .pick-me:disabled { opacity: 0.55; cursor: default; }
 
 /* ---------------- Last Call (intensity pips) ---------------- */
-.heat { display: inline-flex; gap: var(--sp-1); align-items: center; }
+/* Centred, because they live in the header's status strip now — which spans
+   the full width — rather than inside a centred card. See GameScreen's
+   `aside` in LastCallGame. */
+.heat {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-1);
+  align-items: center;
+}
 .heat__pip {
   width: 22px;
   height: 5px;
@@ -1344,8 +1352,34 @@
    media query adds no specificity — an override written earlier in the file
    simply loses the tie. */
 @media (min-width: 640px) and (min-height: 600px) {
-  .kc__card .pcard { height: calc(min(26vw, 300px) * 7 / 5 + var(--pcard-solo-bump)); }
-  .rtb__felt > .pcard { height: calc(min(28vw, 320px) * 7 / 5 + var(--pcard-solo-bump)); }
+  /* ---------------------------------------------------------------
+     CAPPED AGAINST THE VIEWPORT'S HEIGHT, not just derived from its
+     width.
+
+     A solo card's height comes from a width — the row width run
+     through the 5/7 ratio — which is fine until the width is
+     generous and the height is not. In landscape the doubled cap
+     asked for a 436px card in a felt with 434px to give it, so the
+     card was taller than the box it sits in and the scroller cut
+     it: what reached the screen was the bottom half of a playing
+     card, which reads as a wide card rather than a clipped one.
+
+     A card should shrink to fit rather than be sliced. 40vh keeps
+     it well inside the felt at every landscape height and never
+     binds in portrait, where the width is the smaller number
+     anyway.
+
+     Scaled, deliberately NOT rotated. These are playing cards and
+     playing cards are portrait; turning one on its side to fit a
+     screen would be a change to what the thing IS rather than to
+     how big it is.
+     --------------------------------------------------------------- */
+  .kc__card .pcard {
+    height: min(calc(min(26vw, 300px) * 7 / 5 + var(--pcard-solo-bump)), 40vh);
+  }
+  .rtb__felt > .pcard {
+    height: min(calc(min(28vw, 320px) * 7 / 5 + var(--pcard-solo-bump)), 40vh);
+  }
 }
 
 /* The reserved half. 182px is measured, not guessed: it's the tallest this
