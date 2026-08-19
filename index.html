@@ -2,37 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Phone-first, no pinch zoom: this is a pass-the-phone game. Both
+    <!-- Phone-first, no pinch zoom: this is a pass-the-phone game, and
+         viewport-fit=cover lets the shell paint under the notch. Both
          orientations — the manifest no longer asks for a portrait lock, and
-         a tablet propped on a table is as likely to be landscape as not.
-
-         NO viewport-fit=cover, and that is the whole point of this line.
-         `cover` is what pushes the web view out into the unsafe areas so the
-         shell can paint under the notch, and it is therefore also what puts
-         page content up against the top edge — which is the surface iOS 26
-         applies its scroll edge effect to, blurring and dimming everything
-         within ~100px of the top on every screen of the installed app. It is
-         drawn over the web view, so no stylesheet reaches it, and there is no
-         web equivalent of scrollEdgeEffectStyle(.hard) to turn it off. The
-         previous attempt — handing the status bar back to iOS with
-         `default` — did not help on its own, because the tag only governs the
-         BAR while `cover` governs whether the page is under it at all.
-
-         Without cover the view stays inside the safe area and there is no
-         page edge up there to act on. The strip is still the pack's colour,
-         because theme-color paints it and appBackground.ts rewrites that per
-         screen. Both companions self-correct as before: --safe-top is
-         env(safe-area-inset-top, 0px) and goes to 0 once the viewport stops
-         extending under the bar, and --screen-h is 100svh/100lvh.
-
-         The one real cost, if this stays: --action-inset is a flat 20px
-         chosen to clear the home indicator itself, and without cover the
-         system has already inset the view past it — so grounded buttons now
-         sit about 20px higher off the bottom than they were drawn to. Worth
-         trimming if this is kept, but not before it is known to work. -->
+         a tablet propped on a table is as likely to be landscape as not. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <!-- The colour iOS paints behind the status bar in an installed app, and
          it OUTRANKS the translucent style below on iOS 16.4+. So it cannot be
@@ -45,34 +21,29 @@
     <meta name="description" content="Ten pass-the-phone party games. No wifi, no accounts, no setup." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- `default`, not `black-translucent`, and it is iOS 26 that decided it.
-         Translucent used to mean iOS drew no chrome of its own: the page's
-         paint ran to the top edge and the icons stayed light. iOS 26 gives
-         an installed web app the system scroll-edge treatment instead, and
-         blurs and dims everything within ~100px of the top — the wordmark on
-         Home, every mode's title, the picker headings. It is drawn OVER the
-         web view, so no stylesheet can reach it: audited, the entire Home DOM
-         has exactly one filter on it and that one is on the "pick a game for
-         me" ring, 282px down. Confirmed platform-side too, by opening the same
-         build in a normal Safari tab, where it does not happen at all.
+    <!-- Translucent: iOS draws no chrome of its own behind the status bar, so
+         the page's paint runs to the top edge and the icons stay light. Paired
+         with the safe-area padding on .app__frame, which keeps the HEADER out
+         from under those icons, and with --screen-h in tokens.css, which is
+         sized for the taller web view this buys. Do not change one alone.
 
-         `default` hands the status bar back to iOS, so there is no page edge
-         under it for the effect to act on. The strip stays the pack's colour
-         because `theme-color` above is what paints it and appBackground.ts
-         rewrites that on every screen — which is also why this costs less
-         than the old note here feared. Its two companions turn out to need no
-         hand edit: --safe-top is `env(safe-area-inset-top, 0px)`, which goes
-         to 0 on its own once the viewport stops extending under the bar, and
-         --screen-h is 100svh/100lvh, which resizes to the shorter web view by
-         itself. Both were already written in units that follow.
+         RULED OUT, so nobody spends the afternoon again: iOS 27 beta 4 draws
+         a scroll-edge band across the top of every installed web app and
+         blurs what passes under it. It is not this tag and it is not
+         viewport-fit. Both were tried, separately and together, and the blur
+         survived all three configurations — while a second, unrelated PWA on
+         the same phone shows the same band while still on the original pair.
+         It arrived with the OS update; nothing in either codebase changed.
+         There is no web equivalent of scrollEdgeEffectStyle(.hard), so there
+         is nothing to set here, and both tags are back to what the design
+         actually wants.
 
-         What to watch, because iOS picks the status bar's TEXT colour and the
-         page cannot: the clock and icons on the darkest packs — Odd One Out,
-         Kings Cup, Hot Seat and Last Call. If iOS reads theme-color and goes
-         light on those, this is strictly better. If it forces dark text, the
-         fallback is `black`, which keeps the icons light at the cost of a
-         permanent black strip instead of the pack's colour. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+         What DID come out of it is real and lives elsewhere: the document
+         used to rubber-band, because overscroll-behavior was set on `body`,
+         where it never reaches the viewport. That let a drag haul the header
+         up into the band on screens with nothing to scroll. Fixed on `html`
+         in global.css. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Last Call" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
