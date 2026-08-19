@@ -59,16 +59,16 @@ export const MODES: ModeDef[] = [
     color: "--cat-last-word",
   },
   {
-    id: "most-likely-to",
-    title: "Most Likely To",
-    tagline: "Count to three, then point.",
-    color: "--cat-most-likely-to",
-  },
-  {
     id: "rank-it",
     title: "Rank It",
     tagline: "Guess how they'd rank it.",
     color: "--cat-rank-it",
+  },
+  {
+    id: "most-likely-to",
+    title: "Most Likely To",
+    tagline: "Count to three, then point.",
+    color: "--cat-most-likely-to",
   },
   {
     id: "kings-cup",
