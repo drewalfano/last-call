@@ -1410,7 +1410,13 @@
    the guard that keeps it true if that ever changes.
    --------------------------------------------------------------- */
 .picker__card {
-  animation: picker-deal var(--dur-base) var(--ease-out) both;
+  /* `backwards`, NOT `both`. A filled animation keeps its final value after
+     it ends, and that value beats an ordinary declaration — including
+     `:active`. With `both` the settled `transform: none` was overriding the
+     press scale, so every category card had dead press feedback once it had
+     dealt. `backwards` still holds the from-state through the stagger delay,
+     which is the only part we need, and leaves nothing behind. */
+  animation: picker-deal var(--dur-base) var(--ease-out) backwards;
   animation-delay: calc(min(var(--i, 0), 8) * 22ms);
 }
 
