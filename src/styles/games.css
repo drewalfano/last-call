@@ -2762,6 +2762,29 @@
 }
 
 /* ---------------- Most Likely To ---------------- */
+/* ---------------------------------------------------------------
+   THE VERDICT WAITS OUT THE CARD.
+
+   Landing on the count-in's last beat swaps the Countdown for the
+   PromptCard, and because that is a change of element type React
+   remounts it — so the prompt turns back over on card-flip-in,
+   taking --dur-slow. The verdict underneath it appeared in the same
+   frame the flip STARTED, so the sentence that closes the round was
+   fully formed and legible while the card carrying the prompt it
+   refers to was still edge-on.
+
+   Exactly Kings Cup's problem, and exactly its answer — see
+   .kc__below, whose comment is this one's other half: the card, then
+   what it costs you. Same animation, same delay, same fill, for the
+   same --dur-slow flip.
+
+   `backwards` holds it hidden through the wait rather than letting it
+   sit there fully formed while the card is still turning, which is
+   the entire point. `both` would additionally pin its settled state
+   afterwards, and this element carries nothing that needs to
+   override — but `backwards` is the app's convention here and there
+   is no reason to be the one exception.
+   --------------------------------------------------------------- */
 .mlt__verdict {
   margin: 0;
   flex: none;
@@ -2772,6 +2795,14 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--category-ink);
+  animation: pop var(--dur-base) var(--ease-out) 300ms backwards;
+}
+
+/* Delayed, so it needs its own block: the global rule zeroes
+   animation-duration but not animation-delay, and `backwards` would hold this
+   at opacity 0 for 300ms before it appeared. */
+@media (prefers-reduced-motion: reduce) {
+  .mlt__verdict { animation: none; }
 }
 
 /* ---------------- Rank It ---------------- */
