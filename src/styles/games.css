@@ -2891,6 +2891,13 @@
   color: var(--card-ink);
   font-size: var(--fs-md);
   font-variant-numeric: tabular-nums;
+  /* The well takes the pack colour the moment its row is tapped, and .rank__item
+     above transitions only transform and opacity — so the fill was a hard cut
+     underneath a press that was easing. .votepad__player already carries these
+     two for the identical interaction: choosing a thing from a set, where the
+     chosen one fills. Same properties, same duration. */
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
 }
 
 .rank__item[data-ranked] .rank__pos {
