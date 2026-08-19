@@ -21,10 +21,10 @@
   gap: var(--sp-3);
   /* Nothing above: --gutter already holds the wordmark 20px off the top, and
      the head adding its own 8 on top of that put Home's first line lower than
-     every other screen's. Below it, twice the gutter — the wordmark and its
-     tagline are a masthead rather than the first row of the column, and the
-     column that follows is on a flat 20 all the way down. */
-  padding-block: 0 var(--sp-10);
+     every other screen's. Below it, the same gutter again — the masthead gets
+     no more air than the rows under it do, so Home is one flat 20 from the
+     tagline all the way down to the deck. */
+  padding-block: 0 var(--gutter);
 }
 
 .home__wordmark {
