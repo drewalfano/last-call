@@ -1121,8 +1121,18 @@
   flex-direction: column;
   /* One gap for the whole column. Every row is a real row with real height —
      see RosterBar, which stopped rendering the empty ones — so this spacing
-     is honest and the tile is symmetric in every state. */
-  gap: var(--sp-3);
+     is honest and the tile is symmetric in every state.
+
+     The gap is tighter than the padding, and only the gap. Every row here is
+     already a pill carrying its own generous inner padding, so a gap the size
+     of the padding double-counts the air between them and the tile reads as
+     three separated bands rather than as one control with three parts. The
+     padding is even on all four sides, because it is the tile's margin
+     against its own border and there is no reason for the top to sit closer
+     to that border than the left does — trimming it too was what made this
+     feel squeezed rather than tidy. The rows themselves are at the app's
+     minimum touch tiers and are not where the height is negotiable. */
+  gap: var(--sp-2);
   padding: var(--sp-3);
   margin-bottom: var(--sp-3);
   border: var(--border-width) solid var(--border-soft);
@@ -1137,10 +1147,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  /* The label is type, not a control, so the row is set by the button in it.
-     Reserving that height keeps the header the same whether Clear is showing
-     or not — the tile must not resize when the last name is removed. */
-  min-height: var(--control-sm);
+  /* No reserved height. It used to hold --control-sm so the row would not
+     change size when Clear went away, which never bought anything: Clear and
+     the chips are rendered by the same `hasRoster` test, so the row below
+     this one unmounts in the same beat and the tile resizes regardless. All
+     the reserve did was keep 40px of empty band above the field on the one
+     state where there is nothing to clear. The row is set by Clear when Clear
+     is there, and by the label when it is not. */
   /* Optical inset: the label is flush type where the rows below are pills
      with their own inner padding, so it needs a nudge to line up with them. */
   padding-left: var(--sp-2);
@@ -1192,7 +1205,9 @@
   align-items: center;
   gap: var(--sp-2);
   min-height: var(--control-sm);
-  padding: 0 var(--sp-2) 0 var(--sp-3);
+  /* Even inset now the × is bare glyph rather than a disc — the short side
+     was compensating for a 20px well that is no longer there. */
+  padding: 0 var(--sp-3);
   border: none;
   border-radius: var(--radius-pill);
   background: var(--control-bg);
@@ -1206,17 +1221,17 @@
 }
 .roster__chip:active { transform: scale(var(--press-scale-sm)); opacity: var(--press-dim); }
 
-/* The × reads as part of the pill rather than as punctuation after the name:
-   its own round well, sized so the whole chip is still one tap target. */
+/* A bare glyph, no well behind it.
+   The disc was drawn to make the × look like the thing you press — but the
+   whole chip removes the name, and always has, so the disc was pointing at a
+   target inside a target and claiming the smaller one. Without it the × reads
+   as what it is: the mark on a pill you tap to take the pill away. */
 .roster__chip-x {
   display: grid;
   place-items: center;
-  width: var(--sp-5);
-  height: var(--sp-5);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--control-text) 12%, transparent);
-  font-size: var(--fs-sm);
   line-height: 1;
+  /* The name is what you read; the mark is what tells you it comes off. */
+  opacity: 0.6;
 }
 
 .roster__add { display: flex; gap: var(--sp-2); }
