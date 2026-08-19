@@ -34,7 +34,10 @@ interface Props {
 export function SayTheSameThing({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { players, hasRoster } = useRoster();
-  const pool = usePool(SAY_THE_SAME_THING, contentMode);
+  // LEAD, not replace: these are a list the table now reads, and switching to
+  // 19+ must not empty it of everything they were already choosing from. See
+  // the policy note in data/pools.ts.
+  const pool = usePool(SAY_THE_SAME_THING, contentMode, "lead");
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("pair");
