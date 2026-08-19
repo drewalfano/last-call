@@ -599,65 +599,57 @@ Splitting them would have put a commit on the branch that changed nothing observ
 **12 needs a decision from you before I write it** — see the counter-indications.
 My recommendation is the fade.
 
-### Parked: contracting the close back into the Home card
+### Shipped: the close contracts back into the Home card
 
-Attempted, not shipped. `git stash list` → *"WIP: contract mode-close into the
-Home card"*. `main` behaviour is unchanged: the close is still the `--dur-fast`
-fade from `da90be0`.
+Parked once, then built. The final shape is two movements that do not overlap:
 
-**What was built.** 380ms, `LAUNCH_EASE`, contracting to the card's rect —
-measured rather than remembered, since Home mounts under the opaque overlay and
-the real card is in the DOM before anything is visible. Three geometry
-corrections were needed and all three were found by measuring:
+| | |
+|---|---|
+| **0–320ms** | the colour contracts onto the card, which Home is holding RAISED out of the stack, and clears as it lands |
+| **320ms** | the raised card is simply there — name, tagline, its own border — with nothing over it |
+| **320ms+** | it lowers into the slot, `--dur-base` on `--ease-glide`, and that is all that happens |
 
-- **Drift.** Home is mid-`screen-in` (a 10px translate) when the effect runs, so
-  a plain rect aimed the landing 4.6px low, by a different amount every close.
-- **The tail.** The deck overlaps: a card's box is 124px but only 87px is on
-  screen. Landing on the full box painted pack colour over the top 37px of the
-  neighbouring card.
-- **The corners.** Deck cards are `28px 28px 0 0` — square-bottomed — against the
-  overlay's `round 22px`.
+The rect is **measured, not remembered**: Home mounts under the opaque overlay,
+so the real card is in the real DOM before anything is visible. Three
+corrections were needed and all three were found by measuring — the card's
+drift under `screen-in`, the 37px of it tucked behind its neighbour, and its
+corners.
 
-**Why it was parked.** All three were real and all three were fixable, and the
-thing still read as janky, because none of them was the actual problem:
+**Everything that finally worked was a removal.** The list is worth keeping,
+because each item was originally added to fix a symptom:
 
-> **The overlay is a flat field of colour. It is not the card.** No title, no
-> tagline, no 2px stroke. That costs nothing on the way *in*, because it leaves
-> the card on the first frame and you never see the two together. Contracting is
-> the same object with the failure inverted — it comes to rest exactly on the
-> card and *holds* there on `fill: forwards`, so the last thing on screen is a
-> blank red slab where a card with writing on it should be. Then it unmounts and
-> the writing snaps in.
+- **The drawn stroke.** Pinned to the landing rect, so it floats whenever the
+  clip is larger than that rect. The card's own 2px border cannot float,
+  because it is not pinned to anything.
+- **The gradient veil.** Real work — it was hiding the sharp corners — but it
+  brought the close to six overlapping timelines on four easing curves. Frame
+  timing was clean throughout, so "choppy" was never dropped frames.
+- **Squaring the corners.** Contracting to the card's own `28px 28px 0 0` was
+  the obvious thing and was wrong; nothing needs to square off because the
+  bottom edge is clamped to where the next card covers this one.
+- **Hiding the writing.** Redundant — the overlay already covers it — and
+  holding it at zero meant it could only ever arrive *during* the drop, which
+  is what made the two halves read as one blurred event.
+- **The second timer.** App retired the overlay and Home dropped the card on
+  two clocks aimed at the same instant. One signal now.
+- **`painted = screen ?? closing`.** Correct for the fade it was written for,
+  wrong for the contraction — it pinned mode colour above a white Home.
 
-A tail cross-fade was half-written when this was parked, and it would have hidden
-the symptom. It does not fix the cause.
+Two things that were *not* removals, and both were bugs rather than taste:
 
-**How Apple does it, which is the note to start from.** iOS's zoom transition
-(SwiftUI's `NavigationTransition.zoom`, UIKit's zoom options) differs on every
-point that matters here:
+- The drop had no transition of its own, so it inherited `.deck-card`'s —
+  `var(--dur-press)`, the **button press**. It covered 14px in ~90ms and then
+  sat there. It has its own state and a settle curve now.
+- The ghost during the fade is a cross-fade artifact, not a smear: while the
+  colour is part-transparent it sits exactly on the card, so the card's own
+  white text reads grey through it. Fixed by spending less time in the middle
+  — window 120ms → 55ms, and weighted to the end rather than linear. Time
+  below 80% opaque: ~96ms → ~9ms.
 
-1. **The real content is in flight.** The source view itself morphs into the
-   destination — there is no colour proxy, so there is never a frame showing a
-   shape with nothing in it.
-2. **Source and destination cross-fade** while a shared geometry interpolates.
-   Neither is ever the only thing on screen.
-3. **Corner radius morphs continuously** from source to destination.
-4. **Spring-driven, not a fixed-duration bezier**, so it answers to gesture
-   velocity rather than a number.
-5. **Interruptible.** It can be grabbed mid-flight and reversed.
-
-The gap is (1). An opaque rectangle is structurally the wrong primitive for a
-contraction, and no amount of easing or geometry fixes that. Two ways forward
-when this is picked up:
-
-- **(a) Give the overlay the card's content.** Render the deck card's markup —
-  title, tagline, stroke — inside the overlay and cross-fade it against the mode
-  screen. Contained, and it makes the open better too.
-- **(b) FLIP the real card.** Animate the actual `.deck-card` node, which needs
-  Home to stay mounted behind modes. Truer to Apple, and a much larger change to
-  the state machine in `App.tsx`.
-
-**(a) first.** It is the smaller change and it addresses the cause.
+**The lesson, which is the reusable part:** every round where I added a layer
+to answer a piece of visual feedback made it worse, and every round where I
+took one away made it better. Before adding anything to this animation, count
+the clocks already running on it.
 
 ### Phase 5 — optional, lower value  ✅ item 13 landed; item 14 deferred
 
