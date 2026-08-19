@@ -242,6 +242,21 @@ export function Home({ onPick }: HomeProps) {
   });
   const [picked, setPicked] = useState<ModeId | null>(null);
   /**
+   * Which card has been LIFTED, which is not the same question as which one
+   * has been picked.
+   *
+   * `picked` has to be set the instant you tap: it disables the button, turns
+   * the label to "Dealing…" and starts the ring. The lift must not be, and
+   * sharing the one flag is why it was — the chosen card rose out of the deck
+   * immediately, giving the answer away while the ring was still supposedly
+   * working it out, and leaving the delay before the mode opened looking like
+   * lag rather than deliberation.
+   *
+   * Set with the scroll instead, on the second beat, so the sequence reads:
+   * the app thinks, the card comes up, the mode opens.
+   */
+  const [revealed, setRevealed] = useState<ModeId | null>(null);
+  /**
    * The ring is in the DOM only while it has something to do.
    *
    * This is the difference between an animation costing something and a
@@ -283,6 +298,7 @@ export function Home({ onPick }: HomeProps) {
     setPicked(mode.id);
     // Beat one: the ring, on a screen that is holding still.
     timer.current = window.setTimeout(() => {
+      setRevealed(mode.id);
       el.scrollIntoView({ block: "center", behavior: "smooth" });
       // Beat two: which card it landed on, and then the card itself.
       timer.current = window.setTimeout(() => openCard(mode.id, el), REVEAL_MS);
@@ -442,7 +458,7 @@ export function Home({ onPick }: HomeProps) {
           <button
             key={mode.id}
             data-mode={mode.id}
-            data-picked={picked === mode.id || undefined}
+            data-picked={revealed === mode.id || undefined}
             className="deck-card"
             /* Counted from the BOTTOM of the deck, so the deal runs upward —
                see .home__deck--dealing. */
