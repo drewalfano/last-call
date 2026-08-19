@@ -7,6 +7,25 @@ import { categoryStyle } from "../lib/style";
 interface HomeProps {
   /** The rect lets App expand the mode's color out from the card you tapped. */
   onPick: (id: ModeId, rect?: { top: number; left: number; right: number; bottom: number }) => void;
+  /**
+   * A mode that is closing back into its card, which arrives RAISED.
+   *
+   * Home mounts underneath the closing overlay, so this happens with nothing
+   * visible: the card is already lifted out of the stack by the time the
+   * colour has finished contracting onto it. App measures that lifted rect —
+   * which is why the raise carries no transition of its own, see
+   * .deck-card[data-returning]. A card easing upward while it is being
+   * measured is a moving target.
+   */
+  returning?: ModeId | null;
+  /**
+   * How long the colour takes to contract, so the card knows when to drop.
+   *
+   * Passed rather than shared through a module, because the number belongs to
+   * the animation App is running and Home only has to agree with it. A
+   * constant in a third file would be a third place to change.
+   */
+  settleAfter?: number;
 }
 
 
@@ -217,7 +236,7 @@ let dealt = false;
  * The whole app's table of contents, dealt as a stack of overlapping cards.
  * Every mode is one tap away — no menus, no settings page.
  */
-export function Home({ onPick }: HomeProps) {
+export function Home({ onPick, returning, settleAfter = 0 }: HomeProps) {
   /** True only on the first Home of the session. Claims it as it reads it. */
   const [dealing] = useState(() => {
     const first = !dealt;
@@ -255,6 +274,18 @@ export function Home({ onPick }: HomeProps) {
    */
   const [sweeping, setSweeping] = useState(dealing);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /**
+   * THE CARD COMING BACK, AND WHETHER IT IS STILL HELD UP.
+   *
+   * True from the moment Home mounts under a closing overlay until the colour
+   * has finished contracting onto the card, at which point the card drops into
+   * the slot and takes its writing with it — see .deck-card[data-returning].
+   *
+   * Home times this rather than App, because the card is Home's. App owns the
+   * overlay and tells Home how long it will be; the two only have to agree on
+   * one number, which is why it arrives as a prop.
+   */
+  const [held, setHeld] = useState<ModeId | null>(returning ?? null);
   const deckRef = useRef<HTMLElement>(null);
   const timer = useRef<number>(undefined);
   const raf = useRef<number>(undefined);
@@ -371,6 +402,21 @@ export function Home({ onPick }: HomeProps) {
     },
     [],
   );
+
+  /**
+   * Drop the returning card once the colour has finished arriving on it.
+   *
+   * The whole point of the hold is that the card is still MOVING when its
+   * title, tagline and stroke come up — the overlay dissolves on this same
+   * beat, so the writing cross-fades in rather than appearing on something
+   * that has already stopped. That was the fault with every version of this
+   * before the card was allowed to move at all.
+   */
+  useEffect(() => {
+    if (!held) return;
+    const t = window.setTimeout(() => setHeld(null), settleAfter);
+    return () => window.clearTimeout(t);
+  }, [held, settleAfter]);
 
   // Retire the ring the moment its last piece has gone out.
   useEffect(() => {
@@ -519,6 +565,8 @@ export function Home({ onPick }: HomeProps) {
             key={mode.id}
             data-mode={mode.id}
             data-picked={revealed === mode.id || undefined}
+            /* Held up while the closing colour lands on it, then dropped. */
+            data-returning={held === mode.id || undefined}
             className="deck-card"
             /* Counted from the BOTTOM of the deck, so the deal runs upward —
                see .home__deck--dealing. */

@@ -396,6 +396,54 @@
 }
 
 /* ---------------------------------------------------------------
+   THE CARD COMES BACK RAISED, AND THEN SETTLES.
+
+   Closing a mode contracts its colour onto this card — see App.tsx —
+   and the card is held out of the stack while that happens, exactly
+   as though it had been drawn and were now being put back. When the
+   colour has arrived, the card drops into the slot and the drop is
+   what the writing arrives ON.
+
+   That last part is the whole reason the raise exists. Every earlier
+   version landed a flat field of colour on a stationary card, and
+   the title, tagline and stroke could only appear — there was
+   nothing else happening for them to arrive with. Here the overlay
+   dissolves over exactly the beat the card is moving, so the two
+   cross-fade and the writing rides the card down.
+
+   NO TRANSITION ON THE WAY UP. It is deliberate and it is not a
+   shortcut: App MEASURES this card to know where to contract to, and
+   it measures on the frame Home mounts. A card easing upward is a
+   moving target, and the colour would land 14px below where the card
+   finally settles. Nobody sees the raise anyway — it happens
+   underneath an overlay that is covering the entire screen.
+
+   The drop is the ordinary one: --dur-base on the spring, the same
+   pair .deck-card[data-picked] uses, because it is the same movement
+   in the other direction.
+   --------------------------------------------------------------- */
+.deck-card[data-returning] {
+  transform: translateY(-14px);
+  box-shadow: 0 -10px 28px -6px rgba(0, 0, 0, 0.5);
+  transition: none;
+}
+
+/* Its writing comes up as it falls. Held at nothing while the card is up and
+   the colour is still covering it, then crossed in against the overlay's own
+   dissolve on the same clock — see CLOSE_SETTLE_MS in App.tsx, which is this
+   duration. The stroke needs no help: it is the card's own border and simply
+   emerges as the colour over it goes. */
+.deck-card[data-returning] .deck-card__title,
+.deck-card[data-returning] .deck-card__tagline {
+  opacity: 0;
+}
+
+.deck-card__title,
+.deck-card__tagline {
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+/* ---------------------------------------------------------------
    TABLET: THE DECK GROWS WITH THE FRAME.
 
    --peek and --card-h are two hand-measured numbers, and the
@@ -452,32 +500,11 @@
   transform: translateZ(0);
 }
 
-/* ---------------------------------------------------------------
-   THE SAME FIELD, GOING THE OTHER WAY.
-
-   Opening clips a rect open to full screen. Closing does not clip at
-   all — it starts covering everything and simply goes, which is why
-   this needs no inline clip-path and why the screen underneath can
-   be swapped back to Home on the very first frame.
-
-   --dur-fast and a plain fade rather than the launch's 520ms
-   contraction, which is a decision with its reasoning at CLOSE_MS in
-   App.tsx: the X is a reflex, and the way out is the last place in
-   this app to spend duration.
-
-   `forwards`, so it holds at transparent for the beat between the
-   animation ending and App retiring it — without the fill it would
-   flash back to a full screen of pack colour for that frame, which
-   is the one thing this cannot afford to do.
-
-   `will-change` is corrected off the inherited clip-path: this one
-   only ever moves opacity, and naming the wrong property is worse
-   than naming none.
-   --------------------------------------------------------------- */
-.launch--closing {
-  will-change: opacity;
-  animation: fade-out var(--dur-fast) var(--ease-out) forwards;
-}
+/* Both directions are this one element. Opening clips a card's rect open to
+   the full screen; closing clips the full screen back down to it. Neither has
+   a rule of its own here — the geometry is measured in App.tsx and driven on
+   the Web Animations API, because only JavaScript can know where the card is.
+   `will-change: clip-path` above covers the pair. */
 
 /* ---------------- Pick a game for me ---------------- */
 /* ---------------------------------------------------------------
