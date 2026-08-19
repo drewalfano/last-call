@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Countdown } from "../components/Countdown";
+import { CategoryPicker } from "../components/CategoryPicker";
 import { useDeck, shuffle } from "../lib/deck";
 import { buzz } from "../lib/useCountdown";
 import { usePool } from "../data/pools";
@@ -23,7 +24,7 @@ import type { ModeDef } from "../data/modes";
  * as a match — "close enough" is a conversation, not a string comparison.
  */
 
-type Phase = "pair" | "counting" | "answer" | "matched";
+type Phase = "pair" | "picking" | "counting" | "answer" | "matched";
 
 interface Props {
   mode: ModeDef;
@@ -39,6 +40,13 @@ export function SayTheSameThing({ mode, onBack }: Props) {
   const [phase, setPhase] = useState<Phase>("pair");
   const [round, setRound] = useState(0);
   const [attempt, setAttempt] = useState(1);
+  /**
+   * Set when the table went and chose one, or wrote their own; otherwise the
+   * deck's draw stands. Same two-source arrangement Last Word's category uses,
+   * and for the same reason — a hand-picked word has to survive the attempts
+   * that follow it, and a drawn one has to keep advancing.
+   */
+  const [chosen, setChosen] = useState<string | null>(null);
 
   /**
    * A fresh pair each round. Roster names when they exist, neutral labels when
@@ -69,18 +77,46 @@ export function SayTheSameThing({ mode, onBack }: Props) {
   /**
    * A new word for the same pair. Deliberately not `nextRound`: the pair has
    * not had a go yet, so it is the word being rejected, not them.
+   *
+   * Clears `chosen` on the way past — this is the button that hands the
+   * choice back to the deck, so leaving a hand-picked word in place would
+   * make Random the one control on the screen that does nothing.
    */
-  const skip = useCallback(() => {
+  const drawRandom = useCallback(() => {
+    setChosen(null);
     deck.draw();
     setAttempt(1);
   }, [deck]);
 
   const nextRound = useCallback(() => {
+    setChosen(null);
     deck.draw();
     setAttempt(1);
     setRound((n) => n + 1);
     setPhase("pair");
   }, [deck]);
+
+  const word = chosen ?? deck.current ?? "";
+
+  /* No header: its chevron would leave the round entirely, and the picker's
+     own Back goes where you actually mean. Same treatment Last Word and
+     Imposter give the same screen. */
+  if (phase === "picking") {
+    return (
+      <GameScreen mode={mode} hideHeader onBack={onBack}>
+        <CategoryPicker
+          categories={pool}
+          customNoun="starting word"
+          onPick={(c) => {
+            setChosen(c);
+            setAttempt(1);
+            setPhase("pair");
+          }}
+          onCancel={() => setPhase("pair")}
+        />
+      </GameScreen>
+    );
+  }
 
   return (
     /* The attempt count is what the pair is being scored on, so it is the
@@ -108,7 +144,7 @@ export function SayTheSameThing({ mode, onBack }: Props) {
                which pair, which attempt, which phase. */
             <div
               className="card"
-              key={`${deck.drawCount}-${round}-${attempt}-${phase}`}
+              key={`${chosen ?? deck.drawCount}-${round}-${attempt}-${phase}`}
             >
               <span className="card__eyebrow">
                 {phase === "matched"
@@ -129,7 +165,7 @@ export function SayTheSameThing({ mode, onBack }: Props) {
                 </>
               ) : (
                 <>
-                  <p className="card__prompt">{deck.current ?? ""}</p>
+                  <p className="card__prompt">{word}</p>
                   <p className="card__meta">
                     {attempt === 1
                       ? `${pair[0]} and ${pair[1]}, say the first thing you think of — at the same time.`
@@ -140,10 +176,27 @@ export function SayTheSameThing({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* Both ways to change the word, side by side, exactly as Last Word
+              and Imposter offer them — a tap for a different one, or the
+              whole list to read together.
+
+              This was a single "New word" link, which only ever rolled the
+              dice again: a table that wanted a particular kind of opener had
+              to keep tapping until one turned up. Laying the list out costs
+              this game nothing, because there is no secret in it. Imposter
+              hides its WORDS and shows its categories precisely because a
+              player who reads the word breaks the round; here both players
+              are meant to see the prompt and everyone else is watching them
+              try to meet on it. */}
           {phase === "pair" && (
-            <button className="gfoot__skip" onClick={skip}>
-              New word
-            </button>
+            <div className="actions--row">
+              <button className="btn btn--ghost" onClick={drawRandom}>
+                Random
+              </button>
+              <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
+                Categories
+              </button>
+            </div>
           )}
 
           {phase === "pair" && (
