@@ -141,7 +141,7 @@ const RING_PATH = RING_RAMP.length * RING_SPAN;
  * eases off its ceiling instead of turning a corner — a linear taper still
  * reads as an edge, just a slanted one.
  */
-const EDGE_PIECES = 48;
+const EDGE_PIECES = 64;
 const EDGE_FLOOR = 0.22;
 
 function edgeOpacity(i: number): number {

@@ -520,6 +520,13 @@
 /* Up fast, out slow — a hard leading edge with the fade trailing behind
    it, which is what makes it read as travelling rather than blinking.
 
+   The hold ends at 46%, so more than half of every piece's life is spent
+   going out. That is the other half of how the exit feels, and the half
+   that is easy to miss: the ramp decides how DIM the line is as it
+   retracts, but this decides how long each piece takes to let go. Held
+   longer and released quickly, the tail reads as a cut no matter how faint
+   it has become.
+
    The ceiling is --edge, not 1, and that is the softening: it is set per
    piece in Home.tsx and falls away toward both ends of the ramp, which meet
    each other at the bottom midpoint. So a piece near the birth point never
@@ -530,14 +537,14 @@
 @keyframes pick-me-piece-deal {
   0% { opacity: 0; }
   12% { opacity: var(--edge, 1); }
-  58% { opacity: var(--edge, 1); }
+  46% { opacity: var(--edge, 1); }
   100% { opacity: 0; }
 }
 
 @keyframes pick-me-piece-lap {
   0% { opacity: 0; }
   12% { opacity: var(--edge, 1); }
-  58% { opacity: var(--edge, 1); }
+  46% { opacity: var(--edge, 1); }
   100% { opacity: 0; }
 }
 
