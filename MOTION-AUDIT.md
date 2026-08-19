@@ -659,12 +659,33 @@ when this is picked up:
 
 **(a) first.** It is the smaller change and it addresses the cause.
 
-### Phase 5 — optional, lower value  ⏸ not started
+### Phase 5 — optional, lower value  ✅ item 13 landed; item 14 deferred
 
 | # | Commit | Files | Size | Finding |
 |---|---|---|---|---|
-| 13 | Deal the Kings Cup rules rows | `styles/games.css`, `games/KingsCup.tsx` | ~10 lines | **D** |
-| 14 | Collapse the press recipe into a shared class | `styles/global.css`, `styles/games.css` | large, mechanical | **H** |
+| 13 | ✅ `b3add42` Deal the Kings Cup rules rows | `styles/games.css`, `games/KingsCup.tsx` | ~45 lines | **D** |
+| 14 | ⏸ Collapse the press recipe into a shared class | `styles/global.css`, `styles/games.css`, ~10 TSX | large, mechanical | **H** |
+
+**Item 14 is the one outstanding item in this whole plan**, deferred by D3 and not
+attempted. D3's stated blocker — that it must not be mixed with behaviour changes —
+no longer applies now that every behaviour change is landed, so it could now be done
+as the isolated commit D3 described.
+
+Worth knowing before it is: the fourteen presses are **not** uniform, so this is not
+a find-and-replace. They fall into four groups.
+
+- `--press-scale` + `--press-dim` (7): `.btn`, `.chip`, `.lw__letter`,
+  `.votepad__player`, `.picker__card`, `.rank__item`, `.roster__go`, `.pick-me`
+- `--press-scale-sm` + `--press-dim` (5): `.gheader__back`, `.roster__chip`,
+  `.stepper__step`, `.gfoot__skip`, `.sheet__close`
+- **Genuine exceptions (3)**: `.settings-btn` adds `rotate(35deg)` — the one press in
+  the app that says what the button *does*; `.deck-card` uses `translateY(-4px)` and
+  no dim, because the cards overlap and a scale slides one under its neighbour while
+  a dimming card reads as moving away from you; `.segmented__opt` takes scale with no
+  dim, because dimming the pressed option fights the fill that carries its state.
+
+So a shared pair of classes covers twelve, and three keep bespoke rules with their
+reasoning intact. That is a real simplification and not a total one.
 
 ### What Phase 4 actually cost
 
