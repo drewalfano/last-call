@@ -152,9 +152,24 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out),
+  transition: transform var(--dur-press) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
+/* Scale only, no dim.
+
+   The fill sliding across is the real feedback here and it covers the case
+   that matters — but only when the selection actually MOVES. Pressing the
+   option that is already on changed nothing at all, which is the one press in
+   this control that had no answer.
+
+   Deliberately without --press-dim, unlike the fourteen other presses. This
+   control is two or three options in one pill and the state is carried by
+   which one is filled; dimming the pressed option fights that reading for
+   120ms, and on the already-selected option it looks like the setting is
+   being switched off. The scale says "pressed" without touching what the
+   fill is saying. */
+.segmented__opt:active { transform: scale(var(--press-scale)); }
 .segmented--three .segmented__opt { font-size: var(--fs-sm); }
 .segmented__opt[data-on] { background: var(--control-bg); color: var(--control-text); }
 
