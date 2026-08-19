@@ -428,31 +428,19 @@
   transition: none;
 }
 
-/* Its writing comes up as it falls. Held at nothing while the card is up and
-   the colour is still covering it, then crossed in against the overlay's own
-   dissolve. The stroke needs no help: it is the card's own border and simply
-   emerges as the colour over it goes. */
-.deck-card[data-returning] .deck-card__title,
-.deck-card[data-returning] .deck-card__tagline {
-  opacity: 0;
-}
+/* NOTHING HIDES THE WRITING, and taking that out is what separates the two
+   halves of the close.
 
-/* --dur-fast, NOT the --dur-base the card falls on, and the gap between the
-   two is the point.
+   It used to be held at nothing until the card dropped, so it came up DURING
+   the drop — the card was moving and its own name was arriving at the same
+   time, which is the two beats happening on top of each other rather than one
+   after the other.
 
-   Run on the same clock the writing only finishes arriving at the instant the
-   card stops, so it is still coming up for the whole of the drop and the card
-   reaches its slot at the same moment it becomes readable. What you see is a
-   blank card settling and the words catching up with it.
-
-   Shorter, the writing is fully there with about 100ms of travel still to go:
-   the card is legible while it is still moving, and the last thing that
-   happens is simply the card sitting down. Which is the right order — the
-   name arrives, then the deck settles. */
-.deck-card__title,
-.deck-card__tagline {
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
+   It never needed hiding. The overlay is opaque and sitting exactly on this
+   card until it clears, so the writing is covered by the thing that is
+   supposed to be covering it. Let the colour fade off and the card is simply
+   revealed, raised, complete — name, tagline and its own border — and the
+   drop that follows has nothing to do but drop. */
 
 /* ---------------------------------------------------------------
    TABLET: THE DECK GROWS WITH THE FRAME.

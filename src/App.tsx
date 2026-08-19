@@ -81,26 +81,24 @@ const CLOSE_MS = 320;
 const CLOSE_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 /**
- * THE SECOND HALF: the card settling into the slot, and the colour going with
- * it.
+ * WHEN THE COLOUR STARTS CLEARING, so that it has finished by the time the
+ * contraction has.
  *
- * The close is two movements, not one. The colour contracts onto the card
- * where it is HELD — raised out of the stack, as though it had been drawn and
- * were being put back — and then the card drops and the colour dissolves off
- * it on the way down.
+ * The close is two movements and they do not overlap. First the colour
+ * contracts onto the card where it is HELD — raised out of the stack, as
+ * though it had been drawn and were being put back — and clears as it lands.
+ * Then, and only then, the card drops into the slot.
  *
- * The drop is what the writing arrives on. Every version of this before it
- * landed a flat field on a card that was standing still, and a title, tagline
- * and stroke can only ever APPEAR on something standing still. Give the card
- * somewhere to go and the same content cross-fades in instead.
+ * They ran together once: the overlay followed the card down while
+ * dissolving, and the writing came up underneath it on a third clock. The
+ * arrival and the settle were happening on top of each other and neither read
+ * as a thing of its own.
  *
- * --dur-base on --ease-spring, because both are already the card's: it is the
- * pair .deck-card[data-picked] lifts and settles on, and this is that same
- * movement in the other direction. Home is told this number so its drop and
- * this dissolve run on one clock.
+ * The drop itself is not timed here. It is the card's, and the card is
+ * Home's — `settleAfter` tells it when the colour will be gone, and
+ * .deck-card[data-returning] owns how it falls.
  */
-const CLOSE_SETTLE_MS = 260;
-const SETTLE_EASE = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const DISSOLVE_FROM_MS = 200;
 
 /**
  * How long the overlay is given before it is retired regardless.
@@ -111,7 +109,7 @@ const SETTLE_EASE = "cubic-bezier(0.34, 1.56, 0.64, 1)";
  * live line's exit and Letter Rip's board are both written to avoid, and worse
  * here, because there is no screen underneath to press.
  */
-const CLOSE_FAILSAFE_MS = CLOSE_MS + CLOSE_SETTLE_MS + 120;
+const CLOSE_FAILSAFE_MS = CLOSE_MS + 120;
 
 interface Launch {
   id: ModeId;
@@ -283,16 +281,11 @@ export default function App() {
 
         /* The card is RAISED right now — Home lifted it on mount, without a
            transition, precisely so this measurement is of where the colour
-           has to land rather than of a card still on its way up. Its lift is
-           read off the element instead of being restated here, so the two
-           cannot drift apart. */
-        const lift = -new DOMMatrix(getComputedStyle(card).transform).m42;
-
+           has to land rather than of a card still on its way up. */
         const sides = `${window.innerWidth - r.right}px ${
           window.innerHeight - bottom
         }px ${r.left}px round ${radius}`;
         const onRaised = `inset(${r.top - drift}px ${sides})`;
-        const onSettled = `inset(${r.top - drift + lift}px ${sides})`;
 
         /* SOFT CORNERS THE WHOLE WAY DOWN.
            It starts `round 28px` rather than square. A sharp-cornered
@@ -343,46 +336,28 @@ export default function App() {
            already dropping on the spring that .deck-card[data-picked] uses.
            Two clocks in one beat is the thing that reads as choppy.
            --------------------------------------------------------------- */
-        el.animate([{ clipPath: onRaised }, { clipPath: onSettled }], {
-          duration: CLOSE_SETTLE_MS,
-          delay: CLOSE_MS,
-          easing: SETTLE_EASE,
-          fill: "forwards",
-        });
-
         /* ---------------------------------------------------------------
-           IT GOES TRANSPARENT BEFORE IT ARRIVES, AND THE CARD RESOLVES
-           THROUGH IT.
+           THE COLOUR IS GONE BEFORE THE CARD MOVES.
 
-           The overlay is a flat field of colour with no stroke, and against
-           a deck where every card carries a 2px border in a darker cut of
-           its own colour, that is exactly what it looks like: a block. The
-           fix is not to draw a border on the overlay — a clip-path clips the
-           element, so any border would be drawn at the SCREEN's edges and
-           clipped away, and a copy of the card's stroke is a copy to keep in
-           sync besides.
+           These are two beats and they used to be one. The overlay followed
+           the card down while dissolving, and the writing came up underneath
+           it on a third clock — so the arrival and the settle were happening
+           at the same time, on top of each other, and neither read as a
+           thing in its own right.
 
-           Instead the colour thins out as it closes in, and what comes up
-           through it is the real card: its real border, in its real colour,
-           already in the right place. Nothing is duplicated and nothing can
-           drift, because the stroke that appears IS the card's.
+           Now the fade finishes exactly when the contraction does. At
+           CLOSE_MS the colour has landed and cleared, and what is on screen
+           is the card, held up out of the deck, with its writing already on
+           it. Only then does it drop.
 
-           ONE RAMP ACROSS BOTH STAGES, not one per stage. It starts around
-           two thirds of the way through the contraction — by then the clip
-           is about three quarters home, so the transparency is confined to a
-           small area near the card rather than showing the whole deck
-           through a half-screen of colour — and finishes as the card lands
-           in the slot. So the sequence reads: colour travels, card resolves
-           through it, card drops with its writing coming up. Nothing ever
-           arrives and stops.
+           So: the mode closes into a raised card. The raised card sits down.
+           One after the other, with nothing shared between them.
 
-           Linear. This is a dissolve laid over two eased movements, and
-           giving it a curve of its own would be a third clock in the same
-           beat. */
-        const dissolveFrom = Math.round(CLOSE_MS * 0.62);
+           It also takes the count of things happening at once from five to
+           three, and the two that are left never overlap. */
         el.animate([{ opacity: 1 }, { opacity: 0 }], {
-          duration: CLOSE_MS + CLOSE_SETTLE_MS - dissolveFrom,
-          delay: dissolveFrom,
+          duration: CLOSE_MS - DISSOLVE_FROM_MS,
+          delay: DISSOLVE_FROM_MS,
           easing: "linear",
           fill: "forwards",
         });
@@ -393,10 +368,11 @@ export default function App() {
           fill: "forwards",
         });
       }
-      /* Retired after BOTH stages — `anim` is the contraction, so its own
-         finish lands halfway through. */
+      /* Retired with the contraction. The drop that follows is the card's
+         own, and Home owns it — see `settleAfter`. */
+      anim.onfinish = done;
       anim.oncancel = done;
-      closeTimer.current = window.setTimeout(done, CLOSE_MS + CLOSE_SETTLE_MS);
+      closeTimer.current = window.setTimeout(done, CLOSE_MS);
     });
 
     // The guarantee, not the ordinary path. See CLOSE_FAILSAFE_MS.
