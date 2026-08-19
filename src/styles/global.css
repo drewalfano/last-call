@@ -339,7 +339,9 @@ button { font: inherit; color: inherit; }
    ring below. Two- and three-line categories filled the box and looked
    right, which is why only the short ones read as wrong. */
 .screen:has(.focal.lw) .gheader__now {
-  min-height: calc(var(--fs-2xl) * var(--lh-tight) * 2);
+  /* Named, because `live-drop` has to subtract the half line this floor
+     leaves above a short category. One definition, two readers. */
+  min-height: var(--gheader-now-floor);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -471,42 +473,57 @@ button { font: inherit; color: inherit; }
 /* ---------------------------------------------------------------
    THE CATEGORY TRAVELS TO THE ROUND-OVER SCREEN.
 
-   Ending a round in Letter Rip drops it 48px. The line does not
-   move — the reserve under it does: .focal.lw is swapped for
-   .focal--slot, which flips a :has() selector and takes .gheader from
-   0 to --gheader-live-h, and auto margins re-centre the line in the
-   taller box.
+   Ending a round in Letter Rip drops it. The line does not move —
+   the reserve under it does: .focal.lw is swapped for .focal--slot,
+   which turns the screen into a grid whose first row is the header,
+   and auto margins re-centre the line in that taller box.
 
-   Two ways to animate that were tried before this one. A FLIP, which
-   measures the line's old SCREEN position and animates from it —
-   frame one is the element where it used to be, so a surface that
-   defers painting leaves the category parked behind the letter grid
-   for the whole round. And a transition on the reserve itself, which
-   is honest layout but depends on a :has() recalculation starting a
-   transition in the same frame a whole subtree is replaced, and did
-   not fire.
+   The layout SNAPS, and it has to. A FLIP was tried and cost the
+   category: it measures the line's old SCREEN position and animates
+   from it, so a surface that defers painting leaves it parked behind
+   the letter grid for the whole round. Interpolating the reserve was
+   tried too, and animates a property nothing is reading — on this
+   screen the header's height is a GRID TRACK, so min-height runs 0 ->
+   222.5 while the rendered header sits at 222.5 the whole way. The
+   two states are not interpolatable in any case: playing is a flex
+   column, round-over is a grid.
 
-   This is the form the entrance already uses and the only one with no
-   way to be wrong: the layout SNAPS, exactly as it always did, and a
-   relative translate makes the line appear to arrive from where it
-   just was. The end state is 0 — the correct position — so a stall at
-   frame one leaves it 48px high, which is where it was a moment ago,
-   still legible, with the layout underneath already right.
+   So the layout snaps and a relative translate makes the line appear
+   to arrive from where it just was. The end state is 0 — the correct
+   position — so a stall at frame one leaves it a line high, which is
+   where it was a moment ago, still legible, over a layout that is
+   already right.
 
-   48px is measured on a two-line category and is deliberately a fixed
-   number rather than a computed one. The true drop is half the
-   difference between the reserve and the header's content, so it runs
-   from ~33px on a three-line category to ~64px on a one-liner. A
-   measurement is what a FLIP is; a constant that is a little wrong at
-   the START of a 260ms slide is not something anyone can see, and it
-   cannot fail.
+   THE DISTANCE IS THE FREE SPACE, HALVED, and it has to be computed
+   rather than picked. It was a flat 48px, and no constant is right:
+   the drop is 44.5px on a category of one or two lines and 29px on
+   one that takes three. Too short is invisible. Too LONG is not —
+   48px started the line 3.5px above where it had been sitting, and
+   --ease-glide leaves it up there for the first 40ms, so the category
+   flicked UP before it moved down.
+
+   Centred in the reserve, the line lands half the leftover room below
+   where it sat: half of the reserve, less the header's own furniture,
+   less the box the line filled DURING the round — which is the two-
+   line floor .gheader__now keeps while playing, or the line itself
+   when it is taller. `100%` is that line's height; a translate
+   percentage resolves against the element being translated, which is
+   what makes this expressible in CSS at all.
    --------------------------------------------------------------- */
 .screen:has(.focal.lw-over) .gheader__live {
   animation: live-drop var(--dur-base) var(--ease-glide) both;
 }
 
 @keyframes live-drop {
-  from { translate: 0 -48px; }
+  from {
+    translate: 0
+      calc(
+        (
+          var(--tap-target) + var(--sp-3) * 2 +
+            max(100%, var(--gheader-now-floor)) - var(--gheader-live-h)
+        ) / 2
+      );
+  }
 }
 
 /* Going the other way, and it CAN take opacity where the entrance cannot.

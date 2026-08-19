@@ -65,18 +65,23 @@ interface GameHeaderProps {
    one and the worst case is a category 10px off, still legible. See
    `live-in` in global.css.
 
-   THE JUMP IS ANIMATED AGAIN NOW, and not here. Nothing moves the
-   line: the reserve underneath it does. Ending a round swaps
-   .focal.lw for .focal--slot, which flips a :has() selector and takes
-   .gheader from 0 to --gheader-live-h, and the line is centred in
-   that box. Transitioning the box carries the line with it.
+   THE JUMP IS ANIMATED AGAIN NOW, and not here. It is a CSS
+   `translate` of the same shape as the entrance — `live-drop` in
+   global.css — running from the line's old position to 0.
 
-   That is the difference from the FLIP and the whole reason it is
-   safe. A FLIP is a correction applied on top of a finished layout,
-   so its frame one is a lie that persists if nothing paints. A
-   transition IS the layout, interpolated: every frame is a height the
-   header could correctly have, and a stalled one snaps between two
-   right answers. See `.gheader` in global.css.
+   Interpolating the layout instead was tried, and cannot work: on the
+   round-over screen the header's height is a GRID TRACK, so animating
+   its min-height moves a number nothing reads, and the playing screen
+   is a flex column, which a grid track cannot interpolate to anyway.
+   The layout snaps; only the line is animated.
+
+   That is still not a FLIP, and the difference is the whole reason it
+   is safe. A FLIP measures a finished layout and applies a correction
+   on top of it, so its frame one is a lie that persists if nothing
+   paints. This ends at 0 — the position the line correctly has —
+   so a frame that never comes leaves it right, and the distance it
+   starts from is worked out by the stylesheet from the same tokens
+   that lay the header out. See `live-drop` in global.css.
    --------------------------------------------------------------- */
 
 /**

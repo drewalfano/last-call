@@ -271,6 +271,21 @@
   );
 
   /* ----------------------------------------------------------
+     TWO LINES OF CATEGORY, ALWAYS, on Letter Rip's board.
+
+     Its header is auto — see .screen:has(.focal.lw) — so without a
+     floor a one-line category makes a short header and the letter
+     grid climbs to meet it. Two lines' worth holds the board still
+     whatever the category is.
+
+     A token because two rules need the same number: the floor
+     itself, and `live-drop`, which subtracts the half line the
+     floor leaves above a short category when it works out how far
+     the category has to travel at the end of a round.
+     ---------------------------------------------------------- */
+  --gheader-now-floor: calc(var(--fs-2xl) * var(--lh-tight) * 2);
+
+  /* ----------------------------------------------------------
      The card is square, so one number is its width AND its height,
      and it is whichever of three limits bites first:
 
