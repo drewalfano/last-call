@@ -647,13 +647,19 @@ button { font: inherit; color: inherit; }
 /* ---------------------------------------------------------------
    Everything below the card, grounded at the bottom of the screen.
 
-   It scrolls, and that is deliberate. The vote pad and the survivor
-   tracker are the only things down here whose height is not known in
-   advance — they grow a row per three players, from 172px at four up
-   to 284px at twelve. Reserving the twelve-player case would cost
-   every screen in the app 280px of card. So the band takes the space
-   the slot leaves and scrolls past it instead, and the card stays
-   where it is either way.
+   It scrolls, and that is deliberate. The player picker — Kings Cup's
+   2 and 8, Hot Seat's subject — is the one thing down here whose
+   height is not known in advance: it grows a row per three players,
+   from 172px at four up to 284px at twelve. Reserving the
+   twelve-player case would cost every screen in the app 280px of
+   card. So the band takes the space the slot leaves and scrolls past
+   it instead, and the card stays where it is either way.
+
+   It used to name two of these, the vote pad and Drink If's survivor
+   tracker. Both are gone for the same reason, which is the one this
+   app keeps arriving at: a table settles who drinks by looking at
+   each other, and queueing up at a phone to tap it in was slower than
+   the thing it replaced.
    --------------------------------------------------------------- */
 .gfoot {
   display: flex;

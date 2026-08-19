@@ -20,7 +20,7 @@ import { useRoster } from "../state/roster";
  * a row of its own. Prefers the fewest rows, then the narrowest grid, and
  * rejects any split that would leave a remainder of exactly one.
  */
-export function balancedColumns(n: number): number {
+function balancedColumns(n: number): number {
   if (n <= 3) return Math.max(1, n);
   const options = [2, 3, 4].map((cols) => ({ cols, rows: Math.ceil(n / cols) }));
   const fewest = Math.min(...options.map((o) => o.rows));
@@ -29,8 +29,9 @@ export function balancedColumns(n: number): number {
   return pick.cols;
 }
 
-/** Grid sizing shared by the player chips, the picker and the survivor row. */
-export function gridStyle(n: number) {
+/** Grid sizing for the picker's rows. Local — the survivor row was the only
+    caller outside this file, and it is gone. */
+function gridStyle(n: number) {
   return { ["--cols" as string]: String(balancedColumns(n)) } as CSSProperties;
 }
 

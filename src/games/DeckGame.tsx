@@ -4,7 +4,6 @@ import { PromptCard } from "../components/PromptCard";
 import { useDeck } from "../lib/deck";
 import { usePool, type PoolPolicy, type Pools } from "../data/pools";
 import type { ModeDef } from "../data/modes";
-import { SurvivorTracker } from "../components/Mechanics";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { fillPrompt } from "../lib/prompts";
@@ -14,10 +13,17 @@ import { DRINK_IF } from "../data/drinkIf";
  * One screen, one mode — for now.
  * Would You Rather, Drink If… and Most Likely To share the same base loop —
  * reveal a card, draw the next — so they share this component and differ by
- * config below. Each layers its own mechanic on top via `afterCard`.
+ * config below.
  *
  * This registry used to hold five. Never Have I Ever and Happy Hour Qs were
  * retired as modes precisely because sharing this loop was all they did.
+ *
+ * It also used to have an `afterCard` slot, for a mechanic between the card
+ * and the primary action. Drink If was the only config that ever filled it,
+ * with an elimination tracker, and that is gone — so the slot went with it
+ * rather than sitting here as an extension point with nothing on the other
+ * end. It is a small component and a config field; if a mode ever needs one
+ * again it comes back in the shape that mode actually wants.
  */
 export interface DeckGameConfig<T> {
   pools: Pools<T>;
@@ -32,13 +38,6 @@ export interface DeckGameConfig<T> {
   render: (item: T, fill: (text: string) => string) => ReactNode;
   /** Primary action label. */
   nextLabel: string;
-  /** Small print under the card. */
-  /**
-   * Optional mechanic rendered between the card and the primary action —
-   * a vote pad, a split, an elimination tracker. Receives a key that changes
-   * on every draw so the mechanic can reset itself.
-   */
-  afterCard?: (item: T, round: number) => ReactNode;
 }
 
 /** Deck configs, keyed by mode id. Adding a plain deck mode is a config entry. */
@@ -48,8 +47,6 @@ export const DECK_GAMES = {
     eyebrow: "Drink if…",
     render: (p: string, fill) => fill(p),
     nextLabel: "Next",
-    // Optional elimination layer — hidden entirely without a roster.
-    afterCard: () => <SurvivorTracker />,
   } satisfies DeckGameConfig<string>,
 
 } as const;
@@ -91,7 +88,6 @@ export function DeckGame({ mode, config, onBack }: DeckGameProps) {
           </PromptCard>
         }
       >
-        {deck.current !== undefined && config.afterCard?.(deck.current, deck.drawCount)}
         <p className="counter">
           {deck.position} of {deck.total}
           {deck.cycle > 0 && " · reshuffled"}
