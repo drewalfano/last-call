@@ -200,6 +200,46 @@
   transition: transform var(--dur-press) var(--ease-out);
 }
 
+/* ---------------------------------------------------------------
+   THE DECK DEALS ITSELF OUT, ONCE.
+
+   Eleven cards used to be simply there — the app's front door, and
+   the one screen whose whole idea is a deck, arriving fully formed
+   while the category grid two taps away dealt itself.
+
+   First open only. Home is remounted every time you leave a mode, and
+   re-dealing on every back press turns the app's opening flourish
+   into a toll you pay all night. Home decides which it is; see
+   `dealt` in games/Home.tsx.
+
+   UPWARD, from the bottom of the deck. That is not only how it
+   reads better — it is what stops the deal exposing the thing the
+   squared bottoms were hiding. Each card is covered by the one
+   BELOW it in the stack, so dealing downward meant a card rose into
+   place while nothing covered its bottom edge yet, flashing the flat
+   cut we went to some trouble to hide. Dealt upward, the covering
+   card is always already there.
+
+   Same `backwards` as the picker, and for the same reason: these
+   cards carry a press lift AND a pick lift, both transforms, and a
+   filled animation would sit on top of both.
+   --------------------------------------------------------------- */
+@keyframes deck-deal {
+  from { opacity: 0; transform: translateY(28px) scale(0.98); }
+}
+
+/* 30ms, not 45. Only the bottom six cards are on screen at 812pt and the
+   rest are below the fold, so a slower stagger spends its opening beats
+   somewhere nobody can see and the visible deal starts late. */
+.home__deck--dealing .deck-card {
+  animation: deck-deal var(--dur-base) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__deck--dealing .deck-card { animation: none; }
+}
+
 .deck-card:not(:first-child) {
   margin-top: calc(var(--peek) - var(--card-h));
 }
@@ -980,6 +1020,18 @@
    words). Fixing it is what stops the card above from moving — content is
    top-aligned inside, so a one-line rule leaves slack rather than shifting
    the card up. */
+/* ---------------------------------------------------------------
+   The rule arrives AFTER the card it belongs to.
+
+   Drawing turned the card over and then blinked the rule into
+   existence beneath it — the thing you drew moved, the thing it does
+   to you did not. Now it waits out the flip and rises in behind it,
+   so the two read in order: the card, then what it costs you.
+
+   The delay is most of --dur-slow, which is what the flip takes.
+   `backwards` holds it hidden through that wait rather than letting
+   it sit there fully formed while the card is still turning.
+   --------------------------------------------------------------- */
 .kc__below {
   display: flex;
   flex-direction: column;
@@ -988,6 +1040,11 @@
   flex: none;
   width: 100%;
   min-height: 182px;
+  animation: pop var(--dur-base) var(--ease-out) 300ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kc__below { animation: none; }
 }
 
 .kc__rule {
@@ -1020,18 +1077,6 @@
   flex: none;
   margin: 0;
   padding: var(--sp-3);
-/* ---------------------------------------------------------------
-   The rule arrives AFTER the card it belongs to.
-
-   Drawing turned the card over and then blinked the rule into
-   existence beneath it — the thing you drew moved, the thing it does
-   to you did not. Now it waits out the flip and rises in behind it,
-   so the two read in order: the card, then what it costs you.
-
-   The delay is most of --dur-slow, which is what the flip takes.
-   `backwards` holds it hidden through that wait rather than letting
-   it sit there fully formed while the card is still turning.
-   --------------------------------------------------------------- */
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--category-ink) 14%, transparent);
   color: var(--category-ink);
@@ -1040,11 +1085,6 @@
   font-weight: var(--fw-bold);
   text-align: center;
 }
-  animation: pop var(--dur-base) var(--ease-out) 300ms backwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .kc__below { animation: none; }
 
 .kc__extra-label {
   display: block;

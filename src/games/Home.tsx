@@ -13,10 +13,26 @@ interface HomeProps {
 const REVEAL_MS = 480;
 
 /**
+ * Whether the deck has already dealt itself out this session.
+ *
+ * Module scope, not state: Home is unmounted every time you open a mode and
+ * remounted every time you come back, so component state would call every
+ * return a first open. The deal is the app's opening flourish — paying it on
+ * every back press would turn it into a toll.
+ */
+let dealt = false;
+
+/**
  * The whole app's table of contents, dealt as a stack of overlapping cards.
  * Every mode is one tap away — no menus, no settings page.
  */
 export function Home({ onPick }: HomeProps) {
+  /** True only on the first Home of the session. Claims it as it reads it. */
+  const [dealing] = useState(() => {
+    const first = !dealt;
+    dealt = true;
+    return first;
+  });
   const [picked, setPicked] = useState<ModeId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const deckRef = useRef<HTMLElement>(null);
@@ -64,14 +80,24 @@ export function Home({ onPick }: HomeProps) {
         {picked ? "Dealing…" : "Pick a game for me"}
       </button>
 
-      <nav className="home__deck" aria-label="Game modes" ref={deckRef}>
+      <nav
+        className={dealing ? "home__deck home__deck--dealing" : "home__deck"}
+        aria-label="Game modes"
+        ref={deckRef}
+      >
         {MODES.map((mode, i) => (
           <button
             key={mode.id}
             data-mode={mode.id}
             data-picked={picked === mode.id || undefined}
             className="deck-card"
-            style={{ ...categoryStyle(mode.color), zIndex: i + 1 }}
+            /* Counted from the BOTTOM of the deck, so the deal runs upward —
+               see .home__deck--dealing. */
+            style={{
+              ...categoryStyle(mode.color),
+              zIndex: i + 1,
+              ["--i" as string]: MODES.length - 1 - i,
+            }}
             onClick={(e) => openCard(mode.id, e.currentTarget)}
           >
             <span className="deck-card__title">
