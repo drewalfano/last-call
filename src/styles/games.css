@@ -452,6 +452,33 @@
   transform: translateZ(0);
 }
 
+/* ---------------------------------------------------------------
+   THE SAME FIELD, GOING THE OTHER WAY.
+
+   Opening clips a rect open to full screen. Closing does not clip at
+   all — it starts covering everything and simply goes, which is why
+   this needs no inline clip-path and why the screen underneath can
+   be swapped back to Home on the very first frame.
+
+   --dur-fast and a plain fade rather than the launch's 520ms
+   contraction, which is a decision with its reasoning at CLOSE_MS in
+   App.tsx: the X is a reflex, and the way out is the last place in
+   this app to spend duration.
+
+   `forwards`, so it holds at transparent for the beat between the
+   animation ending and App retiring it — without the fill it would
+   flash back to a full screen of pack colour for that frame, which
+   is the one thing this cannot afford to do.
+
+   `will-change` is corrected off the inherited clip-path: this one
+   only ever moves opacity, and naming the wrong property is worse
+   than naming none.
+   --------------------------------------------------------------- */
+.launch--closing {
+  will-change: opacity;
+  animation: fade-out var(--dur-fast) var(--ease-out) forwards;
+}
+
 /* ---------------- Pick a game for me ---------------- */
 /* ---------------------------------------------------------------
    THE ONE BUTTON THAT HAS TO ASK.

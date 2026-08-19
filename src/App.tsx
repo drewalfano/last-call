@@ -30,6 +30,31 @@ import { Imposter } from "./games/Imposter";
 const LAUNCH_MS = 520;
 const LAUNCH_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
 
+/**
+ * CLOSING IS NOT OPENING PLAYED BACKWARDS, AND DELIBERATELY SO.
+ *
+ * Opening is a presentation worth watching: a card's colour expands from the
+ * rect you tapped, over 520ms, and the screen swap hides underneath it.
+ * Contracting back to that rect would be the symmetrical thing to do and the
+ * wrong one, for two reasons.
+ *
+ * The rect is gone. Home is unmounted while a mode is up, and its deck may
+ * have been scrolled since; there is no card on screen to aim at, so the
+ * destination would have to be a remembered rectangle that may no longer be
+ * where that card sits. A contraction that lands somewhere arbitrary is worse
+ * than none.
+ *
+ * And the X is a reflex. It is pressed to GET OUT — by someone who opened the
+ * wrong mode, or whose round has ended — and every pass-the-phone handoff in
+ * this app already spends --dur-slow on a card flip. The way out is the last
+ * place to spend more.
+ *
+ * So the colour just goes: --dur-fast, straight through. Long enough that the
+ * pack colour is not cut off mid-frame, short enough to stay out of the way.
+ * Matches --dur-fast, which is what the CSS takes; see .launch--closing.
+ */
+const CLOSE_MS = 160;
+
 interface Launch {
   id: ModeId;
   /** Where on screen the tapped card was, in viewport pixels. */
@@ -39,7 +64,10 @@ interface Launch {
 export default function App() {
   const [screen, setScreen] = useState<ModeId | null>(null);
   const [launch, setLaunch] = useState<Launch | null>(null);
+  /** The mode whose colour is still on screen, fading, after it has closed. */
+  const [closing, setClosing] = useState<ModeId | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number>(undefined);
   const { theme } = useTheme();
 
   /**
@@ -50,10 +78,44 @@ export default function App() {
    * Deliberately keyed to `screen` and not to `launch`: the pack colour lands
    * as the screen swaps, which happens underneath the opaque launch overlay,
    * so the status bar changes colour on the one frame nothing else is visible.
+   *
+   * `closing` holds it there on the way out, for the same reason read the
+   * other way round. The screen goes back to Home immediately — under an
+   * opaque overlay still flooded in the pack colour — so a status bar keyed to
+   * `screen` alone would snap to the shell while the whole display below it is
+   * still red. It follows the overlay instead and changes as that clears,
+   * which is once again the frame where nothing else is moving.
    */
-  useAppBackground(screen ? MODE_BY_ID[screen].color : SHELL_TOKEN, theme);
+  const painted = screen ?? closing;
+  useAppBackground(painted ? MODE_BY_ID[painted].color : SHELL_TOKEN, theme);
 
-  const goHome = useCallback(() => setScreen(null), []);
+  /**
+   * Leaving a mode drops its colour over the whole screen and fades it out —
+   * the same ordering the launch uses, with the two steps swapped. The screen
+   * goes back to Home UNDERNEATH an overlay that is already opaque and already
+   * covering, so the unmount is as invisible as the mount is on the way in,
+   * and what you actually watch is a field of colour clearing off Home.
+   *
+   * A timeout retires the overlay rather than an animation event: a stalled
+   * fade would otherwise leave an opaque sheet of colour over the entire app
+   * with nothing left to dismiss it. Same rule, same reason, as the live
+   * line's exit and Letter Rip's board.
+   *
+   * Under reduced motion there is no overlay at all — the same check the
+   * launch makes, so both directions answer the question once each.
+   */
+  const goHome = useCallback(() => {
+    if (screen === null) return;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!reduced) {
+      setClosing(screen);
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = window.setTimeout(() => setClosing(null), CLOSE_MS);
+    }
+    setScreen(null);
+  }, [screen]);
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   /**
    * Opening a mode expands its color from the tapped card out to the whole
@@ -135,6 +197,15 @@ export default function App() {
               window.innerWidth - launch.rect.right
             }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
           }}
+          aria-hidden="true"
+        />
+      )}
+      {/* The colour on its way off. No clip-path: it covers everything from
+          the frame it appears, which is what lets the screen swap under it. */}
+      {closing && (
+        <div
+          className="launch launch--closing"
+          style={categoryStyle(MODE_BY_ID[closing].color)}
           aria-hidden="true"
         />
       )}
