@@ -1020,6 +1020,18 @@
   flex: none;
   margin: 0;
   padding: var(--sp-3);
+/* ---------------------------------------------------------------
+   The rule arrives AFTER the card it belongs to.
+
+   Drawing turned the card over and then blinked the rule into
+   existence beneath it — the thing you drew moved, the thing it does
+   to you did not. Now it waits out the flip and rises in behind it,
+   so the two read in order: the card, then what it costs you.
+
+   The delay is most of --dur-slow, which is what the flip takes.
+   `backwards` holds it hidden through that wait rather than letting
+   it sit there fully formed while the card is still turning.
+   --------------------------------------------------------------- */
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--category-ink) 14%, transparent);
   color: var(--category-ink);
@@ -1028,6 +1040,11 @@
   font-weight: var(--fw-bold);
   text-align: center;
 }
+  animation: pop var(--dur-base) var(--ease-out) 300ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kc__below { animation: none; }
 
 .kc__extra-label {
   display: block;

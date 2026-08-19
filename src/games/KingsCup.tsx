@@ -201,7 +201,10 @@ export function KingsCup({ mode, onBack }: Props) {
             <PlayingCard card={s.card} />
           </div>
 
-          <div className="kc__below">
+          {/* Keyed on the draw so the rule replays with every card — without
+              it React reuses the element and the animation runs once, on the
+              first card of the game only. */}
+          <div className="kc__below" key={s.deck.length}>
             <div className="kc__rule">
               <span className="kc__rule-label">{s.rule?.label}</span>
               <p className="kc__rule-text">{s.rule?.text}</p>
