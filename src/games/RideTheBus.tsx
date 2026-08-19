@@ -209,7 +209,14 @@ export function RideTheBus({ mode, onBack }: Props) {
         </CardBody>
       ) : (
         <div className="focal rtb">
-            <div className="rtb__felt focal__center">
+            {/* Cards and verdict as ONE centred object. The felt used to
+                carry .focal__center itself, and its auto block margins then
+                sat BETWEEN the cards and the verdict — moving the verdict
+                out of .actions cut the distance from 294px to 168 and no
+                further, because the slack simply reappeared above it.
+                Centre the pair and the sentence stays with its cards. */}
+            <div className="rtb__table focal__center">
+            <div className="rtb__felt">
               {s.phase === "bus" ? (
                 <PlayingCard card={s.busCard} />
               ) : (
@@ -226,11 +233,30 @@ export function RideTheBus({ mode, onBack }: Props) {
               )}
             </div>
 
+            {/* The verdict belongs to the CARDS, so it sits under them
+                rather than in the row of buttons. It was authored inside
+                .actions, which is grounded at the bottom of the screen —
+                on a 13" that put "Wrong. Take 1." 294px below the four
+                cards it is a verdict on, reading as a caption for the
+                button instead. Nothing about the cards said what had
+                happened to them. */}
+            {/* Always rendered, hidden when there is nothing to say, so its
+                row is reserved and the cards do not jump 20px the moment a
+                guess resolves — the same trick .gfoot__skip uses, and for
+                the same reason: this game's whole content is four cards you
+                are reading, and they must not move under you.
+                `visibility`, not opacity, so it leaves the a11y tree too. */}
+            <p
+              className="rtb__verdict"
+              data-good={s.verdict?.correct || undefined}
+              data-hidden={!s.verdict || undefined}
+            >
+              {s.verdict?.text ?? "\u00a0"}
+            </p>
+            </div>
+
             {s.verdict ? (
               <div className="actions">
-                <p className="rtb__verdict" data-good={s.verdict.correct || undefined}>
-                  {s.verdict.text}
-                </p>
                 <button
                   className="btn btn--lg btn--block"
                   onClick={s.phase === "bus" ? clearVerdict : continueSetup}

@@ -521,6 +521,34 @@
   border: 3px solid var(--card-face);
 }
 
+/* ---------------------------------------------------------------
+   TABLET: THE PLAYING CARDS ARE THE GAME.
+
+   Kings Cup and Ride the Bus are the two modes whose entire
+   content is a card face you are meant to read — in Ride the Bus
+   the rank IS the question — and they were the two that gained
+   least from a bigger screen. Every width here is min(vw, cap), so
+   on a tablet the cap bit every time and a 1366pt board dealt the
+   same 84px cards a 375pt phone does.
+
+   The caps roughly double and the vw terms come down with them, so
+   the cap is still what binds on a tablet rather than the width.
+
+   Ride the Bus lays four in a row: 4 x 150 + 3 x 12 = 636 inside a
+   652px column. The gap goes up with the cards — at --sp-2 four
+   150px cards read as one block rather than as four cards.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .pcard { width: min(34vw, 320px); }
+
+  .pcard--sm {
+    width: min(16vw, 150px);
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .rtb__row { gap: var(--sp-3); }
+}
+
 /* ---------------- Ride the Bus ---------------- */
 .focal.rtb { gap: var(--sp-3); }
 
@@ -534,6 +562,16 @@
   color: color-mix(in srgb, var(--category-ink) 72%, transparent);
 }
 .rtb__tally strong { color: var(--category-ink); font-size: var(--fs-md); }
+
+/* Cards and verdict as one block, centred together. The felt carried
+   .focal__center itself until the verdict moved out of the button row, and
+   its auto block margins then sat between the two — see RideTheBus. */
+.rtb__table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+}
 
 /* No tray. The cards sit directly on the pack color. */
 .rtb__felt {
@@ -558,8 +596,29 @@
   color: var(--category-ink);
 }
 
-.rtb__verdict { color: color-mix(in srgb, var(--category-ink) 75%, transparent); }
+/* ---------------------------------------------------------------
+   THE VERDICT SITS UNDER THE CARDS, NOT IN THE BUTTON ROW.
+
+   It used to live inside .actions, which is grounded against the
+   bottom of the screen. On a phone that reads as a caption a
+   little way under the felt and mostly gets away with it. On a
+   13" it put "Wrong. Take 1." 294px below the four cards it is a
+   verdict ON, next to a button it has nothing to do with, while
+   the cards themselves said nothing about what had just happened.
+
+   Its own row directly beneath the felt now, so the sentence and
+   the thing it is about are one object. `flex: none` because it
+   must not take any of the felt's slack, and the reserve below
+   still holds the button still between rounds.
+   --------------------------------------------------------------- */
+.rtb__verdict {
+  flex: none;
+  margin-top: var(--sp-2);
+  color: color-mix(in srgb, var(--category-ink) 75%, transparent);
+}
 .rtb__verdict[data-good] { color: var(--category-ink); }
+/* Holds its row when it has nothing to say. */
+.rtb__verdict[data-hidden] { visibility: hidden; }
 
 .rtb__choices { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 .rtb__choice { flex: 1 1 40%; }
@@ -1278,6 +1337,15 @@
 .rtb__felt > .pcard {
   width: auto;
   height: calc(min(46vw, 190px) * 7 / 5 + var(--pcard-solo-bump));
+}
+
+/* The solo heights at tablet. Down here rather than with the rest of the
+   tablet card sizing because both base rules are declared below it, and a
+   media query adds no specificity — an override written earlier in the file
+   simply loses the tie. */
+@media (min-width: 640px) and (min-height: 600px) {
+  .kc__card .pcard { height: calc(min(26vw, 300px) * 7 / 5 + var(--pcard-solo-bump)); }
+  .rtb__felt > .pcard { height: calc(min(28vw, 320px) * 7 / 5 + var(--pcard-solo-bump)); }
 }
 
 /* The reserved half. 182px is measured, not guessed: it's the tallest this
