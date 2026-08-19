@@ -127,14 +127,22 @@ const RING_PATH = RING_RAMP.length * RING_SPAN;
  * part of the line — the bloom carries it further — while still arriving far
  * below the body's full strength, which is all the softness was ever for.
  *
- * EDGE_PIECES comes down to suit: with a floor to start from, the climb to
- * full has less distance to cover, and a shorter ramp keeps the dim stretch
- * from spreading across the whole bottom edge. Smoothstep rather than a
- * straight ramp, so the brightness eases off its ceiling instead of turning
- * a corner — a linear taper still reads as an edge, just a slanted one.
+ * The two numbers pull against each other and are worth tuning as a pair.
+ * The floor is how lit the midpoint gets; the length is how gently the line
+ * reaches full strength. Raising the floor colours the midpoint better and
+ * makes the arrival abrupter, because there is less climb left to do —
+ * shortening the ramp does the same thing twice over. Both were moved at
+ * once in the commit before this and the entrance came out harder than it
+ * had ever been: 0.35 appearing over only 58px is close to a pop.
+ *
+ * So the length goes past where it started rather than back to it, and the
+ * floor comes down to the least that still reads: ~116px to climb, from a
+ * fifth of full. Smoothstep rather than a straight ramp, so the brightness
+ * eases off its ceiling instead of turning a corner — a linear taper still
+ * reads as an edge, just a slanted one.
  */
-const EDGE_PIECES = 24;
-const EDGE_FLOOR = 0.35;
+const EDGE_PIECES = 48;
+const EDGE_FLOOR = 0.22;
 
 function edgeOpacity(i: number): number {
   const t = Math.min(1, Math.min(i, RING_RAMP.length - 1 - i) / EDGE_PIECES);
