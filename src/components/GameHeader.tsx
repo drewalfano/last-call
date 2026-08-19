@@ -37,6 +37,35 @@ interface GameHeaderProps {
   onBack: () => void;
 }
 
+/* ---------------------------------------------------------------
+   NO FLIP ON THE LIVE LINE. IT MOVES WHERE IT MOVES.
+
+   Last Word's board takes an auto header and its round-over card
+   takes the reserved one, so ending a round drops the category ~60px
+   down the screen. That jump used to be animated: remember where the
+   line was, and once the browser had put it somewhere new, run a
+   WAAPI `translate` from the old position to the new one. Textbook
+   FLIP, and correct on paper — the layout is right the whole time and
+   only the paint lags.
+
+   It cost the category. An animation's clock is the document's, and a
+   surface that defers painting doesn't have one running, so the
+   animation didn't play slowly — it stopped on frame one and stayed.
+   Frame one of a FLIP is the element at its OLD position: the
+   category 60px down the screen, behind the letter grid, for the
+   whole round, on the one screen where it's the only thing a player
+   has to hold in their head. Skipping it while `document.hidden` was
+   not enough — a surface can be painting late without ever saying it
+   is hidden.
+
+   The lesson is narrower than "don't use FLIP": don't put the thing a
+   player cannot play without inside an effect that has to RUN to end
+   up correct. The entrance the line does keep is a CSS `translate`
+   that starts 10px high and never touches opacity — stall it at frame
+   one and the worst case is a category 10px off, still legible. See
+   `live-in` in global.css.
+   --------------------------------------------------------------- */
+
 /** Back-to-Home affordance, the mode's name, and the live line under both. */
 export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderProps) {
   return (

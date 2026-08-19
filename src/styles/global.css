@@ -266,15 +266,18 @@ button { font: inherit; color: inherit; }
   min-height: var(--gheader-live-h);
 }
 
-/* A header carrying a status strip needs a floor under that reserve. The
-   strip hangs out of flow, so on a short screen — where the reserve shrinks
-   with the card — there was no longer enough room below the live line to
-   hold it, and it overlapped the game by 4px at 667pt and below. 200px is
-   the live line, its 20px gap and the strip, with room to spare. Above
-   ~700pt the reserve already exceeds it and this does nothing. */
-.screen:has(.gheader__aside) .gheader {
-  min-height: max(var(--gheader-live-h), 200px);
-}
+/* No floor under the reserve for a status strip any more — see
+   .gheader__aside, which is in flow now.
+
+   There used to be one: `max(--gheader-live-h, 200px)`, because a strip
+   hanging out of flow needed room below the centred line that a short
+   screen's reserve did not have, and without it the strip overlapped the
+   game by 4px at 667pt. But 200px is taller than the row a 667pt screen
+   gives the header, so the floor made the HEADER overflow instead — the
+   strip cleared the card by only 2px, having been pushed down by the very
+   rule meant to lift it. An in-flow strip is inside the box being reserved
+   for, so `--gheader-live-h` covers it the way it covers the line, and at
+   667pt the pips now clear the card by 27px. */
 
 /* ---------------------------------------------------------------
    EXCEPT LAST WORD, WHICH KEEPS AN AUTO HEADER.
@@ -301,9 +304,19 @@ button { font: inherit; color: inherit; }
    short header and the board underneath climbs to meet it — Rank It's list
    moved 20.5px between the ranking pass and the guessing pass purely because
    "Everyone else" is one line and "X — privately" is two. Two lines' worth,
-   always, on the screens whose header is free to move. */
+   always, on the screens whose header is free to move.
+
+   CENTRED in that reserve, not sitting on top of it. A reserve is a box, and
+   text starts at the top of a box — so a one-line category rendered against
+   the ceiling of a two-line space with the empty line under it, half a line
+   higher than the block it is supposed to be centred in and adrift from the
+   ring below. Two- and three-line categories filled the box and looked
+   right, which is why only the short ones read as wrong. */
 .screen:has(.focal.lw) .gheader__now {
   min-height: calc(var(--fs-2xl) * var(--lh-tight) * 2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .gheader__bar {
@@ -404,6 +417,35 @@ button { font: inherit; color: inherit; }
   margin-block: auto;
 }
 
+/* Arriving is a different move from moving.
+ *
+ * A live line that is already on screen and merely lands somewhere else
+ * SLIDES — see useLiveLineFlip in GameHeader, which owns that case because
+ * only JavaScript knows where the line used to be. This is the other case:
+ * a line appearing where there wasn't one, which is a mount, which CSS can
+ * see. Last Word's category is the example — the intro card has no live
+ * line and the board does, so pressing Start round used to blink a heading
+ * into existence above a board that had also arrived from nowhere.
+ *
+ * It TRAVELS but never fades. This line is the one thing a player has to
+ * carry through the round, and an entrance that starts at `opacity: 0` puts
+ * it at nothing for as long as the animation has not run — which on any
+ * surface that defers rendering is longer than 260ms, and reads not as a
+ * fade but as a category that never arrived. Distance costs nothing when
+ * the frame is late: the line is legible on frame one either way.
+ */
+.gheader__live {
+  animation: live-in var(--dur-base) var(--ease-out) backwards;
+}
+
+@keyframes live-in {
+  from { translate: 0 -10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gheader__live { animation: none; }
+}
+
 .gheader__now {
   margin: 0;
   text-align: center;
@@ -429,19 +471,30 @@ button { font: inherit; color: inherit; }
 /* ---------------------------------------------------------------
    THE STATUS STRIP, 20px under the live line.
 
-   Taken OUT of flow deliberately. The live line is centred in the
-   header's reserve, so anything added to that block changes what is
-   being centred and drags the line off the position every other mode
-   shares. Hung from the block's bottom edge instead, it can sit 20px
-   under the line without the line knowing it is there.
+   IN FLOW, so what gets centred is the PAIR.
 
-   It lands in space the reserve was leaving empty anyway — the gap
-   between the centred line and the bottom of the header.
+   It used to hang out of flow at `top: 100% + 20px`, on the argument
+   that anything added to the block would change what is being
+   centred and drag the live line off the position every other mode
+   shares. True — and the cost was worse than the thing it bought.
+   The line stayed put and the strip hung off the bottom of it into
+   space that was NOT spare, so the block came out bottom-heavy: on
+   Last Call at 812pt, 72px of air above the line and 47 below the
+   pips, with the pips 47px off the top of the card and the mode name
+   72px away. It read as a header sagging onto its card.
+
+   Centring the pair costs the line about half the strip's height on
+   the screens that carry one, and buys back a block that is level in
+   its reserve on every one of them. It also self-corrects: Kings
+   Cup's two-line status and Last Call's 5px pips are different
+   heights, and an out-of-flow strip could only ever be right for one
+   of them.
+
+   The 20px is now `margin-top` less the parent's own 4px gap.
    --------------------------------------------------------------- */
 .gheader__aside {
-  position: absolute;
-  top: calc(100% + 20px);
-  inset-inline: 0;
+  margin-top: calc(20px - var(--sp-1));
+  width: 100%;
 }
 
 /* The standing rule under it. Deliberately quieter than the line it qualifies

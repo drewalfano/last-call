@@ -406,11 +406,25 @@
   width: 22px;
   height: 5px;
   border-radius: var(--radius-pill);
-  /* On white stock the pips read as the mode's color, not as grey text. */
-  background: color-mix(in srgb, var(--card-ink) 18%, transparent);
+  /* ------------------------------------------------------------
+     THE PACK'S INK, NOT THE PACK'S COLOUR.
+
+     These were coloured for the card they used to sit on: a lit pip
+     took `--category` so it read as the mode's colour against white
+     stock. They live in the header now, ON that colour — so a lit
+     pip was Last Call's red on Last Call's red, and the level you
+     are actually at was the one pip you could not see. The two
+     UNLIT ones were the only marks on the strip, which reads as the
+     indicator being broken rather than as an intensity of one.
+
+     The ink is the value every pack guarantees will carry against
+     its own field. Lit takes it whole; unlit takes a quarter of it,
+     so the track is still there to be counted against.
+     ------------------------------------------------------------ */
+  background: color-mix(in srgb, var(--category-ink, var(--card-ink)) 25%, transparent);
   transition: background var(--dur-base) var(--ease-out);
 }
-.heat__pip[data-lit] { background: var(--category); }
+.heat__pip[data-lit] { background: var(--category-ink, var(--card-ink)); }
 
 /* ---------------- Hot Seat ---------------- */
 .text-input {
@@ -829,6 +843,63 @@
   cursor: default;
 }
 
+/* ---------------------------------------------------------------
+   DEALING THE BOARD.
+
+   Every other screen in the app arrives on `screen-in` — but that
+   animation is on `.screen`, and Last Word's four phases are one
+   `.screen` that React reuses. Nothing remounts when Start round is
+   pressed, so nothing ran: the intro card was replaced by a full
+   board of twenty letters in a single frame, with no motion at all
+   on the one transition that changes the most.
+
+   The board deals instead. The ring lands first and the bank
+   cascades in behind it, in reading order, so the eye is taken to
+   the clock and then across the letters it is about to use.
+
+   `scale`, NOT `transform: scale()`. At tablet size the letters ARE
+   a transform — `--place` swings each one out to its angle on the
+   ring — and a keyframe animating `transform` would throw that away
+   for the length of the animation, collapsing all twenty onto the
+   centre before they snapped out. The independent property composes
+   with the placement instead of replacing it.
+
+   `backwards` for the reason the picker and the deck both document:
+   a filled animation's final value outranks a plain declaration,
+   and these tiles carry a press scale that would go dead under it.
+   --------------------------------------------------------------- */
+.lw__timer {
+  animation: lw-ring-in var(--dur-base) var(--ease-out) backwards;
+}
+
+.lw__letter {
+  animation: lw-key-in var(--dur-base) var(--ease-out) backwards;
+  /* 10ms: twenty tiles, so the last one starts at 190ms and the bank is
+     whole inside 450 — a beat, not a queue. The round is ten seconds long
+     and the clock is already running. */
+  animation-delay: calc(var(--i, 0) * 10ms);
+}
+
+/* Last, and only just — it is the way out of a round that has only this
+   second started, so it should arrive after the thing you came here for. */
+.focal.lw .actions {
+  animation: pop var(--dur-base) var(--ease-out) 260ms backwards;
+}
+
+@keyframes lw-ring-in {
+  from { opacity: 0; scale: 0.9; }
+}
+
+@keyframes lw-key-in {
+  from { opacity: 0; scale: 0.72; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lw__timer,
+  .lw__letter,
+  .focal.lw .actions { animation: none; }
+}
+
 /* ================================================================
    LAST WORD AT TABLET — the ring comes back, where it fits.
 
@@ -1196,10 +1267,8 @@
   cursor: default;
 }
 
-/* ---------------- Vote pad ---------------- */
+/* ---------------- Player chips ---------------- */
 /* Sits on the flooded pack color, so chips invert like every other control. */
-.votepad { display: flex; flex-direction: column; gap: var(--sp-2); }
-
 /* Column count comes from balancedColumns() so rows divide evenly — a lone
    name on its own row reads as a layout bug. */
 .votepad__grid {
@@ -1231,7 +1300,7 @@
 }
 .votepad__player:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
 
-/* A vote fills the chip — countable at a glance from across a table. */
+/* The chosen one fills — readable from across a table. */
 .votepad__player[data-voted] {
   background: var(--category-ink);
   color: var(--category);
@@ -1239,24 +1308,6 @@
 }
 
 .votepad__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.votepad__count {
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
-  opacity: 0.75;
-}
-
-.votepad__reveal { font-size: var(--fs-sm); }
-
-.votepad__verdict {
-  margin: 0;
-  padding: var(--sp-2);
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-  color: var(--category-ink);
-}
 
 /* ---------------- Kings Cup ---------------- */
 .focal.kc { gap: var(--sp-3); }
