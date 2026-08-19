@@ -106,39 +106,34 @@ const RING_PATH = RING_RAMP.length * RING_SPAN;
  * Picking for you happens in two beats, and the first one exists so you can
  * see the app decide.
  *
- * RING_MS is that beat: the button says "Dealing…", the line races round it,
+ * RING_MS is that beat: the button says "Picking…", the line races round it,
  * and NOTHING else moves. It has to come first because the reveal scrolls the
  * chosen card into view, and on a deck eleven cards long that carries the
  * button off the top of the screen — so the flourish that says the app is
  * choosing used to be dragged out of sight the instant it started.
  *
- * REVEAL_MS is the second: the card is brought into view and lifted, then
- * opened.
+ * REVEAL_MS is a hold AFTER the scroll has stopped, not a guess at how long
+ * the scroll takes. That distinction is the whole of the second beat: the
+ * launch reads the chosen card's rect to expand its colour from, and a smooth
+ * scroll of unknown length was still moving when it did. The overlay grew from
+ * where the card had been while the card carried on — and a scroll animation
+ * and a 520ms clip-path ran against each other for the overlap. Tapping a card
+ * directly has neither problem, which is exactly why it felt better.
  *
- * Both are derived rather than chosen, because they are timed against the
- * sweep and a hand-set pair drifts the moment either side is retuned. The
- * sweep's own numbers live here too and reach the stylesheet as custom
- * properties, so this file is the only place the tap flourish is described.
- *
- * OPEN_THROUGH is how far into the lap the mode opens, and it is deliberately
- * short of the end: the line should still be travelling when the pack colour
- * takes the screen. Letting it finish first leaves a beat where the button is
- * done and nothing has happened yet, which reads as the app hesitating rather
- * than dealing.
- *
- * Four fifths, not three quarters. At 0.75 the mode arrived while the line
- * still had a visible quarter of the ring to cover, which is not "still
- * travelling" so much as interrupted. A fifth left is enough to read as
- * unfinished without being enough to feel cut off.
+ * So the open is no longer at a fixed fraction of the lap. It cannot be: it
+ * waits on a scroll whose length depends on how far down the deck the pick
+ * landed. Near the top it opens around three quarters through, at the bottom
+ * nearer the end. The line is still running either way, which was the point of
+ * asking for it.
  */
-const OPEN_THROUGH = 0.8;
+const RING_MS = 603;
+const REVEAL_MS = 240;
+
 /**
- * How long the ring waits for the wordmark. Matches --dur-base + --dur-fast,
- * the tokens the stylesheet still uses for the delay itself; it is repeated
- * here only so the unmount below can be timed against it.
+ * The two sweeps. Both reach the stylesheet as custom properties, so this file
+ * is the only place the flourish is described and the two cannot drift.
  */
 const DEAL_DELAY_MS = 420;
-
 const DEAL_STEP_MS = 4;
 const DEAL_LIFE_MS = 515;
 const DEAL_SWEEP_MS = (RING_RAMP.length - 1) * DEAL_STEP_MS + DEAL_LIFE_MS;
@@ -150,28 +145,17 @@ const PICK_SWEEP_MS = (RING_RAMP.length - 1) * PICK_STEP_MS + PICK_LIFE_MS;
 /**
  * THE GLOW IS FED A COARSER LINE THAN THE ONE YOU SEE.
  *
- * Everything used to sit inside the filter — all 321 pieces — which meant
- * that every frame the browser rasterised 321 full-perimeter dashed paths
- * into an offscreen buffer and then blurred the result. An svg filter is not
- * GPU-accelerated on iOS, so that is the whole stutter.
+ * All 321 pieces used to sit inside the filter, so every frame rasterised 321
+ * full-perimeter dashed paths into an offscreen buffer before blurring them.
+ * An svg filter is not GPU-accelerated on iOS; that was the stutter.
  *
- * The blur is still a real blur; it is just given less to chew on. A coarse
- * copy drawn from every HALO_EVERY-th piece goes through the filter, and the
- * sharp line is drawn separately, outside it, where it costs nothing but its
- * own paint. Forty-one paths into the buffer instead of 321.
- *
- * This is not the flat stacked-stroke halo that got tried and binned — that
- * one had no blur at all, which is why it read as bands of colour. What the
- * coarseness costs is colour detail inside the bloom, and a bloom is the one
- * place that cannot matter: blurring is the destruction of exactly that
- * detail. Eight pieces get averaged into one and then smeared 12px.
+ * The blur is still a real blur, just given less to chew on: a coarse copy
+ * drawn from every HALO_EVERY-th piece goes through the filter, and the sharp
+ * line is drawn separately, outside it. What coarseness costs is colour detail
+ * inside a bloom, and destroying that detail is what blurring IS.
  */
 const HALO_EVERY = 8;
 const HALO_RAMP = RING_RAMP.filter((_, i) => i % HALO_EVERY === 0);
-
-const OPEN_AT = Math.round(PICK_SWEEP_MS * OPEN_THROUGH);
-const RING_MS = Math.round(OPEN_AT * 0.58);
-const REVEAL_MS = OPEN_AT - RING_MS;
 
 /**
  * How brightly each piece is allowed to burn, by how close it sits to the
@@ -273,6 +257,7 @@ export function Home({ onPick }: HomeProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const deckRef = useRef<HTMLElement>(null);
   const timer = useRef<number>(undefined);
+  const raf = useRef<number>(undefined);
 
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
@@ -300,8 +285,47 @@ export function Home({ onPick }: HomeProps) {
     timer.current = window.setTimeout(() => {
       setRevealed(mode.id);
       el.scrollIntoView({ block: "center", behavior: "smooth" });
-      // Beat two: which card it landed on, and then the card itself.
-      timer.current = window.setTimeout(() => openCard(mode.id, el), REVEAL_MS);
+
+      /**
+       * Beat two waits for the scroll to actually stop before it opens.
+       *
+       * Polled rather than listening for `scrollend`, which does not fire at
+       * all when the card was already in view — the common case near the top
+       * of the deck, and one that would then sit on a fallback timeout for no
+       * reason. Three unchanged frames settles that case in ~50ms and a long
+       * scroll whenever it genuinely finishes.
+       */
+      const scroller = el.closest(".screen");
+      const startedAt = performance.now();
+      let last = -1;
+      let still = 0;
+      let moved = false;
+      const settled = () => {
+        const top = scroller?.scrollTop ?? 0;
+        if (top === last) {
+          still += 1;
+        } else {
+          if (last !== -1) moved = true;
+          still = 0;
+          last = top;
+        }
+        /**
+         * Three unchanged frames is not enough on its own: a smooth scroll can
+         * take a frame or two to START, and "has not begun" looks exactly like
+         * "has finished". So either it has moved and then stopped, or enough
+         * time has passed that it was never going to move — which is the
+         * ordinary case for a card already in view near the top of the deck,
+         * and one that must not sit on a timeout waiting for a scroll that is
+         * not coming.
+         */
+        if (still < 3 || !(moved || performance.now() - startedAt > 140)) {
+          raf.current = requestAnimationFrame(settled);
+          return;
+        }
+        // Only now is the rect the launch reads the one the card is at.
+        timer.current = window.setTimeout(() => openCard(mode.id, el), REVEAL_MS);
+      };
+      raf.current = requestAnimationFrame(settled);
     }, RING_MS);
   }, [picked, onPick, openCard]);
 
@@ -310,7 +334,13 @@ export function Home({ onPick }: HomeProps) {
    * ref, so clearing it once is enough — and it matters more now the wait is a
    * chain: a timer that outlived the screen would open a mode nobody asked for.
    */
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(timer.current);
+      if (raf.current) cancelAnimationFrame(raf.current);
+    },
+    [],
+  );
 
   // Retire the ring the moment its last piece has gone out.
   useEffect(() => {
@@ -445,7 +475,7 @@ export function Home({ onPick }: HomeProps) {
           </svg>
         )}
         <span className="pick-me__label">
-          {picked ? "Dealing…" : "Pick a game for me"}
+          {picked ? "Picking…" : "Pick a game for me"}
         </span>
       </button>
 
