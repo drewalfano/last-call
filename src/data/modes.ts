@@ -84,7 +84,7 @@ export const MODES: ModeDef[] = [
   },
   {
     id: "say-the-same-thing",
-    title: "Say the Same Thing",
+    title: "Same Page",
     tagline: "Two people, one word. Keep converging.",
     color: "--cat-say-the-same-thing",
   },
