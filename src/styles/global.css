@@ -25,6 +25,31 @@ html, body, #root {
   background: var(--app-bg, var(--shell-bg));
 }
 
+/* ---------------------------------------------------------------
+   NOTHING RUBBER-BANDS THE DOCUMENT, AND IT HAS TO BE SET HERE.
+
+   `overscroll-behavior` was on `body`, where it did nothing. Unlike
+   `overflow`, it does NOT propagate from the body to the viewport —
+   only the ROOT element's value reaches it. So for as long as that
+   rule has existed the document has been free to bounce, and it was
+   invisible because nothing here scrolls: measured, html, body, the
+   frame and every screen are all exactly viewport height with zero
+   overflow. Home scrolls inside `.screen`, not the page.
+
+   iOS 26 is what made an inert rule matter. It draws a fixed
+   scroll-edge band across the top of an installed app and blurs
+   whatever passes under it — so a drag that moved nothing anyone
+   could see still hauled the header up into the band, and the mode
+   title went soft. The bounce was never the bug; it just had no
+   consequences until something was watching the top edge.
+
+   `none` and not `contain`: there is no parent scroller to chain to,
+   so the only thing left to stop is the bounce itself.
+   --------------------------------------------------------------- */
+html {
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -33,7 +58,8 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overscroll-behavior-y: none;
+  /* Overscroll is handled on the root — see above. It is deliberately not
+     repeated here, because here is where it does not work. */
   /* Pass-the-phone: nobody should ever zoom or text-select a prompt. */
   -webkit-user-select: none;
   user-select: none;
