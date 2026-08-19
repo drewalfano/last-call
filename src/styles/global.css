@@ -636,7 +636,11 @@ button { font: inherit; color: inherit; }
 
 .slot {
   position: relative;
-  width: min(100%, var(--card-size));
+  /* Square, by taking the smaller of the column's width and the slot's own
+     height. On a phone --slot-h IS --card-size and this is the single number
+     it always was; on a tablet in landscape the height is the smaller of the
+     two, and without this term the card would come out a wide rectangle. */
+  width: min(100%, var(--card-size), var(--slot-h));
   margin-inline: auto;
   /* Bare cards deal straight into the slot rather than through a stage, so
      the slot carries the perspective for them. Without it the entrance
@@ -858,48 +862,24 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------------------------------------------------------------
-   TABLET: THE CARD STOPS FILLING ITS SLOT.
-
-   The slot is a square and the card filled it, which is right on a
-   phone where that square is 358px and two lines of prompt very
-   nearly fill it anyway. Blow the square up and the same two lines
-   sit in the upper middle with the bottom half empty — which does
-   not read as a layout choice, it reads as something that failed
-   to load.
-
-   So the HEIGHT shrink-wraps and the width does not. The width was
-   never the problem: the column is already capped well short of
-   the frame by --content-max, and a card that keeps the column's
-   width stays recognisably the same object it is on a phone. Only
-   the vertical was lying about how much content there is.
-
-   `top: 0; bottom: 0` with an auto block margin is what centres
-   it — the card's middle stays on the slot's middle, so a one-line
-   prompt and a four-line one still centre on the same point, and
-   the flip still has two cards occupying one box to turn between.
-   The min-height is the floor that keeps it a card; without it a
-   two-word prompt draws a letterbox strip.
-
-   The padding is MORE on the sides than the top, which is the way
-   round a phone cannot afford. Horizontal padding is what sets the
-   line length, and 64px type running to within 24px of the stock's
-   edge reads as text poured in rather than set.
-   --------------------------------------------------------------- */
-/* ---------------------------------------------------------------
-   THE PROMPT ANSWERS TO THE SLOT AS WELL AS THE VIEWPORT.
+   THE CARD'S CONTENTS ANSWER TO THE CARD, NOT ONLY THE VIEWPORT.
 
    --fs-prompt is sized against the screen, which is the right
-   input for "how far away is this being read from". It is not the
-   right input for "does it fit". At 1133x744 the slot is 252px
-   tall and a four-line Drink If prompt at 44.6px came to 271 — so
-   the card, which clips, cut the last line off. A prompt losing
-   words is the one failure this whole exercise cannot ship.
+   input for "how far away is this being read from" and no input at
+   all for "does it fit". At 1133x744 the slot is 251px and a
+   four-line Drink If prompt at 44.6px came to 271 — and .card
+   clips, so the last line simply went. A prompt losing words is
+   the one failure this whole exercise cannot ship.
 
-   So the viewport sets the ambition and the slot sets the ceiling,
-   and the smaller wins. 12cqh only bites where the slot is short:
-   it costs a few points at 13" and takes 44.6px down to 30 at mini
-   landscape, which is the difference between a readable card and a
-   truncated one.
+   So the viewport sets the ambition, the slot sets the ceiling,
+   and the smaller wins. The cap only bites where the slot is
+   short: it costs a few points at 13" and takes 44.6px down to 30
+   at mini landscape, which is the difference between a card you
+   can read and one with a line missing.
+
+   Scoped to slots holding a CARD. `contain: size` would otherwise
+   land on every card screen in the app, and Rank It renders a
+   scrolling list into this same box.
    --------------------------------------------------------------- */
 @media (min-width: 640px) and (min-height: 600px) {
   .slot:has(.card) { container-type: size; }
@@ -908,14 +888,25 @@ button { font: inherit; color: inherit; }
   .slot:has(.card) .card__prompt--sm { font-size: min(var(--fs-prompt-sm), 10cqh); }
 }
 
+/* ---------------------------------------------------------------
+   TABLET: MORE AIR ROUND A BIGGER PROMPT.
+
+   The card fills its square slot here exactly as it does on a
+   phone — see --slot-h. Only the padding changes, and it changes
+   asymmetrically: MORE on the sides than the top, which is the way
+   round a phone cannot afford. Horizontal padding is what sets the
+   line length, and 61px type running to within 24px of the stock's
+   edge reads as text poured in rather than set.
+
+   Both are capped against the card's own height, so a short
+   landscape screen — where the square comes out small — does not
+   spend two thirds of its card on margins. The card is a size
+   container already, for the prompt.
+   --------------------------------------------------------------- */
 @media (min-width: 640px) and (min-height: 600px) {
   .cardstage > .card,
   .slot > .card {
-    height: fit-content;
-    min-height: 42%;
-    max-height: 100%;
-    margin-block: auto;
-    padding: var(--sp-6) var(--sp-10);
+    padding: min(var(--sp-6), 5cqh) min(var(--sp-10), 8cqh);
   }
 }
 
@@ -1014,36 +1005,30 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------------------------------------------------------------
-   TABLET: THE HEADER TAKES THE SLACK, NOT THE FOOTER.
+   TABLET: THE CARD IS CENTRED ON THE SCREEN.
 
-   A phone has no slack worth arguing about. A 13" iPad in portrait
-   has 1366pt of it, and `minmax(--gfooter-h, 1fr)` gives every
-   pixel to the footer — which pins the card to one end of the
-   screen and the button to the other. Measured before this change:
-   279px of nothing between the card and the primary action. The
-   two read as repelling each other rather than as one block.
+   The footer took every spare pixel first, which pinned the card
+   to one end of a 1366pt screen and the button to the other —
+   279px of nothing between them. The fix for that was to give the
+   slack to the HEADER instead, which pulled the card down to sit
+   near the button and left the air above it.
 
-   So the rows swap jobs. The FOOTER becomes the constant, at
-   exactly its reserve; the HEADER takes the leftovers. The card
-   slides down to sit near the button, the air ends up above the
-   card where it costs nothing, and the primary action stays
-   exactly where it was — grounded on --action-inset, where a hand
-   reaches.
+   That was solving the wrong half. The void was never caused by
+   where the card sat; it was caused by --gfooter-h being 62px
+   short of the tallest footer in the app, so the footer row
+   collapsed to its floor and the leftover had to go somewhere. Now
+   that the reserve is measured rather than guessed, the two wants
+   stop competing: the card can sit on the screen's centre AND the
+   button can be 79px under it, because the footer row is finally
+   the size of the footer.
 
-   The card lands a little below true centre as a result, which is
-   the right way round: optical centre sits slightly high of
-   geometric centre, so a card pushed past it reads as centred
-   where the same card with a void beneath it does not.
+   So this is the phone's own arithmetic — half the screen minus
+   half the slot — restated with the tablet's --sp-6 top padding in
+   place of --sp-3. Same shape, different gutter.
 
-   A FIXED footer row also keeps the slot a constant, which is the
-   entire reason this grid exists. Size the footer to its own
-   content and the card moves every time a screen swaps a
-   one-button footer for a two-button one. Anything taller than the
-   reserve scrolls — see .gfoot, which was built for that.
-
-   --gheader-live-h in tokens.css is this same arithmetic, for
-   screens with no card row to inherit it from. Change one, change
-   the other, in the same edit.
+   --gheader-live-h in tokens.css is this same formula, for screens
+   with no card row to inherit it from. Change one, change the
+   other, in the same edit.
 
    AND THE FOOTER BELONGS TO THE COLUMN, NOT THE FRAME. --block on
    a button means the full width of what contains it, and on a
@@ -1052,22 +1037,24 @@ button { font: inherit; color: inherit; }
    frame opens to 980 and the column stays at 700 those are
    different numbers, and the button ran 140px past the card on
    each side — a control visibly wider than the thing it acts on,
-   with its ends out where nobody is sitting. The whole band takes
-   the CARD's width; everything in it inherits.
+   with its ends out where nobody is sitting.
 
    --card-size, not --content-max: the column is a cap, and on a
    744pt-wide mini the gutters bite before the cap does, so the
-   card comes out 652 while the column is still nominally 700. Cap
-   the band at the column and it sat 44px wider than the card on
-   exactly that device. The card's own width is the number that is
-   true everywhere.
+   card comes out 652 while the column is still nominally 700.
    --------------------------------------------------------------- */
 @media (min-width: 640px) and (min-height: 600px) {
   .screen:has(.focal--slot) {
     grid-template-rows:
-      minmax(var(--gheader-h), 1fr)
+      minmax(
+        var(--gheader-h),
+        calc(
+          var(--screen-h) / 2 - var(--safe-top) - var(--sp-6)
+            - var(--slot-h) / 2
+        )
+      )
       var(--slot-h)
-      var(--gfooter-h);
+      minmax(var(--gfooter-h), 1fr);
   }
 
   .gfoot,
@@ -1075,6 +1062,65 @@ button { font: inherit; color: inherit; }
     width: min(100%, var(--card-size));
     margin-inline: auto;
   }
+}
+
+/* ---------------------------------------------------------------
+   THE SCREENS WITH NO CARD GET THE SAME THREE ROWS.
+
+   A card screen centres its slot on the middle of the display by
+   construction. A screen with no card centres its focal element in
+   whatever `.focal` has left between the header and the actions —
+   and that box is only screen-centred when the header happens to
+   equal the actions plus the bottom inset, which it never does.
+   Measured at 1024x1366: Kings Cup's playing card sat 135px below
+   the middle of the screen and Ride the Bus's felt 54px, while
+   every card screen sat on 0. On a board being read from three
+   feet that reads as three modes that forgot to line up.
+
+   So they take the grid instead of inventing their own centring —
+   `display: contents` on the focal, exactly as .focal--slot does,
+   so the felt lands in the slot's row and the actions in the
+   footer's. Nothing here is a new idea; it is the shell's own,
+   applied to the screens that had been opting out of it.
+
+   Last Word keeps its own arrangement. Its board is a ring that
+   wants every pixel of both axes and its header is deliberately
+   unreserved — see .lw__board.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .screen:has(.focal.kc),
+  .screen:has(.focal.rtb) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows:
+      minmax(
+        var(--gheader-h),
+        calc(
+          var(--screen-h) / 2 - var(--safe-top) - var(--sp-6)
+            - var(--slot-h) / 2
+        )
+      )
+      var(--slot-h)
+      minmax(var(--gfooter-h), 1fr);
+  }
+
+  .focal.kc,
+  .focal.rtb { display: contents; }
+
+  /* Both took the slack with auto margins, which a fixed grid row
+     has none of. Centring is the row's job now. */
+  .kc__body,
+  .rtb__table {
+    margin-block: 0;
+    justify-content: center;
+  }
+
+  /* Kings Cup zeroed its actions' auto top margin so a second one
+     could not fight the felt's for the slack. In a grid row there
+     is no slack to fight over and no auto margin to ground it, so
+     the button floated 237px off the bottom. Ride the Bus already
+     ends its row this way. */
+  .focal.kc .actions { justify-content: flex-end; }
 }
 
 .counter {

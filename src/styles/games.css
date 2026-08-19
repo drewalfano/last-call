@@ -2090,6 +2090,42 @@
   text-wrap: pretty;
 }
 
+/* ---------------------------------------------------------------
+   TABLET: THE STEPPER ANSWERS TO THE CARD.
+
+   This row is the widest fixed thing any card holds — two round
+   controls, a gap either side, and a two-character numeral — and
+   every part of it was sized against the viewport. That is fine
+   while the card is the widest thing on the screen and wrong the
+   moment it is not: in landscape the square card comes out small,
+   and a row measured against a 1133pt viewport does not fit inside
+   a 251px card. It overflowed and .card clipped it, which is how
+   the steppers ended up sliced off both edges of the stock.
+
+   Everything here now takes the smaller of its viewport size and a
+   fraction of the card, so the row shrinks with the thing that
+   contains it. On a 13" nothing changes; on a mini in landscape it
+   is the difference between a stepper and two half-circles.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .stepper { gap: min(var(--sp-5), 6cqh); }
+
+  .stepper__step {
+    width: min(var(--control-md), 18cqh);
+    height: min(var(--control-md), 18cqh);
+    font-size: min(var(--fs-2xl), 9cqh);
+  }
+
+  /* The svg glyph inside is a fixed 22px in the markup, which is most
+     of a 45px well on a short landscape screen. */
+  .stepper__step svg {
+    width: min(22px, 8cqh);
+    height: min(22px, 8cqh);
+  }
+
+  .stepper__n { font-size: min(clamp(3.5rem, 18vw, 5.5rem), 22cqh); }
+}
+
 /* ---------------- Category picker ---------------- */
 .picker {
   display: flex;
@@ -2127,15 +2163,23 @@
   margin-bottom: calc(var(--action-inset) * -1);
 }
 
-/* The ramp's length is written by the scroll handler — 0 at rest, so the mask
-   is a no-op and the first row of cards is untouched, growing as content goes
-   under the top edge. See `onScroll` in CategoryPicker for why it is a length
-   rather than an on/off. */
 .picker__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* The ramp's length is written by the scroll handler, and so is this
+   attribute. The length is what makes the fade grow with the scroll rather
+   than snap on; the attribute is what keeps the mask off the element entirely
+   until there is something to fade.
+
+   Both are needed. A mask whose two stops sit on the same pixel fades
+   nothing, but it still composites the layer, and iOS rasterises it on its
+   own — which laid a barely-there blur along the top edge of every picker and
+   the rules sheet even at rest. See fadeOnScroll in lib/scrollFade.ts. */
+.picker__scroll[data-fading] {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-ramp, 0px));
   mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-ramp, 0px));
 }

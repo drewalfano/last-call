@@ -541,7 +541,24 @@
        it; short ones stop floating in the middle of a square. */
     --card-size: calc(min(100vw, var(--content-max)) - var(--sp-6) * 2);
     --slot-h: min(
-      calc(var(--card-size) * 0.78),
+      /* ------------------------------------------------------
+         THE CARD IS SQUARE, as it is on a phone.
+
+         It shrink-wrapped its height for a while, on the theory
+         that a blown-up square with two lines in it reads as a
+         failed render. The real culprit there was the TYPE, which
+         had stayed at phone size inside a card three times the
+         area; with the prompt scaled the square is full again, and
+         what shrink-wrapping actually produced was a 652x318
+         letterbox adrift in a 509px slot with 95px of dead band
+         above and below it. A card that changes shape with its
+         sentence is not the card this app has.
+
+         So one number for both axes again — see .slot, which takes
+         the smaller of the column and this. Whichever of the three
+         terms bites, the slot stays square.
+         ------------------------------------------------------ */
+      var(--card-size),
       58lvh,
       var(--screen-h) - var(--safe-top) - var(--sp-6) - var(--action-inset)
         - var(--gheader-h) - var(--sp-4) - var(--gfooter-h)
@@ -596,8 +613,8 @@
     --gheader-live-h: max(
       var(--gheader-h),
       calc(
-        var(--screen-h) - var(--safe-top) - var(--sp-6) - var(--action-inset)
-          - var(--slot-h) - var(--gfooter-h)
+        var(--screen-h) / 2 - var(--safe-top) - var(--sp-6)
+          - var(--slot-h) / 2
       )
     );
   }
