@@ -1,6 +1,6 @@
 # Last Call
 
-Offline pass-the-phone party game. Ten modes, one home screen, no accounts,
+Offline pass-the-phone party game. Eleven modes, one home screen, no accounts,
 no network, no ads.
 
 ```bash
@@ -78,20 +78,35 @@ Reach for this principle before adding anything that keeps score.
 
 ---
 
-## The ten modes
+## The eleven modes
+
+Listed in the order Home deals them, which is `MODES` in `src/data/modes.ts` —
+the single source for titles, taglines and pack colours. Highest-replay modes
+sit at the top, because eleven cards scroll past a single screen.
 
 | # | Mode | Type |
 |---|---|---|
 | 1 | Last Call ★ | wildcard deck |
-| 2 | Kings Cup | card game |
-| 3 | Ride the Bus | card game |
-| 4 | Letter Rip | timer game |
-| 5 | Odd One Out | social deduction |
-| 6 | Drink If… | deck + elimination |
-| 7 | Most Likely To | deck + voting |
-| 8 | Would You Rather | deck + vote split |
-| 9 | Truth or Dare | deck + turns |
-| 10 | Hot Seat | turn structure + voting |
+| 2 | Odd One Out | social deduction |
+| 3 | Letter Rip | timer game |
+| 4 | Rank It | ranking + guessing |
+| 5 | Most Likely To | deck + pointing |
+| 6 | Kings Cup | card game |
+| 7 | Ride the Bus | card game |
+| 8 | Same Page | timed convergence |
+| 9 | Overbid | bidding + challenge |
+| 10 | Drink If… | deck |
+| 11 | Hot Seat | turn structure + voting |
+
+**Ids are not titles.** Four modes were renamed and their ids deliberately were
+not, because nothing a player sees is attached to them: Odd One Out is
+`imposter`, Letter Rip is `last-word`, Same Page is `say-the-same-thing`,
+Overbid is `the-number-game`. The same goes for their files, data exports and
+`--cat-*` tokens. Renaming them would touch about thirty sites to change
+nothing on screen.
+
+Odd One Out is a rename of the MODE only. The role it deals is still called the
+Imposter and the in-game copy still says so.
 
 ### Mode notes
 
@@ -119,6 +134,17 @@ Reach for this principle before adding anything that keeps score.
      eyebrow. Only the text colour differs. An inverted dark card would change
      how much light the screen throws and let someone across the table spot
      the Imposter without reading a word.
+- **Rank It** — one player ranks a set privately, the table guesses the order,
+  and the reveal slides each item from where the group put it to where the
+  ranker did. How far a row travels is how wrong it was.
+- **Same Page** — two players say a word at the same time, then keep saying
+  the word between their two answers until they match. Prompts are worded as
+  territory, never as a single instance: "Sports", not "A sport". The singular
+  form asks for one item and leaves nowhere to converge.
+- **Overbid** — bidding escalates until someone calls it, then the bidder gets
+  a clock and has to produce what they claimed. Without a roster it asks how
+  many are playing, so the bid has a table to go round; with names it uses
+  those instead.
 - **Hot Seat** — four questions per seat, split evenly between the seat
   answering and the table voting.
 
@@ -181,31 +207,41 @@ reads "Drew, Sam, Alex, Player 4, Player 5".
 
 ## Content
 
-Roughly 60 per pool per mode. Every pool is checked for duplicates, and every
-card is drawn against the fixed square card in 19+ — the longest copy — to
-confirm nothing clips.
+Every pool is checked for duplicates — including across Safe and 19+, since
+they are concatenated rather than swapped — and every card is drawn against the
+fixed square card at the longest copy to confirm nothing clips.
 
 | Pool | Safe | 19+ |
 |---|---|---|
-| Drink If… | 60 | 60 |
-| Most Likely To | 60 | 60 |
-| Would You Rather | 60 | 60 |
-| Truth or Dare — truths | 60 | 60 |
-| Truth or Dare — dares | 60 | 60 |
-| Hot Seat | 60 | 60 |
+| Last Call | 76 *(27/31/18 by tier)* | 56 *(19/17/20)* |
 | Odd One Out words | 140 *(14 categories)* | 60 *(6 categories)* |
-| Last Call | 76 | 56 |
-| Letter Rip categories | 94 | +40 |
+| Letter Rip categories | 94 | 46 |
+| Rank It sets | 24 | 16 |
+| Most Likely To | 60 | 60 |
+| Same Page prompts | 44 | 32 |
+| Overbid categories | 40 | 26 |
+| Drink If… | 60 | 60 |
+| Hot Seat | 60 | 60 |
 | Never Have I Ever *(Kings Cup's Jack)* | 60 | 60 |
 
-**Night policy** is per file and documented at the top of each, and every one
-of them ADDS. `lead` where the list is browsed — the 19+ entries go on top and
-the safe ones stay, interleaved — and `supplement` where it is dealt blind.
+The 19+ column is what that pool ADDS, not what it becomes — see the policy
+below. A mode's real 19+ deck is both columns together.
 
-There is no policy that drops the safe pool. `replace` existed once and was
-removed outright, because nothing about a rowdy table makes "Countries" or a
-warm-up question unsuitable, and a Night deck that threw the safe pool away
-halved the material on the night the app gets used most.
+**Night policy** is per file, documented at the top of each, and every one of
+them ADDS. The choice is settled by one question — does a player read this
+list, or is it dealt blind?
+
+| Policy | Used by | Behaviour |
+|---|---|---|
+| `lead` | Letter Rip, Odd One Out, Rank It, Same Page, Overbid | 19+ entries in front, safe ones interleaved through. The order matters because these are browsed in a picker; a straight concatenation puts a wall of one register at the top. |
+| `supplement` | Last Call, Drink If…, Most Likely To, Hot Seat, Never Have I Ever | Safe + 19+. No claim about order — everything reading this shuffles. |
+
+There is no policy that drops the safe pool. `replace` existed once, was the
+default, and was removed outright — not merely left unused, because a third
+option the project has decided against is one the next mode falls into by
+accident. Nothing about a rowdy table makes "Countries" or a warm-up question
+unsuitable, and a 19+ deck that threw the safe pool away halved the material on
+the night the app gets used most.
 
 **Both category games mix two kinds deliberately.** Plain categories anyone can
 play cold — Countries, Colours, Girls' names, Animals — alongside bar-flavoured
@@ -229,25 +265,26 @@ with the primary action grounded 20px off the bottom in every mode, so nothing
 moves between prompts.
 
 **Two neutrals app-wide:** flat white and `#141414`. Every pack colour ships
-with the ink that sits on it, and all ten clear WCAG AA against just those two
-foregrounds:
+with the ink that sits on it, and all eleven clear WCAG AA against just those
+two foregrounds. Ratios are the ones recorded beside each token in
+`tokens.css`; the table below is in Home's dealing order.
 
-| Mode | Colour | Ink | Ratio |
-|---|---|---|---|
-| Last Call | `#E0070F` | white | 4.99 |
-| Kings Cup | `#0F4A42` | white | 10.10 |
-| Ride the Bus | `#273287` | white | 11.10 |
-| Letter Rip | `#E990A2` | `#141414` | 7.87 |
-| Odd One Out | `#CAC307` | `#141414` | 9.93 |
-| Drink If… | `#FF340C` | `#141414` | 5.04 |
-| Most Likely To | `#A5C0EA` | `#141414` | 9.94 |
-| Would You Rather | `#FFAE00` | `#141414` | 9.92 |
-| Truth or Dare | `#F03172` | `#141414` | 4.73 |
-| Hot Seat | `#441B07` | white | 14.94 |
+| Mode | Token | Colour | Ink | Ratio |
+|---|---|---|---|---|
+| Last Call | `--cat-last-call` | `#E0070F` | white | 4.99 |
+| Odd One Out | `--cat-imposter` | `#0F4A42` | white | 10.10 |
+| Letter Rip | `--cat-last-word` | `#E990A2` | `#141414` | 7.87 |
+| Rank It | `--cat-rank-it` | `#CAC307` | `#141414` | 9.93 |
+| Most Likely To | `--cat-most-likely-to` | `#E43E70` | `#141414` | 4.58 |
+| Kings Cup | `--cat-kings-cup` | `#273287` | white | 11.10 |
+| Ride the Bus | `--cat-ride-the-bus` | `#FFAE00` | `#141414` | 9.92 |
+| Same Page | `--cat-say-the-same-thing` | `#A5C0EA` | `#141414` | 9.94 |
+| Overbid | `--cat-the-number-game` | `#EE4620` | `#141414` | 4.85 |
+| Drink If… | `--cat-drink-if` | `#B9A3E3` | `#141414` | 8.26 |
+| Hot Seat | `--cat-hot-seat` | `#441B07` | white | 14.94 |
 
-**Open item:** `#FFAE00` is listed twice in the source swatch sheet. The row-3
-light blue is clearly not amber; `#A5C0EA` is sampled from the image and is a
-placeholder until the real hex is confirmed.
+The token column is there because the ids never changed: Odd One Out's colour
+lives under `--cat-imposter`, and looking for `--cat-odd-one-out` finds nothing.
 
 ### Card treatment
 
