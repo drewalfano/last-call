@@ -2,12 +2,19 @@
  * KINGS CUP — the ruleset.
  *
  * Data, not logic: one entry per rank, so any rank can be swapped without
- * touching the game component. Rhyme and Floor are the usual alternates if a
- * group wants them over Drive or Heaven.
+ * touching the game component. Rhyme is the usual alternate if a group wants
+ * it over Drive.
  *
- * This is the classic set, gendered ranks included. Kings do double duty —
- * pour into the cup AND make a rule — which is the common pub version and the
- * reason the app has rules to track at all.
+ * This is the classic set, gendered ranks included. Floor and Heaven sit
+ * either side of them at 4 and 7 — two races to move, bracketing the two
+ * ranks that ask nobody to do anything. Thumb Master used to hold 4 and is
+ * out: it is one of the two "you are now the X until the next X" rules and
+ * Question Master at 12 is the better of them, because a question is
+ * something you can catch someone with rather than a race nobody was
+ * watching for.
+ *
+ * Kings do double duty — pour into the cup AND make a rule — which is the
+ * common pub version and the reason the app has rules to track at all.
  *
  * No Safe/Night split: the rules are the rules. The two ranks that pull extra
  * content (10 and J) draw from pools that already respect the global mode.
@@ -17,7 +24,6 @@ export type KingsCupEffect =
   | "none"
   | "pick-player"
   | "pick-mate"
-  | "thumb-master"
   | "question-master"
   | "drive"
   | "category"
@@ -55,8 +61,8 @@ export const KINGS_CUP_RULES: KingsCupRule[] = [
   },
   {
     rank: 4,
-    label: "Girls",
-    text: "All the girls drink.",
+    label: "Floor",
+    text: "Everyone touch the floor. Last one down drinks.",
     effect: "none",
   },
   {
@@ -67,9 +73,9 @@ export const KINGS_CUP_RULES: KingsCupRule[] = [
   },
   {
     rank: 6,
-    label: "Thumb Master",
-    text: "You're Thumb Master until the next 6. Put your thumb on the table whenever you like — last one to follow drinks.",
-    effect: "thumb-master",
+    label: "Girls",
+    text: "All the girls drink.",
+    effect: "none",
   },
   {
     rank: 7,

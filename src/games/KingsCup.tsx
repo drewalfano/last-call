@@ -17,9 +17,9 @@ import type { ModeDef } from "../data/modes";
  * Draw a card, the rank is the rule.
  *
  * The reason to play this on a phone rather than with a physical deck is the
- * bookkeeping: which rules are in play, who's Thumb Master, who's Question
- * Master, who's mated to whom, and how many kings are gone. All of that is
- * what a table actually loses track of three rounds in.
+ * bookkeeping: which rules are in play, who's Question Master, who's mated
+ * to whom, and how many kings are gone. All of that is what a table actually
+ * loses track of three rounds in.
  */
 
 const TOTAL_KINGS = 4;
@@ -35,10 +35,10 @@ interface State {
    * Mates are the only thing worth surfacing: a mate is a standing obligation
    * between two named people, not a rule the table is meant to be policing.
    *
-   * Thumb Master, Question Master and house rules are deliberately NOT
-   * tracked. Displaying them hands the answer to whoever forgot, which is the
-   * exact moment those rules exist to catch. The players keep each other
-   * honest; the app just deals.
+   * Question Master and house rules are deliberately NOT tracked. Displaying
+   * them hands the answer to whoever forgot, which is the exact moment those
+   * rules exist to catch. The players keep each other honest; the app just
+   * deals.
    */
   mates: [string, string][];
   /** The player the current card's pick landed on. */
