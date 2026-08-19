@@ -90,7 +90,7 @@ export const MODES: ModeDef[] = [
   },
   {
     id: "the-number-game",
-    title: "The Number Game",
+    title: "Overbid",
     tagline: "Bid high. Get called out.",
     color: "--cat-the-number-game",
   },
