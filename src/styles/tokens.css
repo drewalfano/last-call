@@ -283,16 +283,16 @@
      ---------------------------------------------------------- */
   --cat-last-call: #E0070F;
   --cat-last-call-ink: #FFFFFF;          /* 4.99 */
-  --cat-kings-cup: #0F4A42;
-  --cat-kings-cup-ink: #FFFFFF;          /* 10.10 */
+  --cat-kings-cup: #273287;
+  --cat-kings-cup-ink: #FFFFFF;          /* 11.10 */
   /* Yellow because it is a bus. Swapped with Say the Same Thing, ink and
      all — the ink is chosen for the colour it sits on, so it moves with it. */
   --cat-ride-the-bus: #FFAE00;
   --cat-ride-the-bus-ink: #141414;       /* 9.92 */
   --cat-last-word: #E990A2;
   --cat-last-word-ink: #141414;          /* 7.87 */
-  --cat-imposter: #273287;
-  --cat-imposter-ink: #FFFFFF;           /* 11.10 */
+  --cat-imposter: #0F4A42;
+  --cat-imposter-ink: #FFFFFF;           /* 10.10 */
   --cat-drink-if: #F54119;
   --cat-drink-if-ink: #141414;           /* 4.96 */
   --cat-most-likely-to: #A5C0EA;
