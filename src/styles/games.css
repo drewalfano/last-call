@@ -565,22 +565,20 @@
   /* One piece shown, the rest of the lap hidden. --path is the ramp length
      times RING_SPAN, set from Home.tsx alongside the pathLength it matches.
 
-     --dash is EXACTLY the 1 unit each piece owns, and the six tenths of
-     overlap it used to carry is why the ramp went blocky.
+     --dash is EXACTLY the 1 unit each piece owns. It used to carry six
+     tenths of overlap, which was right while every piece was fully opaque —
+     solid strokes laid over each other look identical to one continuous
+     stroke, so it hid the antialiased seam at each join for free.
 
-     That overlap was right when every piece was fully opaque: solid strokes
-     laid over each other look identical to one continuous stroke, and it
-     hid the antialiased seam at each join. It stopped being right the
-     moment pieces started fading independently. Two translucent strokes
-     stacked do not composite to the same value as one — they come out
-     darker — so every overlap became a brighter tick, 320 of them, and only
-     in the parts of the line that were not at full strength. Which is
-     exactly where the blockiness showed: bright stretches read smooth, the
+     It stopped being free once pieces began fading independently. Two
+     translucent strokes stacked composite DARKER than one, so every overlap
+     became a brighter tick — 320 of them, and only where the line was below
+     full strength, which is why bright stretches read smooth while the
      fading head and tail read as a comb.
 
-     Butted exactly, the worst that is left is the join being a fraction
-     light where two antialiased ends meet. Between neighbours this close in
-     hue that is far below the tick it replaces. */
+     Butted exactly, the worst left is a join sitting a fraction light where
+     two antialiased ends meet, which between neighbours this close in hue is
+     far below the tick it replaces. */
   --dash: 1;
   stroke-dasharray:
     calc(var(--dash) * 1px)
@@ -611,20 +609,36 @@
   stroke-linecap: round;
 }
 
-/* ---------------------------------------------------------------
-   NO GLOW, AND THE REASON IS THE PHONE.
+/* ---------------- The glow's inside edge ----------------
+   White shows, black hides. The full field, with the button's own interior
+   punched out of it — see the mask in Home.tsx for why. */
+.pick-me__mask-all {
+  x: -100px;
+  y: -100px;
+  width: calc(100% + 200px);
+  height: calc(100% + 200px);
+  fill: #fff;
+}
 
-   There was an feGaussianBlur over this group, with a mask under it to
-   keep the bloom outside the pill. It looked good and it cost far too
-   much: an svg filter is not GPU-accelerated on iOS, and applying one
-   to a group forces every one of the 321 pieces inside it to be
-   re-rasterised and re-blurred on every single frame. Desktop hid it
-   completely — 120fps with frames to spare — and the phone did not.
+.pick-me__mask-hole {
+  /* The padding box: the pill inset by its 2px border. The line lives in
+     that border band and so survives; only what the blur threw further in
+     is cut. */
+  x: 2px;
+  y: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  rx: calc(var(--control-height) / 2);
+  ry: calc(var(--control-height) / 2);
+  fill: #000;
+}
 
-   Both go together, because the mask existed only to bound the glow.
-   What is left is a stroke changing opacity, which is the cheapest
-   thing this could have been.
-   --------------------------------------------------------------- */
+/* Motion is the flourish, never the thing that makes the screen usable —
+   the same rule the launch animation and the picker's deal follow. Stopped,
+   the line is still there; it just holds still at the top of the pill. */
+@media (prefers-reduced-motion: reduce) {
+  .pick-me__ring g[data-sweep] > rect { animation: none; }
+}
 
 .pick-me:active:not(:disabled) {
   transform: scale(var(--press-scale));

@@ -224,7 +224,69 @@ export function Home({ onPick }: HomeProps) {
           style={{ ["--path" as string]: RING_PATH }}
           aria-hidden="true"
         >
-          <g data-sweep={picked ? "pick" : dealing ? "deal" : undefined}>
+          <defs>
+            {/* The bloom, done as ONE filter on the whole group rather than a
+                second blurred copy of the line — another 176 rects to light
+                the first 176 is a lot of machinery for a soft edge. feMerge
+                lays the blur down twice under the sharp original, which is
+                what gives it a centre bright enough to read as a glow rather
+                than as the line being out of focus.
+
+                The region is generous on purpose: a filter clips to its own
+                box, and a stdDeviation of 4 carries roughly 12px, which is
+                well outside a 60px-tall bounding box. Cropping it would put
+                a straight edge across the bloom. */}
+            <filter
+              id="pick-me-glow"
+              x="-25%"
+              y="-150%"
+              width="150%"
+              height="400%"
+              colorInterpolationFilters="sRGB"
+            >
+              <feGaussianBlur stdDeviation="4" result="bloom" />
+              <feMerge>
+                <feMergeNode in="bloom" />
+                <feMergeNode in="bloom" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* OUTSIDE ONLY. The bloom is a blur, so half of it lands inside
+                the pill, where it washes across the label and reads as the
+                button being lit from within rather than as an edge that
+                glows. This punches the button's own interior out of it.
+
+                The hole is the PADDING box — the pill inset by the 2px
+                border. The sharp line sits in that border band, so it comes
+                through untouched; everything the blur threw further inward
+                is cut at the inner edge of the stroke. Masking cannot soften
+                that boundary, but it does not need to: the line's own colour
+                sits right on it.
+
+                userSpaceOnUse with a region to match the filter's — a mask
+                defaults to a box 10% around the object, which would crop the
+                outward bloom the filter just drew. */}
+            <mask
+              id="pick-me-outside"
+              maskUnits="userSpaceOnUse"
+              x="-25%"
+              y="-150%"
+              width="150%"
+              height="400%"
+            >
+              <rect className="pick-me__mask-all" />
+              <rect className="pick-me__mask-hole" />
+            </mask>
+          </defs>
+          {/* Sweeps once when the deck deals itself in, once more when you
+              tap, and holds still the rest of the time — see .pick-me__ring.
+              Undefined is the resting state, not a third animation. */}
+          <g
+            data-sweep={picked ? "pick" : dealing ? "deal" : undefined}
+            filter="url(#pick-me-glow)"
+            mask="url(#pick-me-outside)"
+          >
             {RING_RAMP.map((colour, i) => (
               <rect
                 key={i}
