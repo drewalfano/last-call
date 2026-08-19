@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
@@ -13,23 +13,26 @@ interface HomeProps {
 const REVEAL_MS = 480;
 
 /**
- * How much of the button's edge the travelling line covers, as a divisor of
- * the perimeter — 2 is half the way round.
+ * The ramp spans the WHOLE perimeter now — one piece per unit, all the way
+ * round — because the line no longer travels as a fixed-length streak. It
+ * draws itself: each piece lights in turn, so the line grows out of one point,
+ * runs the full ring, and retracts back into the same point. See
+ * .pick-me__ring for the timing that produces it.
  *
- * This is a legibility number, not a taste one. The eleven packs are not
- * merely many, they swing hard in LIGHTNESS: Imposter's dark teal, Kings
- * Cup's navy and Hot Seat's near-black brown sit between eight bright ones.
- * At a third of the perimeter each pack held ~26px, so the line crossed a
- * full dark-to-light cycle every ~50px and read as blotchy however many
- * blend steps it was cut into — the roughness was the palette, not the
- * resolution. Half the perimeter gives each pack ~40px, which is enough for
- * a dark one to arrive as part of a ramp rather than as a gap in the line.
+ * It used to be half the perimeter, slid round by an animated offset. That
+ * can only ever FADE a half-ring into view — there is no point for it to come
+ * out of, because at the moment it becomes visible it already covers half the
+ * button.
  *
- * The other lever, if this ever needs to be short again, is evening out the
- * lightness of the ramp — but that stops the colours being the packs, which
- * is the entire point of it.
+ * Spread over the whole ring, each pack holds ~80px, which is more than
+ * enough for the dark ones — Imposter's teal, Kings Cup's navy, Hot Seat's
+ * near-black brown — to arrive as part of a ramp rather than as a gap. That
+ * was the problem when the line was a third of the perimeter and each pack
+ * had ~26px: the eleven swing hard in lightness, so the line crossed a full
+ * dark-to-light cycle every ~50px and read as blotchy however finely it was
+ * cut. Room, not resolution, was the fix.
  */
-const RING_SPAN = 2;
+const RING_SPAN = 1;
 
 /**
  * Sub-segments per pack. This is what turns eleven flat colours into a
@@ -102,6 +105,29 @@ const RING_RAMP = [
 const RING_PATH = RING_RAMP.length * RING_SPAN;
 
 /**
+ * How brightly each piece is allowed to burn, by how close it sits to the
+ * point the line is born and dies.
+ *
+ * Both ends of the ramp meet at the bottom midpoint, so without this the line
+ * springs into existence already at full strength and is cut off at full
+ * strength — a bright nick appearing and vanishing on one spot. Holding the
+ * pieces nearest each end below full opacity turns that into a swell: the
+ * line gathers as it leaves the bottom and thins back out as it returns.
+ *
+ * Smoothstep rather than a straight ramp, so the brightness eases off its
+ * ceiling instead of turning a corner — a linear taper still reads as an
+ * edge, just a slanted one. Over EDGE_PIECES of a 321-piece ring that is
+ * about 100px at each end, which is the width the swell needs to be read as
+ * one rather than noticed as a fade.
+ */
+const EDGE_PIECES = 40;
+
+function edgeOpacity(i: number): number {
+  const t = Math.min(1, Math.min(i, RING_RAMP.length - 1 - i) / EDGE_PIECES);
+  return +(t * t * (3 - 2 * t)).toFixed(3);
+}
+
+/**
  * Whether the deck has already dealt itself out this session.
  *
  * Module scope, not state: Home is unmounted every time you open a mode and
@@ -125,28 +151,7 @@ export function Home({ onPick }: HomeProps) {
   const [picked, setPicked] = useState<ModeId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const deckRef = useRef<HTMLElement>(null);
-  const ringRef = useRef<SVGGElement>(null);
   const timer = useRef<number>(undefined);
-
-  /**
-   * The line winds up while the deck is dealing.
-   *
-   * `playbackRate` rather than a shorter `animation-duration` under
-   * `:disabled`, which was the obvious way and is wrong: duration is what
-   * maps elapsed time onto progress, so changing it re-maps where the
-   * animation already IS and the line teleports to a different point on the
-   * loop at the exact moment you are watching it. Setting the rate keeps the
-   * current time and only changes what happens next, so it reads as the thing
-   * accelerating from wherever it had got to.
-   *
-   * Nothing to clean up: the element unmounts with Home, and it is set back
-   * to 1 rather than left fast in case a deal is ever cancelled.
-   */
-  useEffect(() => {
-    const spin = ringRef.current?.getAnimations()[0];
-    // Absent under prefers-reduced-motion, where the line does not run at all.
-    if (spin) spin.playbackRate = picked ? 8 : 1;
-  }, [picked]);
 
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
@@ -251,12 +256,23 @@ export function Home({ onPick }: HomeProps) {
               <rect className="pick-me__mask-hole" />
             </mask>
           </defs>
-          <g ref={ringRef} filter="url(#pick-me-glow)" mask="url(#pick-me-outside)">
+          {/* Sweeps once when the deck deals itself in, once more when you
+              tap, and holds still the rest of the time — see .pick-me__ring.
+              Undefined is the resting state, not a third animation. */}
+          <g
+            data-sweep={picked ? "pick" : dealing ? "deal" : undefined}
+            filter="url(#pick-me-glow)"
+            mask="url(#pick-me-outside)"
+          >
             {RING_RAMP.map((colour, i) => (
               <rect
                 key={i}
                 pathLength={RING_PATH}
-                style={{ stroke: colour, ["--seg" as string]: i }}
+                style={{
+                  stroke: colour,
+                  ["--seg" as string]: i,
+                  ["--edge" as string]: edgeOpacity(i),
+                }}
               />
             ))}
           </g>

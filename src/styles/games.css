@@ -463,37 +463,84 @@
   pointer-events: none;
 }
 
-/* ONE animation for the whole ramp, not one per piece.
+/* ---------------------------------------------------------------
+   THE LINE DRAWS ITSELF, AND THAT IS WHY NOTHING SLIDES.
 
-   At sixteen steps a pack the line is 161 pieces, and giving each its own
-   `animation` is 161 animation objects doing identical work off the same
-   clock. Instead the group animates a single registered custom property and
-   every piece reads it: the offsets still differ, because each piece adds its
-   own index, but there is one thing running. `@property` is what makes it
-   possible at all — an unregistered custom property has no type, so the
-   browser cannot interpolate it and the line would jump a whole piece at a
-   time rather than travel. */
-@property --pick-me-spin {
-  syntax: "<number>";
-  initial-value: 0;
-  inherits: true;
+   This used to be one fixed-length streak slid round the ring by an
+   animated offset. It could fade in and out, but it could never come
+   OUT of anywhere: at the instant it became visible it already
+   covered half the button, so its arrival had no location.
+
+   So nothing moves now. Every piece sits at its own fixed place all
+   the way round the pill and what animates is which ones are lit.
+   Each lights a beat after the one before it, holds, and goes out, so
+   a bright band runs round the ring — growing from nothing at the
+   start, and shrinking back into nothing as the last pieces catch up.
+   Piece 0 sits on the bottom midpoint and the final piece lands right
+   beside it, which is what puts the birth and the death of the line
+   on the same spot.
+
+   Cheaper as well as truer: opacity is a compositor property and
+   these run once and finish. The version before recalculated a custom
+   property into 321 dash offsets every frame, forever.
+
+   TWO NAMES, ONE BODY, as before — changing only the duration on a
+   running animation re-maps where it already is instead of restarting
+   it, so each trigger owns a keyframe name.
+   --------------------------------------------------------------- */
+
+/* Dark at rest, so the button settles back to a plain grey pill. */
+.pick-me__ring g > rect { opacity: 0; }
+
+/* 4ms between pieces across 320 of them is 1.28s for the head to get all
+   the way round, and holding each lit for 515ms makes the band ~128
+   pieces, a bit under half the ring. 1.8s from first spark to last one
+   out — a touch quicker than the sweep it replaces.
+
+   Held back until the wordmark has landed AND had a beat to settle.
+   --dur-base is `screen-in` itself, the animation that carries LAST CALL in
+   — there is no separate one on .home__wordmark, so that token is the
+   entrance and the wait cannot drift out of step with it. --dur-fast on top
+   is the pause: starting the instant the title stopped moving read as the
+   two being one event, and they are not. Both in tokens rather than a round
+   number, so retuning the entrance retunes this with it. */
+.pick-me__ring g[data-sweep="deal"] > rect {
+  animation: pick-me-piece-deal 515ms linear both;
+  animation-delay: calc(var(--dur-base) + var(--dur-fast) + var(--seg) * 4ms);
 }
 
-.pick-me__ring g {
-  animation: pick-me-deal 9s linear infinite;
+/* The same shape squeezed into the window the button is still on screen:
+   the reveal holds for 480ms and the launch overlay covers everything by
+   about 700. */
+.pick-me__ring g[data-sweep="pick"] > rect {
+  animation: pick-me-piece-lap 175ms linear both;
+  animation-delay: calc(var(--seg) * 1.3ms);
 }
 
-/* Exactly one lap, so every piece lands where it started and the loop has no
-   seam to catch. */
-@keyframes pick-me-deal {
-  to { --pick-me-spin: var(--path); }
+/* Up fast, out slow — a hard leading edge with the fade trailing behind
+   it, which is what makes it read as travelling rather than blinking.
+
+   The ceiling is --edge, not 1, and that is the softening: it is set per
+   piece in Home.tsx and falls away toward both ends of the ramp, which meet
+   each other at the bottom midpoint. So a piece near the birth point never
+   reaches full strength however long it is lit, and the line swells out of
+   the bottom and thins back into it rather than being switched on and cut
+   off there. The fallback of 1 keeps this honest if the property ever goes
+   missing — full brightness is the safe wrong answer, not invisibility. */
+@keyframes pick-me-piece-deal {
+  0% { opacity: 0; }
+  12% { opacity: var(--edge, 1); }
+  58% { opacity: var(--edge, 1); }
+  100% { opacity: 0; }
 }
 
-/* `g > rect`, not `rect`. The mask's own two rects are also rects inside this
-   svg, and a bare `.pick-me__ring rect` outranks a lone `.pick-me__mask-all`
-   on specificity — so the mask got handed the ramp's geometry and `fill:
-   none`, which makes a mask that shows nothing and takes the whole line with
-   it. Scoping to the ramp group keeps the two sets of rects apart. */
+@keyframes pick-me-piece-lap {
+  0% { opacity: 0; }
+  12% { opacity: var(--edge, 1); }
+  58% { opacity: var(--edge, 1); }
+  100% { opacity: 0; }
+}
+
 .pick-me__ring g > rect {
   /* Geometry as CSS rather than attributes, so it can reference the same
      token the button's height comes from — the pill's radius is half its
@@ -522,9 +569,18 @@
   stroke-dasharray:
     calc(var(--dash) * 1px)
     calc((var(--path) - var(--dash)) * 1px);
-  /* Each piece sits one unit further along than the last, and the group's
-     --pick-me-spin carries all of them round together. */
-  stroke-dashoffset: calc((var(--seg) + var(--pick-me-spin)) * -1px);
+  /* Each piece sits one unit further along than the last, and stays there.
+
+     --ring-start is where piece 0 lives, and therefore where the line is
+     born and where it dies. A fraction of the path so it holds as the button
+     changes width — and it holds better than it looks like it should. The
+     bottom edge always BEGINS at exactly half the perimeter, by symmetry:
+     the top edge plus the right cap is half a pill however wide the pill is.
+     Only the bottom's own length moves its midpoint, so the target sits
+     between 0.679 at 320px and 0.699 on a tablet, and 0.69 is within a
+     couple of parts per thousand of correct at every width. */
+  stroke-dashoffset: calc((var(--seg) + var(--path) * var(--ring-start, 0.69)) * -1px);
+
   /* Butt caps, INSIDE the line. A round cap on every piece would overhang its
      own share by half the stroke and bulge the line at all 320 joins. */
   stroke-linecap: butt;
@@ -567,7 +623,7 @@
    the same rule the launch animation and the picker's deal follow. Stopped,
    the line is still there; it just holds still at the top of the pill. */
 @media (prefers-reduced-motion: reduce) {
-  .pick-me__ring g { animation: none; }
+  .pick-me__ring g[data-sweep] > rect { animation: none; }
 }
 
 .pick-me:active:not(:disabled) {
