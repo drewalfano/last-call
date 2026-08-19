@@ -37,7 +37,12 @@ interface Props {
 export function RankIt({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { players, hasRoster } = useRoster();
-  const pool = usePool(RANK_IT, contentMode);
+  /* LEAD, not replace. The lists are browsable by name in the picker below,
+     so replacing them made every familiar list vanish the moment the table
+     flipped to 19+ — a group that wanted a few rowdier sets lost pizza
+     toppings and hangover cures to get them. The adult sets go first; the
+     safe ones stay on the list underneath. */
+  const pool = usePool(RANK_IT, contentMode, "lead");
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("handover");

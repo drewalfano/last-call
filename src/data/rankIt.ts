@@ -2,7 +2,10 @@ import type { Pools } from "./pools";
 
 /**
  * RANK IT — ranking prompts.
- * Night policy: REPLACE.
+ * Night policy: LEAD — the 19+ sets go on top, the safe ones stay.
+ * The lists here are picked by name off a browsable page, not drawn blind,
+ * so swapping them out would take away choices the table can still see and
+ * still wants. See data/pools.ts for why categories lead rather than replace.
  *
  * Every prompt has to be OPINION, never trivia. "Rank these by population" has
  * a right answer, so the group isn't guessing the Ranker — they're guessing a

@@ -43,7 +43,27 @@ export default defineConfig({
         start_url: base,
         scope: base,
         display: "standalone",
-        orientation: "portrait",
+        /**
+         * `any`, not `portrait`.
+         *
+         * The lock never did anything on the platform it was written
+         * for: iOS and iPadOS do not implement the manifest's
+         * `orientation` member for home-screen web apps, which is why
+         * an installed iPad rotates freely today and why every
+         * landscape screenshot of this app exists at all.
+         *
+         * Where it IS honoured — Android, desktop Chrome — it is now
+         * wrong. The tablet layout is built for a device propped at an
+         * angle on a table with people around it, and a board held
+         * landscape is the case it is built for. Locking that to
+         * portrait would be the manifest overruling the CSS.
+         *
+         * So this is a no-op on the target device and a fix
+         * everywhere else. It also stops the manifest contradicting
+         * the stylesheet, which is the kind of disagreement that
+         * costs someone an afternoon later.
+         */
+        orientation: "any",
         background_color: "#141414",
         theme_color: "#141414",
         categories: ["games", "entertainment"],
