@@ -110,6 +110,16 @@ export function NumberGame({ mode, onBack }: Props) {
     setPhase("challenge");
   }, [bid, timer]);
 
+  /**
+   * A fresh category, the same table.
+   *
+   * `seats` is deliberately untouched: how many of you there are is a fact
+   * about the night, not about the round, and being asked again between
+   * categories would be the app forgetting something it was just told. It
+   * goes when the game does — closing the mode unmounts this component and
+   * takes the count with it, which is the same rule every other mode's state
+   * follows. See the note on the state machine in App.tsx.
+   */
   const newRound = useCallback(() => {
     deck.draw();
     setBid(START_BID);
