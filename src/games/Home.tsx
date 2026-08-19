@@ -43,17 +43,21 @@ const RING_SPAN = 2;
  * and the pack it is heading for — enough of them that the steps close up and
  * read as a blend.
  *
- * Sixteen, which is more than it sounds. A third of a ~870px perimeter is
- * ~290px of line: at six steps each piece was ~4px and the ramp still read as
- * a row of tiny flat bands rather than a blend. At sixteen they are ~1.6px,
- * under the width at which the eye separates them.
+ * Thirty-two, and the number is set by the WORST pair rather than the
+ * average one. Most of the ten transitions are smooth by sixteen; Ride the
+ * Bus to Same Page is not, because gold and light blue sit almost opposite
+ * each other on the hue wheel. Going round between them is ~180 degrees
+ * however you go, so at sixteen steps each piece turned 11 degrees of hue at
+ * full chroma — measured as a 55-point rgb jump between two neighbours, which
+ * is a visible edge no matter how narrow the piece is. Doubling halves it.
  *
- * The count is free in the way that matters — see .pick-me__ring, where the
- * whole ramp moves on ONE animation rather than one each — so the only real
- * cost is DOM nodes. Dropping this to 1 is the whole way back to eleven hard
- * bands: the same design with the blending turned off.
+ * The count is nearly free in the way that matters — see .pick-me__ring,
+ * where the whole ramp moves on ONE animation rather than one each — so the
+ * cost is DOM nodes and per-frame style recalc, not animation objects.
+ * Dropping this to 1 is the whole way back to eleven hard bands: the same
+ * design with the blending turned off.
  */
-const RING_STEPS = 16;
+const RING_STEPS = 32;
 
 /**
  * The eleven packs blended into each other, in the order they sit on Home —
@@ -70,9 +74,23 @@ const RING_RAMP = [
     Array.from(
       { length: RING_STEPS },
       (_, step) =>
-        // oklab, not srgb: mixing saturated hues in srgb dips through grey at
-        // the midpoint, which put a dull band between every pair.
-        `color-mix(in oklab, var(${mode.color}) ${
+        // oklch, and the CH is the whole point: it is polar, so the mix walks
+        // hue ROUND the wheel at full chroma instead of cutting across the
+        // middle of it. srgb was the first attempt and dips through grey;
+        // oklab was the second and dips just as hard — measured, every one of
+        // the ten pairs lost most of its colour at the midpoint, worst of them
+        // Kings Cup to Ride the Bus at chroma 176 down to 24. That is what a
+        // straight line between two saturated colours does: it passes near the
+        // achromatic axis. Eleven bright packs separated by ten grey sags is
+        // exactly what "I can see the steps" looks like, and no number of
+        // extra steps fixes it, because the sag is IN the ramp rather than
+        // between its pieces.
+        //
+        // Going round keeps the chroma up the whole way. The hues it passes
+        // through are the short way between two packs, which on this palette
+        // is mostly other packs' hues — navy to gold goes purple, magenta,
+        // red, orange rather than through mud.
+        `color-mix(in oklch, var(${mode.color}) ${
           100 - (step * 100) / RING_STEPS
         }%, var(${MODES[i + 1].color}))`,
     ),

@@ -525,9 +525,18 @@
   /* Each piece sits one unit further along than the last, and the group's
      --pick-me-spin carries all of them round together. */
   stroke-dashoffset: calc((var(--seg) + var(--pick-me-spin)) * -1px);
-  /* Butt caps. A round or square cap would overhang the piece's own share and
-     bulge the line where two colours meet. */
+  /* Butt caps, INSIDE the line. A round cap on every piece would overhang its
+     own share by half the stroke and bulge the line at all 320 joins. */
   stroke-linecap: butt;
+}
+
+/* Except the two ends of the whole thing, which are the head and tail of the
+   streak rather than a join with anything. Rounding only these leaves the
+   line reading as one drawn stroke that starts and stops, instead of two
+   pieces someone cut square. */
+.pick-me__ring g > rect:first-child,
+.pick-me__ring g > rect:last-child {
+  stroke-linecap: round;
 }
 
 /* ---------------- The glow's inside edge ----------------
