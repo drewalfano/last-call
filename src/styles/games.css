@@ -962,8 +962,52 @@
   color: color-mix(in srgb, var(--category-ink) 75%, transparent);
 }
 .rtb__verdict[data-good] { color: var(--category-ink); }
-/* Holds its row when it has nothing to say. */
-.rtb__verdict[data-hidden] { visibility: hidden; }
+
+/* ---------------------------------------------------------------
+   HOLDS ITS ROW WHEN IT HAS NOTHING TO SAY — AND FADES RATHER THAN
+   BLINKS WHEN IT DOES.
+
+   The reserve was already right: `visibility` keeps the row so the
+   four cards above cannot move when a guess resolves, and it leaves
+   the accessibility tree the way `display: none` would. What it did
+   not do was arrive. The one sentence telling you whether you were
+   right appeared in a single frame, beside a card taking --dur-slow
+   to turn over.
+
+   This is .roster__clear[data-hidden]'s treatment, applied to the
+   second element in the app with exactly its shape — reserved by
+   `visibility`, toggled by a `data-hidden` attribute the component
+   already sets. It borrows the part that is easy to get wrong:
+   `visibility` must NOT interpolate, so it is switched immediately
+   on the way IN and held to the far end of the fade on the way OUT.
+   That is what the two differing `visibility` delays below are
+   doing, and it is why the shorthand cannot simply be listed once.
+
+   TWO DELIBERATE DIFFERENCES FROM CLEAR, both because the two
+   elements are alike in shape and not in job.
+
+   No scale. Clear shrinks to 0.92 because it arrives beside a row
+   that is opening at the same moment, and a bare fade next to a
+   moving row reads as a glitch. This sits in a row that is already
+   reserved and cannot move, with four playing cards directly above
+   it — a scale on centred text under held-still cards reads as a
+   zoom, and the whole point of the reserve is that nothing here
+   changes size.
+
+   --dur-fast, where Clear takes --dur-base. Clear has to finish
+   with the row it is travelling alongside. This has nothing to keep
+   time with, and a verdict is news: it should land, not drift in.
+   --------------------------------------------------------------- */
+.rtb__verdict {
+  transition: opacity var(--dur-fast) var(--ease-out),
+              visibility 0s;
+}
+.rtb__verdict[data-hidden] {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out),
+              visibility 0s var(--dur-fast);
+}
 
 .rtb__choices { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 .rtb__choice { flex: 1 1 40%; }
