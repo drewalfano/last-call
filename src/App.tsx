@@ -139,15 +139,25 @@ export default function App() {
    * as the screen swaps, which happens underneath the opaque launch overlay,
    * so the status bar changes colour on the one frame nothing else is visible.
    *
-   * `closing` holds it there on the way out, for the same reason read the
-   * other way round. The screen goes back to Home immediately — under an
-   * opaque overlay still flooded in the pack colour — so a status bar keyed to
-   * `screen` alone would snap to the shell while the whole display below it is
-   * still red. It follows the overlay instead and changes as that clears,
-   * which is once again the frame where nothing else is moving.
+   * IT IS NOT HELD THROUGH THE CLOSE, and it was once — `screen ?? closing`,
+   * so the pack colour stayed until the overlay had gone. That was correct
+   * when closing was a full-screen fade: the display was pack-coloured the
+   * whole way out, and a status bar that snapped to the shell early left a
+   * band of the wrong colour across the top of a screen that was still red.
+   *
+   * The contraction inverted it. The colour is off most of the display within
+   * a couple of frames now, so holding this pins a strip of mode colour above
+   * a Home that is already white — and under `black-translucent` the page
+   * paints right up under the status bar, so that strip is the first thing
+   * you see. On a device it reads as a gradient bleeding down from the top.
+   *
+   * Keyed to `screen` alone, the shell lands on the frame the swap happens —
+   * underneath an overlay that is still opaque and still covering everything,
+   * including that strip, because it is `inset: 0` and above the frame. So it
+   * is once again a colour change made where nothing can see it, which is the
+   * same argument as the launch's, arrived at from the other side.
    */
-  const painted = screen ?? closing;
-  useAppBackground(painted ? MODE_BY_ID[painted].color : SHELL_TOKEN, theme);
+  useAppBackground(screen ? MODE_BY_ID[screen].color : SHELL_TOKEN, theme);
 
   /**
    * Leaving a mode puts its colour over the whole screen and shrinks it back
