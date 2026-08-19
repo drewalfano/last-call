@@ -48,7 +48,7 @@ export const MODES: ModeDef[] = [
   },
   {
     id: "imposter",
-    title: "Imposter",
+    title: "Odd One Out",
     tagline: "One of you doesn't know the word.",
     color: "--cat-imposter",
   },
