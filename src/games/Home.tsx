@@ -281,6 +281,36 @@ export function Home({ onPick }: HomeProps) {
       return;
     }
     setPicked(mode.id);
+
+    /**
+     * BOTH BEATS ARE THE FLOURISH, SO BOTH GO WITH IT.
+     *
+     * The two waits below exist to be watched: RING_MS is how long the line
+     * takes to run round the button, and REVEAL_MS is a hold so you can see
+     * which card came up before its colour takes the screen. Neither is doing
+     * anything a player needs — the mode opens on exactly the same card either
+     * way.
+     *
+     * Under reduced motion the stylesheet has already frozen the ring
+     * (.pick-me__ring in games.css), so the waits were being spent on a still
+     * image: about 850ms of a dead button reading "Picking…", which reads as
+     * the app having hung rather than as it deciding.
+     *
+     * The scroll goes instant too, and that is what lets the settle poll go
+     * entirely. The poll exists to find the end of a SMOOTH scroll; with no
+     * animation to outlast, the rect is right on the next line.
+     *
+     * Same question, same answer as App's launch overlay — see the check in
+     * App.tsx, which this deliberately mirrors rather than inventing a second
+     * mechanism for.
+     */
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setRevealed(mode.id);
+      el.scrollIntoView({ block: "center", behavior: "auto" });
+      openCard(mode.id, el);
+      return;
+    }
+
     // Beat one: the ring, on a screen that is holding still.
     timer.current = window.setTimeout(() => {
       setRevealed(mode.id);
