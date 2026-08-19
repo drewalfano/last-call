@@ -76,6 +76,16 @@ export function NumberGame({ mode, onBack }: Props) {
 
   const bidder = nameAt(holder);
   const challenger = nameAt(turn);
+  /**
+   * Has anyone actually claimed anything yet?
+   *
+   * START_BID is a floor the round opens on, not a bid somebody made — until
+   * the first raise, `holder` is pointing at a player who has said nothing.
+   * The card was crediting them with the number anyway and the footer was
+   * offering to challenge them for it, so a round could open with "Prove it,
+   * Lily" before Lily had opened her mouth.
+   */
+  const opened = bid > START_BID;
 
   return (
     /* The category is what everyone is bidding against and has to hold in
@@ -94,10 +104,20 @@ export function NumberGame({ mode, onBack }: Props) {
       {phase === "bidding" && (
         <CardBody
           card={
+            /* Two people are on this card and they are doing different
+               things: one owns the number, the other has to answer it. The
+               eyebrow said "Can name" and the line under the number was the
+               only name on the card — so the number read as belonging to the
+               player it was sitting on top of, who is in fact the one being
+               bid AT. Both roles are named now, above and below. */
             <div className="card">
-              <span className="card__eyebrow">Can name</span>
+              <span className="card__eyebrow">
+                {opened ? `${bidder} can name` : "Bidding opens at"}
+              </span>
               <span className="num__bid-n">{bid}</span>
-              <span className="num__bid-who">{nameAt(turn)}'s call</span>
+              <span className="num__bid-who">
+                {opened ? `${challenger}'s call` : `${challenger} starts`}
+              </span>
             </div>
           }
         >
@@ -113,9 +133,12 @@ export function NumberGame({ mode, onBack }: Props) {
             <button className="btn btn--lg btn--block" onClick={raise}>
               I can name {bid + 1}
             </button>
-            <button className="btn btn--ghost btn--block" onClick={challenge}>
-              Prove it, {bidder}
-            </button>
+            {/* Nothing to call until somebody has claimed something. */}
+            {opened && (
+              <button className="btn btn--ghost btn--block" onClick={challenge}>
+                Prove it, {bidder}
+              </button>
+            )}
           </div>
         </CardBody>
       )}
@@ -150,9 +173,15 @@ export function NumberGame({ mode, onBack }: Props) {
         <CardBody
           card={
             <div className="card">
-              <span className="card__eyebrow">Did they get {bid}?</span>
+              {/* "Did they get 7? If they did, X drinks, if they didn't, Y
+                  does" left the table working out which "they" was which. The
+                  question names the bidder, so the sentence under it can lean
+                  on it. */}
+              <span className="card__eyebrow">
+                Did {bidder} get {bid}?
+              </span>
               <p className="card__prompt card__prompt--sm">
-                If they did, {challenger} drinks. If they didn't, {bidder} does.
+                If they did, {challenger} drinks. If not, {bidder} does.
               </p>
               <p className="card__meta">The table decides what counts.</p>
             </div>
