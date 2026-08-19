@@ -1249,6 +1249,53 @@ button { font: inherit; color: inherit; }
 
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
+/* ---------------------------------------------------------------
+   AND IT GOES BACK OUT THE WAY IT CAME — ON ITS OWN KEYFRAME, NOT
+   ON THE ENTRANCE REVERSED.
+
+   `reverse` was the first attempt, on the argument that one set of
+   keyframes cannot drift out of step with itself. It is the form
+   .focal.lw[data-leaving] .actions uses, and it is fine THERE
+   because that one only moves opacity.
+
+   It does not survive being given distance. `animation-direction:
+   reverse` plays the timing function backwards as well as the
+   keyframes, and --ease-out is ~95% done by its halfway point —
+   which mirrored is ~5% done by halfway. Measured by scrubbing the
+   sheet's exit at 40ms intervals: 0.04px of travel at 40, 0.5px at
+   80, 3.1px at 120, and the whole remaining 15px in the last 40ms.
+   A sheet that hangs there and then vanishes reads as a dropped
+   frame, not as a dismissal.
+
+   So the exits are their own keyframes played FORWARD, which is what
+   every other exit in the app already does — see lw-ring-out and
+   lw-key-out, which restate their scales rather than reversing the
+   entrances they mirror. The duplication is the price of the curve
+   behaving, and it is the price this file has already agreed to pay
+   twice.
+
+   `forwards` and not `both`: these have to HOLD their end state for
+   the beat the sheet stays mounted after the animation finishes.
+   Without the fill it would snap back to full opacity for that
+   frame, which is the flash the exit exists to remove.
+
+   Whatever the backdrop is holding fades WITH it, because opacity on
+   a parent takes its subtree along. That is the whole exit for a
+   plain `.modal`; `.sheet` adds travel of its own in games.css,
+   because it arrived with some.
+
+   Pointer events go immediately. The backdrop stays under the finger
+   for the length of the fade, and a dismissed sheet must not be
+   dismissable twice — Settings guards the timeout as well, but the
+   control should stop being a control the moment it is spent.
+   --------------------------------------------------------------- */
+.modal-backdrop[data-leaving] {
+  animation: fade-out var(--dur-fast) var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+@keyframes fade-out { to { opacity: 0; } }
+
 .modal {
   width: 100%;
   max-width: 360px;
@@ -1266,6 +1313,14 @@ button { font: inherit; color: inherit; }
 @keyframes modal-in {
   from { opacity: 0; transform: translateY(18px) scale(0.94); }
   to { opacity: 1; transform: none; }
+}
+
+/* Back down to where it came up from. Kept next to its entrance and stating
+   the same two numbers, which is the arrangement lw-ring-in / lw-ring-out
+   already uses — change one, change the other, in the same edit. See the note
+   on .modal-backdrop[data-leaving] for why this is not the entrance reversed. */
+@keyframes modal-out {
+  to { opacity: 0; transform: translateY(18px) scale(0.94); }
 }
 
 .modal__title {

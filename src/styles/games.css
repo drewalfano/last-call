@@ -81,6 +81,34 @@
   animation: modal-in var(--dur-base) var(--ease-spring) both;
 }
 
+/* ---------------------------------------------------------------
+   THE SHEET LEAVES SHORTER AND FLATTER THAN IT ARRIVED.
+
+   The backdrop's fade already carries this with it — see
+   .modal-backdrop[data-leaving] — so this is only the extra travel,
+   for the one thing on screen that came in with some.
+
+   `--dur-fast` against the entrance's `--dur-base`, which is Letter
+   Rip's rule for every exit in the app: an arrival is being read, a
+   departure is already decided. You have pressed the X; the sheet
+   agreeing quickly is the point.
+
+   AND `--ease-out`, NOT the entrance's `--ease-spring`. A spring is
+   for landing somewhere, and nothing is landing here — played out it
+   would overshoot past the sheet's resting place before leaving,
+   which reads as a flinch rather than a dismissal.
+
+   `modal-out` played forward rather than `modal-in` reversed. That
+   distinction is not cosmetic and it cost a measurement to find —
+   see the note on .modal-backdrop[data-leaving] in global.css.
+
+   `forwards` so the end state holds through the beat before Settings
+   unmounts it.
+   --------------------------------------------------------------- */
+.modal-backdrop[data-leaving] .sheet {
+  animation: modal-out var(--dur-fast) var(--ease-out) forwards;
+}
+
 .sheet__head { display: flex; align-items: center; justify-content: space-between; }
 
 .sheet__title {
@@ -181,9 +209,12 @@
 .home__deck {
   display: flex;
   flex-direction: column;
-  /* How much of each card stays visible under the next one. Content ends 65px
-     in, so this leaves the same breathing room below it as the 18px above. */
-  --peek: 84px;
+  /* How much of each card stays visible under the next one — and therefore
+     the air UNDER its text, because the card's own padding-bottom is beneath
+     the next card and is never seen. Content ends 67px in, so this leaves the
+     same 20px below it that the padding leaves above. Re-measure it whenever
+     the title or the tagline changes size; it is not derived. */
+  --peek: 87px;
   --card-h: 124px;
   /* Nothing below the deck, deliberately. The cards run to the bottom edge of
      the display and the last one is cut by it — that IS the deck: a stack you
@@ -201,7 +232,12 @@
   gap: 2px;
   align-items: flex-start;
   min-height: var(--card-h);
-  padding: var(--sp-4) var(--sp-5);
+  /* 20px on every side, measured from the card's OUTER edge — where the eye
+     measures it from, and the 2px stroke below is part of that edge. So the
+     padding is 20 LESS the border rather than 20 itself, and the text lands on
+     the same 20 the screen holds off the display. The bottom of that figure is
+     --peek's job, not this one's. */
+  padding: calc(var(--sp-5) - 2px);
   /* 2px stroke in a darker cut of the card's own color — an edge, not an
      outline. Cut 20%, not 38%: the same recipe runs on every pack, and at 38
      it disappeared into the dark ones while drawing a hard line around the
@@ -363,10 +399,10 @@
    TABLET: THE DECK GROWS WITH THE FRAME.
 
    --peek and --card-h are two hand-measured numbers, and the
-   recipe behind them is written on --peek: content ends 65px into
-   the card, and the peek leaves the same breathing room under it
-   as the 16px above. Both are therefore wrong the moment the type
-   changes, and the tablet ramp changes it.
+   recipe behind them is written on --peek: content ends 67px into
+   the card, and the peek leaves the same 20px under it that the
+   padding leaves above. Both are therefore wrong the moment the
+   type changes, and the tablet ramp changes it.
 
    Left alone, the frame went from 480 to 980 while the slabs
    stayed 124px tall, so eleven near-square cards became eleven

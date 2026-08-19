@@ -1,6 +1,15 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
+
+/**
+ * How long the sheet is held on screen on its way out.
+ *
+ * Matches --dur-fast, which is what the exit animation takes. It is a number
+ * here rather than a read of the token because a timeout cannot read CSS, and
+ * the two only have to agree to the frame — see the note on the hold below.
+ */
+const LEAVE_MS = 160;
 
 /**
  * SETTINGS
@@ -32,14 +41,53 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { isNight, toggle } = useContentMode();
   const { preference, setPreference } = useTheme();
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+  /**
+   * THE SHEET LEAVES AS WELL AS ARRIVES.
+   *
+   * It came in on a spring and went out between two frames: Home owns whether
+   * it is mounted, so every way of dismissing it unmounted the thing mid-air.
+   * The one presentation in the app was the only surface that never got to go.
+   *
+   * The exit is owned HERE rather than by Home, the same way Letter Rip owns
+   * its board's — the component that knows it is leaving is the one that
+   * should hold itself on screen for it. Home still decides whether the sheet
+   * exists; this only delays telling it.
+   *
+   * THE HOLD IS A TIMEOUT, NOT `animationend`, which is the rule this app
+   * arrived at twice already — see GameHeader's live line and LastWord's
+   * board. A timeout fires whether or not anything painted, so a surface that
+   * defers rendering costs you the animation and nothing else. Waiting on the
+   * event would strand a settings sheet over the app with no way to dismiss
+   * it, because the only handlers that could are the ones already spent.
+   *
+   * Guarded against a second dismiss: the backdrop is still under the finger
+   * for the whole exit, and a second tap would stack another timeout and
+   * another `onClose`.
+   */
+  const [leaving, setLeaving] = useState(false);
+  const exit = useRef<number>(undefined);
+
+  const close = useCallback(() => {
+    if (exit.current !== undefined) return;
+    setLeaving(true);
+    exit.current = window.setTimeout(onClose, LEAVE_MS);
   }, [onClose]);
 
+  useEffect(() => () => window.clearTimeout(exit.current), []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [close]);
+
   return (
-    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+    <div
+      className="modal-backdrop"
+      data-leaving={leaving || undefined}
+      role="presentation"
+      onClick={close}
+    >
       <div
         className="sheet"
         role="dialog"
@@ -49,7 +97,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       >
         <header className="sheet__head">
           <h2 className="sheet__title">Settings</h2>
-          <button className="sheet__close" onClick={onClose} aria-label="Close settings">
+          <button className="sheet__close" onClick={close} aria-label="Close settings">
             ×
           </button>
         </header>
