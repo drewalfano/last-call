@@ -576,14 +576,17 @@ confidence and risk: everything in Phase 1 and 2 is CSS-only or near it.
 | 6 | Land Most Likely To's verdict behind the card, not with it | `styles/games.css` | ~8 lines | **E** |
 | 7 | Let Ride the Bus's streak arrive | `styles/games.css`, `games/RideTheBus.tsx` | ~8 lines | **L** |
 
-### Phase 3 — Rank It deals
+### Phase 3 — Rank It deals  ✅ landed
 
 Two dependent changes on one surface; 9 is meaningless without 8.
 
 | # | Commit | Files | Size | Finding |
 |---|---|---|---|---|
-| 8 | Deal Rank It's list, the way the picker deals its cards | `styles/games.css`, `games/RankIt.tsx` | ~14 lines | **B** |
-| 9 | Replay the deal when the phone changes hands | `games/RankIt.tsx` | 1 line | **C** |
+| 8+9 | Deal Rank It's list, and deal it again when the phone changes hands | `styles/games.css`, `games/RankIt.tsx` | ~55 lines | **B** + **C** |
+
+**Landed as one commit** (`c805c78`), not two. **C** is a no-op on its own — `key={phase}`
+remounts the list, but nothing animates on mount until **B** gives it an entrance.
+Splitting them would have put a commit on the branch that changed nothing observable.
 
 ### Phase 4 — presentation exits
 
