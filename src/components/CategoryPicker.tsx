@@ -1,9 +1,5 @@
 import { useState } from "react";
-
-/** How far you have to scroll for the top fade to reach full strength. */
-const FADE_IN_PX = 56;
-/** How deep the fade goes once it is fully in. */
-const FADE_MAX_PX = 26;
+import { fadeOnScroll } from "../lib/scrollFade";
 
 interface CategoryPickerProps {
   /** Every category the group can choose from. */
@@ -35,24 +31,6 @@ export function CategoryPicker({
 }: CategoryPickerProps) {
   const [custom, setCustom] = useState("");
   const [writing, setWriting] = useState(false);
-  /**
-   * The top fade EARNS its way in rather than being switched on.
-   *
-   * It means "there is more above", so at rest it must not be there at all —
-   * left on, it just washes out the first row of cards for no reason. But a
-   * boolean at scrollTop > 0 is worse in the other direction: the fade appears
-   * at full strength one pixel into a drag, which reads as a glitch rather
-   * than as depth.
-   *
-   * So the ramp's LENGTH is the scroll position, growing from nothing to full
-   * over FADE_IN_PX. Written straight to a custom property rather than through
-   * state: this fires on every scroll frame, and it has no business causing a
-   * React render.
-   */
-  const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const t = Math.min(1, e.currentTarget.scrollTop / FADE_IN_PX);
-    e.currentTarget.style.setProperty("--fade-ramp", `${(t * FADE_MAX_PX).toFixed(1)}px`);
-  };
 
   return (
     <div className="picker">
@@ -100,7 +78,7 @@ export function CategoryPicker({
             Write your own
           </button>
 
-          <div className="picker__scroll" onScroll={onScroll}>
+          <div className="picker__scroll" onScroll={fadeOnScroll}>
             <div className="picker__grid">
               {categories.map((c, i) => (
                 <button

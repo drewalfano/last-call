@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { PlayingCard } from "../components/PlayingCard";
+import { fadeOnScroll } from "../lib/scrollFade";
 import { PlayerPicker } from "../components/VotePad";
-import { deal, freshDeck, type Card } from "../lib/cards";
+import { SUITS, deal, freshDeck, rankLabel, type Card } from "../lib/cards";
 import { randomItem } from "../lib/deck";
 import { resolvePool } from "../data/pools";
-import { RULE_BY_RANK, DRIVE_CALLS, type KingsCupRule } from "../data/kingsCup";
+import { KINGS_CUP_RULES, RULE_BY_RANK, DRIVE_CALLS, type KingsCupRule } from "../data/kingsCup";
 import { LAST_WORD_CATEGORIES } from "../data/lastWord";
 import { NEVER_HAVE_I_EVER } from "../data/neverHaveIEver";
 import { useContentMode } from "../state/contentMode";
@@ -64,10 +65,33 @@ interface Props {
   onBack: () => void;
 }
 
+/**
+ * A face for every rule, so the sheet shows the card you will actually draw
+ * rather than a number in a box.
+ *
+ * All spades. The rank is the only thing carrying meaning here — a rule is a
+ * rule in any suit — so varying it would suggest a distinction that does not
+ * exist, and the spade is the cleanest of the four pips at this size.
+ */
+const SPADE = SUITS[0];
+const RULE_FACES: { rule: (typeof KINGS_CUP_RULES)[number]; card: Card }[] =
+  KINGS_CUP_RULES.map((rule) => ({
+    rule,
+    card: {
+      rank: rule.rank,
+      label: rankLabel(rule.rank),
+      suit: SPADE.suit,
+      symbol: SPADE.symbol,
+      red: SPADE.red,
+    },
+  }));
+
 export function KingsCup({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { currentPlayer, advance, hasRoster } = useRoster();
   const [s, setS] = useState<State>(initialState);
+  /** The rules sheet, for a table reading them before it plays. */
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   const drawer = currentPlayer ?? "Whoever drew it";
 
@@ -123,6 +147,44 @@ export function KingsCup({ mode, onBack }: Props) {
 
   const restart = useCallback(() => setS(initialState()), []);
 
+  // ---- What every card means ----
+  if (rulesOpen) {
+    return (
+      /* Full page and one way out, exactly like the category picker: the
+         header's chevron would leave the game, and this is a detour from it,
+         not a way out of it. */
+      <GameScreen mode={mode} hideHeader onBack={onBack}>
+        <div className="picker">
+          <div className="picker__scroll" onScroll={fadeOnScroll}>
+            <ol className="kc-rules">
+              {RULE_FACES.map(({ rule, card }) => (
+                <li key={rule.rank} className="kc-rules__row">
+                  <PlayingCard card={card} small />
+                  <span className="kc-rules__body">
+                    <span className="kc-rules__label">{rule.label}</span>
+                    <span className="kc-rules__text">{rule.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="picker__depth" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+
+          <div className="actions">
+            <button className="btn btn--float btn--block" onClick={() => setRulesOpen(false)}>
+              Back
+            </button>
+          </div>
+        </div>
+      </GameScreen>
+    );
+  }
+
   // ---- Fourth king: the game is over ----
   if (s.finished) {
     return (
@@ -161,6 +223,11 @@ export function KingsCup({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* Before the first card, not during — a table reads the ruleset
+              once, on the way in. */}
+          <button className="gfoot__skip" onClick={() => setRulesOpen(true)}>
+            What the cards mean
+          </button>
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={draw}>
               Draw first card

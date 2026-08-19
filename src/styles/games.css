@@ -1303,6 +1303,94 @@
 }
 
 
+/* ---------------------------------------------------------------
+   KINGS CUP: WHAT EVERY CARD MEANS.
+
+   Thirteen rules read once, before the first card. It borrows the
+   category picker's shell wholesale — the same scroller, the same
+   top fade, the same progressive blur under the same floating Back
+   — because it is the same kind of screen: a full page of reference
+   you came to from inside a round and are going back to.
+
+   Rows sit on the pack colour rather than on cards of their own. A
+   list of thirteen white tiles carrying two lines of text each is a
+   wall; the rank chip is the only thing that needs to pop, and it
+   pops by being the card stock in a field that is not.
+   --------------------------------------------------------------- */
+.kc-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0 0 calc(var(--control-height) + var(--action-inset) * 2);
+  list-style: none;
+}
+
+.kc-rules__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* The real card, not a number in a box — smaller than Ride the Bus deals
+   them, because thirteen of these are a list rather than a hand. */
+.kc-rules .pcard {
+  flex: none;
+  width: 60px;
+  /* The card radius is tuned for the size Ride the Bus and the felt deal at.
+     Held at 14px on a card a third that size it reads as a rounded rectangle
+     with a pip on it rather than as a playing card. */
+  border-radius: var(--radius-sm);
+  /* Reference, not a deal. Thirteen cards turning over at once while you are
+     trying to read them is noise, not motion. */
+  animation: none;
+}
+
+/* ---------------------------------------------------------------
+   ONE MARK PER CARD.
+
+   A full face carries three glyphs — corner rank, centre pip, and
+   the rank again upside down — and only one of them says anything
+   here: the rank. All thirteen pips are the same spade, so the
+   loudest thing in every row was the thing that never changed,
+   while the mark you actually scan for was the smallest on the card.
+   Thirteen rows of that is a wall.
+
+   So the face keeps its stock, its proportion and its corner, and
+   shows only the rank. It still reads as a card — that was the point
+   of using one — without repeating itself down the page.
+   --------------------------------------------------------------- */
+.kc-rules .pcard__pip,
+.kc-rules .pcard__corner--flip {
+  display: none;
+}
+
+.kc-rules .pcard__corner {
+  align-self: center;
+  margin-block: auto;
+  /* cqw resolves against the card's CONTENT box, which the padding takes a
+     real bite out of at this size. */
+  font-size: 62cqw;
+}
+
+.kc-rules__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.kc-rules__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--category-ink);
+}
+
+.kc-rules__text {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  color: color-mix(in srgb, var(--category-ink) 78%, transparent);
+  text-wrap: pretty;
+}
+
 /* ---------------- Category picker ---------------- */
 .picker {
   display: flex;

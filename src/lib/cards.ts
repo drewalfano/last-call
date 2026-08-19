@@ -20,12 +20,17 @@ export const SUITS: { suit: Suit; symbol: string; red: boolean }[] = [
 
 const LABELS: Record<number, string> = { 11: "J", 12: "Q", 13: "K", 14: "A" };
 
+/** What a rank is called on the face of a card. */
+export function rankLabel(rank: number): string {
+  return LABELS[rank] ?? String(rank);
+}
+
 /** A real, complete 52-card deck, shuffled. */
 export function freshDeck(): Card[] {
   const cards: Card[] = [];
   for (const { suit, symbol, red } of SUITS) {
     for (let rank = 2; rank <= 14; rank++) {
-      cards.push({ rank, label: LABELS[rank] ?? String(rank), suit, symbol, red });
+      cards.push({ rank, label: rankLabel(rank), suit, symbol, red });
     }
   }
   return shuffle(cards);
