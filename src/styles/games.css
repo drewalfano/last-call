@@ -440,21 +440,26 @@
    it was snapping down, because it was borrowing the transition that
    exists for a thumb going down on a card.
 
-   --dur-base on --ease-glide, and the curve is the point. tokens.css
-   describes --ease-glide as being for motion that reads as TRAVEL
-   rather than as arrival, where --ease-out is "~95% done by the
-   halfway point, so the movement itself is over before you have seen
-   it". A card lowering itself into a slot is travel. It is also the
-   reason not to reach for --ease-spring here, which is what the lift
-   uses: a spring overshoots, and something being put back down should
-   not bounce past where it belongs.
+   --ease-in-out, and the curve is the point. --ease-glide was the
+   first answer and it is still front-loaded: measured, it covers 78%
+   of the 14px in the first half of the time, so the card goes most of
+   the way at once and then eases the last few pixels. That reads as a
+   drop that settles rather than as a card being put down.
+
+   Symmetric, it leaves as gently as it arrives — 50% of the distance
+   at 50% of the time — which is a hand lowering something into place
+   rather than releasing it above the slot. Not --ease-out, which is
+   ~95% done by halfway and would be worse than what it replaced. Not
+   --ease-spring either, which is what the LIFT uses: a spring
+   overshoots, and something being put back down should not bounce
+   past where it belongs.
 
    The shadow comes with it on the same clock, so the card's lift and
    its weight land together instead of one chasing the other.
    --------------------------------------------------------------- */
 .deck-card[data-settling] {
-  transition: transform var(--dur-base) var(--ease-glide),
-              box-shadow var(--dur-base) var(--ease-glide);
+  transition: transform var(--dur-base) var(--ease-in-out),
+              box-shadow var(--dur-base) var(--ease-in-out);
 }
 
 /* NOTHING HIDES THE WRITING, and taking that out is what separates the two

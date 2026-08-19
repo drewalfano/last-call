@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
@@ -428,8 +428,18 @@ export function Home({ onPick, returning }: HomeProps) {
    * There is no second clock now. App retires the overlay and `returning`
    * goes null in the same commit, so the colour leaving and the card being
    * released are not two events that agree — they are one event.
+   *
+   * AND IT IS A LAYOUT EFFECT, WHICH IS THE DIFFERENCE BETWEEN THE CARD BEING
+   * LOWERED AND BEING DROPPED. A plain effect runs after the browser has
+   * painted, so the order was: `data-returning` comes off, the browser starts
+   * the transform transition — finding nothing but `.deck-card`'s own rule,
+   * which is var(--dur-press), the BUTTON PRESS — and only then does
+   * `data-settling` arrive to say how the fall should go. The card was
+   * launching on a 120ms press curve and being corrected mid-flight. That is
+   * the slam. Running before paint, the attribute is there when the
+   * transition is computed, so it never starts on the wrong one.
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previous = wasReturning.current;
     wasReturning.current = returning ?? null;
     if (previous && !returning) setSettling(previous);
