@@ -555,10 +555,16 @@
        lines of a 40px live line, and the padding under it:
        96 + 12 + 88 + 12 = 208, with a little over.
 
-       --gfooter-h: a counter, a gap, the grounded action and a
-       secondary beneath it: 22 + 16 + 120 + 8 + 84 = 250, which is
-       Last Call's main screen. Anything taller scrolls, exactly as
-       it does on a phone.
+       --gfooter-h: MEASURED, not derived. The first pass reasoned
+       it out as a counter, a gap, the grounded action and a
+       secondary beneath it — 22 + 16 + 120 + 8 + 84 = 250 — and
+       missed the tallest footer in the app by 62px. The Number
+       Game's bidding screen carries a skip AND two stacked
+       actions: 32 of skip margin + 52 of skip + 16 + 212 = 312,
+       so its primary action sat 20px below the fold on every
+       tablet size until you scrolled for it. Walk the modes and
+       take the largest .gfoot scrollHeight; do not reason about
+       it. Anything taller than this scrolls, as on a phone.
 
        BOTH ARE CAPPED AGAINST VIEWPORT HEIGHT, and that is not
        decoration. Flat, they came to 480px of furniture on an
@@ -569,7 +575,7 @@
        difference back to the card. Landscape still wants a
        composition of its own; this only stops it collapsing. */
     --gheader-h: min(216px, 24vh);
-    --gfooter-h: min(264px, 33vh);
+    --gfooter-h: min(312px, 33vh);
 
     /* ------------------------------------------------------
        WHERE THE LIVE LINE SITS — re-derived, because the rows

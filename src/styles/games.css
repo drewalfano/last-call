@@ -1229,6 +1229,44 @@
   letter-spacing: 0.02em;
 }
 
+/* ---------------------------------------------------------------
+   KINGS CUP'S FELT GIVES WAY BEFORE THE BUTTON DOES.
+
+   This screen has no card slot — it is a felt, a rule and the
+   bookkeeping, stacked, with the action grounded under them. On a
+   phone the stack fits and `flex: none` is right: nothing here
+   should be squashed.
+
+   At 1133x744 it does not fit. The stack came to 459px in 492px of
+   room once the tablet header reserve and a 120px action were
+   taken, and because the column does not scroll, the overflow went
+   straight out of the bottom of the display: the primary action
+   ended 71px below the viewport with no way to reach it. Not a
+   tight layout — an unreachable one.
+
+   So the felt scrolls and the button does not move. `min-height: 0`
+   is the half that actually does the work; without it a flex item
+   refuses to shrink below its content and `overflow` never gets a
+   chance to engage.
+
+   This is the short-landscape symptom showing up in the one mode
+   with the tallest fixed stack. It is a floor, not a fix — a card
+   above its actions is a portrait composition, and landscape is
+   getting a proposal of its own.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .kc__body {
+    /* `flex: none` is flex-shrink: 0, so the item keeps its content
+       height no matter what and `overflow` never gets a chance to
+       engage. Allow the shrink and keep the auto top margin that
+       centres it. */
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 /* ---------------- Drink If: last one standing ---------------- */
 .survivor { display: flex; flex-direction: column; gap: var(--sp-2); flex: none; }
 
