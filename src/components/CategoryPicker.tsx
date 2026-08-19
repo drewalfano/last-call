@@ -12,6 +12,22 @@ interface CategoryPickerProps {
   customNoun?: string;
   /** Shown under the custom field when it needs a caveat. */
   customNote?: string;
+  /**
+   * Whether the group can write their own.
+   *
+   * Off for Rank It, where an entry is not a word but a title AND the four or
+   * five things being ranked — more than anyone is typing at a bar, and a
+   * half-filled one would break the round rather than personalise it.
+   */
+  allowCustom?: boolean;
+  /**
+   * A line that finishes on every card, so the cards do not each repeat it.
+   *
+   * Rank It's forty prompts all open "Rank these…", which is forty copies of
+   * the same three words competing with the part that differs. Said once, at
+   * the top, and the cards carry only what changes.
+   */
+  heading?: string;
 }
 
 /**
@@ -28,6 +44,8 @@ export function CategoryPicker({
   onCancel,
   customNoun = "category",
   customNote,
+  allowCustom = true,
+  heading,
 }: CategoryPickerProps) {
   const [custom, setCustom] = useState("");
   const [writing, setWriting] = useState(false);
@@ -70,13 +88,17 @@ export function CategoryPicker({
               so the button arrived on screen already clipped. */}
           {/* First card dealt, so the deal starts at the top of the screen and
               runs down into the grid rather than skipping this one. */}
-          <button
-            className="picker__card picker__card--custom"
-            style={{ ["--i" as string]: 0 }}
-            onClick={() => setWriting(true)}
-          >
-            Write your own
-          </button>
+          {allowCustom && (
+            <button
+              className="picker__card picker__card--custom"
+              style={{ ["--i" as string]: 0 }}
+              onClick={() => setWriting(true)}
+            >
+              Write your own
+            </button>
+          )}
+
+          {heading && <p className="picker__heading">{heading}</p>}
 
           <div className="picker__scroll" onScroll={fadeOnScroll}>
             <div className="picker__grid">

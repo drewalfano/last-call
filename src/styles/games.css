@@ -1609,6 +1609,23 @@
   text-transform: uppercase;
 }
 
+/* Fixed furniture in the slot the custom button would take, for a picker
+   whose options all finish the same sentence. Not a control and styled so it
+   cannot be mistaken for one — no fill, no border, just the words the cards
+   below it complete. */
+.picker__heading {
+  flex: none;
+  margin: 0;
+  padding-inline: var(--sp-1);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--category-ink);
+}
+
 .picker__custom { display: flex; flex-direction: column; gap: var(--sp-3); }
 
 .picker__note {

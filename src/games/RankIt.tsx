@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck, randomItem } from "../lib/deck";
+import { CategoryPicker } from "../components/CategoryPicker";
 import { buzz } from "../lib/useCountdown";
 import { usePool } from "../data/pools";
 import { RANK_IT, type RankPrompt } from "../data/rankIt";
@@ -23,7 +24,10 @@ import type { ModeDef } from "../data/modes";
  * same as everywhere else in the app.
  */
 
-type Phase = "handover" | "ranking" | "guessing" | "revealed";
+type Phase = "handover" | "picking" | "ranking" | "guessing" | "revealed";
+
+/** Every prompt opens with this; the picker says it once instead. */
+const RANK_PREFIX = /^Rank these /;
 
 interface Props {
   mode: ModeDef;
@@ -37,6 +41,8 @@ export function RankIt({ mode, onBack }: Props) {
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("handover");
+  /** A list the group chose by name, which wins over whatever the deck dealt. */
+  const [chosen, setChosen] = useState<RankPrompt | null>(null);
   /** The Ranker's real order. */
   const [order, setOrder] = useState<string[]>([]);
   /** The group's guess at it. */
@@ -45,7 +51,7 @@ export function RankIt({ mode, onBack }: Props) {
     hasRoster ? randomItem(players) : "Whoever's turn it is",
   );
 
-  const prompt = deck.current as RankPrompt | undefined;
+  const prompt = chosen ?? (deck.current as RankPrompt | undefined);
 
   /** Same tap-to-order interaction for both passes; only the target differs. */
   const pick = useCallback(
@@ -58,18 +64,22 @@ export function RankIt({ mode, onBack }: Props) {
   );
 
   /**
-   * A new list for the same Ranker. Offered on the ranking screen and not on
-   * the handover before it, because the handover card shows the Ranker's
-   * name — the list itself is not on screen yet, and you cannot reject a
-   * prompt you have not read.
+   * A different list for the same Ranker, dealt at random.
+   *
+   * On the handover, where the title is already on screen as the live line —
+   * you are choosing what to rank before anyone has committed to ranking it.
+   * It used to sit on the ranking screen instead, back when the handover card
+   * showed only the Ranker's name and there was no prompt to reject yet.
    */
-  const skip = useCallback(() => {
+  const reroll = useCallback(() => {
+    setChosen(null);
     deck.draw();
     setOrder([]);
     setGuess([]);
   }, [deck]);
 
   const nextRound = useCallback(() => {
+    setChosen(null);
     deck.draw();
     setOrder([]);
     setGuess([]);
@@ -88,6 +98,7 @@ export function RankIt({ mode, onBack }: Props) {
   return (
     <GameScreen
       mode={mode}
+      hideHeader={phase === "picking"}
       /* The prompt is what everyone is holding in their head, so it takes the
          live line — the same treatment Last Word and the Number Game give
          theirs. Whose pass it is qualifies it, so that hangs underneath as
@@ -117,12 +128,44 @@ export function RankIt({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* Choose what you are ranking BEFORE anyone commits to ranking it.
+              The title is already up there as the live line, so this is the
+              screen where rejecting it costs nothing. */}
+          <div className="actions--row">
+            <button className="btn btn--ghost" onClick={reroll}>
+              Random
+            </button>
+            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
+              Lists
+            </button>
+          </div>
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={() => setPhase("ranking")}>
               I've got it
             </button>
           </div>
         </CardBody>
+      )}
+
+      {/* ---------- Pick a list by name ---------- */}
+      {phase === "picking" && (
+        <CategoryPicker
+          /* Every prompt opens "Rank these…", so that goes in the heading and
+             the cards carry only the part that differs. */
+          heading="Rank these…"
+          categories={pool.map((p) => p.title.replace(RANK_PREFIX, ""))}
+          allowCustom={false}
+          onPick={(shortened) => {
+            const picked = pool.find((p) => p.title.replace(RANK_PREFIX, "") === shortened);
+            if (picked) {
+              setChosen(picked);
+              setOrder([]);
+              setGuess([]);
+            }
+            setPhase("handover");
+          }}
+          onCancel={() => setPhase("handover")}
+        />
       )}
 
       {/* ---------- Ranking, by tapping ----------
@@ -152,16 +195,6 @@ export function RankIt({ mode, onBack }: Props) {
             </ol>
           }
         >
-          {/* Only until the Ranker has tapped something — after that the order
-              is theirs. Always rendered, and hidden rather than removed, so
-              nothing below it moves the moment they tap. */}
-          <button
-            className="gfoot__skip"
-            data-hidden={!(phase === "ranking" && order.length === 0) || undefined}
-            onClick={skip}
-          >
-            New list
-          </button>
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
