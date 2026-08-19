@@ -67,12 +67,12 @@ The app runs what a group genuinely can't — shuffling, secret roles, timers,
 a 52-card deck. It deliberately does **not** adjudicate what players are
 better at settling themselves:
 
-- **Last Word** has no answer validation. The table challenges a bad answer,
+- **Letter Rip** has no answer validation. The table challenges a bad answer,
   exactly like the physical game it's based on.
 - **Kings Cup** tracks only mate pairings. Thumb Master, Question Master and
   house rules are *not* displayed — showing them hands the answer to whoever
   forgot, which is the moment those rules exist to catch.
-- **Imposter** has no ballot, no reveal and no score.
+- **Odd One Out** has no ballot, no reveal and no score.
 
 Reach for this principle before adding anything that keeps score.
 
@@ -85,8 +85,8 @@ Reach for this principle before adding anything that keeps score.
 | 1 | Last Call ★ | wildcard deck |
 | 2 | Kings Cup | card game |
 | 3 | Ride the Bus | card game |
-| 4 | Last Word | timer game |
-| 5 | Imposter | social deduction |
+| 4 | Letter Rip | timer game |
+| 5 | Odd One Out | social deduction |
 | 6 | Drink If… | deck + elimination |
 | 7 | Most Likely To | deck + voting |
 | 8 | Would You Rather | deck + vote split |
@@ -100,14 +100,16 @@ Reach for this principle before adding anything that keeps score.
   27/31/18 (Safe) and 19/17/20 (19+); keep it roughly even when adding cards
   or a round stalls in the warm-up.
 - **Kings Cup** — classic ruleset, gendered ranks included, Drive at 9
-  (vroom / skrrt / skeet). Rank 10 pulls a category from Last Word's pool and
+  (vroom / skrrt / skeet). Rank 10 pulls a category from Letter Rip's pool and
   the Jack pulls from the Never Have I Ever pool. The ruleset is data in
   `src/data/kingsCup.ts`, one entry per rank.
 - **Ride the Bus** — real 52-card deck. Ties lose. Wrong guesses cost 1/2/3/4
   by round; the bus needs four correct in a row.
-- **Last Word** — the letter bank drops Q, U, V, X, Y, Z. The clock is
+- **Letter Rip** — the letter bank drops Q, U, V, X, Y, Z. The clock is
   deadline-based, so a backgrounded tab can't hand a player extra time.
-- **Imposter** — one secret word, one player who never sees it. Two things are
+- **Odd One Out** — one secret word, one player who never sees it. The mode was
+  renamed; the ROLE it deals is still called the Imposter, and the in-game copy
+  still says so, which is why the word appears below. Two things are
   load-bearing and easy to break:
   1. **A role is only ever on screen for the player it belongs to.** Every
      reveal is bracketed by a neutral cover screen, and the phase machine
@@ -122,15 +124,15 @@ Reach for this principle before adding anything that keeps score.
 
 ### Choosing a category
 
-Last Word and Imposter share `CategoryPicker`. Three ways in, in order of
+Letter Rip and Odd One Out share `CategoryPicker`. Three ways in, in order of
 speed: the category already on screen, **Random** to redraw, and **All
 categories** for a scrollable grid with **Write your own** pinned at the top.
 
-**Imposter groups its words by category rather than listing them flat, and
+**Odd One Out groups its words by category rather than listing them flat, and
 that grouping is load-bearing.** A player browsing a list of *words* and
 choosing one would know the secret word — and can still be dealt the Imposter,
 which breaks the game outright. Choosing a *category* leaks only the theme,
-which the first clue gives away anyway. Custom entry in Imposter *is* the word,
+which the first clue gives away anyway. Custom entry in Odd One Out *is* the word,
 so it carries a note saying whoever types it will see it; that is left to the
 table rather than blocked.
 
@@ -172,7 +174,7 @@ to generic wording — "someone else", "the person on your left". That single
 fallback is why modes don't need two sets of copy. Resolution happens once per
 card, not per render, so a name can't change mid-prompt.
 
-Imposter degrades per player, so a three-name roster in a five-player game
+Odd One Out degrades per player, so a three-name roster in a five-player game
 reads "Drew, Sam, Alex, Player 4, Player 5".
 
 ---
@@ -191,14 +193,19 @@ confirm nothing clips.
 | Truth or Dare — truths | 60 | 60 |
 | Truth or Dare — dares | 60 | 60 |
 | Hot Seat | 60 | 60 |
-| Imposter words | 140 *(14 categories)* | 60 *(6 categories)* |
+| Odd One Out words | 140 *(14 categories)* | 60 *(6 categories)* |
 | Last Call | 76 | 56 |
-| Last Word categories | 94 | +40 |
+| Letter Rip categories | 94 | +40 |
 | Never Have I Ever *(Kings Cup's Jack)* | 60 | 60 |
 
-**Night policy** is per file and documented at the top of each: `replace` for
-most (the adult version is a different question, not a cruder one) and
-`supplement` for Last Word (its safe categories still play with a rowdy table).
+**Night policy** is per file and documented at the top of each, and every one
+of them ADDS. `lead` where the list is browsed — the 19+ entries go on top and
+the safe ones stay, interleaved — and `supplement` where it is dealt blind.
+
+There is no policy that drops the safe pool. `replace` existed once and was
+removed outright, because nothing about a rowdy table makes "Countries" or a
+warm-up question unsuitable, and a Night deck that threw the safe pool away
+halved the material on the night the app gets used most.
 
 **Both category games mix two kinds deliberately.** Plain categories anyone can
 play cold — Countries, Colours, Girls' names, Animals — alongside bar-flavoured
@@ -230,8 +237,8 @@ foregrounds:
 | Last Call | `#E0070F` | white | 4.99 |
 | Kings Cup | `#0F4A42` | white | 10.10 |
 | Ride the Bus | `#273287` | white | 11.10 |
-| Last Word | `#E990A2` | `#141414` | 7.87 |
-| Imposter | `#CAC307` | `#141414` | 9.93 |
+| Letter Rip | `#E990A2` | `#141414` | 7.87 |
+| Odd One Out | `#CAC307` | `#141414` | 9.93 |
 | Drink If… | `#FF340C` | `#141414` | 5.04 |
 | Most Likely To | `#A5C0EA` | `#141414` | 9.94 |
 | Would You Rather | `#FFAE00` | `#141414` | 9.92 |
