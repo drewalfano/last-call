@@ -588,7 +588,7 @@ Two dependent changes on one surface; 9 is meaningless without 8.
 remounts the list, but nothing animates on mount until **B** gives it an entrance.
 Splitting them would have put a commit on the branch that changed nothing observable.
 
-### Phase 4 — presentation exits
+### Phase 4 — presentation exits  ✅ landed
 
 | # | Commit | Files | Size | Finding |
 |---|---|---|---|---|
@@ -599,12 +599,45 @@ Splitting them would have put a commit on the branch that changed nothing observ
 **12 needs a decision from you before I write it** — see the counter-indications.
 My recommendation is the fade.
 
-### Phase 5 — optional, lower value
+### Phase 5 — optional, lower value  ⏸ not started
 
 | # | Commit | Files | Size | Finding |
 |---|---|---|---|---|
 | 13 | Deal the Kings Cup rules rows | `styles/games.css`, `games/KingsCup.tsx` | ~10 lines | **D** |
 | 14 | Collapse the press recipe into a shared class | `styles/global.css`, `styles/games.css` | large, mechanical | **H** |
+
+### What Phase 4 actually cost
+
+| # | Commit | Files | Finding |
+|---|---|---|---|
+| 10 | `2310428` Let the settings sheet leave | `components/Settings.tsx`, `styles/games.css`, `styles/global.css` | **Q** |
+| 11 | — *not needed* | — | see D1 |
+| 12 | `da90be0` Close a mode the way it opened, only faster | `App.tsx`, `styles/games.css` | mode exit |
+
+**Commit 11 was dropped.** D1 chose a fade over a reversed clip-path, and a fade
+does not reuse the launch curve — so `--dur-launch` / `--ease-launch` were never
+needed. `LAUNCH_MS` and `LAUNCH_EASE` stay in `App.tsx` as the entrance's own
+values, and **no motion token was added by any of this work.**
+
+### One thing the plan got wrong: `reverse` does not undo an easing curve
+
+Both exits were first written as the entrance played `reverse`, on the argument
+that one set of keyframes cannot drift out of step with itself — the form
+`.focal.lw[data-leaving] .actions` already uses.
+
+That is fine for opacity and **wrong the moment there is distance to cover.**
+`animation-direction: reverse` mirrors the *timing function* as well as the
+keyframes, and `--ease-out` is ~95% done by its halfway point — which mirrored is
+~5% done by halfway. Scrubbed at 40ms intervals, the sheet moved 0.04px, 0.5px and
+3.1px of its 18, then the remaining 15 in the last quarter. It hung, then vanished.
+
+Rewritten as `modal-out` / `fade-out` played forward it travels 14.9px in the first
+40ms. This is why `lw-ring-out` and `lw-key-out` restate their scales rather than
+reversing the entrances they mirror — a detail whose reason was not obvious until
+something else needed it.
+
+**Rule for anything added later: an exit that only moves opacity may reverse its
+entrance. An exit that travels needs its own keyframe, played forward.**
 
 ### Held pending a decision
 
