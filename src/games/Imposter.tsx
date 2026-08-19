@@ -3,6 +3,7 @@ import { CardBody, GameScreen } from "../components/GameScreen";
 import { randomItem, shuffle } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { Stepper } from "../components/Stepper";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import type { ModeDef } from "../data/modes";
@@ -77,10 +78,7 @@ export function Imposter({ mode, onBack }: Props) {
 
 
   const setCount = useCallback((next: number) => {
-    setS((prev) => ({
-      ...prev,
-      count: Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, next)),
-    }));
+    setS((prev) => ({ ...prev, count: next }));
   }, []);
 
   const startRound = useCallback(() => {
@@ -150,25 +148,13 @@ export function Imposter({ mode, onBack }: Props) {
           card={
             <div className="card">
             <span className="card__eyebrow">Players</span>
-            <div className="imp-count">
-              <button
-                className="imp-count__step"
-                onClick={() => setCount(s.count - 1)}
-                disabled={s.count <= MIN_PLAYERS}
-                aria-label="One fewer player"
-              >
-                <StepIcon minus />
-              </button>
-              <span className="imp-count__n">{s.count}</span>
-              <button
-                className="imp-count__step"
-                onClick={() => setCount(s.count + 1)}
-                disabled={s.count >= MAX_PLAYERS}
-                aria-label="One more player"
-              >
-                <StepIcon />
-              </button>
-            </div>
+            <Stepper
+              value={s.count}
+              min={MIN_PLAYERS}
+              max={MAX_PLAYERS}
+              onChange={setCount}
+              noun="player"
+            />
             <p className="card__meta">
               One of you won't get the word.{" "}
               {hasRoster
@@ -309,25 +295,5 @@ export function Imposter({ mode, onBack }: Props) {
         </CardBody>
       )}
     </GameScreen>
-  );
-}
-
-/**
- * The stepper's − and +, drawn rather than typed.
- *
- * As text they were centred by their line box, not by their ink, and the
- * display font's ascent and descent overrun a `line-height: 1` box — which
- * dropped the baseline and left the glyph 2px below the middle of its
- * circle. A path has no metrics to fight: it is centred because it is drawn
- * centred. Same reason the back chevron is an svg.
- */
-function StepIcon({ minus }: { minus?: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M5 12h14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      {!minus && (
-        <path d="M12 5v14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      )}
-    </svg>
   );
 }

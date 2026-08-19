@@ -1705,15 +1705,16 @@
 
 .imp-card__meta { color: var(--card-ink-muted); }
 
-/* Player count stepper */
-.imp-count {
+/* Player count stepper — Imposter's roster size and the Number Game's
+   table size. See components/Stepper.tsx. */
+.stepper {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--sp-5);
 }
 
-.imp-count__step {
+.stepper__step {
   display: grid;
   place-items: center;
   /* Square, so the pill radius reads as a circle. It was 56 wide against a
@@ -1733,15 +1734,15 @@
   transition: transform var(--dur-press) var(--ease-out),
               opacity var(--dur-press) ease-out;
 }
-.imp-count__step:active:not(:disabled) {
+.stepper__step:active:not(:disabled) {
   transform: scale(var(--press-scale-sm));
   opacity: var(--press-dim);
 }
 /* Solid ground — this sits on the white card stock, never over a scroller,
    so opacity has nothing to reveal. See the note on `.btn:disabled`. */
-.imp-count__step:disabled { opacity: 0.25; cursor: default; }
+.stepper__step:disabled { opacity: 0.25; cursor: default; }
 
-.imp-count__n {
+.stepper__n {
   min-width: 2.2ch;
   text-align: center;
   font-family: var(--font-display);
