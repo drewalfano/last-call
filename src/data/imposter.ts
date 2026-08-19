@@ -17,9 +17,9 @@ import { lead } from "./pools";
  * more than they look: a table that only ever gets nightlife words runs out of
  * distinct clues fast.
  *
- * Night is meaningfully more adult in subject — dating, hookups, nightlife —
+ * Night is meaningfully more adult in subject — dating, exes, nightlife —
  * rather than the same words with profanity attached. A rude word is not a
- * better secret word; a revealing one is.
+ * better secret word; a clueable one is.
  */
 
 export interface WordCategory {
@@ -128,14 +128,18 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
       ],
     },
   ],
+  /**
+   * Night is adult by SUBJECT — dating, exes, nightlife, the things people
+   * hide — and the words still have to work as Imposter words, which rules
+   * out most of the obvious rude ones twice over.
+   *
+   * A category fails here when its words are interchangeable. "Booty call",
+   * "sneaky link", "one-night stand" and "hookup" all mean the same thing, so
+   * any clue that fits one fits all four: the table cannot separate them and
+   * the Imposter bluffs for free. The words below are chosen to be tellable
+   * APART, not just to be racy.
+   */
   night: [
-    {
-      name: "Hookups",
-      words: [
-        "One-night stand", "Sneaky link", "Booty call", "Walk of shame", "Morning after",
-        "Body count", "Hookup", "Sleepover", "Late night call", "Bedroom",
-      ],
-    },
     {
       name: "Dating",
       words: [
@@ -147,32 +151,40 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
       name: "Exes",
       words: [
         "Ex's apartment", "Rebound", "Ghosting", "Blocked number", "Drunk text",
-        "Old photos", "Someone's ex", "Deleted the app", "Reinstalled the app",
-        "Someone else's hoodie",
+        "Old photos", "Closure", "Box of their stuff", "Someone else's hoodie",
+        "Unfollowed",
       ],
     },
     {
       name: "Texting",
       words: [
-        "Sexting", "Thirst trap", "Left on read", "Slid into the DMs", "Screenshot",
-        "Shared location", "Notifications off", "Unread messages", "Breadcrumbing",
-        "Read receipts",
+        "Left on read", "Double text", "Slid into the DMs", "Screenshot",
+        "Shared location", "Read receipts", "Typing dots", "Notifications off",
+        "Breadcrumbing", "Drafts folder",
       ],
     },
     {
       name: "Nightlife",
       words: [
-        "Strip club", "Afterparty", "Bad decision", "Sunday morning taxi",
-        "Holiday romance", "VIP booth", "Bottle service", "Closing time",
-        "Last one standing", "Lock-in",
+        "Afterparty", "Lock-in", "Closing time", "VIP booth", "Bottle service",
+        "Last one standing", "Night bus", "Queue jump", "Bad decision",
+        "Sunday morning taxi",
       ],
     },
     {
       name: "Red flags",
       words: [
-        "Red flag", "Second phone", "Emergency contact", "Mutual friend",
-        "Situation with a coworker", "Meeting the parents", "Toothbrush at their place",
-        "Hall pass", "Open relationship", "Long distance",
+        "Red flag", "Hall pass", "Open relationship", "Long distance",
+        "Mutual friend", "Someone's coworker", "Toothbrush at their place",
+        "Meeting the parents", "Emergency contact", "Moving in together",
+      ],
+    },
+    {
+      name: "Secrets",
+      words: [
+        "Second phone", "Locked phone", "Burner account", "Snooping",
+        "White lie", "Alibi", "Sworn to secrecy", "Deleted history",
+        "Group chat about you", "Anonymous account",
       ],
     },
   ],
