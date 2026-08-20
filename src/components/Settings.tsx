@@ -3,6 +3,27 @@ import { useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
 
 /**
+ * The build stamp, worded on the device rather than at build time.
+ *
+ * __BUILT_AT__ is an ISO instant baked into the bundle — see vite.config.ts.
+ * Actions builds in UTC, so anything formatted there would read hours off on
+ * the one phone this exists for. `toLocaleString` with no locale argument
+ * takes the device's own, so it comes out in the reader's timezone, in the
+ * order and clock they already use: "20 Aug 2026, 14:32" or "2:32 PM"
+ * depending on the phone, both of which are the right answer for that phone.
+ *
+ * Computed once at module scope. It cannot change while the app is open —
+ * a new build is, by definition, a different bundle.
+ */
+const BUILT_AT = new Date(__BUILT_AT__).toLocaleString(undefined, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/**
  * How long the sheet is held on screen on its way out.
  *
  * Matches --dur-fast, which is what the exit animation takes. It is a number
@@ -159,12 +180,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
             Dated rather than numbered, because "is this current" is really
             "is this today" — no release number to remember to bump and no
-            chance of it confidently stating the wrong answer. The commit
-            beside it pins the exact build, separates two pushes on the same
-            day, and can be checked against the last commit on main. */}
-        <p className="sheet__build">
-          Build {__BUILT_ON__} · {__BUILD_COMMIT__}
-        </p>
+            chance of it confidently stating the wrong answer. The time is what
+            separates two pushes on the same day, which is most of them. */}
+        <p className="sheet__build">Built {BUILT_AT}</p>
       </div>
     </div>
   );

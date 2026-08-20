@@ -1,4 +1,3 @@
-import { execSync } from "node:child_process";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -36,22 +35,23 @@ const base = process.env.VITE_BASE ?? "/";
  *
  * A date needs no discipline and answers the real question on sight. "Is this
  * current" becomes "is this today", with nothing to look up and nothing to
- * remember. The commit sits beside it for the times that is not enough: it
- * pins the exact build, tells two pushes on the same day apart, and can be
- * checked against the last commit on main. GITHUB_SHA is what Actions builds
- * from, so a deployed app stamps the commit it was deployed from; the git
- * call is the local fallback and "dev" covers a tarball with no repo.
+ * remember.
+ *
+ * THE INSTANT IS BAKED; THE WORDING IS NOT. What goes in is an ISO timestamp
+ * to the second, and the phone formats it — see Settings. That split is the
+ * whole reason this is a full timestamp rather than a pre-written string:
+ * Actions builds in UTC, so a stamp formatted here would read an hour or eight
+ * off on the one device it exists for. Formatted on the device it is always in
+ * the timezone of whoever is squinting at it.
+ *
+ * It replaced a date plus a short commit sha. The sha pinned the exact build
+ * and told two pushes on the same day apart, but it answered the question
+ * indirectly — it had to be carried over to `git log` and compared. A time
+ * answers it on sight: a build from four minutes ago is the one you just
+ * pushed, and a build from this morning is not, with nothing to look up. The
+ * same job, done by the thing that was already there.
  */
-const builtOn = new Date().toISOString().slice(0, 10);
-
-const commit = (() => {
-  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7);
-  try {
-    return execSync("git rev-parse --short=7 HEAD").toString().trim();
-  } catch {
-    return "dev";
-  }
-})();
+const builtAt = new Date().toISOString();
 
 /**
  * VITE_SINGLE_FILE marks a standalone-preview build. The PWA plugin stays on
@@ -63,8 +63,7 @@ const commit = (() => {
 export default defineConfig({
   base,
   define: {
-    __BUILT_ON__: JSON.stringify(builtOn),
-    __BUILD_COMMIT__: JSON.stringify(commit),
+    __BUILT_AT__: JSON.stringify(builtAt),
   },
   plugins: [
     react(),
