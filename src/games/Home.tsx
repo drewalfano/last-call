@@ -650,10 +650,14 @@ export function Home({ onPick, returning }: HomeProps) {
   return (
     <div className="screen home">
       <header className="home__head">
-        <div>
-          <h1 className="home__wordmark">Last Call</h1>
-          <p className="home__tagline">11 games. No wifi. Just play.</p>
-        </div>
+        {/* The wordmark is a direct child, not wrapped. It shared a div with a
+            tagline — "11 games. No wifi. Just play." — which was the only line
+            in the app that said what the app was, and was carrying that for an
+            audience of one: whoever opened it the first time. Everyone after
+            that is being handed a phone at a table, and the deck says eleven
+            games by being eleven cards. The wrapper went with the line, so the
+            head is two things now and can simply centre them. */}
+        <h1 className="home__wordmark">Last Call</h1>
         <SettingsButton onOpen={() => setSettingsOpen(true)} />
       </header>
 

@@ -16,14 +16,25 @@
 
 .home__head {
   display: flex;
-  align-items: flex-start;
+  /* Centred, which is worth a word because centring type against a control
+     usually is not this simple. The wordmark's line box is 39.6px and the gear
+     is a 48px tap target, so `center` puts the two boxes on one axis — but a
+     box is not what you see. The letters are all caps and sit inside that box
+     with leading above and below them, which is why centring a heading against
+     a button so often leaves it looking high and gets fixed with a margin that
+     nobody can justify later.
+     Measured here: cap height 26.24px, and its centre falls 0.18px from the
+     centre of the line box. So the boxes and the letters agree, and this needs
+     no nudge. If the wordmark's face or size ever changes, re-measure before
+     trusting that. */
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
   /* Nothing above: --gutter already holds the wordmark 20px off the top, and
      the head adding its own 8 on top of that put Home's first line lower than
      every other screen's. Below it, the same gutter again — the masthead gets
      no more air than the rows under it do, so Home is one flat 20 from the
-     tagline all the way down to the deck. */
+     wordmark all the way down to the deck. */
   padding-block: 0 var(--gutter);
 }
 
@@ -34,11 +45,6 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   line-height: var(--lh-tight);
-}
-
-.home__tagline {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
 }
 
 .settings-btn {
