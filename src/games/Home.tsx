@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
+import { useContentMode } from "../state/contentMode";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
 import { categoryStyle } from "../lib/style";
@@ -500,6 +501,7 @@ export function Home({ onPick, returning }: HomeProps) {
    */
   const [sweeping, setSweeping] = useState(dealing);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { mode: contentMode } = useContentMode();
   /**
    * THE CARD COMING BACK, AND WHETHER IT IS STILL HELD UP.
    *
@@ -531,9 +533,28 @@ export function Home({ onPick, returning }: HomeProps) {
    * it with the same expansion a tap gives. The pause is the point — you see
    * which card was chosen before its color takes the screen.
    */
+  /**
+   * MILD DOES NOT GET HANDED A DRINKING GAME.
+   *
+   * The tier says it plays sober, and three of the eleven cannot: Kings Cup's
+   * rules ARE drink instructions, Ride the Bus is a forfeit ladder, and Drink
+   * If is the verb in its own title. Offering one to a table that has just
+   * said nobody is drinking is the app not listening.
+   *
+   * It gates the PICKER and nothing else. All eleven stay on the deck at every
+   * level and a table that wants Kings Cup can tap it — the rule everywhere
+   * else in this app is that a tier adds and never takes away, and hiding
+   * cards would be the one place that broke it. What Mild changes is what the
+   * app volunteers, not what it allows.
+   */
+  const pickable = useMemo(
+    () => (contentMode === "safe" ? MODES.filter((m) => !m.drinking) : MODES),
+    [contentMode],
+  );
+
   const pickForMe = useCallback(() => {
     if (picked) return;
-    const mode = MODES[Math.floor(Math.random() * MODES.length)];
+    const mode = pickable[Math.floor(Math.random() * pickable.length)];
     const el = deckRef.current?.querySelector<HTMLElement>(`[data-mode="${mode.id}"]`);
     if (!el) {
       onPick(mode.id);
@@ -616,7 +637,7 @@ export function Home({ onPick, returning }: HomeProps) {
       };
       raf.current = requestAnimationFrame(settled);
     }, RING_MS);
-  }, [picked, onPick, openCard]);
+  }, [picked, pickable, onPick, openCard]);
 
   /**
    * Whichever beat is pending when Home goes, goes with it. Both share the one

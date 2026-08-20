@@ -32,6 +32,18 @@ export interface ModeDef {
   color: string;
   /** The app's namesake gets a star on Home. */
   signature?: boolean;
+  /**
+   * A drinking game at heart: the drinking IS the mechanic, not a prompt it
+   * happens to carry. Kings Cup's rules ARE drink instructions, Ride the Bus
+   * is a forfeit ladder, and Drink If is the verb in its own title.
+   *
+   * They are exempt from anything that tries to make the app sober, because
+   * there is nothing left of them once you do. What it gates is
+   * `pickForMe` — see Home. The cards stay on the deck at every level and a
+   * table that wants one can still tap it; what changes is that the app
+   * stops handing one to a table that has just told it nobody is drinking.
+   */
+  drinking?: boolean;
 }
 
 /**
@@ -72,12 +84,14 @@ export const MODES: ModeDef[] = [
   },
   {
     id: "kings-cup",
+    drinking: true,
     title: "Kings Cup",
     tagline: "Draw a card, do what it says.",
     color: "--cat-kings-cup",
   },
   {
     id: "ride-the-bus",
+    drinking: true,
     title: "Ride the Bus",
     tagline: "Four rounds, then try to get off the bus.",
     color: "--cat-ride-the-bus",
@@ -96,6 +110,7 @@ export const MODES: ModeDef[] = [
   },
   {
     id: "drink-if",
+    drinking: true,
     title: "Drink If…",
     tagline: "No turns, no setup. Call yourself out.",
     color: "--cat-drink-if",
