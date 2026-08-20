@@ -232,7 +232,24 @@ button { font: inherit; color: inherit; }
    is passing behind it.
    --------------------------------------------------------------- */
 .btn--float {
-  border-color: transparent;
+  /* AN EDGE, BECAUSE THE FILL IS NOT ALWAYS ITS OWN.
+     .btn fills with --category-ink, and on the four dark packs that ink is
+     #FFFFFF — the same white as --card-surface, which is the picker's card
+     stock. So on Same Page, Kings Cup, Drink If and Last Call this button was
+     a white pill with the same corner radius as the white cards it floats
+     over, and it disappeared into them. The other seven packs never showed it
+     because their ink is near-black.
+     Forcing it black everywhere is the fix that looks obvious and is wrong:
+     white ink exists on those four precisely BECAUSE their fields are dark, so
+     a black button would sink into the background instead of the cards.
+     The pack colour is the one thing the cards never carry, so an edge in it
+     separates the button from them without touching the seven that already
+     work — against a flat field of that same colour it is invisible, and it
+     only appears where a card passes behind, which is where it is needed.
+     The darker cut is the recipe .deck-card already uses for its own edge; it
+     reads as an edge rather than as a highlight, and reusing it means there is
+     one such recipe in the app rather than two. */
+  border-color: color-mix(in srgb, var(--category) 80%, #000 20%);
   box-shadow: 0 6px 22px -8px rgba(0, 0, 0, 0.55);
 }
 
