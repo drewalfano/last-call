@@ -158,7 +158,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             </span>
           </div>
           <div className="segmented segmented--three" role="group" aria-label="Appearance">
-            {(["dark", "light", "device"] as const).map((opt) => (
+            {(["light", "dark", "device"] as const).map((opt) => (
               <button
                 key={opt}
                 className="segmented__opt"
