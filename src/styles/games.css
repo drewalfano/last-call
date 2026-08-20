@@ -2128,9 +2128,10 @@
 
 /* Out of the tab order and the accessibility tree, exactly as if it were not
    rendered — see .gfoot__skip[data-hidden], which does the same thing for the
-   same reason. It fades and shrinks slightly rather than blinking: it arrives
-   at the moment the row below it opens, and two different kinds of appearing
-   in one beat is what read as a glitch.
+   same reason. A plain fade, no scale: it used to shrink a little on the way
+   out as well, and stacked on the box collapsing below it that read as the
+   button folding rather than leaving. One property is enough here — the row
+   underneath is already supplying all the movement this moment needs.
 
    `visibility` is the one property that must NOT interpolate, so it is
    switched at the far end of the transition on the way out and immediately on
@@ -2138,26 +2139,29 @@
 .roster__clear {
   transition: transform var(--dur-press) var(--ease-out),
               opacity var(--dur-base) var(--ease-glide),
-              border-color var(--dur-base) var(--ease-out),
               visibility 0s;
 }
 .roster__clear[data-hidden] {
   visibility: hidden;
   opacity: 0;
-  transform: scale(0.92);
   pointer-events: none;
-  /* AND IT STOPS HOLDING THE ROW OPEN. Hidden is not gone: a --control-sm
-     button still contributes 40px of height to the head, which is a floor the
-     collapsed tile cannot get under — it was arriving 16px too tall with the
-     question stranded in the middle of an empty row. The head states its own
-     min-height for both states now (see .roster__head), so this one only ever
-     applied while the tile was open, where the head is already 40. Nothing
-     visible moves when it changes. */
-  min-height: 0;
   transition: opacity var(--dur-base) var(--ease-glide),
-              transform var(--dur-base) var(--ease-glide),
               visibility 0s var(--dur-base);
 }
+
+/* IT ONLY HAS TO STOP RESERVING HEIGHT WHEN THE TILE IS SHUT — not whenever
+   it is hidden, which is what made it fold.
+
+   Hidden is not gone: a --control-sm button still contributes 40px to the
+   head, and that is a floor the collapsed tile cannot get under; it was
+   arriving 16px too tall with the question stranded in an empty row. But
+   keying the fix to `[data-hidden]` meant taking the last name out of an OPEN
+   tile also collapsed the button's box, 40px to its line height, while it was
+   still on screen fading — which is the crease you see. Keyed to the tile
+   instead, it fades at full size and the box only goes once the whole tile has.
+   Nothing is visible by then to fold. */
+.roster:not([data-open]) .roster__clear { min-height: 0; }
+
 
 /* ---------------------------------------------------------------
    THE TWO SLOTS.
@@ -2345,8 +2349,37 @@
      that is already open has nothing to hide behind it. */
   --k: 0;
   margin-bottom: calc(var(--sp-2) * -1);
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - min(12px, var(--control-sm) * (1 - var(--k)) * 2)), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - min(12px, var(--control-sm) * (1 - var(--k)) * 2)), transparent 100%);
+  /* EASED, NOT LINEAR — and this is the difference between a fade and a
+     smear. A two-stop gradient holds alpha at 1 and then CORNERS into a
+     straight decline: the value is continuous but its slope is not, and the
+     eye reads that crease as an edge no matter how long you make the ramp.
+     Deepening it only makes a longer smear.
+
+     So the stops walk a smootherstep instead. Alpha leaves 1 almost flat,
+     drops through the middle, and approaches 0 flat again, which is the
+     shape that has no corner to find at either end. Same idea as the ramps
+     in .pick-me__ring, and the reason that one needed its own note: a curve
+     with a flat foot is exactly right when it is LEAVING a value and exactly
+     wrong when something has to appear at the far end of it. Nothing appears
+     here — the row is only ever hiding what it has not revealed yet.
+
+     16px rather than 12: the eased ramp spends its first fifth barely moving,
+     so it needs a little more room to cover the same cut. */
+  --fade: min(16px, var(--control-sm) * (1 - var(--k)) * 2);
+  -webkit-mask-image: linear-gradient(to bottom,
+      rgb(0 0 0 / 1)    calc(100% - var(--fade)),
+      rgb(0 0 0 / 0.94) calc(100% - var(--fade) * 0.8),
+      rgb(0 0 0 / 0.73) calc(100% - var(--fade) * 0.6),
+      rgb(0 0 0 / 0.32) calc(100% - var(--fade) * 0.4),
+      rgb(0 0 0 / 0.06) calc(100% - var(--fade) * 0.2),
+      transparent       100%);
+  mask-image: linear-gradient(to bottom,
+      rgb(0 0 0 / 1)    calc(100% - var(--fade)),
+      rgb(0 0 0 / 0.94) calc(100% - var(--fade) * 0.8),
+      rgb(0 0 0 / 0.73) calc(100% - var(--fade) * 0.6),
+      rgb(0 0 0 / 0.32) calc(100% - var(--fade) * 0.4),
+      rgb(0 0 0 / 0.06) calc(100% - var(--fade) * 0.2),
+      transparent       100%);
   transition: height var(--dur-base) var(--ease-glide),
               margin-bottom var(--dur-base) var(--ease-glide),
               --k var(--dur-base) var(--ease-glide);
