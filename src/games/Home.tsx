@@ -382,10 +382,15 @@ const DECK_DEAL_MS = (MODES.length - 1) * 46 + 620;
  * It used to be a flat 720ms from mount, which put the ring's first piece 360ms
  * before the last card had landed — the beat was not a beat at all, it was an
  * overlap, and the two events read as one thing arriving on top of itself.
- * Three quarters of a second after the deck has actually settled is what makes
- * it a beat: the cards land, everything stops, and only then does the button
- * offer. The number is short enough to feel like a pause rather than a wait,
- * and it is measured from the deal so it stays that way if the deal is retimed.
+ * Half a second after the deck has actually settled is what makes it a beat:
+ * the cards land, everything stops, and only then does the button offer. It is
+ * measured from the deal rather than from mount, so it stays a beat if the
+ * deal is ever retimed.
+ *
+ * It reads as slightly longer than it is, and that is why 500 is enough where
+ * 500 from a standing start would not be. The line is born at zero opacity and
+ * climbs over its runway, so nothing is visible on the very first frame after
+ * the wait — the eye gets the pause plus the fade, not the pause alone.
  *
  * A number here rather than `--dur-slow + --dur-base` in the stylesheet, which
  * is what it used to be. Those two happened to add to 720 and had nothing to
@@ -397,7 +402,7 @@ const DECK_DEAL_MS = (MODES.length - 1) * 46 + 620;
  * kept in step by hand. It reaches the stylesheet as `--deal-delay` now, like
  * every other number in the flourish.
  */
-const DEAL_DELAY_MS = DECK_DEAL_MS + 750;
+const DEAL_DELAY_MS = DECK_DEAL_MS + 500;
 const DEAL_LAP_MS = 1280;
 const DEAL_LIFE_MS = 515;
 const DEAL_STEP_MS = DEAL_LAP_MS / RING_RAMP.length;
