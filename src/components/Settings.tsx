@@ -2,6 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
 
+/** Order is the control's order, and the index of the current one drives the
+    travelling fill — see .segmented. Declared once so the two cannot drift. */
+const APPEARANCE = ["light", "dark", "device"] as const;
+
 /**
  * The build stamp, worded on the device rather than at build time.
  *
@@ -132,7 +136,14 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 : "Adult, but comfortable with coworkers or a date at the table."}
             </span>
           </div>
-          <div className="segmented" role="group" aria-label="Content rating">
+          <div
+            className="segmented"
+            role="group"
+            aria-label="Content rating"
+            /* --i is which option is on and --n how many there are; the fill
+               that travels between them is drawn from these. See .segmented. */
+            style={{ ["--n" as string]: 2, ["--i" as string]: isNight ? 1 : 0 }}
+          >
             <button
               className="segmented__opt"
               data-on={!isNight || undefined}
@@ -157,8 +168,16 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               Device follows your phone. Packs keep their colour either way.
             </span>
           </div>
-          <div className="segmented segmented--three" role="group" aria-label="Appearance">
-            {(["light", "dark", "device"] as const).map((opt) => (
+          <div
+            className="segmented segmented--three"
+            role="group"
+            aria-label="Appearance"
+            style={{
+              ["--n" as string]: APPEARANCE.length,
+              ["--i" as string]: APPEARANCE.indexOf(preference),
+            }}
+          >
+            {APPEARANCE.map((opt) => (
               <button
                 key={opt}
                 className="segmented__opt"

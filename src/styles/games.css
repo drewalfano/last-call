@@ -168,18 +168,62 @@
 
 /* Two states side by side, so the current one is visible without reading a
    label — a lone switch never says which way is on. */
+/* ---------------------------------------------------------------
+   THE FILL IS ONE THING THAT MOVES, NOT A COLOUR ON EACH OPTION.
+
+   It used to be `background` on whichever option carried [data-on],
+   transitioned. That cross-FADES: the old fill dims where it stands
+   while the new one brightens where it stands, and nothing ever
+   travels between them. The note under :active has claimed the fill
+   "slides across" for a while; this is the change that makes that
+   sentence true.
+
+   One pseudo-element, translated. --i is the selected index and --n
+   the option count, both set from Settings.tsx, so the same rule
+   serves the two-up and the three-up without knowing which it is.
+
+   The percentage in translateX resolves against the THUMB's own
+   width, which is exactly one column — so one step is 100% plus the
+   4px gap, whatever the control is sized to. Nothing here needs a
+   pixel measurement or a resize observer.
+   --------------------------------------------------------------- */
 .segmented {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(var(--n, 2), 1fr);
   gap: 4px;
   padding: 4px;
   border: var(--border-width) solid var(--border-soft);
   border-radius: var(--radius-pill);
 }
 
+.segmented::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  /* The track less its padding and its gaps, divided by the options. */
+  width: calc((100% - 8px - (var(--n, 2) - 1) * 4px) / var(--n, 2));
+  border-radius: var(--radius-pill);
+  background: var(--control-bg);
+  transform: translateX(calc(var(--i, 0) * (100% + 4px)));
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented::before { transition: none; }
+}
+
+/* --n also drives the columns, so a three-up needs no class of its own for
+   layout — this one only carries the smaller type. */
 .segmented--three { grid-template-columns: repeat(3, 1fr); }
 
 .segmented__opt {
+  /* Above the travelling fill. */
+  position: relative;
+  z-index: 1;
   min-height: var(--control-md);
   border: none;
   border-radius: var(--radius-pill);
@@ -210,7 +254,10 @@
    fill is saying. */
 .segmented__opt:active { transform: scale(var(--press-scale)); }
 .segmented--three .segmented__opt { font-size: var(--fs-sm); }
-.segmented__opt[data-on] { background: var(--control-bg); color: var(--control-text); }
+/* No background of its own any more — the thumb behind it is the fill. Only
+   the ink changes, and it changes on the same curve the thumb travels on, so
+   the label darkens as the fill arrives under it rather than before it. */
+.segmented__opt[data-on] { color: var(--control-text); }
 
 .home__deck {
   display: flex;
