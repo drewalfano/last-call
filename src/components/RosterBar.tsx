@@ -27,6 +27,12 @@ export function RosterBar() {
   if (!open && !hasRoster) {
     return (
       <button className="roster__prompt" onClick={() => setOpen(true)}>
+        {/* The dashes are a stroke, not a border. A CSS `dashed` border cannot
+            round its dashes and hands the corners to the browser, which is
+            where it visibly gives up — see .roster__prompt-outline. */}
+        <svg className="roster__prompt-outline" aria-hidden="true">
+          <rect />
+        </svg>
         <span className="roster__prompt-label">Who's playing?</span>
         <span className="roster__prompt-hint">Optional — names make it better</span>
       </button>

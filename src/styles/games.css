@@ -1742,18 +1742,83 @@
   padding: var(--sp-3) var(--sp-4);
   /* The column's one gap — the same 20 that holds it off the side edges. */
   margin-bottom: var(--gutter);
-  border: var(--border-width) dashed var(--border-soft);
+  /* SOLID AND TRANSPARENT, because the dashes are drawn as a stroke instead —
+     see .roster__prompt-outline. The border still has to be declared at its
+     real width: it is holding the box open. Drop it and everything inside
+     moves 2px, which is the trap in replacing a border with a drawing. */
+  border: var(--border-width) solid transparent;
   border-radius: var(--radius-lg);
   background: transparent;
   color: var(--text);
   text-align: left;
   cursor: pointer;
+  /* The stroke that replaced the border is absolutely positioned against this. */
+  position: relative;
   transition: transform var(--dur-press) var(--ease-out),
-              opacity var(--dur-press) ease-out,
-              border-color var(--dur-base) var(--ease-out);
+              opacity var(--dur-press) ease-out;
 }
 .roster__prompt:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
-.roster__prompt:hover { border-color: var(--text-muted); }
+
+/* ---------------------------------------------------------------
+   PILLS, NOT TICKS.
+
+   A CSS `dashed` border draws rectangles and there is no property
+   that rounds them — `border-style` has no cap. It also decides the
+   dash length itself, per edge, and reconciles the leftover at the
+   corners, which is why the four corners of this tile each carried a
+   stub of a different length. The dashes were not the same size as
+   each other and could not be made to be.
+
+   An svg stroke owns both: `stroke-linecap: round` turns every dash
+   into a pill, and one dasharray runs continuously round the whole
+   outline, corner arcs included, so every pill is the same length
+   wherever it lands.
+
+   The pattern is in PIXELS rather than normalised through
+   `pathLength`, and that is the one real choice here. Normalising
+   would divide the outline into a whole number of dashes and leave
+   no remainder at all — but the number of them would be fixed, so a
+   pill would be 6px on a phone and about twice that on a tablet,
+   where this tile is 652px wide instead of 335. Same size at every
+   width is what was asked for, so the size is what is written down
+   and the remainder is what gives: one gap, where the pattern wraps
+   at the top-left corner, up to 10px instead of 4.
+
+   4 rather than 6 for the dash, because a round cap overhangs its
+   own length by half the stroke at each end. 4 plus a 2px stroke is
+   the 6px pill the square dashes were.
+   --------------------------------------------------------------- */
+.roster__prompt-outline {
+  position: absolute;
+  /* Negative by the border width, and spelled out: an svg is a REPLACED
+     element, so `inset: 0` alone would size it to the padding box and leave
+     the dashes running inside the edge rather than on it. The same reasoning
+     as .pick-me__ring, which is the other drawing in this app standing where
+     a border would be. */
+  inset: calc(var(--border-width) * -1);
+  width: calc(100% + var(--border-width) * 2);
+  height: calc(100% + var(--border-width) * 2);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.roster__prompt-outline rect {
+  /* Inset by half the stroke so the 2px line lands ON the border box rather
+     than straddling its outer edge. */
+  x: 1px;
+  y: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  rx: var(--radius-lg);
+  ry: var(--radius-lg);
+  fill: none;
+  stroke: var(--border-soft);
+  stroke-width: var(--border-width);
+  stroke-linecap: round;
+  stroke-dasharray: 4 6;
+  transition: stroke var(--dur-base) var(--ease-out);
+}
+.roster__prompt:hover .roster__prompt-outline rect { stroke: var(--text-muted); }
 
 .roster__prompt-label {
   font-family: var(--font-display);
