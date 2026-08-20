@@ -41,7 +41,7 @@ export const NUMBER_GAME_CATEGORIES: Pools<string> = {
     "Worst places to get caught",
     "Reasons to block someone",
     "Things you'd never admit sober",
-    "Bad first-date questions",
+    "Bad first date questions",
     "Ways to ruin a night out",
     "Morning-after regrets",
     "Things that kill the mood",

@@ -147,7 +147,7 @@ export const LAST_WORD_CATEGORIES: Pools<string> = {
     "Guilty pleasures",
     "Things you'd delete before handing over your phone",
     "Reasons to block someone",
-    "Things you've drunk-bought online",
+    "Things you've bought drunk",
     "Signs someone isn't interested",
     "Things you can't say at work",
     "Reasons a situationship dies",

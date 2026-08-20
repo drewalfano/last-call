@@ -171,7 +171,7 @@ export function SayTheSameThing({ mode, onBack }: Props) {
                   <p className="card__prompt">{word}</p>
                   <p className="card__meta">
                     {attempt === 1
-                      ? `${pair[0]} and ${pair[1]}, say the first thing you think of — at the same time.`
+                      ? `${pair[0]} and ${pair[1]}, say the first thing you think of, at the same time.`
                       : "Say the word that connects your two answers. At the same time."}
                   </p>
                 </>

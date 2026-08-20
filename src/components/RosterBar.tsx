@@ -34,7 +34,7 @@ export function RosterBar() {
           <rect />
         </svg>
         <span className="roster__prompt-label">Who's playing?</span>
-        <span className="roster__prompt-hint">Optional — names make it better</span>
+        <span className="roster__prompt-hint">Optional. Names make it better</span>
       </button>
     );
   }

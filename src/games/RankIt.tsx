@@ -35,7 +35,7 @@ interface Props {
 }
 
 export function RankIt({ mode, onBack }: Props) {
-  const { mode: contentMode } = useContentMode();
+  const { mode: contentMode, tier } = useContentMode();
   const { players, hasRoster } = useRoster();
   /* LEAD, not replace. The lists are browsable by name in the picker below,
      so replacing them made every familiar list vanish the moment the table
@@ -112,7 +112,7 @@ export function RankIt({ mode, onBack }: Props) {
       subtitle={phase === "revealed" ? `${hits} of ${total} right` : prompt.title}
       note={
         phase === "ranking"
-          ? `${ranker} — privately`
+          ? `${ranker}, privately`
           : phase === "guessing"
             ? "Everyone else"
             : undefined
@@ -132,7 +132,7 @@ export function RankIt({ mode, onBack }: Props) {
               <span className="card__eyebrow">Ranker</span>
               <p className="card__prompt">{ranker}</p>
               <p className="card__meta">
-                Your list, your opinion. Nobody else looks — they get their own go
+                Your list, your opinion. Nobody else looks. They get their own go
                 at guessing it after.
               </p>
             </div>
@@ -303,10 +303,18 @@ export function RankIt({ mode, onBack }: Props) {
             </ol>
           }
         >
+          {/* THE SCORE FIRST, AND THE DRINK ONLY IF THE TIER TAKES ONE.
+              This line used to say "Drink 4" at every level, including Mild —
+              which is the one tier that promises it plays sober. Rank It is
+              not a drinking game at heart: it is guessing how somebody thinks,
+              and the drink was a consequence bolted onto a result. So the
+              result is what it states, and the drink is an extra sentence that
+              Spicy and Filthy add, because those are the tiers where there is
+              a glass on the table to begin with. */}
           <p className="rank__rule">
             {hits === total
-              ? `Nobody drinks. You know ${ranker} too well.`
-              : `Drink ${total - hits} — one for every one you missed.`}
+              ? `All ${total}. You know ${ranker} too well.`
+              : `${hits} of ${total}.${tier > 0 ? ` Drink ${total - hits}.` : ""}`}
           </p>
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={nextRound}>

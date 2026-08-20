@@ -88,7 +88,7 @@ export const LAST_CALL: Pools<Wildcard> = {
     { kind: "question", text: "Who's the funniest person you know in real life?", intensity: 1 },
     { kind: "question", text: "What's a rule you live by that you'd recommend to anyone?", intensity: 2 },
     { kind: "question", text: "What's the last thing you did for the first time?", intensity: 3 },
-    { kind: "question", text: "If you had to give a 20-minute talk with no prep, what's the topic?", intensity: 3 },
+    { kind: "question", text: "If you had to give a 20 minute talk with no prep, what's the topic?", intensity: 3 },
     { kind: "question", text: "How did tonight actually start? Whoever's turn it is tells it.", intensity: 1 },
     { kind: "vote", text: "Point at who's most likely to still be out at closing.", intensity: 1 },
     { kind: "drink", text: "Everyone who's checked their phone in the last minute drinks.", intensity: 1 },

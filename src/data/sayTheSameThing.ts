@@ -70,7 +70,7 @@ export const SAY_THE_SAME_THING: Pools<string> = {
     "Things you'd fake",
     "Reasons to unmatch",
     "Things you'd take back",
-    "Bad first-date questions",
+    "Bad first date questions",
     "Things you'd never admit",
     "Questionable decisions",
     "Things you'd blame on the drinks",

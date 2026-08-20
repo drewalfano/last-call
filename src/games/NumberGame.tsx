@@ -172,21 +172,16 @@ export function NumberGame({ mode, onBack }: Props) {
                 onChange={setSeats}
                 noun="player"
               />
-              {/* WHAT THE GAME IS, ON THE FIRST SCREEN THAT SHOWS ONE.
+              {/* ONE LINE, AND IT IS THE RULE.
                   This card asked how many were playing and never said what
-                  they would be playing — and neither did the bidding screen
-                  after it, which shows a name, a number and two buttons and
-                  trusts you to infer the verb from them. Every other mode
-                  states its rule on the card you meet first; this one had the
-                  seating note in the only place that could have. */}
+                  they would be playing, so the rule went on. Then it carried
+                  two paragraphs, which on a card this size is a wall: the note
+                  about seating was answering a question nobody had asked yet.
+                  What a player needs here is what the game is. The stepper
+                  above it already says the rest. */}
               <p className="card__meta">
-                Bid how many you can name from a category. Raise it, or make
-                someone prove theirs — then they have {SECONDS_PER_ITEM}
-                &nbsp;seconds a piece to actually name them.
-              </p>
-              <p className="card__meta">
-                The bid goes round the table, so it has to know where the table
-                ends. Add names on Home and it uses those instead.
+                Bid how many you can name from a category. Raise, or call it
+                and make them prove it.
               </p>
             </div>
           }

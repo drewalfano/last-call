@@ -34,7 +34,7 @@ export const MOST_LIKELY_TO: Pools<string> = {
     "get banned from a group chat.",
     "become everyone's therapist tonight.",
     "accidentally join a cult.",
-    "get into an argument with a self-checkout machine.",
+    "get into an argument with a self checkout machine.",
     "be the first to leave tonight.",
     "be the last to admit they're leaving tonight.",
     "run a marathon on a bet.",

@@ -3438,15 +3438,17 @@
   text-align: center;
 }
 
-/* The rule, under the two names and the number they are arguing about. Held
-   off the bottom of the card rather than sitting under the roles, because it
-   is a caption for the BUTTONS below the card, not a third label on the bid.
+/* The rule, under the two names and the number they are arguing about.
    Sentence case on purpose: everything else on this card is a name or a
    figure, set in caps, and one line of ordinary writing is what makes it read
-   as an instruction rather than another piece of state. */
+   as an instruction rather than another piece of state.
+
+   `margin-top: auto` was the first attempt and it was wrong. It pinned this to
+   the foot of a card whose height is set by the biggest thing it ever holds,
+   so the line sat alone with a hand's width of nothing above it. The bid is
+   one group of three lines; this belongs with them, not exiled from them. */
 .num__rule {
-  margin-top: auto;
-  padding-top: var(--sp-4);
+  margin-top: var(--sp-3);
   text-align: center;
   text-wrap: balance;
 }

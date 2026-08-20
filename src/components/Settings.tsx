@@ -34,7 +34,7 @@ const TIERS: {
 }[] = [
   { mode: "safe", label: "Mild", hint: "Plays sober, with anyone.",
     icon: { size: 20, flame: false } },
-  { mode: "night", label: "Spicy", hint: "Adds bar-night material. Drinking assumed.",
+  { mode: "night", label: "Spicy", hint: "Adds material for a night out. Drinking assumed.",
     icon: { size: 16, flame: true } },
   { mode: "filthy", label: "Filthy",
     hint: "Adds what you would only admit to people who will not repeat it.",
@@ -181,7 +181,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <div className="setting__label">
             <span className="setting__name">Content</span>
             <span className="setting__hint">
-              <b>{TIERS[tier].label}</b> — {TIERS[tier].hint}
+              <b>{TIERS[tier].label}.</b> {TIERS[tier].hint}
             </span>
           </div>
           <div

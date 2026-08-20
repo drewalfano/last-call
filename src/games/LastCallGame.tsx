@@ -99,7 +99,7 @@ export function LastCallGame({ mode, onBack }: Props) {
               <span className="card__eyebrow">That's the round</span>
               <p className="card__prompt">No cards left.</p>
               <p className="card__meta">
-                {"Pour another and go again — it deals from the top."}
+                {"Pour another and go again. It deals from the top."}
               </p>
             </div>
           }

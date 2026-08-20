@@ -196,7 +196,7 @@ export function Imposter({ mode, onBack }: Props) {
         <CategoryPicker
           categories={categories}
           customNoun="word"
-          customNote="Whoever types this will see it — and can still be dealt the Imposter. Your table, your call."
+          customNote="Whoever types this will see it, and can still be dealt the Imposter. Your table, your call."
           onPick={(c) => setS((prev) => ({ ...prev, category: c, phase: "setup" }))}
           onCancel={() => setS((prev) => ({ ...prev, phase: "setup" }))}
         />
@@ -277,7 +277,7 @@ export function Imposter({ mode, onBack }: Props) {
                 Go round the group. One clue each about the word.
               </p>
               <p className="card__meta">
-                Don't make it too obvious — the Imposter is listening and has to
+                Don't make it too obvious. The Imposter is listening and has to
                 blend in. Argue it out, point at someone, and let the Imposter own
                 up. Everyone but them already knows the word.
               </p>
