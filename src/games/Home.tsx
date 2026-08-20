@@ -3,6 +3,7 @@ import { MODES, type ModeId } from "../data/modes";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
 import { categoryStyle } from "../lib/style";
+import { DeckFace } from "../components/DeckFace";
 
 interface HomeProps {
   /** The rect lets App expand the mode's color out from the card you tapped. */
@@ -617,15 +618,7 @@ export function Home({ onPick, returning }: HomeProps) {
             }}
             onClick={(e) => openCard(mode.id, e.currentTarget)}
           >
-            <span className="deck-card__title">
-              {mode.title}
-              {mode.signature && (
-                <span className="deck-card__star" aria-label="the namesake mode">
-                  ★
-                </span>
-              )}
-            </span>
-            <span className="deck-card__tagline">{mode.tagline}</span>
+            <DeckFace mode={mode} />
           </button>
         ))}
       </nav>

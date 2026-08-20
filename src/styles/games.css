@@ -539,6 +539,51 @@
    the Web Animations API, because only JavaScript can know where the card is.
    `will-change: clip-path` above covers the pair. */
 
+/* ---------------------------------------------------------------
+   THE CARD'S WRITING, RIDING ON THE CLOSING COLOUR.
+
+   The last stretch of a close has the colour sitting exactly where a
+   card is, and a card has writing on it. This is that writing, ON the
+   colour rather than under it — see FACE_FROM_MS in App.tsx for why
+   that distinction is the whole idea, and for the hand-off when the
+   overlay goes.
+
+   Positioned by App, which is the only thing that knows where the
+   card is. A clip-path cuts a shape out of a full-screen element
+   without changing its box, so a child has nothing to lay itself out
+   against and has to be told.
+
+   It borrows the card's own type through DeckFace's classes and the
+   card's own inset here, so the copy lands on the same pixels the
+   real writing occupies. Change .deck-card's padding and this has to
+   move with it — which is the one seam this approach cannot close,
+   and the reason the TYPE at least is shared rather than restated.
+   --------------------------------------------------------------- */
+.launch__face {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: var(--sp-4) var(--sp-5);
+  color: var(--category-ink, var(--cat-ink));
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The card's inset changes at the tablet breakpoint; so does this. */
+@media (min-width: 640px) and (min-height: 600px) {
+  .launch__face {
+    gap: var(--sp-1);
+    padding: var(--sp-6) var(--sp-8);
+  }
+}
+
+/* Motion is the flourish. Stopped, there is no overlay to carry it. */
+@media (prefers-reduced-motion: reduce) {
+  .launch__face { display: none; }
+}
+
 /* ---------------- Pick a game for me ---------------- */
 /* ---------------------------------------------------------------
    THE ONE BUTTON THAT HAS TO ASK.

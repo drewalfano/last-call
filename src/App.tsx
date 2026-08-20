@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MODE_BY_ID, type ModeId } from "./data/modes";
 import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
+import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
 import { Home } from "./games/Home";
 import { DeckGame, DECK_GAMES, isDeckGame, type DeckGameConfig } from "./games/DeckGame";
@@ -123,6 +124,31 @@ const DISSOLVE_FROM_MS = 265;
 const DISSOLVE_EASE = "cubic-bezier(0.7, 0, 1, 1)";
 
 /**
+ * THE CARD'S WRITING, CARRIED ON THE COLOUR.
+ *
+ * The overlay is a flat field, and for most of the way in that is all it needs
+ * to be. At the end it is sitting exactly where a card is, and a card has
+ * writing on it — so the last stretch shows the name and the tagline coming up
+ * ON the colour rather than through it.
+ *
+ * ON, and that is the whole point of doing it this way. Fading the REAL card's
+ * text underneath means reading white type through a half-transparent field of
+ * its own colour, which is what greys it out; the earlier passes at this spent
+ * their time tuning how briefly that happened rather than avoiding it. Put the
+ * writing above the colour and it is never seen through anything.
+ *
+ * It is a CHILD of the overlay, so when the colour goes it goes too — and that
+ * is the hand-off, not a fault. The real card underneath is identical, in the
+ * same place, already at full strength: the copy fades out as the colour does
+ * and what is left is the card itself. Nothing appears, and nothing pops.
+ *
+ * 240ms, where the clip is about 96% of the way home — near enough that the
+ * writing arrives on something the size and shape of a card rather than
+ * floating in a large field of colour.
+ */
+const FACE_FROM_MS = 240;
+
+/**
  * How long the overlay is given before it is retired regardless.
  *
  * The animation's `onfinish` is the ordinary path; this is the guarantee. A
@@ -146,6 +172,7 @@ export default function App() {
   const [closing, setClosing] = useState<ModeId | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLDivElement>(null);
+  const faceRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number>(undefined);
   const failsafe = useRef<number>(undefined);
   const { theme } = useTheme();
@@ -383,6 +410,24 @@ export default function App() {
           easing: DISSOLVE_EASE,
           fill: "forwards",
         });
+
+        /* The writing, pinned to the rect the colour is landing on so that the
+           card underneath is already carrying it in exactly that place when
+           the overlay goes. Its own left/width rather than the clip's, because
+           a clip cuts a shape out of a full-screen element and gives a child
+           nothing to lay itself out against. */
+        const face = faceRef.current;
+        if (face) {
+          face.style.top = `${r.top - drift}px`;
+          face.style.left = `${r.left}px`;
+          face.style.width = `${r.right - r.left}px`;
+          face.animate([{ opacity: 0 }, { opacity: 1 }], {
+            duration: CLOSE_MS - FACE_FROM_MS,
+            delay: FACE_FROM_MS,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            fill: "forwards",
+          });
+        }
       } else {
         anim = el.animate([{ opacity: 1 }, { opacity: 0 }], {
           duration: CLOSE_MS,
@@ -517,7 +562,11 @@ export default function App() {
             clipPath: "inset(0px round 28px)",
           }}
           aria-hidden="true"
-        />
+        >
+          <div className="launch__face" ref={faceRef}>
+            <DeckFace mode={MODE_BY_ID[closing]} />
+          </div>
+        </div>
       )}
     </div>
   );
