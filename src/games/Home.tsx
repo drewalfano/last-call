@@ -145,7 +145,7 @@ const REVEAL_MS = 240;
  * The two sweeps. Both reach the stylesheet as custom properties, so this file
  * is the only place the flourish is described and the two cannot drift.
  */
-const DEAL_DELAY_MS = 420;
+const DEAL_DELAY_MS = 720;
 const DEAL_STEP_MS = 4;
 const DEAL_LIFE_MS = 515;
 const DEAL_SWEEP_MS = (RING_RAMP.length - 1) * DEAL_STEP_MS + DEAL_LIFE_MS;

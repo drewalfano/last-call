@@ -719,14 +719,20 @@
    drawn from, which is what keeps a blurred piece over the eight sharp ones
    it stands for rather than racing them.
 
-   Held back by --dur-base + --dur-fast: the first is `screen-in`, the
-   animation that carries LAST CALL in, and the second is a beat after it,
-   because starting the instant the title stopped moving read as the two
-   being one event. */
+   Held back by --dur-slow + --dur-base. The first figure is longer than
+   `screen-in` actually takes — that is --dur-base — and deliberately so: the
+   ring should not start as the title lands, it should start once the screen
+   has visibly settled. At --dur-base + --dur-fast the two read as one event
+   arriving on top of itself, which is what made opening the app feel abrupt.
+   720ms leaves a clear beat of stillness first, and the beat is the point:
+   the deck is dealt, everything stops, and only then does the button offer.
+
+   DEAL_DELAY_MS in games/Home.tsx is this same number and is what retires
+   the ring from the DOM. Change one, change the other. */
 .pick-me__ring g[data-sweep="deal"] > rect {
   animation: pick-me-piece-deal calc(var(--deal-life) * 1ms) linear both;
   animation-delay: calc(
-    var(--dur-base) + var(--dur-fast) + var(--seg) * var(--step, 1) * var(--deal-step) * 1ms
+    var(--dur-slow) + var(--dur-base) + var(--seg) * var(--step, 1) * var(--deal-step) * 1ms
   );
 }
 
@@ -740,7 +746,7 @@
    of nothing and goes back into nothing. */
 .pick-me__ring g[data-sweep="deal"] {
   animation: pick-me-veil calc(var(--deal-total) * 1ms) linear both;
-  animation-delay: calc(var(--dur-base) + var(--dur-fast));
+  animation-delay: calc(var(--dur-slow) + var(--dur-base));
 }
 
 .pick-me__ring g[data-sweep="pick"] {
