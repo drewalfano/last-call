@@ -98,6 +98,18 @@ const RING_STEPS = 32;
  * gathers and thins. Its two neighbours round the loop step 8.1 and 6.4, so
  * the roughest joins are nowhere near the place the eye is waiting.
  *
+ * IT NAMES GAMES BUT IT IS A SEQUENCE OF COLOURS, and those two came apart
+ * when the deck was recoloured. The tour is solved over hexes — it is a route
+ * through the palette — so when the palette was dealt out differently across
+ * the eleven games (see PACK COLORS in tokens.css), every id here had to be
+ * rewritten to whichever game now wears the colour that id used to carry. The
+ * gradient is byte-for-byte the one that was solved; only the names changed.
+ *
+ * That is the trap this list sets for the next person: re-colour a pack and
+ * this silently becomes a different route through the wheel, with no error and
+ * nothing obviously wrong on screen beyond the line looking worse than it did.
+ * Check the COLOUR sequence, not the ids.
+ *
  * Sorting by lightness was the version before this and it was the wrong
  * objective. It put the two brightest packs on the ends, which mattered while
  * the ends were permanently dim — and once the sweep started overshooting the
@@ -109,16 +121,16 @@ const RING_STEPS = 32;
  */
 const RING_ORDER: ModeId[] = [
   "ride-the-bus",
-  "the-number-game",
-  "last-call",
   "most-likely-to",
-  "kings-cup",
+  "last-call",
   "last-word",
-  "drink-if",
-  "say-the-same-thing",
-  "imposter",
+  "kings-cup",
+  "the-number-game",
   "hot-seat",
   "rank-it",
+  "say-the-same-thing",
+  "drink-if",
+  "imposter",
   // Closed: back onto the pack it started from. ELEVEN transitions now, not
   // ten, and the wrap is the whole point rather than an oversight. The line is
   // born and dies at the same spot on the pill, so with an open ramp those two

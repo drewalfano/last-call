@@ -436,6 +436,30 @@
      below clears WCAG AA (4.5:1) for normal text against exactly two
      inks — near-black or white — which is why no third color is
      needed anywhere in the app.
+
+     THE ASSIGNMENT IS DEALT FOR THE DECK, NOT PICKED PER GAME.
+
+     Home is eleven cards that overlap, so the only thing a pack's
+     colour has to do there is not look like the one it is touching.
+     Chosen one at a time, that is exactly what nothing guarantees:
+     Letter Rip's pink sat directly on Rank It's yellow at a distance
+     of 0.223 in OKLab, the closest pair in the stack, and no amount
+     of liking either colour on its own fixes a pair.
+
+     So the eleven were dealt across the eleven slots to make the
+     WEAKEST neighbouring pair as strong as it can be — 0.223 up to
+     0.295, and the worst join in the deck is now Most Likely To
+     against Same Page. The deck's running order did not move; it is
+     sorted by replay value and that is a different job (see MODES).
+     Only which colour each game wears changed.
+
+     Ink travels with colour, always. It is chosen for the colour it
+     sits on rather than for the game, so a pairing moves as a unit
+     and every contrast ratio below is the one that was measured for
+     that hex — none of them are re-derived, because none of them
+     changed. The file already did this once, for the bus.
+
+     Last Call, Kings Cup and Ride the Bus kept theirs.
      ---------------------------------------------------------- */
   --cat-last-call: #E0070F;
   --cat-last-call-ink: #FFFFFF;          /* 4.99 */
@@ -445,25 +469,30 @@
      all — the ink is chosen for the colour it sits on, so it moves with it. */
   --cat-ride-the-bus: #FFAE00;
   --cat-ride-the-bus-ink: #141414;       /* 9.92 */
-  --cat-last-word: #E990A2;
-  --cat-last-word-ink: #141414;          /* 7.87 */
-  --cat-imposter: #0F4A42;
-  --cat-imposter-ink: #FFFFFF;           /* 10.10 */
-  --cat-drink-if: #B9A3E3;
-  --cat-drink-if-ink: #141414;           /* 8.26 */
-  --cat-most-likely-to: #E43E70;
-  --cat-most-likely-to-ink: #141414;     /* 4.58 */
-  --cat-say-the-same-thing: #A5C0EA;
-  --cat-say-the-same-thing-ink: #141414; /* 9.94 */
-  --cat-rank-it: #CAC307;
-  --cat-rank-it-ink: #141414;            /* 9.93 */
+
+  /* Was teal; the yellow came from Rank It. */
+  --cat-imposter: #CAC307;
+  --cat-imposter-ink: #141414;           /* 9.93 */
+  /* Was pink — the half of the closest pair in the old deck. */
+  --cat-last-word: #E43E70;
+  --cat-last-word-ink: #141414;          /* 4.58 */
+  /* Was yellow — the other half of it. */
+  --cat-rank-it: #A5C0EA;
+  --cat-rank-it-ink: #141414;            /* 9.94 */
   /* The one hue the supplied swatch sheet didn't cover. Muted rather than
      saturated like the rest, which flips which ink works: near-black clears AA
-     at 4.57 where white only reaches 4.03. */
-  --cat-the-number-game: #EE4620;
-  --cat-the-number-game-ink: #141414;    /* 4.85 */
-  --cat-hot-seat: #441B07;
-  --cat-hot-seat-ink: #FFFFFF;           /* 14.94 */
+     where white does not. It sits on Most Likely To now. */
+  --cat-most-likely-to: #EE4620;
+  --cat-most-likely-to-ink: #141414;     /* 4.85 */
+  --cat-say-the-same-thing: #0F4A42;
+  --cat-say-the-same-thing-ink: #FFFFFF; /* 10.10 */
+  --cat-the-number-game: #E990A2;
+  --cat-the-number-game-ink: #141414;    /* 7.87 */
+  /* The darkest pack in the app, and it is on Drink If now. */
+  --cat-drink-if: #441B07;
+  --cat-drink-if-ink: #FFFFFF;           /* 14.94 */
+  --cat-hot-seat: #B9A3E3;
+  --cat-hot-seat-ink: #141414;           /* 8.26 */
 
   /* Fallback foreground for any subtree that hasn't set --category-ink. */
   --cat-ink: #FFFFFF;
