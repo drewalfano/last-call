@@ -172,6 +172,18 @@ export function NumberGame({ mode, onBack }: Props) {
                 onChange={setSeats}
                 noun="player"
               />
+              {/* WHAT THE GAME IS, ON THE FIRST SCREEN THAT SHOWS ONE.
+                  This card asked how many were playing and never said what
+                  they would be playing — and neither did the bidding screen
+                  after it, which shows a name, a number and two buttons and
+                  trusts you to infer the verb from them. Every other mode
+                  states its rule on the card you meet first; this one had the
+                  seating note in the only place that could have. */}
+              <p className="card__meta">
+                Bid how many you can name from a category. Raise it, or make
+                someone prove theirs — then they have {SECONDS_PER_ITEM}
+                &nbsp;seconds a piece to actually name them.
+              </p>
               <p className="card__meta">
                 The bid goes round the table, so it has to know where the table
                 ends. Add names on Home and it uses those instead.
@@ -210,6 +222,14 @@ export function NumberGame({ mode, onBack }: Props) {
               <span className="num__bid-who">
                 {opened ? `${challenger}'s call` : `${challenger} starts`}
               </span>
+              {/* The line that finishes the sentence. The header carries the
+                  category and the card carries a number, and nothing joined
+                  them: "Belly can name / 4 / Lily's call" never says name
+                  four WHAT, or what either player is meant to do about it.
+                  Both buttons are below this, so it reads as their caption. */}
+              <p className="card__meta num__rule">
+                Name this many, or push it higher.
+              </p>
             </div>
           }
         >
