@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MODE_BY_ID, type ModeId } from "./data/modes";
 import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
@@ -173,6 +173,27 @@ export default function App() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
+  /**
+   * WHERE HOME'S DECK WAS STANDING WHEN YOU LEFT IT.
+   *
+   * Home is unmounted for as long as a mode is up, and .screen.home is the
+   * scroller, so it comes back at nought every time — the deck is at the top
+   * however far down it you were. What used to put the card back on screen was
+   * the contraction's own `scrollIntoView`, and that only ever promised the
+   * card would be VISIBLE, not that it would be where you left it: `nearest`
+   * scrolls the least it can, which parks the card against whichever edge it
+   * came in from. Open Kings Cup from the middle of the screen and closing it
+   * returned the deck to nought with the card down at the bottom, 344px from
+   * where you tapped it.
+   *
+   * One number, read as you leave and written back before the first frame of
+   * Home is painted. It is a remembered offset rather than a measured one, and
+   * that is safe in a way a remembered RECT is not — see CLOSE_MS. A rect is a
+   * claim about where something is on screen, and the screen has changed
+   * underneath it. This is a claim about how far down a list you were, which
+   * is still true when you come back to the same list.
+   */
+  const homeScroll = useRef(0);
   const closeTimer = useRef<number>(undefined);
   const failsafe = useRef<number>(undefined);
   const { theme } = useTheme();
@@ -227,22 +248,37 @@ export default function App() {
   }, [screen]);
 
   /**
+   * PUT THE DECK BACK BEFORE ANYTHING IS PAINTED.
+   *
+   * A layout effect, which is the whole reason this works: it runs after React
+   * has put Home in the DOM and before the browser paints, so the deck is never
+   * seen at nought on its way to where it belongs. The contraction below is a
+   * passive effect and runs after this, which is what leaves its
+   * `scrollIntoView` free to stay as the safety net it should always have been
+   * — with the offset already restored the card is in view, and `nearest` does
+   * nothing at all when that is true.
+   */
+  useLayoutEffect(() => {
+    if (screen !== null) return;
+    const deck = document.querySelector(".screen.home");
+    if (deck) deck.scrollTop = homeScroll.current;
+  }, [screen]);
+
+  /**
    * THE CONTRACTION, ONCE HOME IS BACK AND BEFORE ANY OF IT IS VISIBLE.
    *
    * This runs after React has committed Home under the overlay, which is the
    * only moment the destination exists: the card is in the DOM, laid out, and
    * covered. So the rect is measured rather than remembered — see CLOSE_MS.
    *
-   * THE DECK IS SCROLLED FIRST, AND THAT IS NOT A DETAIL. Home comes back at
-   * the top of its deck, where only the first five of eleven cards fit on a
-   * 375x812 phone; the other six have no rect on screen to aim at. So the
-   * scroller is nudged until the card is in view — instantly, and underneath
-   * an overlay that is still covering everything, so the scroll itself is
-   * never seen. `block: "nearest"` is what makes it free: it does nothing at
-   * all when the card is already visible, and the least it can when it is not.
+   * THE DECK HAS ALREADY BEEN PUT BACK by the layout effect above, so by here
+   * the card is where you left it and this `scrollIntoView` is a safety net
+   * rather than the mechanism. `block: "nearest"` is what makes it free: it
+   * does nothing at all when the card is already visible, which is now the
+   * ordinary case, and the least it can when something has moved.
    *
-   * It also leaves Home somewhere better than it found it. Close Hot Seat and
-   * its card is under your thumb rather than six rows below the fold.
+   * It used to be the mechanism, and that was the bug: it only ever promised
+   * the card would be on screen, never that it would be where you tapped it.
    *
    * If the card cannot be found the overlay just fades. Nothing should be able
    * to strand a full-screen field of colour over the app.
@@ -475,6 +511,10 @@ export default function App() {
        long enough to tap a card in. Retire it here, or the two overlays stack
        and the one going out paints over the one coming in. */
     setClosing(null);
+    /* Before anything swaps. Both paths below unmount Home, and the pick-for-me
+       flourish has already scrolled the deck by the time it calls this, so what
+       gets caught is the deck as the player last saw it either way. */
+    homeScroll.current = document.querySelector(".screen.home")?.scrollTop ?? 0;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!rect || reduced) {
       setScreen(id);
