@@ -60,17 +60,17 @@
   color: var(--text);
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out),
-              opacity var(--dur-press) ease-out,
-              border-color var(--dur-base) var(--ease-out);
+              opacity var(--dur-press) ease-out;
 }
-/* The twist is this control's own, and it stays — it is the one press in the
-   app that says what the button DOES. The scale and the dip underneath it are
-   the shared ones. */
+/* The shared press, nothing of its own. The gear used to twist on touch, which
+   was the one press in the app that mimed what the button does — and that is
+   exactly why it went: a single control moving differently from every other
+   one reads as a glitch, not as wit. --press-scale-sm because this is a
+   48px icon well, same as .sheet__close and .roster__chip. */
 .settings-btn:active {
-  transform: scale(var(--press-scale-sm)) rotate(35deg);
+  transform: scale(var(--press-scale-sm));
   opacity: var(--press-dim);
 }
-.settings-btn:hover { border-color: var(--text-muted); }
 
 /* ---------------- Settings sheet ---------------- */
 .sheet {
@@ -1820,32 +1820,40 @@
 }
 
 /* ---------------- Roster (Home) ---------------- */
-/* Collapsed by default: setup must never be the first thing you meet. */
-.roster__prompt {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  padding: var(--sp-3) var(--sp-4);
-  /* The column's one gap — the same 20 that holds it off the side edges. */
-  margin-bottom: var(--gutter);
-  /* SOLID AND TRANSPARENT, because the dashes are drawn as a stroke instead —
-     see .roster__prompt-outline. The border still has to be declared at its
-     real width: it is holding the box open. Drop it and everything inside
-     moves 2px, which is the trap in replacing a border with a drawing. */
-  border: var(--border-width) solid transparent;
-  border-radius: var(--radius-lg);
+/* Collapsed by default: setup must never be the first thing you meet.
+
+   Collapsed and open are the SAME element — see RosterBar, which stopped
+   returning two subtrees. `[data-open]` is the only thing that changes, and
+   everything below is written as a pair: a resting value on .roster, and the
+   value it travels to under .roster[data-open]. All of it on one clock,
+   --dur-base on --ease-glide, which is the pair .roster__chipwrap already
+   opens on. One duration and one curve for every property is the whole
+   discipline here: the moment two of them disagree about when to happen, an
+   opening tile reads as several things moving at once. */
+
+/* The collapsed tap target. It fills the tile rather than being it, because
+   the open state puts Clear and a form inside and nothing nests in a button.
+   Unmounted the instant the tile opens, so it can never sit invisibly over a
+   field. `aria-labelledby` gives it the question and the hint as its name —
+   what it looks like it says is what it says. */
+.roster__tap {
+  position: absolute;
+  /* Negative by the border width. An absolutely positioned box resolves
+     `inset` against the PADDING box, so `0` would leave the tile's 2px ring
+     outside the target — it was inside it when the tile itself was a button. */
+  inset: calc(var(--border-width) * -1);
+  border: none;
+  border-radius: inherit;
   background: transparent;
-  color: var(--text);
-  text-align: left;
   cursor: pointer;
-  /* The stroke that replaced the border is absolutely positioned against this. */
-  position: relative;
-  transition: transform var(--dur-press) var(--ease-out),
-              opacity var(--dur-press) ease-out;
 }
-.roster__prompt:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+/* The press belongs to the whole tile, not to the invisible button on top of
+   it — pressing a transparent overlay must look like pressing the thing you
+   can see. --press-scale, the full-width tier, because that is what this is. */
+.roster:has(.roster__tap:active) {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-dim);
+}
 
 /* ---------------------------------------------------------------
    PILLS, NOT TICKS.
@@ -1876,7 +1884,7 @@
    own length by half the stroke at each end. 4 plus a 2px stroke is
    the 6px pill the square dashes were.
    --------------------------------------------------------------- */
-.roster__prompt-outline {
+.roster__outline {
   position: absolute;
   /* Negative by the border width, and spelled out: an svg is a REPLACED
      element, so `inset: 0` alone would size it to the padding box and leave
@@ -1890,7 +1898,7 @@
   pointer-events: none;
 }
 
-.roster__prompt-outline rect {
+.roster__outline rect {
   /* Inset by half the stroke so the 2px line lands ON the border box rather
      than straddling its outer edge. */
   x: 1px;
@@ -1903,44 +1911,89 @@
   stroke: var(--border-soft);
   stroke-width: var(--border-width);
   stroke-linecap: round;
-  stroke-dasharray: 4 6;
-  transition: stroke var(--dur-base) var(--ease-out);
-}
-.roster__prompt:hover .roster__prompt-outline rect { stroke: var(--text-muted); }
-
-.roster__prompt-label {
-  font-family: var(--font-display);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  stroke-dasharray: 4px 6px;
+  transition: stroke-dasharray var(--dur-base) var(--ease-glide);
 }
 
-.roster__prompt-hint { font-size: var(--fs-xs); color: var(--text-muted); }
+/* THE DASHES KNIT. Each pill stretches until it meets the next while the gaps
+   close under it, so one unbroken line exists the whole way across — the
+   dashed outline BECOMES the tile's border rather than being swapped for one.
+
+   The open dash length is arbitrary and 48 is as good as any: once the gap is
+   0 the pattern is a solid line whatever the dash measures. What the number
+   buys is the shape of the travel. Closing the gaps alone leaves 4px pills
+   sliding together, which reads as the dashes crowding; growing them as well
+   reads as the line knitting itself shut, and that is the one that got picked
+   off the bench.
+
+   The tile's own border is transparent and stays that way — see .roster. Two
+   mechanisms used to draw this line, a stroke when collapsed and a real border
+   when open, and a line cannot animate into a different line. Now there is
+   one. */
+.roster[data-open] .roster__outline rect { stroke-dasharray: 48px 0px; }
 
 .roster {
+  /* No padding and no column here — both belong to .roster__body. */
+  margin-bottom: var(--gutter);
+  /* SOLID AND TRANSPARENT, because the line is drawn as a stroke instead — see
+     .roster__outline. The border still has to be declared at its real width:
+     it is holding the box open. Drop it and everything inside moves 2px, which
+     is the trap in replacing a border with a drawing. */
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-lg);
+  /* The stroke that replaced the border, and the collapsed tap target, are
+     both absolutely positioned against this. */
+  position: relative;
+  /* The one number this whole transition runs on. See @property --k. */
+  --k: 0;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
+              --k var(--dur-base) var(--ease-glide);
+}
+.roster[data-open] { --k: 1; }
+
+/* ---------------------------------------------------------------
+   THE BODY, WHICH IS WHAT CLIPS — AND WHY IT IS NOT THE TILE.
+
+   The field is revealed by being cut off, and the cut has to land on
+   the tile's own edge. Anywhere else and you get a line hanging in
+   open space with the field half-drawn above it and nothing below —
+   which is what every mask in this file used to be apologising for.
+   Put the cut on the border and there is nothing to apologise for:
+   the field is simply behind the tile until it is not.
+
+   TWO THINGS ABOUT `overflow` MADE THIS TAKE THREE GOES.
+
+   It cannot go on .roster. The outline is an svg at `inset: -2px`,
+   OUTSIDE the padding box, so clipping there eats the dashed border
+   along with the overflow. The stroke has to stay outside whatever
+   clips.
+
+   And the padding stays on all four sides. `overflow` clips at the
+   PADDING box, not the content box, so the field is free to run into
+   the bottom 12px and gets cut by the border itself. Moving that 12px
+   down into the field's own slot — which looks equivalent — put it
+   inside the clip instead, and left 12px of field showing at rest.
+
+   One gap for the whole column. Every row is a real row with real
+   height, so this spacing is honest and the tile is symmetric in
+   every state. The gap is tighter than the padding, and only the gap:
+   every row here is already a pill carrying its own generous inner
+   padding, so a gap the size of the padding double-counts the air and
+   the tile reads as separated bands rather than one control with
+   parts. The padding is even on all four sides — it is the tile's
+   margin against its own border, and there is no reason for the top
+   to sit closer to that border than the left does.
+   --------------------------------------------------------------- */
+.roster__body {
   display: flex;
   flex-direction: column;
-  /* One gap for the whole column. Every row is a real row with real height —
-     see RosterBar, which stopped rendering the empty ones — so this spacing
-     is honest and the tile is symmetric in every state.
-
-     The gap is tighter than the padding, and only the gap. Every row here is
-     already a pill carrying its own generous inner padding, so a gap the size
-     of the padding double-counts the air between them and the tile reads as
-     three separated bands rather than as one control with three parts. The
-     padding is even on all four sides, because it is the tile's margin
-     against its own border and there is no reason for the top to sit closer
-     to that border than the left does — trimming it too was what made this
-     feel squeezed rather than tidy. The rows themselves are at the app's
-     minimum touch tiers and are not where the height is negotiable. */
   gap: var(--sp-2);
   padding: var(--sp-3);
-  /* Open or collapsed, the tile leaves the same gap under it — see
-     .roster__prompt. Expanding must move the deck, not re-space the column. */
-  margin-bottom: var(--gutter);
-  border: var(--border-width) solid var(--border-soft);
-  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* The inner radius: the border box's corner less the border it sits
+     inside, so the cut follows the stroke instead of crossing it. */
+  border-radius: calc(var(--radius-lg) - var(--border-width));
 }
 
 /* The tile says what it is, and Clear sits at the end of that line rather
@@ -1951,27 +2004,100 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  /* Reserved, and the reason is the label rather than the tile. Clear is now
-     always in the row and merely hidden, so this height is what it would be
-     anyway — but stating it keeps the row honest if that ever changes. What
-     it buys: "Who's playing?" is centred against a row of constant height, so
+  /* Reserved once the tile is open, and the reason is the label rather than
+     the tile: "Who's playing?" is centred against a row of constant height, so
      the first name landing does not shove the label up the screen on its way
      past. The tile's own height still changes, and is supposed to; it just
-     changes in one place now, below this row. */
-  min-height: var(--control-sm);
+     changes in the slots rather than here.
+
+     This used to be unconditional, on the grounds that hidden Clear reserved
+     the 40 anyway. It does — which is exactly what stopped the collapsed tile
+     from being 72px, so Clear now stands down while hidden and this row states
+     the height on its own. */
+  /* Nothing reserved while the tile is shut: the row is exactly the question's
+     own line box there, which is what keeps the collapsed tile at 72px. It
+     grows to the touch tier as the tile opens, and that growth is what carries
+     the title down the 10px between its two resting places. Interpolating a
+     min-height rather than a height so the row still cannot be shorter than
+     what is in it — during the travel the larger of the two wins, and both
+     move in the same direction, so the row never dips and comes back. */
+  min-height: 0;
   /* Optical inset: the label is flush type where the rows below are pills
-     with their own inner padding, so it needs a nudge to line up with them. */
+     with their own inner padding, so it needs a nudge to line up with them.
+     4px collapsed and 8px open — the whole distance the question travels
+     sideways, and the reason it appears to stay put rather than jump. */
+  padding-left: var(--sp-1);
+  transition: min-height var(--dur-base) var(--ease-glide),
+              padding-left var(--dur-base) var(--ease-glide);
+}
+.roster[data-open] .roster__head {
+  min-height: var(--control-sm);
   padding-left: var(--sp-2);
 }
 
+/* The header becomes the way out while the tile is empty — see RosterBar for
+   why only then. A bare well, no border and no fill: it sits where a heading
+   sits and has to keep reading as one, so the affordance is the press rather
+   than a shape. --press-scale-sm, the tier the 40px controls beside it use.
+
+   Stretched to the row's full height so the target is the whole left half of
+   the header rather than the cap height of one line of type. */
+.roster__shut {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  /* The whole left of the row, not the width of the words. Clear is hidden in
+     this state but still holds its own width, so this takes everything else —
+     a 40px-tall target spanning the header rather than a line of type. */
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
+  transform-origin: left center;
+}
+.roster__shut:active {
+  transform: scale(var(--press-scale-sm));
+  opacity: var(--press-dim);
+}
+
+/* THE ONE ELEMENT IN BOTH STATES.
+
+   Collapsed it is the invitation — full size, full white, the brightest thing
+   in the tile. Open it is a label for a tile you are already inside, so it
+   steps down a size and drops to muted. It used to be two spans in two
+   subtrees at two sizes, which is why opening could only ever be a swap: you
+   cannot animate an element into a different element.
+
+   line-height is left to the cascade deliberately. Both sizes resolve at the
+   same 1.5 ratio, so the box follows the size for free and there is one fewer
+   thing on the clock. If the type scale ever stops being proportional, this
+   needs stating. */
 .roster__title {
   font-family: var(--font-display);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text);
+  /* SCALED, NOT RESIZED. It lands on the same 14px the open state always
+     used — 0.875 of --fs-md is --fs-sm — but animating `font-size` relaid out
+     and re-rasterised this line on every single frame, and it was the most
+     expensive property in the whole transition. A scale is compositor work.
+     Derived from --k rather than transitioned itself, so it cannot drift from
+     the row heights; see .roster__slot. */
+  transform: scale(calc(1 - 0.125 * var(--k)));
+  transform-origin: left center;
+  transition: color var(--dur-base) var(--ease-glide);
 }
+.roster[data-open] .roster__title { color: var(--text-muted); }
+
 
 /* A pill, not a text link. Everything else pressable in the app is a shape
    you can aim at, and this was the one underlined-looking exception. Ghost
@@ -2020,58 +2146,223 @@
   opacity: 0;
   transform: scale(0.92);
   pointer-events: none;
+  /* AND IT STOPS HOLDING THE ROW OPEN. Hidden is not gone: a --control-sm
+     button still contributes 40px of height to the head, which is a floor the
+     collapsed tile cannot get under — it was arriving 16px too tall with the
+     question stranded in the middle of an empty row. The head states its own
+     min-height for both states now (see .roster__head), so this one only ever
+     applied while the tile was open, where the head is already 40. Nothing
+     visible moves when it changes. */
+  min-height: 0;
   transition: opacity var(--dur-base) var(--ease-glide),
               transform var(--dur-base) var(--ease-glide),
               visibility 0s var(--dur-base);
 }
 
 /* ---------------------------------------------------------------
-   THE ROW THAT OPENS, AND WHAT IT IS MEASURING.
+   THE TWO SLOTS.
 
-   `grid-template-rows: 0fr -> 1fr` rather than a height, because the
-   height is not a number anyone can write down: one name is a 40px
-   row and six names wrap onto three of them. A grid row given `1fr`
-   with one child sizes to that child's content, and the browser can
-   interpolate between the two — so the row opens to exactly what it
-   holds, and keeps working when a seventh name pushes it a line
-   taller. The child needs `min-height: 0` and `overflow: hidden` or
-   it refuses to be squashed below its content and the whole thing
-   collapses to nothing visually while still taking the space.
+   A slot is .roster__chipwrap's idiom — `grid-template-rows: 0fr -> 1fr`,
+   child at `min-height: 0` — used twice more. Two of them rather than
+   one two-row grid, and that is not a style choice: two rows animating
+   `1fr 0fr -> 0fr 1fr` pass through `0.5fr 0.5fr`, where an
+   indefinite-height container sizes BOTH rows to the taller one's
+   content and the tile bulges to twice its height halfway through. Two
+   independent single-row grids each interpolate their own content and
+   simply add up.
 
-   The negative margin is the tile's own gap. .roster lays out three
-   children with `gap`, and the gap does not care that the middle one
-   is zero tall — closed, it contributes 8px above AND 8px below where
-   the tile wants 8px total. So the wrapper cancels one of them while
-   it is shut, and gives it back on the way open. It has to animate on
-   the same clock as the rows, or the tile arrives 8px short and
-   settles late.
+   The hint runs one way and the field the other, so the tile hands its
+   height from one to the other and the total is monotonic throughout.
+
+   The negative margins are the tile's own gap, the same accounting the
+   chip row does: a slot at zero height still gets 8px above AND 8px
+   below it where the tile wants 8 in total, so the shut side cancels
+   one and gives it back on the way open. The hint's resting value
+   cancels it nearly all the way instead — 2px, not 8, because the hint
+   is the second line of a two-line block and not a row of its own.
+
+   NEITHER OF THEM IS FEATHERED ANY MORE, and that is the point of the
+   whole rewrite. Three masks used to sit here softening the edges where
+   content got cut. They were all treating a symptom: the field is now
+   cut by the tile's own border (see .roster__body) so there is no
+   stray edge to hide, and the hint is gone before its slot has
+   collapsed far enough to slice the type. Nothing to soften means
+   nothing to keep in sync.
+
+   `--k` is this transition's one interpolated number, 0 shut to 1 open.
+   Everything non-linear is DERIVED from it — the hint's early fade, the
+   field's offset, the title's scale — rather than given its own
+   transition to drift against. One clock, and the things hanging off it
+   cannot disagree by construction.
+
+   `visibility` must NOT interpolate, so it is switched at the far end
+   of the travel going out and immediately coming in, which is what the
+   differing delays do. It earns its place: a text input inside a shut
+   slot is invisible and still perfectly tabbable, and tabbing to it
+   scrolls the page to a field nobody can see.
+   --------------------------------------------------------------- */
+/* INHERITS, and that is the whole reason it works. Declared once on .roster
+   and read by everything under it — the title's scale, the hint's fade, the
+   field's offset and both slot heights. With `inherits: false` each of those
+   silently fell back to its own initial 0 and sat at the collapsed value
+   forever, which is a failure that looks exactly like a missing transition. */
+@property --k {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.roster__slot {
+  /* ONE TRANSITIONED PROPERTY, AND EVERYTHING ELSE DERIVED FROM IT.
+     Height, margin, opacity and offset are all written as expressions on --k
+     rather than given transitions of their own. They cannot drift apart,
+     because there is nothing to drift — there is one number moving.
+
+     Explicit heights rather than `0fr -> 1fr`, unlike the chip row below.
+     That trick needs `overflow: hidden` on the child, and the field has to be
+     able to ESCAPE its slot so the tile's edge can cut it instead. The two are
+     incompatible. It costs nothing here: both slots hold content of a known
+     token height, which is exactly what the chip row cannot say. */
+  transition: visibility 0s;
+}
+
+/* The hint clips itself — nothing below should see its overflow — and is gone
+   by 30%, which is what lets its old mask go. The slot keeps collapsing after
+   that, but over nothing: the type is never sliced because it is no longer
+   there to slice. */
+.roster__slot--hint {
+  overflow: hidden;
+  /* Optical inset, matching the head's: flush type in a tile whose other rows
+     are pills. */
+  padding-left: var(--sp-1);
+  height: calc(var(--fs-xs) * 1.5 * (1 - var(--k)));
+  /* The tile's own gap, cancelled to the 2px this wants — the hint is the
+     second line of a two-line block, not a row of its own — and then cancelled
+     the rest of the way once it is shut and would otherwise be paid for twice. */
+  margin-top: calc(2px - var(--sp-2) - 2px * var(--k));
+}
+.roster__hint {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  opacity: clamp(0, calc(1 - var(--k) / 0.3), 1);
+}
+
+/* THE FIELD DOES NOT CLIP ITSELF. Its slot collapses to nothing and the field
+   simply overflows, to be cut by .roster__body's edge — the tile's border —
+   rather than by a line in the middle of the tile. */
+.roster__slot--add {
+  overflow: visible;
+  height: calc(var(--control-md) * var(--k));
+  /* EVEN AIR ON ALL FOUR SIDES OF THE FIELD, which is why this is --sp-3 and
+     not the column's --sp-2. The field is the one row that sits against the
+     tile's own padding, so it had 12px to its left, right and underneath and
+     only the column's 8px above it — close enough to read as the chip row
+     crowding it. The extra 4px is added on the way open and taken back on the
+     way shut, where the whole gap has to be cancelled instead: a row at zero
+     height still collects the column gap above AND below it. */
+  margin-top: calc(var(--sp-3) * var(--k) - var(--sp-2));
+}
+
+/* Shut, the field sits exactly ON the border: pushed down by the body's own
+   bottom padding, so its top edge is level with the cut and none of it shows.
+   Opening walks it back into place. A transform, so it costs the compositor
+   and not the layout. */
+.roster__add {
+  display: flex;
+  gap: var(--sp-2);
+  transform: translateY(calc(var(--sp-3) * (1 - var(--k))));
+}
+
+/* --k MEANS ONE THING: HOW OPEN THE TILE IS — not how open a given slot is.
+   The two slots run opposite ways and each writes its own expression against
+   the one number. */
+
+/* `visibility` must NOT interpolate, so it is switched at the far end of the
+   travel going out and immediately coming in — which is what the differing
+   delays do. It earns its place: a text input inside a shut slot is invisible
+   and still perfectly tabbable, and tabbing to it scrolls the page to a field
+   nobody can see. */
+.roster__slot--add,
+.roster[data-open] .roster__slot--hint {
+  visibility: hidden;
+  transition: visibility 0s var(--dur-base);
+}
+.roster__slot--hint,
+.roster[data-open] .roster__slot--add {
+  visibility: visible;
+  /* Restated, and it has to be: the shut rule above is one class, same weight
+     as the base, so it applies in BOTH states unless something more specific
+     says otherwise. Leave `transition` out here and the field keeps the shut
+     side's delayed `visibility` on the way IN — it stays hidden for the whole
+     260ms and then appears at the end, having animated unseen. */
+  transition: visibility 0s;
+}
+
+/* ---------------------------------------------------------------
+   THE ROW THAT OPENS, AND WHAT MEASURES IT.
+
+   Height comes from RosterBar, which observes the names and writes the
+   number — read the note there for why this row cannot use the
+   `0fr -> 1fr` idiom the two slots above it use. Short version: that
+   trick only fires when its declared value changes, and a name wrapping
+   onto a second line changes the CONTENT, not the declaration. This row
+   has four states to cover (open, shut, wrap, fold) and only measuring
+   covers all four.
+
+   --ease-glide, not --ease-out, and tokens.css says why: --ease-out is
+   95% done by the halfway point, which is right for something arriving
+   and wrong for something travelling. This row is travelling, and it is
+   towing the field and everything under it down the screen — on
+   --ease-out the tile lurched most of the way in the first 50ms and then
+   crept the last four pixels, which read as a jump with a tail rather
+   than as an opening. Evenly spread, the eye can follow it.
+
+   The negative margin is the tile's own gap: a row at zero height still
+   gets 8px above AND 8px below where the tile wants 8 in total, so the
+   shut side cancels one and gives it back on the way open.
+
+   AND IT FEATHERS WHAT IT IS STILL HIDING, on the way IN only. A row
+   that reveals by clipping cuts a 40px pill flat across the bottom, and
+   the thing being cut is somebody's name. The depth is keyed to the row
+   opening rather than to a chip arriving, which is the whole rule: a
+   feather is only worth paying for while there is a cut to hide. The
+   first name opens the row, so it runs. Every name after it lands in a
+   row already at full height with nothing clipped, where this is already
+   0 and the chip simply fades in — and it stays 0 through a fold, which
+   is where that came out on the bench.
    --------------------------------------------------------------- */
 .roster__chipwrap {
-  display: grid;
-  grid-template-rows: 0fr;
+  overflow: hidden;
+  /* Same construction as .roster__slot: the feather is as deep as whatever is
+     still clipped, derived from the same --k that opens the row, capped at
+     12px. One row's worth is the reference — this only has to out-cover the
+     cut, and the cut is never deeper than the line being revealed.
+
+     --k is 1 for the whole time the row merely CHANGES height, which is the
+     fold and the wrap, so those get no feather. That is where this came out
+     on the bench: the feather is for a row opening from nothing, and a row
+     that is already open has nothing to hide behind it. */
+  --k: 0;
   margin-bottom: calc(var(--sp-2) * -1);
-  /* --ease-glide, not --ease-out, and tokens.css says why: --ease-out is 95%
-     done by the halfway point, which is right for something arriving and
-     wrong for something travelling. This row is travelling, and it is towing
-     the field and everything under it down the screen — on --ease-out the
-     tile lurched most of the way in the first 50ms and then crept the last
-     four pixels, which is what read as a jump with a tail rather than as an
-     opening. Evenly spread, the eye can follow it. */
-  transition: grid-template-rows var(--dur-base) var(--ease-glide),
-              margin-bottom var(--dur-base) var(--ease-glide);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - min(12px, var(--control-sm) * (1 - var(--k)) * 2)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - min(12px, var(--control-sm) * (1 - var(--k)) * 2)), transparent 100%);
+  transition: height var(--dur-base) var(--ease-glide),
+              margin-bottom var(--dur-base) var(--ease-glide),
+              --k var(--dur-base) var(--ease-glide);
 }
 
 .roster__chipwrap[data-open] {
-  grid-template-rows: 1fr;
   margin-bottom: 0;
+  --k: 1;
 }
 
 .roster__chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  min-height: 0;
-  overflow: hidden;
+  /* The chip on its way out is pinned against this. */
+  position: relative;
 }
 
 /* --control-sm, and the tier matters. A name pill is a label you can dismiss,
@@ -2093,8 +2384,15 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
   cursor: pointer;
+  /* TWO CLOCKS ON ONE ELEMENT, AND THEY MUST NOT BE THE SAME PROPERTY.
+     The press is 120ms; a chip sliding into the space a removed name left is
+     260ms. So the slide travels on `translate` — the individual property —
+     and the press keeps `transform`. They compose instead of overwriting each
+     other, which is the same trap lw-key-in documents from the other side.
+     RosterBar hands each chip the distance; this is only the clock. */
   transition: transform var(--dur-press) var(--ease-out),
-              opacity var(--dur-press) ease-out;
+              opacity var(--dur-press) ease-out,
+              translate var(--dur-base) var(--ease-glide);
 }
 /* Only the name being added plays this. The chips are keyed by name, so
    React leaves the existing ones mounted and only the new element gets a
@@ -2109,16 +2407,63 @@
    disagreements in one 260ms window, which is all "choppy" ever is.
 
    So: no vertical move at all, because the row already supplies it, and no
-   overshoot. A fade with the faintest scale, on the shorter duration, so the
-   name has settled by the time the row finishes and the last thing you see
-   is one motion rather than two. */
-.roster__chip { animation: roster-chip-in var(--dur-fast) var(--ease-glide) backwards; }
+   overshoot. A fade with the faintest scale.
+
+   ON THE ROW'S OWN DURATION, WHICH IS THE PART THIS GOT WRONG. It ran at
+   --dur-fast on the theory that the name should have settled before the row
+   finished. What that actually bought was a chip sitting perfectly still for
+   the last 100ms of a 260ms move while the row underneath it was still towing
+   the field down the screen — the same fault the note above diagnoses in
+   `pop`, reached from the other direction. A shorter clock is not a
+   subtraction if it is a clock nothing else is running on.
+
+   One duration in this moment now, not two: the chip and the row it rides in
+   stop together. It costs the later names a slower entrance than they had,
+   which is the trade — they are the case with nothing else moving to agree
+   with, and they were never the ones that read wrong. */
+.roster__chip { animation: roster-chip-in var(--dur-base) var(--ease-glide) backwards; }
 
 @keyframes roster-chip-in {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: none; }
 }
 .roster__chip:active { transform: scale(var(--press-scale-sm)); opacity: var(--press-dim); }
+
+/* ---------------------------------------------------------------
+   AND HOW IT LEAVES.
+
+   Out of flow from the first frame, pinned by RosterBar to the spot it
+   was already in. That is not a detail of the fade — it is what lets
+   the layout settle immediately so the names that move can be animated
+   from where they were rather than reflowing under them. See the FLIP
+   note in RosterBar.
+
+   It SHRINKS rather than being clipped. The first version collapsed
+   `max-width`, which eats the pill from the right: you watch a name
+   become two letters become one. Scaling the real pill from its left
+   edge is the thing it looks like — the name goes, toward the name
+   before it, and the ones after it come to take the space.
+
+   Gone by 60%, so the last of the travel finishes with nothing left on
+   screen to watch.
+
+   `scale` rather than a `transform`, for the reason lw-key-in documents:
+   the press rule right above sets `transform`, and an animation on the
+   same property would fight it if a chip were tapped twice.
+   --------------------------------------------------------------- */
+.roster__chip[data-leaving] {
+  position: absolute;
+  pointer-events: none;
+  transform-origin: left center;
+  animation: roster-chip-out var(--dur-base) var(--ease-glide) forwards;
+}
+
+@keyframes roster-chip-out {
+  from { opacity: 1; scale: 1; }
+  60% { opacity: 0; }
+  to { opacity: 0; scale: 0; }
+}
+
 
 /* A bare glyph, no well behind it.
    The disc was drawn to make the × look like the thing you press — but the
@@ -2132,8 +2477,6 @@
   /* The name is what you read; the mark is what tells you it comes off. */
   opacity: 0.6;
 }
-
-.roster__add { display: flex; gap: var(--sp-2); }
 
 .roster__input {
   flex: 1;

@@ -664,26 +664,29 @@ no longer applies now that every behaviour change is landed, so it could now be 
 as the isolated commit D3 described.
 
 Worth knowing before it is: the eighteen presses are **not** uniform, so this is not
-a find-and-replace. Fourteen collapse cleanly into two groups. **Four cannot**, and
-one of those four will not announce itself.
+a find-and-replace. Fifteen collapse cleanly into two groups. **Three cannot**, and
+one of those three will not announce itself.
 
 - `--press-scale` + `--press-dim` (9): `.btn`, `.chip`, `.pick-me`, `.picker__card`,
   `.rank__item`, `.roster__prompt`, `.roster__clear`, `.roster__go`,
   `.votepad__player`
-- `--press-scale-sm` + `--press-dim` (5): `.gheader__back`, `.gfoot__skip`,
-  `.roster__chip`, `.sheet__close`, `.stepper__step`
+- `--press-scale-sm` + `--press-dim` (6): `.gheader__back`, `.gfoot__skip`,
+  `.roster__chip`, `.settings-btn`, `.sheet__close`, `.stepper__step`
 
-The four exceptions, each for a written reason:
+`.settings-btn` was a fifth exception until its `rotate(35deg)` came off. The gear
+turning on press mimed what the button does, and that was the whole argument for it
+— but one control moving differently from every other one reads as a glitch rather
+than as wit, so it now takes the plain small press like the rest of its group.
 
-1. **`.settings-btn`** — `scale(var(--press-scale-sm)) rotate(35deg)`. The gear
-   turns. It is the one press in the app that says what the button *does*.
-2. **`.deck-card`** — `translateY(-4px)`, no scale and no dim. The cards overlap, so
+The three exceptions, each for a written reason:
+
+1. **`.deck-card`** — `translateY(-4px)`, no scale and no dim. The cards overlap, so
    a scale slides one under its neighbour, and a card that dims as it comes toward
    you reads backwards.
-3. **`.segmented__opt`** — scale, no dim. Dimming the pressed option fights the fill
+2. **`.segmented__opt`** — scale, no dim. Dimming the pressed option fights the fill
    that carries the control's state, and on the already-selected option it reads as
    the setting being switched off.
-4. **`.lw__letter` — the one that will bite.** At phone size it is a plain
+3. **`.lw__letter` — the one that will bite.** At phone size it is a plain
    `scale()`. At the tablet ring breakpoint the letters are placed by a `--place`
    transform and the press *composes* with it:
    `transform: var(--place) scale(var(--press-scale))`. A shared class setting
@@ -694,7 +697,7 @@ The four exceptions, each for a written reason:
    animation, which is why that one animates the `scale` property rather than
    `transform`.
 
-So a shared pair of classes covers fourteen, and four keep bespoke rules with their
+So a shared pair of classes covers fifteen, and three keep bespoke rules with their
 reasoning intact. A real simplification, not a total one.
 
 **The eight reduced-motion blocks are a different question, and my recommendation
