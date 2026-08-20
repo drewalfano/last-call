@@ -211,10 +211,21 @@
   flex-direction: column;
   /* How much of each card stays visible under the next one — and therefore
      the air UNDER its text, because the card's own padding-bottom is beneath
-     the next card and is never seen. Content ends 67px in, so this leaves the
-     same 20px below it that the padding leaves above. Re-measure it whenever
-     the title or the tagline changes size; it is not derived. */
-  --peek: 87px;
+     the next card and is never seen.
+
+     DERIVED, and it did not use to be. It was 87px written down, with a
+     comment asking whoever changed the padding to re-measure this — and the
+     two are not independent: the peek has to be the inset above the writing,
+     plus the writing, plus the same inset again, or the text stops sitting
+     level in the strip you can actually see. Left as a literal it silently
+     stopped matching the moment the padding moved, and the failure looks like
+     the text drifting upward rather than like a number being stale.
+
+     --card-writing is the one part still hand-measured, because type is the
+     one thing CSS cannot add up for us: a 24.2px title, a 2px gap and a 21px
+     tagline. Re-measure THAT when the type changes; the rest follows. */
+  --card-writing: 47.2px;
+  --peek: calc(var(--card-inset) * 2 + var(--card-writing));
   --card-h: 124px;
   /* Nothing below the deck, deliberately. The cards run to the bottom edge of
      the display and the last one is cut by it — that IS the deck: a stack you
@@ -232,12 +243,11 @@
   gap: 2px;
   align-items: flex-start;
   min-height: var(--card-h);
-  /* 20px on every side, measured from the card's OUTER edge — where the eye
-     measures it from, and the 2px stroke below is part of that edge. So the
-     padding is 20 LESS the border rather than 20 itself, and the text lands on
-     the same 20 the screen holds off the display. The bottom of that figure is
-     --peek's job, not this one's. */
-  padding: calc(var(--sp-5) - 2px);
+  /* --card-inset on every side, less the 2px stroke, because that figure is
+     measured from the card's OUTER edge — where the eye measures it from, and
+     the stroke is part of that edge. The bottom of it is --peek's job, not
+     this one's. See tokens.css for why the number lives there. */
+  padding: calc(var(--card-inset) - 2px);
   /* 2px stroke in a darker cut of the card's own color — an edge, not an
      outline. Cut 20%, not 38%: the same recipe runs on every pack, and at 38
      it disappeared into the dark ones while drawing a hard line around the
@@ -554,10 +564,11 @@
    against and has to be told.
 
    It borrows the card's own type through DeckFace's classes and the
-   card's own inset here, so the copy lands on the same pixels the
-   real writing occupies. Change .deck-card's padding and this has to
-   move with it — which is the one seam this approach cannot close,
-   and the reason the TYPE at least is shared rather than restated.
+   card's own inset through --card-inset, so the copy lands on the
+   same pixels the real writing occupies. That inset used to be
+   restated here as its own pair of numbers, with a comment asking
+   whoever moved one to move the other; it is shared now, so the seam
+   this approach could not close is closed.
    --------------------------------------------------------------- */
 .launch__face {
   position: absolute;
@@ -565,7 +576,12 @@
   flex-direction: column;
   gap: 2px;
   align-items: flex-start;
-  padding: var(--sp-4) var(--sp-5);
+  /* The card's own inset, so the copy lands on the writing it is standing in
+     for — one token now rather than two numbers that had to be remembered
+     together. The 4px it comes up short vertically is kept exactly as it was:
+     it is what shipped, and this change is about the inset moving, not about
+     settling whether that offset was ever meant to be there. */
+  padding: calc(var(--card-inset) - 4px) var(--card-inset);
   color: var(--category-ink, var(--cat-ink));
   opacity: 0;
   pointer-events: none;

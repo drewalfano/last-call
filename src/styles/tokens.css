@@ -77,6 +77,26 @@
 
   --border-width: 2px;
 
+  /* ---------------------------------------------------------------
+     HOW FAR THE DECK CARD'S WRITING SITS FROM THE CARD'S OUTER EDGE.
+
+     Measured from the OUTER edge, which is where the eye measures it
+     from, so the 2px stroke is part of the figure and .deck-card's
+     padding is this LESS the border rather than this itself.
+
+     It lives here rather than beside .deck-card because two unrelated
+     subtrees have to agree on it: the card, and .launch__face — the
+     copy of the card's writing the launch overlay carries, which is
+     positioned on the card's own rect and has to land on the same
+     pixels. That coupling used to be a comment asking whoever changed
+     one to remember the other. It is a token now.
+
+     --peek is derived from it too; see .home__deck. The tablet
+     breakpoint overrides all three with its own hand-measured set and
+     does not use this.
+     --------------------------------------------------------------- */
+  --card-inset: 18px;
+
   /* --- Layout ---------------------------------------------- */
   /* ----------------------------------------------------------
      THE TABLET BREAKPOINT, written down once:
