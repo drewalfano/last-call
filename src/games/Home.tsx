@@ -73,17 +73,76 @@ const RING_SPAN = 1;
 const RING_STEPS = 32;
 
 /**
- * The eleven packs blended into each other, in the order they sit on Home —
- * Last Call's red at one end, Hot Seat's brown at the other.
+ * THE RING'S OWN ORDER, WHICH IS NOT THE DECK'S, AND IS SOLVED RATHER THAN
+ * CHOSEN.
  *
- * Ten transitions, NOT eleven. It used to wrap the last pack back round to
- * the first so the streak had no ends, which sounds tidy and puts a colour on
- * the line that is not in the app: brown mixed toward red lands on a dark
- * muddy red, sitting after the brown as if there were a twelfth game. The
- * line has ends now. They are the first and last cards of the deck.
+ * It used to be the order the cards sit in on Home. That reads as the tidy
+ * answer and it is picked for a different job: the deck is ordered by how much
+ * replay a pack has, which has nothing to do with what its colour does next to
+ * another pack's. The ring is a gradient. What it wants is neighbours that are
+ * near each other.
+ *
+ * So this is a bottleneck tour: of every way of arranging the eleven into a
+ * loop, the one whose WORST neighbouring pair is as good as possible. Measured
+ * as the largest single rgb step between two abutting sub-segments once the
+ * pair is blended over RING_STEPS, which is what "I can see a band" actually
+ * is. The deck order's worst pair steps 36.2; this one steps 10.1, and the
+ * average step falls from 8.4 to about 5. That is the whole of the smoothness
+ * and it costs nothing — no extra sub-segments, no extra nodes, just a better
+ * route through the same eleven colours.
+ *
+ * The loop is CUT at Ride the Bus, and the cut is the only free choice left
+ * once the tour is fixed — every adjacency is already decided, so all it picks
+ * is which pack sits on the seam. Ride the Bus is the lightest pack in the
+ * app, and the seam is the bottom midpoint, where the line is dimmest as it
+ * gathers and thins. Its two neighbours round the loop step 8.1 and 6.4, so
+ * the roughest joins are nowhere near the place the eye is waiting.
+ *
+ * Sorting by lightness was the version before this and it was the wrong
+ * objective. It put the two brightest packs on the ends, which mattered while
+ * the ends were permanently dim — and once the sweep started overshooting the
+ * midpoint (see RING_SWEEP) they are not. What it also did was strand Same
+ * Page next to Ride the Bus at the seam, and gold to pale blue is the worst
+ * pair in the palette: near enough opposite on the hue wheel, 36.2 a step, sat
+ * exactly on the start line. Solving for the wrong thing put the palette's
+ * roughest join in its most-watched spot.
+ */
+const RING_ORDER: ModeId[] = [
+  "ride-the-bus",
+  "the-number-game",
+  "last-call",
+  "most-likely-to",
+  "kings-cup",
+  "last-word",
+  "drink-if",
+  "say-the-same-thing",
+  "imposter",
+  "hot-seat",
+  "rank-it",
+  // Closed: back onto the pack it started from. ELEVEN transitions now, not
+  // ten, and the wrap is the whole point rather than an oversight. The line is
+  // born and dies at the same spot on the pill, so with an open ramp those two
+  // points are different colours butted against each other — a hue seam
+  // sitting exactly where the eye is waiting for the line to arrive. Ending
+  // where it began leaves only a difference in brightness there, which is what
+  // the softening was always meant to be.
+  //
+  // The old comment here warned that wrapping invents a twelfth colour, and it
+  // was right about the ORDER it was describing: brown mixed toward red lands
+  // on a dark muddy red that is in no pack. Gold back to gold mixes with
+  // itself.
+  "ride-the-bus",
+];
+
+const RING_COLOURS = RING_ORDER.map(
+  (id) => MODES.find((mode) => mode.id === id)!.color,
+);
+
+/**
+ * The packs blended into each other along that order.
  */
 const RING_RAMP = [
-  ...MODES.slice(0, -1).flatMap((mode, i) =>
+  ...RING_COLOURS.slice(0, -1).flatMap((colour, i) =>
     Array.from(
       { length: RING_STEPS },
       (_, step) =>
@@ -91,28 +150,161 @@ const RING_RAMP = [
         // hue ROUND the wheel at full chroma instead of cutting across the
         // middle of it. srgb was the first attempt and dips through grey;
         // oklab was the second and dips just as hard — measured, every one of
-        // the ten pairs lost most of its colour at the midpoint, worst of them
+        // the pairs lost most of its colour at the midpoint, worst of them
         // Kings Cup to Ride the Bus at chroma 176 down to 24. That is what a
         // straight line between two saturated colours does: it passes near the
-        // achromatic axis. Eleven bright packs separated by ten grey sags is
-        // exactly what "I can see the steps" looks like, and no number of
-        // extra steps fixes it, because the sag is IN the ramp rather than
-        // between its pieces.
+        // achromatic axis. Bright packs separated by grey sags is exactly what
+        // "I can see the steps" looks like, and no number of extra steps fixes
+        // it, because the sag is IN the ramp rather than between its pieces.
         //
         // Going round keeps the chroma up the whole way. The hues it passes
         // through are the short way between two packs, which on this palette
         // is mostly other packs' hues — navy to gold goes purple, magenta,
         // red, orange rather than through mud.
-        `color-mix(in oklch, var(${mode.color}) ${
+        `color-mix(in oklch, var(${colour}) ${
           100 - (step * 100) / RING_STEPS
-        }%, var(${MODES[i + 1].color}))`,
+        }%, var(${RING_COLOURS[i + 1]}))`,
     ),
   ),
   // Lands on the last pack itself rather than stopping just short of it.
-  `var(${MODES[MODES.length - 1].color})`,
+  `var(${RING_COLOURS[RING_COLOURS.length - 1]})`,
 ];
 
 const RING_PATH = RING_RAMP.length * RING_SPAN;
+
+/**
+ * THE SWEEP IS LONGER THAN THE RING, AND THAT IS THE WHOLE FIX.
+ *
+ * Every version of this before now ran exactly one lap: the line was born at
+ * the bottom midpoint and died there, so the softening at each end had nowhere
+ * to be except ON that point. That is what made the patch unkillable rather
+ * than merely badly tuned — the ceiling was a property of WHERE a piece sat, so
+ * the pieces at the midpoint were dim at the start, dim in the middle and dim
+ * at the end. Moving the floor, the curve or the length all move the same
+ * problem around. The place the eye is waiting is the one place the line could
+ * never be bright.
+ *
+ * So the line starts EDGE_PIECES before the midpoint and finishes EDGE_PIECES
+ * after it. It gathers on the approach, crosses the midpoint at full strength,
+ * runs the ring, comes back round and crosses at full strength a second time,
+ * and only then thins out. The runway is before the start line going in and
+ * after it coming out, which is what a runway is.
+ *
+ * The stretch either side of the midpoint is therefore drawn TWICE — once dim
+ * as the line is born or dying, once bright as it passes through — and the two
+ * visits are a lap apart, so nothing composites. Position and time have come
+ * apart, which is why a piece now carries both: `--seg` is where it sits and
+ * `--beat` is when it lights. They used to be the same number.
+ *
+ * It costs the extra travel, honestly: the sweep is a lap plus two runways, so
+ * the flourish runs longer than a lap by exactly the amount it overshoots.
+ */
+const EDGE_ARC = 0.04;
+const EDGE_PIECES = Math.round(RING_RAMP.length * EDGE_ARC);
+const RING_SWEEP = RING_RAMP.length + EDGE_PIECES * 2;
+
+/**
+ * How brightly each beat is allowed to burn, by how near it is to the start or
+ * the end of the SWEEP — not by where it sits on the ring. Nothing at the
+ * first beat, full by the end of the runway, and the same in reverse coming
+ * out: the line fades up out of the ring and back down into it.
+ *
+ * Without it the line springs into existence at full strength and is cut off
+ * at full strength: a bright nick appearing on one spot. Holding the beats
+ * nearest each end below full turns that into a swell, the line gathering as
+ * it comes up on the midpoint and thinning out after it has gone past.
+ *
+ * THE CURVE IS EASE-OUT, NOT SMOOTHSTEP. Smoothstep is flat at BOTH ends, and
+ * the flat end that mattered was the one nobody was looking at: at the foot the
+ * ceiling left the floor so slowly that the first few beats ran 0.220 → 0.229
+ * and never climbed at all. Only the top of the ramp needs easing, where it
+ * meets full brightness and a corner would read as an edge. The foot is the
+ * birth of the line, where it is honestly a dot — there is nothing there to
+ * ease into.
+ *
+ * IT GOES ALL THE WAY TO NOTHING, and there is no floor under it any more.
+ *
+ * There used to be an EDGE_FLOOR of 0.22, and it was never about how the fade
+ * should look — it was a brace against the sweep running exactly one lap. With
+ * one lap the ceiling was a property of WHERE a piece sat, so a floor of zero
+ * did not mean "the line fades in", it meant the bottom midpoint was the one
+ * place on the button that never took colour at all: a permanent dead notch
+ * rather than a soft arrival. The floor held it just barely lit to hide that.
+ *
+ * Overshooting the midpoint removed the thing the floor was bracing. Every
+ * seat is now crossed at full strength during the lap, the run-up included, so
+ * zero at the first beat costs nothing — the line simply is not there yet, and
+ * the ring it is not-there-on gets painted brightly a moment later anyway. A
+ * workaround outliving its problem is worth deleting rather than tuning, so
+ * the constant is gone and the curve is the whole of it: 0 to 1, ease-out.
+ *
+ * EDGE_ARC is the only number left here. It is how far the line travels
+ * appearing and disappearing — and now also how far before the
+ * midpoint it starts and how far past it it runs on. A fraction of the
+ * perimeter rather than a count of pieces, because a count silently changed
+ * length when the colour order gained a transition: 64 pieces of 321 is 146px
+ * of arc and 64 pieces of 353 is 132px. The runway is the thing the eye reads
+ * directly, so it is written as arc and the count follows.
+ *
+ * 0.04 is ~29px of run-up and the same of run-out. It reads as much longer
+ * than the number suggests, because none of it is shared with the lap any
+ * more: it used to be a fade laid ON the ring's first and last stretch, and it
+ * is now travel the line does before the start line and after it. A short
+ * gather is enough to close the loop in the head — the swell was never the
+ * point, only the fact that the line does not begin at a hard edge.
+ *
+ * 0.09 is the CEILING on this rather than a suggestion, and the palette sets
+ * it. At 0.09 the run-up exactly fills Rank It's yellow, the pack before Ride
+ * the Bus on the seam. Past that the first beats — the dimmest ones — reach
+ * back into Hot Seat's brown, the darkest pack in the app, and the birth stops
+ * reading at all: the same fault the old order had at the death end, arriving
+ * from the other side.
+ */
+function edgeOpacity(beat: number): number {
+  const t = Math.min(1, Math.min(beat, RING_SWEEP - 1 - beat) / EDGE_PIECES);
+  return +(1 - (1 - t) * (1 - t)).toFixed(3);
+}
+
+/**
+ * Where a beat sits on the ring. Beat EDGE_PIECES is the bottom midpoint —
+ * everything before it is the run-up, everything past the lap is the run-out,
+ * and both wrap round to seats that the middle of the sweep also visits.
+ */
+function ringSeat(beat: number): number {
+  const n = RING_RAMP.length;
+  return (((beat - EDGE_PIECES) % n) + n) % n;
+}
+
+/** The sweep as it is drawn: one rect per beat, each seated on the ring. */
+const RING_BEATS = Array.from({ length: RING_SWEEP }, (_, beat) => ({
+  beat,
+  seat: ringSeat(beat),
+  edge: edgeOpacity(beat),
+}));
+
+
+/**
+ * THE GLOW IS FED A COARSER LINE THAN THE ONE YOU SEE.
+ *
+ * All 353 beats used to sit inside the filter, so every frame rasterised that
+ * many full-perimeter dashed paths into an offscreen buffer before blurring
+ * them. An svg filter is not GPU-accelerated on iOS; that was the stutter.
+ *
+ * The blur is still a real blur, just given less to chew on: a coarse copy
+ * drawn from every HALO_EVERY-th beat goes through the filter, and the sharp
+ * line is drawn separately, outside it. What coarseness costs is colour detail
+ * inside a bloom, and destroying that detail is what blurring IS.
+ *
+ * A coarse beat is one dash EIGHT units long standing where its eight sharp
+ * ones stand, rather than one unit on a path measured in eighths. Those are
+ * the same picture only when the ramp divides by eight, which 353 does not —
+ * the old halo tiled 45 units over a 353-unit ring and crept a little further
+ * out of register with every pack. Same units for both copies, no drift, and
+ * `--step` is gone with it: each beat now carries the beat number it is timed
+ * to, so the coarse copy cannot race the line it stands for.
+ */
+const HALO_EVERY = 8;
+const HALO_BEATS = RING_BEATS.filter((_, beat) => beat % HALO_EVERY === 0);
 
 /**
  * Picking for you happens in two beats, and the first one exists so you can
@@ -144,76 +336,66 @@ const REVEAL_MS = 240;
 /**
  * The two sweeps. Both reach the stylesheet as custom properties, so this file
  * is the only place the flourish is described and the two cannot drift.
+ *
+ * THE LAP IS THE TUNED NUMBER, AND THE PER-PIECE STEP FOLLOWS FROM IT. It used
+ * to be the other way round — a step of 4ms written down, and the lap whatever
+ * that came to. That is fine until the ramp changes length: closing the order
+ * back onto its first pack added a transition, 321 pieces became 353, and a
+ * fixed step would have quietly slowed the line by 7% and stretched the sweep
+ * past the timeout that retires the ring. Nothing about how the flourish reads
+ * is a property of one piece. It is how long the line takes to run the ring,
+ * which is 1280ms dealt and 960ms tapped either way. The SWEEP is longer than
+ * the lap, because the line overshoots the midpoint at both ends — see
+ * RING_SWEEP — so the two are no longer the same duration and the timeout that
+ * retires the ring waits on the sweep.
  */
-const DEAL_DELAY_MS = 720;
-const DEAL_STEP_MS = 4;
+/**
+ * How long the deck takes to finish dealing itself out.
+ *
+ * `deck-deal` is 620ms and each card is held back by 46ms times its `--i`,
+ * which counts DOWN the deck — the bottom card leaves first so that every
+ * card's bottom edge is already covered when it lands. Last Call is therefore
+ * the LAST one to arrive, not the first, at 10 x 46 + 620.
+ *
+ * A number here because the beat below is measured from the end of the deal
+ * and a timeout cannot read a stylesheet. It has to agree with
+ * .home__deck--dealing to the frame.
+ */
+const DECK_DEAL_MS = (MODES.length - 1) * 46 + 620;
+
+/**
+ * The beat of stillness before the line runs, measured FROM THE END OF THE
+ * DEAL rather than from the screen mounting.
+ *
+ * It used to be a flat 720ms from mount, which put the ring's first piece 360ms
+ * before the last card had landed — the beat was not a beat at all, it was an
+ * overlap, and the two events read as one thing arriving on top of itself.
+ * Three quarters of a second after the deck has actually settled is what makes
+ * it a beat: the cards land, everything stops, and only then does the button
+ * offer. The number is short enough to feel like a pause rather than a wait,
+ * and it is measured from the deal so it stays that way if the deal is retimed.
+ *
+ * A number here rather than `--dur-slow + --dur-base` in the stylesheet, which
+ * is what it used to be. Those two happened to add to 720 and had nothing to
+ * do with each other or with this: one is how long `screen-in` takes and the
+ * other is longer than that on purpose, so the ring starts once the screen has
+ * visibly SETTLED rather than as the title lands. Spelling it as a sum of two
+ * unrelated tokens meant the delay moved whenever either was tuned, and meant
+ * this constant — which is also what retires the ring from the DOM — had to be
+ * kept in step by hand. It reaches the stylesheet as `--deal-delay` now, like
+ * every other number in the flourish.
+ */
+const DEAL_DELAY_MS = DECK_DEAL_MS + 750;
+const DEAL_LAP_MS = 1280;
 const DEAL_LIFE_MS = 515;
-const DEAL_SWEEP_MS = (RING_RAMP.length - 1) * DEAL_STEP_MS + DEAL_LIFE_MS;
+const DEAL_STEP_MS = DEAL_LAP_MS / RING_RAMP.length;
+const DEAL_SWEEP_MS = (RING_SWEEP - 1) * DEAL_STEP_MS + DEAL_LIFE_MS;
 
-const PICK_STEP_MS = 3;
+const PICK_LAP_MS = 960;
 const PICK_LIFE_MS = 340;
-const PICK_SWEEP_MS = (RING_RAMP.length - 1) * PICK_STEP_MS + PICK_LIFE_MS;
+const PICK_STEP_MS = PICK_LAP_MS / RING_RAMP.length;
+const PICK_SWEEP_MS = (RING_SWEEP - 1) * PICK_STEP_MS + PICK_LIFE_MS;
 
-/**
- * THE GLOW IS FED A COARSER LINE THAN THE ONE YOU SEE.
- *
- * All 321 pieces used to sit inside the filter, so every frame rasterised 321
- * full-perimeter dashed paths into an offscreen buffer before blurring them.
- * An svg filter is not GPU-accelerated on iOS; that was the stutter.
- *
- * The blur is still a real blur, just given less to chew on: a coarse copy
- * drawn from every HALO_EVERY-th piece goes through the filter, and the sharp
- * line is drawn separately, outside it. What coarseness costs is colour detail
- * inside a bloom, and destroying that detail is what blurring IS.
- */
-const HALO_EVERY = 8;
-const HALO_RAMP = RING_RAMP.filter((_, i) => i % HALO_EVERY === 0);
-
-/**
- * How brightly each piece is allowed to burn, by how close it sits to the
- * point the line is born and dies.
- *
- * Both ends of the ramp meet at the bottom midpoint, so without this the line
- * springs into existence already at full strength and is cut off at full
- * strength — a bright nick appearing and vanishing on one spot. Holding the
- * pieces nearest each end below full turns that into a swell: the line
- * gathers as it leaves the bottom and thins back out as it returns.
- *
- * EDGE_FLOOR is why it does not go all the way to zero, and it is not a
- * softening of the softening. At zero the bottom midpoint is the one place on
- * the button that NEVER takes colour — not dim at the start and bright later,
- * but permanently unlit, because the ceiling is a property of where a piece
- * is rather than of when. A dead notch, sitting exactly where the eye is
- * drawn to watch the line arrive.
- *
- * Sliding the birth point sideways does not fix that: the dim stretch is
- * centred on wherever the birth point is, so it slides with it. Only lifting
- * the floor fixes it. At EDGE_FLOOR the midpoint is lit enough to read as
- * part of the line — the bloom carries it further — while still arriving far
- * below the body's full strength, which is all the softness was ever for.
- *
- * The two numbers pull against each other and are worth tuning as a pair.
- * The floor is how lit the midpoint gets; the length is how gently the line
- * reaches full strength. Raising the floor colours the midpoint better and
- * makes the arrival abrupter, because there is less climb left to do —
- * shortening the ramp does the same thing twice over. Both were moved at
- * once in the commit before this and the entrance came out harder than it
- * had ever been: 0.35 appearing over only 58px is close to a pop.
- *
- * So the length goes past where it started rather than back to it, and the
- * floor comes down to the least that still reads: ~116px to climb, from a
- * fifth of full. Smoothstep rather than a straight ramp, so the brightness
- * eases off its ceiling instead of turning a corner — a linear taper still
- * reads as an edge, just a slanted one.
- */
-const EDGE_PIECES = 64;
-const EDGE_FLOOR = 0.22;
-
-function edgeOpacity(i: number): number {
-  const t = Math.min(1, Math.min(i, RING_RAMP.length - 1 - i) / EDGE_PIECES);
-  const eased = t * t * (3 - 2 * t);
-  return +(EDGE_FLOOR + (1 - EDGE_FLOOR) * eased).toFixed(3);
-}
 
 /**
  * How long the returning card takes to lower itself into the slot.
@@ -486,6 +668,7 @@ export function Home({ onPick, returning }: HomeProps) {
           <svg
             className="pick-me__ring"
             style={{
+              ["--deal-delay" as string]: DEAL_DELAY_MS,
               ["--deal-step" as string]: DEAL_STEP_MS,
               ["--deal-life" as string]: DEAL_LIFE_MS,
               ["--deal-total" as string]: DEAL_SWEEP_MS,
@@ -547,21 +730,22 @@ export function Home({ onPick, returning }: HomeProps) {
               className="pick-me__halo"
               data-sweep={picked ? "pick" : "deal"}
               style={{
-                ["--path" as string]: HALO_RAMP.length,
-                ["--step" as string]: HALO_EVERY,
+                ["--path" as string]: RING_PATH,
+                ["--dash" as string]: HALO_EVERY,
                 ["--stroke" as string]: 3,
               }}
               filter="url(#pick-me-glow)"
               mask="url(#pick-me-outside)"
             >
-              {HALO_RAMP.map((colour, j) => (
+              {HALO_BEATS.map(({ beat, seat, edge }) => (
                 <rect
-                  key={j}
-                  pathLength={HALO_RAMP.length}
+                  key={beat}
+                  pathLength={RING_PATH}
                   style={{
-                    stroke: colour,
-                    ["--seg" as string]: j,
-                    ["--edge" as string]: edgeOpacity(j * HALO_EVERY),
+                    stroke: RING_RAMP[seat],
+                    ["--seg" as string]: seat,
+                    ["--beat" as string]: beat,
+                    ["--edge" as string]: edge,
                   }}
                 />
               ))}
@@ -574,14 +758,15 @@ export function Home({ onPick, returning }: HomeProps) {
               data-sweep={picked ? "pick" : "deal"}
               style={{ ["--path" as string]: RING_PATH }}
             >
-              {RING_RAMP.map((colour, i) => (
+              {RING_BEATS.map(({ beat, seat, edge }) => (
                 <rect
-                  key={i}
+                  key={beat}
                   pathLength={RING_PATH}
                   style={{
-                    stroke: colour,
-                    ["--seg" as string]: i,
-                    ["--edge" as string]: edgeOpacity(i),
+                    stroke: RING_RAMP[seat],
+                    ["--seg" as string]: seat,
+                    ["--beat" as string]: beat,
+                    ["--edge" as string]: edge,
                   }}
                 />
               ))}

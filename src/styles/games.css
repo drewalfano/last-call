@@ -680,6 +680,14 @@
      the caps out of round as the button changes width. */
   overflow: visible;
   pointer-events: none;
+  /* ONE unit per piece, and it lives HERE rather than on the rect, which is
+     the difference between a glow and a dotted line. A custom property set on
+     the rect beats one inherited from the group, so .pick-me__halo could not
+     widen its own dashes to the eight units each of its coarse pieces stands
+     for — they stayed a single unit with seven units of gap behind them, and
+     the bloom was drawn from a dashed line instead of a continuous one. Set on
+     the svg it is a default the line inherits and the halo overrides. */
+  --dash: 1;
 }
 
 /* ---------------------------------------------------------------
@@ -715,24 +723,25 @@
    the sweep, the two beats of the reveal, and the moment the ring is taken
    out of the DOM are all derived from one place.
 
-   --step is 1 for the line and HALO_EVERY for the coarse copy the glow is
-   drawn from, which is what keeps a blurred piece over the eight sharp ones
-   it stands for rather than racing them.
+   --seg is where a piece SITS on the ring and --beat is when it lights, and
+   they are different numbers now: the sweep is longer than a lap, so the
+   stretch either side of the bottom midpoint is drawn twice, a lap apart. The
+   delay keys off --beat and the position off --seg. --step is gone — the
+   coarse copy the glow is drawn from carries the beat number it stands for, so
+   it cannot race the eight sharp pieces underneath it.
 
-   Held back by --dur-slow + --dur-base. The first figure is longer than
-   `screen-in` actually takes — that is --dur-base — and deliberately so: the
-   ring should not start as the title lands, it should start once the screen
-   has visibly settled. At --dur-base + --dur-fast the two read as one event
-   arriving on top of itself, which is what made opening the app feel abrupt.
-   720ms leaves a clear beat of stillness first, and the beat is the point:
-   the deck is dealt, everything stops, and only then does the button offer.
-
-   DEAL_DELAY_MS in games/Home.tsx is this same number and is what retires
-   the ring from the DOM. Change one, change the other. */
+   Held back by --deal-delay, which is DEAL_DELAY_MS in games/Home.tsx and is
+   also what retires the ring from the DOM — one number, so the two cannot
+   drift. The ring should not start as the title lands, it should start once
+   the screen has visibly settled: at --dur-base + --dur-fast the two read as
+   one event arriving on top of itself, which is what made opening the app feel
+   abrupt. A full second leaves a clear beat of stillness first, and the beat
+   is the point — the deck is dealt, everything stops, and only then does the
+   button offer. */
 .pick-me__ring g[data-sweep="deal"] > rect {
   animation: pick-me-piece-deal calc(var(--deal-life) * 1ms) linear both;
   animation-delay: calc(
-    var(--dur-slow) + var(--dur-base) + var(--seg) * var(--step, 1) * var(--deal-step) * 1ms
+    (var(--deal-delay) + var(--beat) * var(--deal-step)) * 1ms
   );
 }
 
@@ -746,7 +755,7 @@
    of nothing and goes back into nothing. */
 .pick-me__ring g[data-sweep="deal"] {
   animation: pick-me-veil calc(var(--deal-total) * 1ms) linear both;
-  animation-delay: calc(var(--dur-slow) + var(--dur-base));
+  animation-delay: calc(var(--deal-delay) * 1ms);
 }
 
 .pick-me__ring g[data-sweep="pick"] {
@@ -776,7 +785,7 @@
 
 .pick-me__ring g[data-sweep="pick"] > rect {
   animation: pick-me-piece-lap calc(var(--pick-life) * 1ms) linear both;
-  animation-delay: calc(var(--seg) * var(--step, 1) * var(--pick-step) * 1ms);
+  animation-delay: calc(var(--beat) * var(--pick-step) * 1ms);
 }
 
 /* Up fast, out slow — a hard leading edge with the fade trailing behind
@@ -842,14 +851,15 @@
      Butted exactly, the worst left is a join sitting a fraction light where
      two antialiased ends meet, which between neighbours this close in hue is
      far below the tick it replaces. */
-  --dash: 1;
   stroke-dasharray:
     calc(var(--dash) * 1px)
     calc((var(--path) - var(--dash)) * 1px);
   /* Each piece sits one unit further along than the last, and stays there.
 
-     --ring-start is where piece 0 lives, and therefore where the line is
-     born and where it dies. A fraction of the path so it holds as the button
+     --ring-start is seat 0, the bottom midpoint. It is no longer where the
+     line is born — the sweep starts EDGE_PIECES before it and ends the same
+     distance past it, see RING_SWEEP in games/Home.tsx — it is the point the
+     line crosses at full strength on the way in and again on the way out. A fraction of the path so it holds as the button
      changes width — and it holds better than it looks like it should. The
      bottom edge always BEGINS at exactly half the perimeter, by symmetry:
      the top edge plus the right cap is half a pill however wide the pill is.
@@ -859,7 +869,7 @@
   stroke-dashoffset: calc((var(--seg) + var(--path) * var(--ring-start, 0.69)) * -1px);
 
   /* Butt caps, INSIDE the line. A round cap on every piece would overhang its
-     own share by half the stroke and bulge the line at all 320 joins. */
+     own share by half the stroke and bulge the line at every join. */
   stroke-linecap: butt;
 }
 
