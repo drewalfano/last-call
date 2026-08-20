@@ -2022,6 +2022,8 @@
      what is in it — during the travel the larger of the two wins, and both
      move in the same direction, so the row never dips and comes back. */
   min-height: 0;
+  /* Clear is positioned against this while it is leaving — see below. */
+  position: relative;
   /* Optical inset: the label is flush type where the rows below are pills
      with their own inner padding, so it needs a nudge to line up with them.
      4px collapsed and 8px open — the whole distance the question travels
@@ -2141,26 +2143,37 @@
               opacity var(--dur-base) var(--ease-glide),
               visibility 0s;
 }
+/* A NORMAL BUTTON THAT FADES. Nothing else — no shrink, no collapse.
+
+   Getting there meant taking it OUT OF FLOW on the way out, which sounds like
+   the opposite of "normal" and is the only way to get it. Hidden is not gone:
+   a --control-sm button still contributes 40px to the header, and that is a
+   floor the collapsed tile cannot get under. Every attempt to fix that by
+   shrinking the button — `min-height: 0` when hidden, then when the tile is
+   shut — is what you saw as the fold, because the box was collapsing under a
+   thing still on screen.
+
+   Absolute, it reserves nothing, so the header is free to shrink around it;
+   and it keeps its own full 40px shape, so it just fades. Both at once, which
+   no amount of tuning the height could do.
+
+   It lands where it already was — last child of a `space-between` row, so
+   `right: 0` is the same x, and `top: 0` the same y in a 40px header. Nothing
+   moves at the moment it goes out of flow.
+
+   `visibility` must NOT interpolate, so it is switched at the far end of the
+   fade going out and immediately coming in — the differing delays below. It
+   earns its place: it leaves the tab order and the accessibility tree too. */
 .roster__clear[data-hidden] {
+  position: absolute;
+  top: 0;
+  right: 0;
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--dur-base) var(--ease-glide),
               visibility 0s var(--dur-base);
 }
-
-/* IT ONLY HAS TO STOP RESERVING HEIGHT WHEN THE TILE IS SHUT — not whenever
-   it is hidden, which is what made it fold.
-
-   Hidden is not gone: a --control-sm button still contributes 40px to the
-   head, and that is a floor the collapsed tile cannot get under; it was
-   arriving 16px too tall with the question stranded in an empty row. But
-   keying the fix to `[data-hidden]` meant taking the last name out of an OPEN
-   tile also collapsed the button's box, 40px to its line height, while it was
-   still on screen fading — which is the crease you see. Keyed to the tile
-   instead, it fades at full size and the box only goes once the whole tile has.
-   Nothing is visible by then to fold. */
-.roster:not([data-open]) .roster__clear { min-height: 0; }
 
 
 /* ---------------------------------------------------------------
