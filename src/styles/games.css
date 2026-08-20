@@ -2342,7 +2342,26 @@
   background: var(--category-ink);
   color: var(--category);
   cursor: pointer;
-  animation: pop var(--dur-base) var(--ease-spring) both;
+  /* ------------------------------------------------------------
+     IT TURNS OVER, BECAUSE IT IS A CARD.
+
+     It was arriving on `pop` — the app's entrance for a small
+     element appearing on a surface that is holding still. This is
+     not that. It fills the slot, it wears the card's radius, and it
+     is the thing you are looking at: it is a card, and every card in
+     this app arrives by turning over. See card-flip-in, which says
+     so in as many words.
+
+     Dealt on the same beat as the prompt beneath it, which is also
+     remounting on its dealKey — so the table sees one card turn over
+     and find the level written on it, rather than a panel popping up
+     in front of a card that turned over separately.
+
+     The slot carries the perspective already; without it this would
+     render as a flat squash.
+     ------------------------------------------------------------ */
+  animation: card-flip-in var(--dur-slow) var(--ease-out) both;
+  backface-visibility: hidden;
 }
 
 .lc-tier__label {

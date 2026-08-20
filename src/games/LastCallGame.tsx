@@ -190,15 +190,31 @@ export function LastCallGame({ mode, onBack }: Props) {
             {tiers.size[card.intensity - 1]}
           </p>
         )}
+        {/* Both actions go dead behind the interstitial.
+
+            The level card covers the prompt and says "Tap to carry on", which
+            is the only thing that should be pressable while it is up — a live
+            Next player underneath it lets a table skip past the one moment
+            this mode exists to announce, and worse, spend a card without ever
+            seeing it. Disabled rather than hidden: the row keeps its shape, so
+            nothing moves when the level card goes and the buttons come back. */}
         <div className="actions">
-          <button className="btn btn--lg btn--block" onClick={draw} disabled={!card}>
+          <button
+            className="btn btn--lg btn--block"
+            onClick={draw}
+            disabled={!card || crossing}
+          >
             Next player
           </button>
           {/* Named by destination, not by direction. The jump is forward only
               and the cards in between do not come back, so the table should
               see what it is committing to before it commits. */}
           {nextTier !== null && (
-            <button className="btn btn--ghost btn--block" onClick={skipLevel}>
+            <button
+              className="btn btn--ghost btn--block"
+              onClick={skipLevel}
+              disabled={crossing}
+            >
               Skip to {TIER_LABEL[nextTier - 1]}
             </button>
           )}
