@@ -2338,57 +2338,35 @@
    --------------------------------------------------------------- */
 .roster__chipwrap {
   overflow: hidden;
-  /* Same construction as .roster__slot: the feather is as deep as whatever is
-     still clipped, derived from the same --k that opens the row, capped at
-     12px. One row's worth is the reference — this only has to out-cover the
-     cut, and the cut is never deeper than the line being revealed.
-
-     --k is 1 for the whole time the row merely CHANGES height, which is the
-     fold and the wrap, so those get no feather. That is where this came out
-     on the bench: the feather is for a row opening from nothing, and a row
-     that is already open has nothing to hide behind it. */
-  --k: 0;
   margin-bottom: calc(var(--sp-2) * -1);
-  /* EASED, NOT LINEAR — and this is the difference between a fade and a
-     smear. A two-stop gradient holds alpha at 1 and then CORNERS into a
-     straight decline: the value is continuous but its slope is not, and the
-     eye reads that crease as an edge no matter how long you make the ramp.
-     Deepening it only makes a longer smear.
-
-     So the stops walk a smootherstep instead. Alpha leaves 1 almost flat,
-     drops through the middle, and approaches 0 flat again, which is the
-     shape that has no corner to find at either end. Same idea as the ramps
-     in .pick-me__ring, and the reason that one needed its own note: a curve
-     with a flat foot is exactly right when it is LEAVING a value and exactly
-     wrong when something has to appear at the far end of it. Nothing appears
-     here — the row is only ever hiding what it has not revealed yet.
-
-     16px rather than 12: the eased ramp spends its first fifth barely moving,
-     so it needs a little more room to cover the same cut. */
-  --fade: min(16px, var(--control-sm) * (1 - var(--k)) * 2);
-  -webkit-mask-image: linear-gradient(to bottom,
-      rgb(0 0 0 / 1)    calc(100% - var(--fade)),
-      rgb(0 0 0 / 0.94) calc(100% - var(--fade) * 0.8),
-      rgb(0 0 0 / 0.73) calc(100% - var(--fade) * 0.6),
-      rgb(0 0 0 / 0.32) calc(100% - var(--fade) * 0.4),
-      rgb(0 0 0 / 0.06) calc(100% - var(--fade) * 0.2),
-      transparent       100%);
-  mask-image: linear-gradient(to bottom,
-      rgb(0 0 0 / 1)    calc(100% - var(--fade)),
-      rgb(0 0 0 / 0.94) calc(100% - var(--fade) * 0.8),
-      rgb(0 0 0 / 0.73) calc(100% - var(--fade) * 0.6),
-      rgb(0 0 0 / 0.32) calc(100% - var(--fade) * 0.4),
-      rgb(0 0 0 / 0.06) calc(100% - var(--fade) * 0.2),
-      transparent       100%);
+  /* --ease-glide on the way SHUT, which is the fold: it is travelling with a
+     name that is leaving, and both want the same evenly-spread curve. */
   transition: height var(--dur-base) var(--ease-glide),
-              margin-bottom var(--dur-base) var(--ease-glide),
-              --k var(--dur-base) var(--ease-glide);
+              margin-bottom var(--dur-base) var(--ease-glide);
 }
 
+/* AND --ease-out ON THE WAY OPEN, WHICH IS NOT A STYLE PREFERENCE.
+
+   tokens.css says --ease-out is ~95% done by the halfway point, and that is
+   precisely what this needs. The first name is exactly as tall as the row
+   revealing it, so it is partly cut until the very last frame — which is why
+   this row used to carry a mask, softening an edge instead of not making one.
+
+   Front-load the row and the problem dissolves: it is effectively open by
+   130ms, and the chip does not begin to fade until 104ms (see
+   .roster__chip:only-child). By the time the name is readable there is no cut
+   left to see, so a hard edge costs nothing. Measured across the whole travel,
+   the worst moment is about 4px of cut at 6% opacity — against 20px at 50%
+   with the mask.
+
+   What it buys is that the first name now does the same two things the second
+   one does, a fade and a faint scale, with no gradient anywhere near it. */
 .roster__chipwrap[data-open] {
   margin-bottom: 0;
-  --k: 1;
+  transition: height var(--dur-base) var(--ease-out),
+              margin-bottom var(--dur-base) var(--ease-out);
 }
+
 
 .roster__chips {
   display: flex;
@@ -2455,6 +2433,18 @@
    which is the trade — they are the case with nothing else moving to agree
    with, and they were never the ones that read wrong. */
 .roster__chip { animation: roster-chip-in var(--dur-base) var(--ease-glide) backwards; }
+
+/* THE FIRST NAME IS THE ONLY ONE THE ROW HAS TO OPEN FOR, and `:only-child` is
+   exactly that test — every later name lands in a row already at full height
+   and keeps the full-length entrance above.
+
+   It waits out the row's move and then takes the rest: 40% delay, 60%
+   duration. Same fade and same scale as its siblings, just later, which is
+   what lets the mask come off the row entirely. */
+.roster__chip:only-child {
+  animation: roster-chip-in calc(var(--dur-base) * 0.6) var(--ease-glide)
+             calc(var(--dur-base) * 0.4) backwards;
+}
 
 @keyframes roster-chip-in {
   from { opacity: 0; transform: scale(0.96); }
