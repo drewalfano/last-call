@@ -362,30 +362,55 @@ const REVEAL_MS = 240;
  * retires the ring waits on the sweep.
  */
 /**
- * How long the deck takes to finish dealing itself out.
+ * WHEN THE DECK LOOKS STILL — which is not when it stops moving.
  *
- * `deck-deal` is 620ms and each card is held back by 46ms times its `--i`,
- * which counts DOWN the deck — the bottom card leaves first so that every
+ * `deck-deal` is 620ms and each card is held back by DECK_STAGGER_MS times its
+ * `--i`, which counts DOWN the deck: the bottom card leaves first so that every
  * card's bottom edge is already covered when it lands. Last Call is therefore
- * the LAST one to arrive, not the first, at 10 x 46 + 620.
+ * the LAST to arrive, not the first.
  *
- * A number here because the beat below is measured from the end of the deal
- * and a timeout cannot read a stylesheet. It has to agree with
- * .home__deck--dealing to the frame.
+ * The beat below used to be measured from that animation ENDING, at 10 x 46 +
+ * 620 = 1080ms, and that was 236ms of waiting nobody could see. `--ease-out` is
+ * cubic-bezier(.16, 1, .3, 1), which is violently front-loaded: a card covers
+ * 90% of its travel in the first 204ms and 95% by 264ms. Everything after that
+ * is the curve creeping the last handful of pixels home. Measured against the
+ * curve, the card is 99% of the way there 62% of the way through — 384ms of
+ * 620 — and the remaining 236ms is a card that has, to the eye, already
+ * landed. A fraction rather than a figure, so it holds if the duration moves.
+ *
+ * So the beat is anchored here instead. It is not a shorter pause — it is the
+ * same 500ms of stillness, started when the deck looks still rather than when
+ * the animation object says so. The stillness that was already sitting in the
+ * ease-out's tail is no longer being paid for twice.
+ *
+ * 99% rather than 95%, deliberately: the difference is 120ms and it is a
+ * judgement about when a card has landed rather than a measurement, so it
+ * takes the conservative end. If the ring ever reads as jumping the deal, this
+ * is the number to move, and it moves toward 620.
+ *
+ * All three have to agree with .home__deck--dealing in games.css to the frame,
+ * and a timeout cannot read a stylesheet.
  */
-const DECK_DEAL_MS = (MODES.length - 1) * 46 + 620;
+const DECK_CARD_MS = 620;
+const DECK_STAGGER_MS = 46;
+/** Where cubic-bezier(.16, 1, .3, 1) reaches 99% of its travel: 62% of the way through. */
+const DECK_SETTLED_FRACTION = 0.62;
+const DECK_SETTLED_MS = Math.round(
+  (MODES.length - 1) * DECK_STAGGER_MS + DECK_CARD_MS * DECK_SETTLED_FRACTION,
+);
 
 /**
- * The beat of stillness before the line runs, measured FROM THE END OF THE
- * DEAL rather than from the screen mounting.
+ * The beat of stillness before the line runs, measured FROM WHERE THE DECK
+ * LOOKS SETTLED rather than from the screen mounting.
  *
  * It used to be a flat 720ms from mount, which put the ring's first piece 360ms
  * before the last card had landed — the beat was not a beat at all, it was an
  * overlap, and the two events read as one thing arriving on top of itself.
- * Half a second after the deck has actually settled is what makes it a beat:
- * the cards land, everything stops, and only then does the button offer. It is
- * measured from the deal rather than from mount, so it stays a beat if the
- * deal is ever retimed.
+ * Half a second after the deck has settled is what makes it a beat: the cards
+ * land, everything stops, and only then does the button offer. It is measured
+ * from the deal rather than from mount, so it stays a beat if the deal is ever
+ * retimed — see DECK_SETTLED_MS for what "settled" means, which is the part of
+ * this that is easy to get wrong.
  *
  * It reads as slightly longer than it is, and that is why 500 is enough where
  * 500 from a standing start would not be. The line is born at zero opacity and
@@ -402,7 +427,7 @@ const DECK_DEAL_MS = (MODES.length - 1) * 46 + 620;
  * kept in step by hand. It reaches the stylesheet as `--deal-delay` now, like
  * every other number in the flourish.
  */
-const DEAL_DELAY_MS = DECK_DEAL_MS + 500;
+const DEAL_DELAY_MS = DECK_SETTLED_MS + 500;
 const DEAL_LAP_MS = 1280;
 const DEAL_LIFE_MS = 515;
 const DEAL_STEP_MS = DEAL_LAP_MS / RING_RAMP.length;
