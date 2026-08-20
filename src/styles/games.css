@@ -2453,31 +2453,10 @@
 .kc__ruleform { display: flex; gap: var(--sp-2); flex: none; }
 .kc__ruleform .text-input { flex: 1; min-width: 0; }
 
-/* The bookkeeping the app exists to do: what's still in force.
-   Takes the slack itself so it sits directly above the button as its own
-   strip, rather than being pulled up against the card's rule text. */
-.kc__book {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-2);
-  flex: none;
-  padding-top: var(--sp-3);
-  border-top: 1px solid color-mix(in srgb, var(--category-ink) 25%, transparent);
-}
 
 /* .kc__body owns the slack, so the button must not add a second auto margin
    or the block lands off-centre. */
 .focal.kc .actions { margin-top: 0; }
-
-.kc__book-item {
-  padding: var(--sp-1) var(--sp-2);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--category-ink) 16%, transparent);
-  color: var(--category-ink);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.02em;
-}
 
 /* ---------------------------------------------------------------
    KINGS CUP'S FELT GIVES WAY BEFORE THE BUTTON DOES.

@@ -41,7 +41,6 @@ interface State {
    * rules exist to catch. The players keep each other honest; the app just
    * deals.
    */
-  mates: [string, string][];
   /** The player the current card's pick landed on. */
   picked: string | null;
   finished: boolean;
@@ -54,7 +53,6 @@ function initialState(): State {
     rule: null,
     extra: null,
     kings: 0,
-    mates: [],
     picked: null,
     finished: false,
   };
@@ -128,22 +126,15 @@ export function KingsCup({ mode, onBack }: Props) {
     draw();
   }, [advance, draw]);
 
+  /* The card says who your mate is and the table remembers it. There is no
+     running tally of who owes whom, deliberately: it was a strip of chips
+     that had to live somewhere, and everywhere it lived it pushed the card
+     off centre or crowded the row above it. A drinking game already has a
+     mechanism for remembering standing obligations, and it is the people
+     playing it. */
   const pick = useCallback((name: string) => {
-    setS((prev) => {
-      if (prev.rule?.effect === "pick-mate" && currentPlayer) {
-        // The same pairing can come up twice across four 8s — record it once,
-        // or the footer repeats itself and two chips collide on the same key.
-        const exists = prev.mates.some(
-          ([x, y]) =>
-            (x === currentPlayer && y === name) || (x === name && y === currentPlayer),
-        );
-        return exists
-          ? { ...prev, picked: name }
-          : { ...prev, picked: name, mates: [...prev.mates, [currentPlayer, name]] };
-      }
-      return { ...prev, picked: name };
-    });
-  }, [currentPlayer]);
+    setS((prev) => ({ ...prev, picked: name }));
+  }, []);
 
   const restart = useCallback(() => setS(initialState()), []);
 
@@ -311,16 +302,6 @@ export function KingsCup({ mode, onBack }: Props) {
               ))}
           </div>
         </div>
-
-        {s.mates.length > 0 && (
-          <div className="kc__book">
-            {s.mates.map(([x, y]) => (
-              <span className="kc__book-item" key={`${x}-${y}`}>
-                Mates · {x} + {y}
-              </span>
-            ))}
-          </div>
-        )}
 
         <div className="actions">
           <button className="btn btn--lg btn--block" onClick={next}>
