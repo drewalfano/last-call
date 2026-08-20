@@ -1400,6 +1400,47 @@
   aspect-ratio: 4 / 5;
 }
 
+/* ---------------------------------------------------------------
+   THE BANK TURNS ON ITS SIDE WHEN THE SPACE DOES.
+
+   Twenty letters go 4x5 or 5x4, and which one is bigger is not a
+   taste question — it has an answer, and the answer changes with the
+   shape of the box. A square cell in a C x R grid comes out at
+   min(W/C, H/R). So 4x5 gives min(W/4, H/5) and 5x4 gives
+   min(W/5, H/4), and putting A = W/H, the second beats the first
+   exactly when A > 1. Not 1.1, not 1.25: the crossover is a square
+   container, and at A = 1 the two are identical.
+
+   So the rule is "is this box wider than it is tall", which is what
+   the query asks. Both arrangements stay in the file because both
+   are right somewhere, and the phone crosses between them during
+   ordinary use rather than at some exotic size: in Safari the URL
+   bar eats about 50pt of height and the box comes out wider than
+   tall, while the installed app gets that height back and it is
+   taller than wide. Measured on a 375x812 preview the box is
+   335x423 and 4x5 wins at 78px a cell against 61; in Safari on a
+   phone it is nearer 353x307 and 5x4 wins at 64pt against 55.
+
+   Hard-coding either one makes the letters smaller in the case it
+   was not chosen for, which is why this is a query and not a swap.
+   --------------------------------------------------------------- */
+@container (min-aspect-ratio: 1 / 1) {
+  .lw__grid {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    /* The mirror of the rule above: five wide by four tall is 5/4 as wide as
+       it is tall, so the width that exactly uses the height is 125% of it. */
+    width: min(100%, calc(100cqh * 1.25));
+    aspect-ratio: 5 / 4;
+  }
+
+  /* The cqh term is a fraction of the BOX, not of the cell, so it has to move
+     with the row count or the letter stops filling its circle: four rows make
+     each cell a fifth taller than five rows did, and 9 x 5/4 is what keeps the
+     glyph the same share of the chip it sits in. */
+  .lw__letter { font-size: min(clamp(1.6rem, 7vw, 2.1rem), 11.25cqh); }
+}
+
 .lw__letter {
   /* No aspect-ratio of its own — the cell fills its track, and the track is
      square because the grid's ratio makes it so. Keeping it here would have
