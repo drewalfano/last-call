@@ -1,6 +1,6 @@
 /**
  * MODE REGISTRY
- * The single source of truth for the ten game modes.
+ * The single source of truth for the eleven game modes.
  * Home cards, the spin wheel and the screen state machine all read
  * from this list, so adding a mode means editing exactly one array.
  *
@@ -36,7 +36,7 @@ export interface ModeDef {
 
 /**
  * Order is deliberate: highest-replay modes sit at the top, because
- * ten cards scroll past a single screen.
+ * eleven cards scroll past a single screen.
  */
 export const MODES: ModeDef[] = [
   {

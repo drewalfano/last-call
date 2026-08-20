@@ -81,7 +81,7 @@ export default defineConfig({
       manifest: {
         name: "Last Call",
         short_name: "Last Call",
-        description: "Ten pass-the-phone party games. No wifi, no accounts, no setup.",
+        description: "Eleven pass-the-phone party games. No wifi, no accounts, no setup.",
         start_url: base,
         scope: base,
         display: "standalone",

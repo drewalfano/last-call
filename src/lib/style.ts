@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
  * ink paired with it as `--category-ink`.
  *
  * The palette runs from near-black brown to pale periwinkle, so there is no
- * single foreground that reads on all ten cards — each color ships with the
+ * single foreground that reads on all eleven cards — each color ships with the
  * ink that clears contrast on it (see tokens.css). Components reference
  * var(--category) / var(--category-ink) and never know which mode they're in.
  */
