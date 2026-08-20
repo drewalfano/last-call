@@ -58,7 +58,6 @@ export const RANK_IT: Pools<RankPrompt> = {
     { title: "Rank these from most to least forgivable", items: ["Leaving on read", "Cancelling last minute", "Flirting with a friend", "Lying about their age", "Forgetting a birthday"] },
     { title: "Rank these ways to end things", items: ["In person", "Phone call", "Text", "Ghosting", "Getting a friend to do it"] },
     { title: "Rank these exes by how much of a mistake", items: ["The rebound", "The long one", "The one your friends hated", "The one you cheated with", "The one who cried"] },
-    { title: "Rank these morning-after moves", items: ["Breakfast together", "Sneak out", "Order a taxi", "Stay all day", "Ask for a lift"] },
     { title: "Rank these from most to least of a turn-off", items: ["Bad texting", "No ambition", "Talks over you", "Bad tipper", "Won't split the bill"] },
     { title: "Rank these confessions worst first", items: ["Kissed a friend's ex", "Faked it", "Read their messages", "Lied about your number", "Still have their hoodie"] },
     { title: "Rank these situationship stages", items: ["Talking stage", "Soft launch", "Exclusive", "The talk", "Meeting the friends"] },
@@ -66,5 +65,15 @@ export const RANK_IT: Pools<RankPrompt> = {
     { title: "Rank these texts by desperation", items: ["\"you up\"", "\"we should catch up\"", "A late-night voice note", "Liking an old photo", "\"wrong chat sorry\""] },
     { title: "Rank these from most to least of a green flag", items: ["Good with your friends", "Texts back fast", "Cooks", "Owns a car", "Pays attention"] },
     { title: "Rank these worst nights out", items: ["Losing everyone", "Getting refused entry", "Running into an ex", "Spending rent money", "Crying in the smoking area"] },
+  ],
+  filthy: [
+    { title: "Rank these morning-after moves", items: ["Breakfast together", "Sneak out", "Order a taxi", "Stay all day", "Ask for a lift"] },
+    { title: "Rank these by how much trouble they'd get you in", items: ["Group chat screenshot", "Your search history", "A work email", "Your last three texts", "Your camera roll"] },
+    { title: "Rank these confessions, worst to hear from a friend", items: ["They cheated", "They lied to you for years", "They took your money", "They told your secret", "They set you up"] },
+    { title: "Rank these by how fast you'd lose your job", items: ["A photo", "A group chat", "A voicemail", "A witness", "A receipt"] },
+    { title: "Rank these blackouts, worst first", items: ["Wrong city", "Wrong bed", "No phone", "No wallet", "No memory"] },
+    { title: "Rank these betrayals, worst first", items: ["A friend's ex", "A friend's partner", "A friend's secret", "A friend's money", "A friend's job"] },
+    { title: "Rank these by how hard they'd be to explain", items: ["A tattoo", "A stranger", "A hospital band", "A police caution", "A new number"] },
+    { title: "Rank these things to be caught with", items: ["Someone's phone", "Someone's key", "Someone's letter", "Someone's partner", "Someone's money"] },
   ],
 };

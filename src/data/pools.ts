@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import type { ContentMode } from "../state/contentMode";
+import { CONTENT_TIERS, type ContentMode } from "../state/contentMode";
 
 /**
  * CONTENT POOL PLUMBING
  * ---------------------------------------------------------------
- * Every prompt-based game ships two pools. Flipping the content mode
- * ADDS the other one. It never takes the first one away.
+ * Every prompt-based game ships up to three pools, and raising the content
+ * mode ADDS the next one. It never takes a lower one away.
  *
  *   "supplement" Night is Safe plus the adult cards. The order is left to
  *                whatever deals it — every consumer of this shuffles.
@@ -50,26 +50,49 @@ export type PoolPolicy = "supplement" | "lead";
 export interface Pools<T> {
   safe: readonly T[];
   night: readonly T[];
+  /**
+   * Optional, deliberately. A game with nothing written at this tier simply
+   * plays the two below it — which is what lets the tier ship one game at a
+   * time instead of all ten at once.
+   */
+  filthy?: readonly T[];
 }
 
 /**
- * Night in front, with Safe entries sprinkled through it.
+ * ROUND-ROBIN, NOT A HIERARCHY.
  *
- * One safe entry every `every` night ones, which is what keeps the top of the
- * list from reading as a solid block of one register.
+ * With two tiers this was `lead(night, safe)`: night in front, one safe entry
+ * sprinkled every two. That was already a compromise — it put Countries and
+ * Foods two thirds of the way down a list people browse — and nesting it for a
+ * third tier makes it worse twice over, because safe then sits below night
+ * which sits below filthy.
  *
- * Deterministic, deliberately. This is a list people browse and come back to;
- * shuffling it would move an option someone was reaching for, and useDeck
- * shuffles anyway wherever the order is actually dealt from.
+ * These lists are the games that are NOT drinking games at heart. Colours,
+ * Cities and Animals are the best thing in them at every level, and a player
+ * who turned Filthy on did not stop wanting to play Animals. So the tiers deal
+ * one each, top down, and repeat: the tier you just unlocked is on top, and
+ * nothing you already had drops out of reach behind it.
+ *
+ * Whatever runs out first stops being dealt; the rest carry on in order. So a
+ * short filthy pool seasons the top of the list rather than monopolising it,
+ * which is exactly what a four-category tier should do to a forty-category one.
  */
-export function lead<T>(night: readonly T[], safe: readonly T[], every = 2): T[] {
+function roundRobin<T>(tiers: readonly (readonly T[])[]): T[] {
   const out: T[] = [];
-  let s = 0;
-  night.forEach((item, i) => {
-    out.push(item);
-    if ((i + 1) % every === 0 && s < safe.length) out.push(safe[s++]);
-  });
-  return out.concat(safe.slice(s));
+  const longest = Math.max(0, ...tiers.map((t) => t.length));
+  for (let i = 0; i < longest; i++) {
+    for (const tier of tiers) if (i < tier.length) out.push(tier[i]);
+  }
+  return out;
+}
+
+/**
+ * The tiers at or below `mode`, in order, skipping any the game has not
+ * written. Everything else here is a decision about how to lay them out.
+ */
+function tiersFor<T>(pools: Pools<T>, mode: ContentMode): (readonly T[])[] {
+  const all: (readonly T[] | undefined)[] = [pools.safe, pools.night, pools.filthy];
+  return all.slice(0, CONTENT_TIERS.indexOf(mode) + 1).filter(Boolean) as (readonly T[])[];
 }
 
 export function resolvePool<T>(
@@ -77,8 +100,12 @@ export function resolvePool<T>(
   mode: ContentMode,
   policy: PoolPolicy = "supplement",
 ): readonly T[] {
-  if (mode === "safe") return pools.safe;
-  return policy === "lead" ? lead(pools.night, pools.safe) : [...pools.safe, ...pools.night];
+  const tiers = tiersFor(pools, mode);
+  if (tiers.length === 1) return tiers[0];
+  // Dealt blind: order is never seen, and every consumer shuffles anyway.
+  if (policy === "supplement") return tiers.flat();
+  // Browsed: spiciest first, but one of each, so nothing is buried.
+  return roundRobin([...tiers].reverse());
 }
 
 /**

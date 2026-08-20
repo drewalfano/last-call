@@ -1,10 +1,60 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useContentMode } from "../state/contentMode";
+import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
 
 /** Order is the control's order, and the index of the current one drives the
     travelling fill — see .segmented. Declared once so the two cannot drift. */
 const APPEARANCE = ["light", "dark", "device"] as const;
+
+/**
+ * THE CONTENT TIERS, AS A DOT AND TWO FLAMES.
+ *
+ * Icons rather than words because the labels were being asked to carry two
+ * things at once — how explicit the deck is, and who you can play it with —
+ * and no three words did both. A heat scale says "more" without claiming to
+ * say what OF, and the line under the control does the explaining.
+ *
+ * The escalation is SIZE, so the sizes have to be far enough apart to read as
+ * three steps: 16 and 28 either side of a 20px dot. The first draft ran 19 to
+ * 26 and looked like a rendering mistake rather than a scale.
+ *
+ * Drawn rather than emoji: these sit on a fill that slides under them, so they
+ * have to invert with `currentColor`, and an emoji would keep its own colour
+ * and its own idea of what a flame looks like on every platform.
+ *
+ * `label` is the accessible name — the control is fully readable with no
+ * visible text — and it leads the hint, so the word never actually
+ * disappears, it just stops being a button.
+ */
+const TIERS: {
+  mode: ContentMode;
+  label: string;
+  hint: string;
+  icon: { size: number; flame: boolean };
+}[] = [
+  { mode: "safe", label: "Mild", hint: "Plays sober, with anyone.",
+    icon: { size: 20, flame: false } },
+  { mode: "night", label: "Spicy", hint: "Adds bar-night material. Drinking assumed.",
+    icon: { size: 16, flame: true } },
+  { mode: "filthy", label: "Filthy",
+    hint: "Adds what you would only admit to people who will not repeat it.",
+    icon: { size: 28, flame: true } },
+];
+
+function TierIcon({ size, flame }: { size: number; flame: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      {flame ? (
+        <path
+          fill="currentColor"
+          d="M12 2.2c.7 3 2.3 4.4 3.6 5.8C17 9.5 18 11.2 18 13.6a6 6 0 0 1-12 0c0-1.9.7-3.3 1.7-4.4.3 1 .9 1.7 1.6 2 .3-3 1.5-5.7 2.7-9z"
+        />
+      ) : (
+        <circle cx="12" cy="12" r="3.5" fill="currentColor" />
+      )}
+    </svg>
+  );
+}
 
 /**
  * The build stamp, worded on the device rather than at build time.
@@ -63,7 +113,7 @@ export function SettingsButton({ onOpen }: { onOpen: () => void }) {
 }
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
-  const { isNight, toggle } = useContentMode();
+  const { mode, tier, setMode } = useContentMode();
   const { preference, setPreference } = useTheme();
 
   /**
@@ -131,33 +181,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <div className="setting__label">
             <span className="setting__name">Content</span>
             <span className="setting__hint">
-              {isNight
-                ? "Explicit questions, sex, and prompts about people in the room."
-                : "Adult, but comfortable with coworkers or a date at the table."}
+              <b>{TIERS[tier].label}</b> — {TIERS[tier].hint}
             </span>
           </div>
           <div
-            className="segmented"
+            className="segmented segmented--three"
             role="group"
-            aria-label="Content rating"
-            /* --i is which option is on and --n how many there are; the fill
-               that travels between them is drawn from these. See .segmented. */
-            style={{ ["--n" as string]: 2, ["--i" as string]: isNight ? 1 : 0 }}
+            aria-label="Content level"
+            style={{ ["--n" as string]: CONTENT_TIERS.length, ["--i" as string]: tier }}
           >
-            <button
-              className="segmented__opt"
-              data-on={!isNight || undefined}
-              onClick={() => isNight && toggle()}
-            >
-              Safe
-            </button>
-            <button
-              className="segmented__opt"
-              data-on={isNight || undefined}
-              onClick={() => !isNight && toggle()}
-            >
-              19+
-            </button>
+            {TIERS.map((t) => (
+              <button
+                key={t.mode}
+                className="segmented__opt"
+                data-on={mode === t.mode || undefined}
+                aria-label={t.label}
+                aria-pressed={mode === t.mode}
+                onClick={() => setMode(t.mode)}
+              >
+                <TierIcon {...t.icon} />
+              </button>
+            ))}
           </div>
         </section>
 

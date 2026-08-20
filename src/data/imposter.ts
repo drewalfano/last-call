@@ -1,5 +1,5 @@
 import type { ContentMode } from "../state/contentMode";
-import { lead } from "./pools";
+import { resolvePool, type Pools } from "./pools";
 
 /**
  * IMPOSTER — secret words, grouped into categories.
@@ -27,7 +27,7 @@ export interface WordCategory {
   words: string[];
 }
 
-export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
+export const IMPOSTER_CATEGORIES: Pools<WordCategory> = {
   safe: [
     {
       name: "Foods",
@@ -188,6 +188,24 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
       ],
     },
   ],
+  filthy: [
+    {
+      name: "Trouble",
+      words: ["Police", "Bouncer", "Fine", "Curfew", "Lawyer", "Bail", "Warning", "Fight", "Caution", "Witness"],
+    },
+    {
+      name: "The morning after",
+      words: ["Hangover", "Receipt", "Voicemail", "Stranger", "Taxi", "Sunglasses", "Water", "Regret", "Bruise", "Silence"],
+    },
+    {
+      name: "Things you'd hide",
+      words: ["Diary", "Receipt", "Bruise", "Message", "Photo", "Bottle", "Tattoo", "Letter", "Key", "Scar"],
+    },
+    {
+      name: "Regrets",
+      words: ["Tattoo", "Text", "Shot", "Voicemail", "Haircut", "Email", "Tequila", "Ex", "Piercing", "Confession"],
+    },
+  ],
 };
 
 /**
@@ -202,9 +220,10 @@ export const IMPOSTER_CATEGORIES: Record<ContentMode, WordCategory[]> = {
  * without. The blind prompt decks still replace; you never see what you did
  * not draw, so there is nothing to lose there. See data/pools.ts.
  */
-function categoriesFor(mode: ContentMode): WordCategory[] {
-  if (mode === "safe") return IMPOSTER_CATEGORIES.safe;
-  return lead(IMPOSTER_CATEGORIES.night, IMPOSTER_CATEGORIES.safe);
+/* Was its own copy of the lead logic. It is the shared resolver now — the
+   categories here are browsed off a page, which is exactly what "lead" means. */
+function categoriesFor(mode: ContentMode): readonly WordCategory[] {
+  return resolvePool(IMPOSTER_CATEGORIES, mode, "lead");
 }
 
 /** Flat word list for a category, or every word when no category is chosen. */

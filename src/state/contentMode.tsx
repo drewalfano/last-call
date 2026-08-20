@@ -24,7 +24,24 @@ import {
  * mid-party should drop you back on Home, not resurrect a half-played round.
  */
 
-export type ContentMode = "safe" | "night";
+/**
+ * THREE TIERS, AND THE KEYS ARE NOT THE LABELS.
+ *
+ * `safe` and `night` keep their names because every content file is keyed on
+ * them and renaming would churn ten files for no behavioural gain. What the
+ * player sees is Mild / Spicy / Filthy, decided in Settings — so the wording
+ * can change forever without a data edit.
+ *
+ * The axis is WHO IS AT THE TABLE, not how rude the words are:
+ *   safe    plays sober, with anyone
+ *   night   friends at a bar you are not especially close to
+ *   filthy  people who will not repeat it
+ *
+ * Ordered, and the order is the whole contract: a tier ADDS the ones below it.
+ * See data/pools.ts.
+ */
+export const CONTENT_TIERS = ["safe", "night", "filthy"] as const;
+export type ContentMode = (typeof CONTENT_TIERS)[number];
 
 const MODE_KEY = "lastcall.contentMode";
 
@@ -48,29 +65,26 @@ function writeStored(key: string, value: string): void {
 
 interface ContentModeValue {
   mode: ContentMode;
-  isNight: boolean;
-  /** Flip between Safe and 19+. Switches immediately. */
-  toggle: () => void;
+  /** Position in CONTENT_TIERS — what "adds the ones below it" is measured on. */
+  tier: number;
+  setMode: (m: ContentMode) => void;
 }
 
 const ContentModeContext = createContext<ContentModeValue | null>(null);
 
 export function ContentModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ContentMode>(() =>
-    readStored<ContentMode>(MODE_KEY, ["safe", "night"], "safe"),
+  const [mode, setModeState] = useState<ContentMode>(() =>
+    readStored<ContentMode>(MODE_KEY, CONTENT_TIERS, "safe"),
   );
   useEffect(() => {
     writeStored(MODE_KEY, mode);
   }, [mode]);
 
-  const toggle = useCallback(
-    () => setMode((m) => (m === "night" ? "safe" : "night")),
-    [],
-  );
+  const setMode = useCallback((m: ContentMode) => setModeState(m), []);
 
   const value = useMemo<ContentModeValue>(
-    () => ({ mode, isNight: mode === "night", toggle }),
-    [mode, toggle],
+    () => ({ mode, tier: CONTENT_TIERS.indexOf(mode), setMode }),
+    [mode, setMode],
   );
 
   return <ContentModeContext.Provider value={value}>{children}</ContentModeContext.Provider>;
