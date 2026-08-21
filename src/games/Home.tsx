@@ -520,8 +520,26 @@ export function Home({ onPick, returning }: HomeProps) {
   const timer = useRef<number>(undefined);
   const raf = useRef<number>(undefined);
 
+  /**
+   * A CARD YOU TAP COMES OUT OF THE DECK, THE SAME WAY A CARD THE APP
+   * PICKS FOR YOU DOES.
+   *
+   * `revealed` is the lift, and until now only the pick-for-me flourish
+   * ever set it — so the one card in the deck that did NOT rise was the
+   * one you had just chosen yourself. Tapping got the 4px `:active` nudge,
+   * which releases the instant your finger leaves, and then nothing: the
+   * colour simply took the screen from a deck that had not moved.
+   *
+   * The same state, set from the same place the rect is read, so a tap and
+   * a pick reach the mode by one path from here on.
+   *
+   * It is visible because App holds the colour back for --expand-lead
+   * before the overlay appears. Without that window this would be a lift
+   * happening underneath an opaque rectangle pinned to the card doing it.
+   */
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
+      setRevealed(id);
       const r = el.getBoundingClientRect();
       onPick(id, { top: r.top, left: r.left, right: r.right, bottom: r.bottom });
     },

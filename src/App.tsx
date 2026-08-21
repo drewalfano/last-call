@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { MODE_BY_ID, type ModeId } from "./data/modes";
 import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
+import { motionMs } from "./lib/motion";
 import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
 import { Home } from "./games/Home";
@@ -225,6 +226,8 @@ export default function App() {
    * is still true when you come back to the same list.
    */
   const homeScroll = useRef(0);
+  /** The beat the deck gets to itself before the colour starts. See `open`. */
+  const leadTimer = useRef<number>(undefined);
   const closeTimer = useRef<number>(undefined);
   const failsafe = useRef<number>(undefined);
   const { theme } = useTheme();
@@ -273,10 +276,19 @@ export default function App() {
    */
   const goHome = useCallback(() => {
     if (screen === null) return;
+    /* A launch that has been armed but has not started yet has no business
+       surviving a close. Nothing is on screen for it, so it would fire into
+       a Home that is already coming back and expand a card nobody tapped. */
+    window.clearTimeout(leadTimer.current);
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!reduced) setClosing(screen);
     setScreen(null);
   }, [screen]);
+
+  /* Every timer this component owns outlives a render but must not outlive
+     the component. The launch and close effects clean up their own; the
+     lead belongs to a callback, so it is retired here. */
+  useEffect(() => () => window.clearTimeout(leadTimer.current), []);
 
   /**
    * PUT THE DECK BACK BEFORE ANYTHING IS PAINTED.
@@ -551,7 +563,44 @@ export default function App() {
       setScreen(id);
       return;
     }
-    setLaunch({ id, rect });
+
+    /* ---------------------------------------------------------------
+       THE DECK MOVES FIRST, AND THE COLOUR FOLLOWS IT.
+
+       The overlay is opaque and pinned to the tapped card's rect, so
+       anything the deck does after it appears is behind it. Mounting on
+       the same frame as the tap meant the card's lift and the deck
+       parting around it were both covered by the thing they were
+       supposed to introduce — the gesture existed and was invisible.
+
+       So nothing is mounted for --expand-lead. Home has already been
+       told which card was tapped and is lifting it and splitting the
+       deck around it; this window is that beat, and only then does the
+       colour start.
+
+       THE RECT IS MEASURED AT THE END OF IT, NOT AT THE TAP. This is
+       the close's own argument arriving on the other side: the card has
+       been moving for the whole lead, so the rect read on the tap is a
+       claim about where it USED to be. Landing the clip there would
+       start the expansion 14px below the card it is expanding from, and
+       the join would be a visible step. Ask the card where it is now.
+
+       The rect passed in is kept as the fallback. It is a frame or two
+       stale by here, which is far better than no expansion at all if
+       the card cannot be found — Home is unmounted only on the frame
+       after this, but nothing should be able to strand the launch.
+       --------------------------------------------------------------- */
+    window.clearTimeout(leadTimer.current);
+    leadTimer.current = window.setTimeout(() => {
+      const card = document.querySelector<HTMLElement>(`[data-mode="${id}"]`);
+      const r = card?.getBoundingClientRect();
+      setLaunch({
+        id,
+        rect: r
+          ? { top: r.top, left: r.left, right: r.right, bottom: r.bottom }
+          : rect,
+      });
+    }, motionMs("--expand-lead", 70));
   }, []);
 
   useEffect(() => {
