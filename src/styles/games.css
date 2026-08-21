@@ -3070,13 +3070,16 @@
   transition: transform var(--dur-press) var(--ease-out),
               opacity var(--dur-press) ease-out;
 }
-.stepper__step:active:not(:disabled) {
+.stepper__step:active:not([data-off]) {
   transform: scale(var(--press-scale-sm));
   opacity: var(--press-dim);
 }
 /* Solid ground — this sits on the white card stock, never over a scroller,
-   so opacity has nothing to reveal. See the note on `.btn:disabled`. */
-.stepper__step:disabled { opacity: 0.25; cursor: default; }
+   so opacity has nothing to reveal. See the note on `.btn:disabled`.
+
+   `[data-off]` rather than `:disabled`: the ends stay pressable so they can
+   refuse out loud — see Stepper.tsx. It looks exactly as it did. */
+.stepper__step[data-off] { opacity: 0.25; cursor: default; }
 
 .stepper__n {
   min-width: 2.2ch;

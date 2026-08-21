@@ -8,6 +8,7 @@ import { usePool } from "../data/pools";
 import { SAY_THE_SAME_THING } from "../data/sayTheSameThing";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
+import { audio } from "../lib/audio";
 import type { ModeDef } from "../data/modes";
 
 /**
@@ -216,6 +217,10 @@ export function SayTheSameThing({ mode, onBack }: Props) {
                 className="btn btn--lg btn--block"
                 onClick={() => {
                   buzz([40, 50, 40, 50, 120]);
+                  /* The one success in the app. Everything else here confirms
+                     a press or runs a clock down; this is a round that went
+                     well, and it is allowed to sound like it. */
+                  audio.play("match");
                   setPhase("matched");
                 }}
               >

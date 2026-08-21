@@ -6,6 +6,7 @@ import { CategoryPicker } from "../components/CategoryPicker";
 import { Stepper } from "../components/Stepper";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
+import { audio } from "../lib/audio";
 import type { ModeDef } from "../data/modes";
 
 /**
@@ -250,7 +251,16 @@ export function Imposter({ mode, onBack }: Props) {
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
-              onClick={() =>
+              onClick={() => {
+                /* Sounded from THIS player's press rather than from arriving
+                   at the next cover screen, because the handover is the thing
+                   being confirmed and it happens here — a sound that waited
+                   for the next screen would be telling the person who has
+                   already been handed the phone.
+
+                   Silent on the last player. Nothing is being passed then;
+                   the deal is finished and the game starts. */
+                if (s.at + 1 < s.count) audio.play("advance");
                 setS((prev) => {
                   const next = prev.at + 1;
                   // Always back to a cover screen — never straight to the next
@@ -258,8 +268,8 @@ export function Imposter({ mode, onBack }: Props) {
                   return next >= prev.count
                     ? { ...prev, phase: "ready" }
                     : { ...prev, phase: "cover", at: next };
-                })
-              }
+                });
+              }}
             >
               Hide role
             </button>

@@ -168,7 +168,7 @@ button { font: inherit; color: inherit; }
               background var(--dur-fast) var(--ease-out);
 }
 /* Scale AND dim. See the press note in tokens.css. */
-.btn:active:not(:disabled) {
+.btn:active:not(:disabled):not([data-off]) {
   transform: scale(var(--press-scale));
   opacity: var(--press-dim);
 }
@@ -188,7 +188,11 @@ button { font: inherit; color: inherit; }
    Controls on solid ground keep their opacity — they have nothing
    to reveal. That exception is noted where it applies.
    --------------------------------------------------------------- */
-.btn:disabled {
+/* `[data-off]` is the same look for a button that stays pressable so it can
+   refuse out loud — see Rank It's lock-in and Stepper.tsx. Nothing that uses
+   plain `disabled` changes. */
+.btn:disabled,
+.btn[data-off] {
   background: color-mix(in srgb, var(--category-ink, var(--control-bg)) 40%, var(--category, var(--shell-bg)));
   color: var(--category, var(--control-text));
   cursor: default;

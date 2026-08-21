@@ -73,6 +73,19 @@ export type Sound =
   /** The clock hit zero. The tone the ticks were climbing towards. */
   | "buzzer"
   /**
+   * The end of a 3 · 2 · 1 that everyone acts ON — Point, Say it. The same
+   * three pips lead into it as into `buzzer`, but this is a starting gun and
+   * that is an ending, so it lands brighter and shorter. Two opposite events
+   * should not wear the same sound however alike their run-ups are.
+   */
+  | "go"
+  /**
+   * Two people landed on the same word. The only success in the app —
+   * everything else confirms a press or runs a clock down — and the one place
+   * a slightly bigger sound is earned.
+   */
+  | "match"
+  /**
    * The phone is going to the next player. Written but still UNWIRED: no mode
    * hands over with a sound yet, and it should be judged on a real phone
    * against the ones that do before it goes anywhere.
@@ -348,6 +361,32 @@ class AudioManager {
         this.tone(t, { freq: 1050, duration: 0.5, gain: 0.24, type: "triangle", attack: 0.012 });
         this.tone(t, { freq: 525, duration: 0.5, gain: 0.1, attack: 0.012 });
         break;
+
+      /* Brighter and shorter than the buzzer the same pips lead into. An
+         ending settles; this one has to make a table move at the same instant,
+         so it sits a fifth above and gets out of the way faster. The quiet
+         octave underneath is the only thing it borrows from the ending. */
+      case "go":
+        this.tone(t, { freq: 1320, duration: 0.32, gain: 0.24, type: "triangle", attack: 0.008 });
+        this.tone(t, { freq: 660, duration: 0.32, gain: 0.09, attack: 0.008 });
+        break;
+
+      /* Three notes up, the last one held. Everything else in this file is
+         one event confirmed once; this is a round that went well, so it is
+         allowed to take a beat longer than a confirmation would. */
+      case "match": {
+        const notes = [590, 740, 990];
+        for (let i = 0; i < notes.length; i++) {
+          this.tone(t + i * 0.075, {
+            freq: notes[i],
+            duration: i === notes.length - 1 ? 0.3 : 0.09,
+            gain: 0.2,
+            type: "triangle",
+            attack: 0.006,
+          });
+        }
+        break;
+      }
 
       /* Rising, because it hands over. The only sound here that goes up. */
       case "advance":

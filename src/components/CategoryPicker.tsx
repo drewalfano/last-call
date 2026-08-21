@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { fadeOnScroll } from "../lib/scrollFade";
+import { audio } from "../lib/audio";
 
 interface CategoryPickerProps {
   /** Every category the group can choose from. */
@@ -109,6 +110,7 @@ export function CategoryPicker({
                   /* Stops counting at 8 — past that the delay is being spent
                      on cards below the fold. See .picker__card in games.css. */
                   style={{ ["--i" as string]: Math.min(i + 1, 8) }}
+                  onPointerDown={() => audio.play("tap")}
                   onClick={() => onPick(c)}
                 >
                   {c}

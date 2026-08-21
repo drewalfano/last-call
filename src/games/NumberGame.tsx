@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Stepper } from "../components/Stepper";
 import { useDeck } from "../lib/deck";
 import { useCountdown, buzz } from "../lib/useCountdown";
+import { audio } from "../lib/audio";
 import { usePool } from "../data/pools";
 import { NUMBER_GAME_CATEGORIES } from "../data/numberGame";
 import { useContentMode } from "../state/contentMode";
@@ -95,7 +96,24 @@ export function NumberGame({ mode, onBack }: Props) {
     [table],
   );
 
-  const timer = useCountdown(MIN_SECONDS, () => buzz([90, 60, 180]));
+  const timer = useCountdown(MIN_SECONDS, () => {
+    buzz([90, 60, 180]);
+    audio.play("buzzer");
+  });
+
+  /**
+   * The last three seconds out loud, the same climb Letter Rip's clock runs.
+   *
+   * An effect on `seconds` rather than a ref counting frames: this timer comes
+   * from the shared hook, which already rounds, so the body only runs on the
+   * three renders where the number actually changed. The clock never opens
+   * shorter than MIN_SECONDS, so a challenge can never start already ticking.
+   */
+  useEffect(() => {
+    if (timer.running && timer.seconds > 0 && timer.seconds <= 3) {
+      audio.play("tick", 3 - timer.seconds);
+    }
+  }, [timer.running, timer.seconds]);
 
   const raise = useCallback(() => {
     setBid((b) => b + 1);
@@ -237,7 +255,12 @@ export function NumberGame({ mode, onBack }: Props) {
             </button>
           )}
           <div className="actions">
-            <button className="btn btn--lg btn--block" onClick={raise}>
+            <button
+              className="btn btn--lg btn--block"
+              /* On the press, like every other confirmed tap in the app. */
+              onPointerDown={() => audio.play("tap")}
+              onClick={raise}
+            >
               I can name {bid + 1}
             </button>
             {/* Nothing to call until somebody has claimed something. */}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { buzz } from "../lib/useCountdown";
+import { audio } from "../lib/audio";
 
 interface CountdownProps {
   /** The word on the final beat — "POINT", "SAY IT". */
@@ -35,11 +36,22 @@ export function Countdown({ action, onDone, from = 3 }: CountdownProps) {
     setN(from);
     const timers: number[] = [];
 
+    /* The first numeral is already on screen when this mounts, so it gets its
+       pip here rather than waiting a beat — otherwise the count is silent on
+       "3" and the climb starts halfway up. */
+    audio.play("tick", 0);
+
     for (let i = 1; i <= from; i++) {
       timers.push(
         window.setTimeout(() => {
           setN(from - i);
           buzz(i === from ? [40, 40, 90] : 25);
+          /* The last beat is the word, not a number — everyone acts on it, so
+             it gets `go` rather than the next pip up. The pips lead into it
+             the same way they lead into a clock running out, which is why
+             they climb; what lands is what makes the two different. */
+          if (i === from) audio.play("go");
+          else audio.play("tick", i);
         }, BEAT_MS * i),
       );
     }

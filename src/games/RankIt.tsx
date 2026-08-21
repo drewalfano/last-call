@@ -235,9 +235,21 @@ export function RankIt({ mode, onBack }: Props) {
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
-              disabled={!complete}
+              /* It was `disabled`, and it carried a haptic for the incomplete
+                 press that could therefore never fire — a disabled button gets
+                 no click at all. So the button a table naturally reaches for
+                 said "Tap in order · 2/5" and then did nothing, silently, with
+                 no way to tell a limit from a missed tap.
+
+                 aria-disabled keeps it announced and greyed while letting the
+                 press be refused out loud. The phase change is guarded here
+                 rather than by the flag. */
+              aria-disabled={!complete || undefined}
+              data-off={!complete || undefined}
+              onPointerDown={() => audio.play(complete ? "tap" : "reject")}
               onClick={() => {
-                buzz(complete ? [90, 60, 140] : 20);
+                if (!complete) return;
+                buzz([90, 60, 140]);
                 setPhase(phase === "ranking" ? "guessing" : "revealed");
               }}
             >

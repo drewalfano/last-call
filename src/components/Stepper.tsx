@@ -1,3 +1,5 @@
+import { audio } from "../lib/audio";
+
 interface StepperProps {
   value: number;
   min: number;
@@ -19,12 +21,30 @@ interface StepperProps {
 export function Stepper({ value, min, max, onChange, noun }: StepperProps) {
   const set = (next: number) => onChange(Math.min(max, Math.max(min, next)));
 
+  const atFloor = value <= min;
+  const atCap = value >= max;
+
+  /**
+   * THE ENDS SAY SO NOW.
+   *
+   * Both buttons were `disabled`, which made a press at the range's end
+   * completely inert — no click, and on WebKit no pointer event at all — so a
+   * thumb that kept going got a control that had simply stopped responding,
+   * with nothing to say whether it had hit a limit or missed the button.
+   *
+   * `aria-disabled` keeps the announcement and the styling while letting the
+   * press through to be refused out loud. The clamp in `set` was always the
+   * real guard; the flag was never what kept the number in range. Same fix,
+   * and the same reasoning, as Letter Rip's used letters.
+   */
   return (
     <div className="stepper">
       <button
         className="stepper__step"
+        onPointerDown={() => audio.play(atFloor ? "reject" : "tap")}
         onClick={() => set(value - 1)}
-        disabled={value <= min}
+        aria-disabled={atFloor || undefined}
+        data-off={atFloor || undefined}
         aria-label={`One fewer ${noun}`}
       >
         <StepIcon minus />
@@ -32,8 +52,10 @@ export function Stepper({ value, min, max, onChange, noun }: StepperProps) {
       <span className="stepper__n">{value}</span>
       <button
         className="stepper__step"
+        onPointerDown={() => audio.play(atCap ? "reject" : "tap")}
         onClick={() => set(value + 1)}
-        disabled={value >= max}
+        aria-disabled={atCap || undefined}
+        data-off={atCap || undefined}
         aria-label={`One more ${noun}`}
       >
         <StepIcon />
