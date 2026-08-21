@@ -80,11 +80,22 @@ export type Sound =
    */
   | "go"
   /**
-   * Two people landed on the same word. The only success in the app —
-   * everything else confirms a press or runs a clock down — and the one place
-   * a slightly bigger sound is earned.
+   * Two people landed on the same word, or a Rank It guess came back perfect.
+   * The success — everything else confirms a press or runs a clock down — and
+   * the one place a slightly bigger sound is earned.
    */
   | "match"
+  /**
+   * The opposite result: a guess that landed nothing at all. Deliberately
+   * comic rather than corrective — falling, and over quickly. A miss in a
+   * party game is the funny part, and the mode it belongs to is on record as
+   * refusing to punish: "the drink was a consequence bolted onto a result."
+   *
+   * It fires far more often than `match` does — a clean sweep of five is one
+   * guess in 120, a total miss closer to one in three — so it is written to be
+   * survivable at that rate rather than to match the success in weight.
+   */
+  | "miss"
   /**
    * A CARD TURNS OVER — any card, anywhere. Prompt decks, the playing cards in
    * Kings Cup and Ride the Bus, a mode opening, a phase changing.
@@ -470,6 +481,14 @@ class AudioManager {
           rise: 0.043,
           vary: true,
         });
+        break;
+
+      /* One note sagging from 520 to 260. A slide rather than two steps,
+         because steps read as a verdict being delivered and a slide reads as
+         the air going out of something — which is the joke, and the joke is
+         the right register here. */
+      case "miss":
+        this.tone(t, { freq: 520, slideTo: 260, duration: 0.3, gain: 0.2, type: "triangle", attack: 0.01 });
         break;
 
       /* Rising, because it hands over. The only sound here that goes up. */

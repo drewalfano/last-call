@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck, randomItem } from "../lib/deck";
 import { CategoryPicker } from "../components/CategoryPicker";
@@ -30,6 +30,16 @@ type Phase = "handover" | "picking" | "ranking" | "guessing" | "revealed";
 /** Every prompt opens with this; the picker says it once instead. */
 const RANK_PREFIX = /^Rank these /;
 
+/**
+ * How long a verdict waits before it says anything.
+ *
+ * The press that reveals is already playing `advance`, and both it and the
+ * success are rising figures — landing them together reads as one muddle
+ * rather than two events. This is the gap that separates them, judged on the
+ * phone against a version with no gap and a version with twice as much.
+ */
+const VERDICT_DELAY_MS = 320;
+
 interface Props {
   mode: ModeDef;
   onBack: () => void;
@@ -59,6 +69,13 @@ export function RankIt({ mode, onBack }: Props) {
 
   const prompt = chosen ?? (deck.current as RankPrompt | undefined);
 
+  /* Hoisted above the early return below, because the effect that reads them
+     is a hook and cannot sit after it. `hits` never needed the prompt anyway —
+     it is the two orders compared. */
+  const total = prompt?.items.length ?? 0;
+  /** Positions the group placed exactly right. */
+  const hits = order.filter((item, i) => guess[i] === item).length;
+
   /** Same tap-to-order interaction for both passes; only the target differs. */
   const pick = useCallback(
     (item: string, forGuess: boolean) => {
@@ -84,6 +101,31 @@ export function RankIt({ mode, onBack }: Props) {
     setGuess([]);
   }, [deck]);
 
+  /**
+   * ONLY THE ENDS OF THE RANGE SAY ANYTHING.
+   *
+   * All of them, or none of them. "At least one right" would have been the
+   * obvious line and is the wrong one: a random guess lands one exact position
+   * per round on average, whatever the list length, so it fires on about two
+   * rounds in three and means nothing. The app already draws the line in the
+   * same place in its own copy — only a clean sweep gets a sentence.
+   *
+   * The two ends are nothing like equally likely. Five of five is one guess in
+   * 120 by chance; none at all is closer to one in three. So they are not a
+   * matched pair of reward and punishment, and `miss` is written knowing it
+   * will be heard many times for each time `match` is.
+   *
+   * An effect rather than a timeout inside the handler, so leaving the mode
+   * within that third of a second takes the sound with it.
+   */
+  useEffect(() => {
+    if (phase !== "revealed" || total === 0) return;
+    const verdict = hits === total ? "match" : hits === 0 ? "miss" : null;
+    if (!verdict) return;
+    const t = window.setTimeout(() => audio.play(verdict), VERDICT_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [phase, hits, total]);
+
   const nextRound = useCallback(() => {
     setChosen(null);
     deck.draw();
@@ -95,11 +137,8 @@ export function RankIt({ mode, onBack }: Props) {
 
   if (!prompt) return null;
 
-  const total = prompt.items.length;
   const active = phase === "guessing" ? guess : order;
   const complete = active.length === total;
-  /** Positions the group placed exactly right. */
-  const hits = order.filter((item, i) => guess[i] === item).length;
 
   return (
     <GameScreen
