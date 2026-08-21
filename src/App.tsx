@@ -44,22 +44,34 @@ const LAUNCH_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
  * the whole fault being fixed is that it used to be gone from the first
  * frame.
  *
- * So it holds through most of the expansion and clears near the end.
- * 340ms is about 65% of the way, by which point the clip has passed well
- * beyond the card's rect and the writing is a small label in a large
- * field of colour rather than a card's title — which is the moment it
- * stops meaning anything and starts being a thing left behind.
+ * SO IT GOES WHILE THE COLOUR IS STILL VISIBLY MOVING, and getting that
+ * wrong is what made the first version read as broken.
  *
- * The 150ms it takes to go is longer than it looks. It is spent while
- * the colour is still growing, so what the eye follows is the expansion,
- * not the fade; a shorter clear reads as the title being snatched.
+ * LAUNCH_EASE is front-loaded to the point of being violent about it —
+ * "decisive, then a long settle", and measured, the clip covers about
+ * 79% of its travel in the first 150ms and then spends the remaining
+ * 370ms creeping the last fifth. The overlay is effectively full screen
+ * a quarter of the way in.
  *
- * It is gone by 490ms, leaving 30ms of flat colour before the screen
- * swaps underneath. That gap is deliberate — the swap should land on a
- * plain field, not on the tail of something still clearing.
+ * Held to 340ms against that curve, the writing sat motionless in a
+ * finished field of colour for a fifth of a second before it even began
+ * to fade, and then took another 150ms to go. Nothing else was moving by
+ * then. A title alone on a flat ground, not going anywhere, reads as a
+ * thing the screen forgot to clear rather than as a handover.
+ *
+ * 170ms is where the clip is still plainly travelling, so the fade has
+ * something to happen DURING. The eye follows the expansion and the
+ * writing leaves underneath it — which is the whole trick the close uses
+ * in the other direction, and the reason its own pair of numbers sits at
+ * 75% of a much shorter duration rather than at 65% of this one.
+ *
+ * Gone by 300ms, which leaves the back half of the launch as plain
+ * colour. That is not wasted: it is the settle, and the screen swaps
+ * into it. The swap should land on a flat field rather than on the tail
+ * of something still clearing.
  */
-const FACE_HOLD_MS = 340;
-const FACE_FADE_MS = 150;
+const FACE_HOLD_MS = 170;
+const FACE_FADE_MS = 130;
 
 /**
  * CLOSING GOES BACK INTO THE CARD IT CAME OUT OF.
