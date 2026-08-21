@@ -189,10 +189,47 @@ const FACE_FROM_MS = 240;
  */
 const CLOSE_FAILSAFE_MS = CLOSE_MS + 120;
 
+/**
+ * WHAT REDUCED MOTION GETS INSTEAD, AND WHY IT IS NOT NOTHING.
+ *
+ * It used to be nothing: both directions checked the media query and
+ * skipped straight to `setScreen`, so Home was replaced by a game screen
+ * between one frame and the next. That is a bypass rather than a
+ * designed path, and a hard cut is its own accessibility problem — the
+ * entire display changing colour and content in a single frame, with no
+ * indication that the two states are related, is exactly the kind of
+ * jarring transition the preference is usually set to avoid. Reduced
+ * motion asks for less movement, not for less continuity.
+ *
+ * So the colour still arrives and still leaves; it simply does not
+ * travel. The overlay comes up over Home, the screen swaps underneath
+ * it, and it clears onto the game — no expanding clip, no deck split, no
+ * lift, nothing that moves in space. What is left is a dip through the
+ * pack's own colour, which is the same handover the full transition
+ * makes and the same colour it makes it in.
+ *
+ * SPLIT IN TWO, because the swap has to happen at the covered moment.
+ * Half of it is the colour arriving, then the screen changes underneath
+ * an opaque field, then the other half is it clearing. That is the
+ * launch's own three-step sequence with the movement taken out.
+ *
+ * 130ms all in, inside the 150 this is meant to stay under. Deliberately
+ * not --dur-fast, which is 160 and would miss it; deliberately not
+ * --dur-instant either, because 90ms split in two is 45ms a side, which
+ * is three frames and reads as the cut it is replacing.
+ */
+const REDUCED_MS = 130;
+
+/** The reduced path covers everything from the first frame, so its "rect"
+ *  is the display. Kept so `Launch` needs no optional geometry. */
+const FULL_SCREEN_RECT = { top: 0, left: 0, right: 0, bottom: 0 };
+
 interface Launch {
   id: ModeId;
   /** Where on screen the tapped card was, in viewport pixels. */
   rect: { top: number; left: number; right: number; bottom: number };
+  /** No travel, just a dip through the colour. See REDUCED_MS. */
+  reduced?: boolean;
 }
 
 export default function App() {
@@ -289,8 +326,12 @@ export default function App() {
        surviving a close. Nothing is on screen for it, so it would fire into
        a Home that is already coming back and expand a card nobody tapped. */
     window.clearTimeout(leadTimer.current);
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (!reduced) setClosing(screen);
+    /* Both directions get the colour, and under reduced motion both get
+       it without travel. The contraction reads the flag for itself — see
+       the effect on `closing` — so all that is decided here is that
+       there IS one, which used to be the thing reduced motion skipped.
+       Leaving a mode was a hard cut in exactly the way entering one was. */
+    setClosing(screen);
     setScreen(null);
   }, [screen]);
 
@@ -351,6 +392,33 @@ export default function App() {
 
     const card = document.querySelector<HTMLElement>(`[data-mode="${closing}"]`);
     card?.scrollIntoView({ block: "nearest", behavior: "auto" });
+
+    /* THE WAY OUT UNDER REDUCED MOTION, which is the way in backwards and
+       is just as short. The overlay is already covering — that is what
+       lets Home mount underneath it — so there is no colour to bring on,
+       only colour to take off. Half the budget, because only half the
+       cross-fade is left to do: the covered moment has already happened.
+
+       No contraction, no writing arriving on it, and no raised card to
+       land on: .deck-card[data-returning] is a transform, and the global
+       reduced-motion rule has already flattened it to nothing. What is
+       left is the pack colour clearing off the deck. */
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const fade = el.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: REDUCED_MS / 2,
+        easing: "linear",
+        fill: "forwards",
+      });
+      const finish = () => setClosing(null);
+      fade.onfinish = finish;
+      fade.oncancel = finish;
+      failsafe.current = window.setTimeout(finish, REDUCED_MS);
+      return () => {
+        fade.onfinish = null;
+        fade.oncancel = null;
+        window.clearTimeout(failsafe.current);
+      };
+    }
 
     const done = () => setClosing(null);
     let anim: Animation | undefined;
@@ -574,7 +642,14 @@ export default function App() {
        gets caught is the deck as the player last saw it either way. */
     homeScroll.current = document.querySelector(".screen.home")?.scrollTop ?? 0;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (!rect || reduced) {
+    if (reduced) {
+      /* No lead and no measuring: nothing is going to travel out of the
+         card, so there is nothing for the deck to get out of the way of
+         and no rect to expand from. The full-screen fade covers it. */
+      setLaunch({ id, rect: FULL_SCREEN_RECT, reduced: true });
+      return;
+    }
+    if (!rect) {
       setScreen(id);
       return;
     }
@@ -626,6 +701,54 @@ export default function App() {
       setLaunch(null);
       return;
     }
+    /* THE REDUCED PATH, WHICH IS THE SAME THREE STEPS WITHOUT THE
+       MOVEMENT. Colour arrives, screen swaps underneath it, colour
+       clears — see REDUCED_MS. It shares this effect rather than living
+       in one of its own so that the swap and the retirement stay in one
+       place; two copies of "when is it safe to change the screen" is how
+       one of them ends up wrong. */
+    if (launch.reduced) {
+      const half = REDUCED_MS / 2;
+      const cover = el.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: half,
+        easing: "linear",
+        fill: "forwards",
+      });
+      let clear: Animation | undefined;
+      const done = () => {
+        setLaunch(null);
+        launchAnims.current = [];
+      };
+      cover.onfinish = () => {
+        setScreen(launch.id);
+        /* One frame, so the swap lands under an opaque field — the same
+           reason the travelling path holds its overlay a frame longer. */
+        requestAnimationFrame(() => {
+          clear = el.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: half,
+            easing: "linear",
+            fill: "forwards",
+          });
+          clear.onfinish = done;
+          clear.oncancel = done;
+        });
+      };
+      cover.oncancel = done;
+      /* Nothing should be able to strand a full-screen field of colour
+         over the app, on this path any more than on the others. */
+      window.clearTimeout(reverseFailsafe.current);
+      reverseFailsafe.current = window.setTimeout(done, REDUCED_MS + 160);
+      return () => {
+        cover.onfinish = null;
+        cover.oncancel = null;
+        if (clear) {
+          clear.onfinish = null;
+          clear.oncancel = null;
+        }
+        window.clearTimeout(reverseFailsafe.current);
+      };
+    }
+
     const { top, left, right, bottom } = launch.rect;
     const from = `inset(${top}px ${window.innerWidth - right}px ${
       window.innerHeight - bottom
@@ -788,7 +911,7 @@ export default function App() {
           double tap also rejects an interrupt 10% into the expansion,
           which is the case the requirement names.
           --------------------------------------------------------------- */}
-      {launch && (
+      {launch && !launch.reduced && (
         <div
           className="launch-scrim"
           aria-hidden="true"
@@ -801,14 +924,24 @@ export default function App() {
           className="launch"
           style={{
             ...categoryStyle(MODE_BY_ID[launch.id].color),
-            // Painted correctly on the very first frame, so the animation
-            // never starts from a full-screen flash.
-            clipPath: `inset(${launch.rect.top}px ${
-              window.innerWidth - launch.rect.right
-            }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
+            /* Painted correctly on the very first frame, so the animation
+               never starts from a full-screen flash — and on the reduced
+               path, so it never starts from an opaque one. There the
+               overlay covers everything from the outset and only its
+               opacity moves, so it must arrive fully transparent and must
+               carry no clip at all. */
+            ...(launch.reduced
+              ? { opacity: 0 }
+              : {
+                  clipPath: `inset(${launch.rect.top}px ${
+                    window.innerWidth - launch.rect.right
+                  }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
+                }),
           }}
           aria-hidden="true"
         >
+          {!launch.reduced && (
+          <>
           {/* THE CARD'S OWN WRITING, CARRIED OUT OF THE DECK.
 
               The overlay used to be a bare field of colour on the way in,
@@ -844,6 +977,8 @@ export default function App() {
           >
             <DeckFace mode={MODE_BY_ID[launch.id]} />
           </div>
+          </>
+          )}
         </div>
       )}
       {/* The colour on its way back into its card. Covering on the first
