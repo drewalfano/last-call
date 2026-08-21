@@ -80,6 +80,20 @@ export function LastWord({ mode, onBack }: Props) {
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
   const deadline = useRef(0);
   /**
+   * The last whole second the clock said out loud.
+   *
+   * The loop below runs every frame and the clock speaks once a second, so
+   * something has to stand between 60Hz and 1Hz. Comparing the rounded second
+   * against the one before it is that something.
+   *
+   * It fires on the CHANGE, which means a stall long enough to cross a whole
+   * second drops that pip rather than playing it late or playing it twice.
+   * That is the right way round: the pips are keeping time with a clock the
+   * player can see, and a late one would disagree with the number on screen.
+   * A missing one just isn't heard.
+   */
+  const ticked = useRef(TURN_SECONDS);
+  /**
    * True while `deck.current` is a category the table has been shown on the
    * intro card but hasn't played yet — a fresh deck deals one face-up, and
    * Random deals another. Without it, Start round drew a second time and the
@@ -101,6 +115,7 @@ export function LastWord({ mode, onBack }: Props) {
   const startTurn = useCallback(() => {
     deadline.current = performance.now() + TURN_SECONDS * 1000;
     setRemaining(TURN_SECONDS * 1000);
+    ticked.current = TURN_SECONDS;
   }, []);
 
   // Deadline-based rather than decrementing a counter, so a backgrounded
@@ -114,7 +129,18 @@ export function LastWord({ mode, onBack }: Props) {
         setRemaining(0);
         endRound();
         buzz([90, 60, 180]);
+        audio.play("buzzer");
         return;
+      }
+      /* The last three seconds out loud, on the same beat the dial turns red
+         — see `data-low`. This is where a player stops thinking and starts
+         panicking, and it should arrive in both channels at once.
+
+         The pips climb, so which one this is matters: 3 → 0, 2 → 1, 1 → 2. */
+      const secs = Math.ceil(left / 1000);
+      if (secs !== ticked.current) {
+        ticked.current = secs;
+        if (secs <= 3 && secs > 0) audio.play("tick", 3 - secs);
       }
       setRemaining(left);
       raf = requestAnimationFrame(tick);

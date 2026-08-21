@@ -36,17 +36,18 @@ export type Sound =
   /** A press the game refuses — a letter that is already gone. */
   | "reject"
   /**
-   * The three below are written and deliberately UNWIRED. Letter Rip is the
-   * only mode making a sound so far, and it is carrying the tap on its own on
-   * purpose: a tick and a buzzer in the same round are the two loudest things
-   * here, and they would settle how the tap reads before anyone has heard the
-   * tap. They go in once it is judged on a real phone, one at a time.
+   * One second gone, in the last three of a turn. Takes a `step` — these
+   * climb, and the climb ends on `buzzer`, so the two are written as one
+   * gesture and should be changed as one.
    */
-  /** One second gone, in the last few of a clock. */
   | "tick"
-  /** The clock hit zero. */
+  /** The clock hit zero. The tone the ticks were climbing towards. */
   | "buzzer"
-  /** The phone is going to the next player. */
+  /**
+   * The phone is going to the next player. Written but still UNWIRED: no mode
+   * hands over with a sound yet, and it should be judged on a real phone
+   * against the ones that do before it goes anywhere.
+   */
   | "advance";
 
 /**
@@ -71,6 +72,12 @@ interface ToneOptions {
   gain?: number;
   type?: OscillatorType;
   slideTo?: number | null;
+  /**
+   * How long the tone takes to reach full level. The default is short enough
+   * to read as a hit; a held tone wants a hair longer, or the onset clicks
+   * before the note arrives.
+   */
+  attack?: number;
 }
 
 /** How much noise is minted up front, in seconds. See `_noise`. */
@@ -201,7 +208,7 @@ class AudioManager {
    * touch zero — the tiny floor is inaudible and keeps the envelope from
    * clicking at either end.
    */
-  private tone(t: number, { freq = 180, duration = 0.06, gain = 0.3, type = "sine", slideTo = null }: ToneOptions = {}): void {
+  private tone(t: number, { freq = 180, duration = 0.06, gain = 0.3, type = "sine", slideTo = null, attack = 0.005 }: ToneOptions = {}): void {
     if (!this.ctx || !this.master) return;
 
     const osc = this.ctx.createOscillator();
@@ -211,7 +218,7 @@ class AudioManager {
 
     const env = this.ctx.createGain();
     env.gain.setValueAtTime(0.0001, t);
-    env.gain.exponentialRampToValueAtTime(gain, t + 0.005);
+    env.gain.exponentialRampToValueAtTime(gain, t + attack);
     env.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
     osc.connect(env).connect(this.master);
@@ -221,7 +228,13 @@ class AudioManager {
 
   // --- the sounds --------------------------------------------------------
 
-  play(name: Sound): void {
+  /**
+   * `step` is which beat of an escalating series this is, counted from 0. Only
+   * `tick` reads it — three seconds of clock that tighten as they run out —
+   * and it is clamped, so a caller that miscounts gets the last beat rather
+   * than an undefined one.
+   */
+  play(name: Sound, step = 0): void {
     const ctx = this.live();
     if (!ctx) return;
     const t = ctx.currentTime;
@@ -254,19 +267,38 @@ class AudioManager {
         this.tone(t, { freq: 130, duration: 0.09, gain: 0.22, type: "square", slideTo: 90 });
         break;
 
-      /* Quieter than everything else on purpose. It fires once a second while
-         a player is under pressure, and a tick you notice is a tick that
-         becomes the thing they are listening to. */
-      case "tick":
-        this.noiseBurst(t, { duration: 0.018, gain: 0.16, freq: 3200, q: 2 });
-        break;
+      /* A PIP THAT CLIMBS INTO THE SOUND IT LANDS ON.
+         Three of these then the buzzer is one gesture rather than four
+         events: 700 to 930 and then 1050, each step about the same distance,
+         so the last three seconds audibly go somewhere. Getting louder as
+         well as higher is what makes it read as running out rather than
+         merely counting.
 
-      /* Two saws a hair apart. The beating between them is what makes it sound
-         like a buzzer rather than a note — one oscillator here is a game show
-         answer, two is a klaxon. */
+         Pitched rather than the noise burst this used to be, because the tap
+         is noise now — a clock made of the same material sits in the same
+         part of the spectrum and the two smear together under a thumb. */
+      case "tick": {
+        const i = Math.min(2, Math.max(0, step | 0));
+        this.tone(t, {
+          freq: [700, 810, 930][i],
+          duration: [0.07, 0.075, 0.085][i],
+          gain: [0.18, 0.23, 0.28][i],
+        });
+        break;
+      }
+
+      /* WHERE THE PIPS WERE GOING.
+         It was two sawtooths beating against each other at 160Hz falling to
+         90 — a klaxon on paper, and on a phone speaker a rattle, because that
+         is below what a small driver can reproduce at all. It is the same
+         mistake the tap's body layer was making.
+
+         A held tone at the top of the climb instead, with a quiet octave
+         underneath for body. Long enough to be an ending; the quiet octave is
+         what stops it sounding like a fourth pip that forgot to stop. */
       case "buzzer":
-        this.tone(t, { freq: 160, duration: 0.5, gain: 0.3, type: "sawtooth", slideTo: 90 });
-        this.tone(t, { freq: 161.5, duration: 0.5, gain: 0.25, type: "sawtooth", slideTo: 91 });
+        this.tone(t, { freq: 1050, duration: 0.5, gain: 0.24, type: "triangle", attack: 0.012 });
+        this.tone(t, { freq: 525, duration: 0.5, gain: 0.1, attack: 0.012 });
         break;
 
       /* Rising, because it hands over. The only sound here that goes up. */
