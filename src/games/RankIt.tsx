@@ -3,6 +3,7 @@ import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck, randomItem } from "../lib/deck";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { buzz } from "../lib/useCountdown";
+import { audio } from "../lib/audio";
 import { usePool } from "../data/pools";
 import { RANK_IT, type RankPrompt } from "../data/rankIt";
 import { useContentMode } from "../state/contentMode";
@@ -211,6 +212,15 @@ export function RankIt({ mode, onBack }: Props) {
                   <button
                     className="rank__item"
                     data-ranked={at >= 0 || undefined}
+                    /* On the press, not the click — the same rule Letter Rip's
+                       letters follow, and for the same reason: a sound that
+                       waits for release reads as lag against the finger.
+
+                       Taking an item back out is an UNDO, not a refusal. The
+                       game did not say no, the player changed their mind, so
+                       it does not get `reject` — it gets the tap with the life
+                       taken out of it. `at` already knows which way this goes. */
+                    onPointerDown={() => audio.play(at >= 0 ? "undo" : "tap")}
                     onClick={() => pick(item, phase === "guessing")}
                   >
                     <span className="rank__pos">{at >= 0 ? at + 1 : ""}</span>

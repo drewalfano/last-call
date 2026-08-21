@@ -58,6 +58,13 @@ export type Sound =
   /** A press the game refuses — a letter that is already gone. */
   | "reject"
   /**
+   * Something taken back out: an item lifted off a Rank It list. Not a
+   * refusal — the game did not say no, the player changed their mind — so it
+   * is the tap gone quiet and dull rather than anything that sounds like a
+   * correction.
+   */
+  | "undo"
+  /**
    * One second gone, in the last three of a turn. Takes a `step` — these
    * climb, and the climb ends on `buzzer`, so the two are written as one
    * gesture and should be changed as one.
@@ -287,9 +294,25 @@ class AudioManager {
         break;
       }
 
-      /* Low, square and falling — the shape of "no". */
+      /* SOFT, LOW AND BRIEF — a correction, not a telling-off.
+         It was a square wave at 130Hz falling to 90, which was the loudest
+         thing in the app for the smallest event in it: square is the harshest
+         shape there is, and 130 to 90 is under the floor where a phone speaker
+         rattles instead of playing a note. Reaching for a letter that has gone
+         is a very ordinary mistake and wants a very ordinary sound.
+
+         Triangle rather than square for the same reason it is quiet — this has
+         to say "not that one" and then get out of the way of a table mid-round. */
       case "reject":
-        this.tone(t, { freq: 130, duration: 0.09, gain: 0.22, type: "square", slideTo: 90 });
+        this.tone(t, { freq: 300, duration: 0.055, gain: 0.16, type: "triangle", slideTo: 240 });
+        break;
+
+      /* The tap with the life taken out of it — lower, shorter, quieter, and
+         no pitch variation, because the rotation is what makes a run of taps
+         sound alive and this is the one that should not. Same button, nothing
+         happening. */
+      case "undo":
+        this.noiseBurst(t, { freq: 1100, q: 1.2, duration: 0.02, gain: 0.2 });
         break;
 
       /* A PIP THAT CLIMBS INTO THE SOUND IT LANDS ON.
