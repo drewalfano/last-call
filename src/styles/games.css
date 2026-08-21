@@ -390,15 +390,7 @@
 /* Bottom of the stack first — `--i` counts up from the last card; see
    Home.tsx. That order is what keeps every bottom edge covered: the card
    that hides this one's bottom is already in place before it lands. */
-/* :not([data-split]) so a card that is leaving cannot also be arriving.
-   Both this and the split are (0,2,0), so which one won was decided by
-   which appeared later in the file — true today and one refactor away
-   from not being. It matters on the first Home of the session and only
-   there: this class stays on the deck for the whole of it, so tapping a
-   card before you have left once puts both rules on the same element,
-   and this one uses the `animation` shorthand, which would reset the
-   split's name along with everything else. */
-.home__deck--dealing .deck-card:not([data-split]) {
+.home__deck--dealing .deck-card {
   animation: deck-deal 620ms var(--ease-out) backwards;
   animation-delay: calc(var(--i, 0) * var(--stagger-deal));
 }
@@ -534,153 +526,35 @@
 }
 
 /* ---------------------------------------------------------------
-   THE DECK GETS OUT OF THE WAY OF THE CARD YOU PICKED.
+   THE DECK DOES NOT MOVE WHILE A MODE OPENS, AND THAT IS A
+   DECISION RATHER THAN AN OMISSION.
 
-   Eleven cards used to hold perfectly still while one of them was
-   opened. The colour grew out of a stack that had not reacted, so
-   the card being drawn had nothing to be drawn OUT of — the deck
-   was scenery behind a transition rather than a thing the
-   transition was happening to.
+   There was a split here: the cards above the tapped one left
+   upward, the ones below left downward, so the deck visibly parted
+   around the card being opened. It went through two versions — per
+   card, then as two rigid halves once the per-card one was found to
+   pull the shingle apart — and both were wrong on a device for the
+   same underlying reason.
 
-   Cards above the tapped one leave upward, cards below leave
-   downward, and the deck parts. Delay is a function of DISTANCE
-   from that card, so the parting travels outward from it rather
-   than running down the deck in DOM order — the two look nothing
-   alike, and only one of them reads as caused by the tap.
+   The launch overlay is pinned to the tapped card's rect and grows
+   from it on a curve that is ~79% done in its first 150ms. So for
+   the whole of the window in which deck movement is visible, the
+   thing the eye is tracking is a rectangle of colour rushing
+   outward — and everything else on screen moving at the same time
+   does not read as the deck making way. It reads as the screen
+   coming apart. Eleven cards travelling under an expanding field is
+   simply too much happening at once in too little time.
 
-   TRANSLATE ONLY, AND NO OPACITY WHATSOEVER — which this rule got
-   wrong once and is worth stating in full, because the reason is
-   already written thirty lines up under `deck-deal` and applies
-   here word for word.
+   Held still, the deck is what it looks like: a stack, being
+   covered by the colour of the card you touched. The card lifts
+   nowhere, the neighbours stay put, and the only moving thing is
+   the one you asked to move.
 
-   A deck card that is not fully opaque is a WINDOW. The stack is
-   shingled: every card's squared bottom is hidden by the card in
-   front of it, and nothing else hides it. Drop a card to 0.88 and
-   you read straight through it to that flat cut — and, on this
-   screen, to the wordmark and the roster prompt and the titles of
-   every card behind it. Shipped at 0.88 it looked exactly like
-   what it was: the deck going transparent.
-
-   There is no version of this where a little opacity "softens the
-   edge". The edge it would soften is the display boundary, which
-   is a hard cut whatever the card does, and the cost is the one
-   illusion the whole stack is built on.
-
-   THEY MOVE AS TWO SLABS, NOT AS TEN CARDS, and that is the other
-   half of the same constraint. A shingle only holds while the
-   cards overlap — 40.8px of it, card height less --peek. Give
-   neighbours different delays and they draw apart the moment they
-   are moving quickly, and the card that was covering its
-   neighbour's bottom edge leaves first and uncovers it. That is
-   the flat red band under Odd One Out and the pink sliver under
-   Rank It: not a glitch on top of the animation, the animation
-   working exactly as it was written.
-
-   So the group above the tapped card leaves together and the group
-   below leaves together. Nothing inside a group moves relative to
-   anything else in it, so the overlap is preserved for the whole
-   travel and no squared bottom is ever in open air. The deck
-   parts, and each half is still a deck while it goes.
-
-   THE STAGGER IS BETWEEN THE HALVES, and --stagger-step still sets
-   it. The near half goes on the tap; the far half is one step
-   behind it, so the parting still reads as starting at your finger
-   and moving outward. It is one beat instead of ten, and one beat
-   is what a shingled deck can actually carry.
-
-   100dvh whichever way it goes, so a card is clear of the display
-   from wherever it starts. Cheaper than it looks: one composited
-   transform per card, and the cards are opaque rectangles.
-
-   `forwards`, not the `backwards` the arrivals in this file use.
-   That rule is about animations that SETTLE — a filled
-   `transform: none` at the end outranks :active and kills the
-   press. These do not settle, they leave, and they have to hold
-   off-screen for the beat between arriving there and Home
-   unmounting underneath the overlay. Letter Rip's board exit is
-   `forwards` for exactly the same reason.
+   Kept in the history rather than the file — `git log` for "Part
+   the deck" if the idea is ever worth another try. It would need
+   the expansion to be slower, or to wait, and both of those cost
+   more than the parting is worth.
    --------------------------------------------------------------- */
-@keyframes deck-split-up {
-  to { transform: translateY(-100dvh); }
-}
-@keyframes deck-split-down {
-  to { transform: translateY(100dvh); }
-}
-
-.deck-card[data-split] {
-  animation-duration: var(--dur-base);
-  /* --ease-glide, for travel rather than arrival. These cards are not
-     landing anywhere the player can see, so a curve that spends its tail
-     easing into a resting position is spending it off-screen. */
-  animation-timing-function: var(--ease-glide);
-  animation-fill-mode: forwards;
-  /* One step for the whole half, from --split-half: 0 for the half
-     nearest the tap, 1 for the other. Not --split-d, which is per card
-     and pulls the shingle apart; see above. */
-  animation-delay: calc(var(--split-half, 0) * var(--stagger-step));
-}
-
-.deck-card[data-split="up"] { animation-name: deck-split-up; }
-.deck-card[data-split="down"] { animation-name: deck-split-down; }
-
-/* ---------------------------------------------------------------
-   AND COMES BACK THE OTHER WAY ROUND.
-
-   Same geometry, reversed in two senses. The cards travel back in
-   rather than out, and the ORDER is inverted: delay counts from
-   the far end of the deck, so the cards furthest from the one you
-   are closing arrive first and the ones nearest it arrive last.
-
-   That is not symmetry for its own sake, it is what the close is
-   already doing. The overlay contracts ONTO the returning card, so
-   it uncovers the edges of the screen first and the card itself
-   last — the far cards are visible early and the near ones are
-   still behind colour. Returning them in that order means each
-   card arrives about when it becomes possible to see it. Run the
-   split's own order here and the near cards land under the overlay
-   and are simply present when it clears.
-
-   --ease-out rather than the split's --ease-glide, because this
-   direction DOES land somewhere the player is looking: it is an
-   arrival, and it settles.
-   --------------------------------------------------------------- */
-@keyframes deck-rejoin-up {
-  from { transform: translateY(-100dvh); }
-}
-@keyframes deck-rejoin-down {
-  from { transform: translateY(100dvh); }
-}
-
-.deck-card[data-rejoin] {
-  animation-timing-function: var(--ease-out);
-  /* `backwards` here and not `forwards`, and this is the arrivals rule
-     doing its job: these cards settle back to resting, so a filled end
-     state would leave `transform: none` sitting on top of :active and the
-     press would stop working on ten of the eleven cards. */
-  animation-fill-mode: backwards;
-  /* Inverted: the FAR half comes back first, the near half last. The
-     contraction uncovers the edges of the screen before it uncovers the
-     card it is landing on, so each half arrives about when it becomes
-     possible to see it. Same one-step-per-half rule as the split — a
-     shingle cannot be staggered per card in either direction. */
-  animation-delay: calc(
-    (1 - var(--split-half, 0)) * var(--stagger-step)
-  );
-}
-
-.deck-card[data-rejoin][data-split="up"] { animation-name: deck-rejoin-up; }
-.deck-card[data-rejoin][data-split="down"] { animation-name: deck-rejoin-down; }
-
-/* Both directions are staggered, so both need this. The global
-   reduced-motion rule zeroes animation-duration but NOT animation-delay,
-   and these fill in both directions — without it the deck would sit
-   part-way off screen for up to --split-max steps before appearing. */
-@media (prefers-reduced-motion: reduce) {
-  .deck-card[data-split],
-  .deck-card[data-rejoin] {
-    animation: none;
-  }
-}
 
 /* NOTHING HIDES THE WRITING, and taking that out is what separates the two
    halves of the close.

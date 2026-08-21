@@ -2,7 +2,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { MODE_BY_ID, type ModeId } from "./data/modes";
 import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
-import { motionMs } from "./lib/motion";
 import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
 import { Home } from "./games/Home";
@@ -281,8 +280,6 @@ export default function App() {
    * is still true when you come back to the same list.
    */
   const homeScroll = useRef(0);
-  /** The beat the deck gets to itself before the colour starts. See `open`. */
-  const leadTimer = useRef<number>(undefined);
   /** The expansion in flight, kept so it can be turned round. See `reverseLaunch`. */
   const launchAnims = useRef<Animation[]>([]);
   const reverseFailsafe = useRef<number>(undefined);
@@ -334,10 +331,6 @@ export default function App() {
    */
   const goHome = useCallback(() => {
     if (screen === null) return;
-    /* A launch that has been armed but has not started yet has no business
-       surviving a close. Nothing is on screen for it, so it would fire into
-       a Home that is already coming back and expand a card nobody tapped. */
-    window.clearTimeout(leadTimer.current);
     /* Both directions get the colour, and under reduced motion both get
        it without travel. The contraction reads the flag for itself — see
        the effect on `closing` — so all that is decided here is that
@@ -352,7 +345,6 @@ export default function App() {
      lead belongs to a callback, so it is retired here. */
   useEffect(
     () => () => {
-      window.clearTimeout(leadTimer.current);
       window.clearTimeout(reverseFailsafe.current);
     },
     [],
@@ -667,42 +659,25 @@ export default function App() {
     }
 
     /* ---------------------------------------------------------------
-       THE DECK MOVES FIRST, AND THE COLOUR FOLLOWS IT.
+       THE COLOUR LEAVES ON THE FRAME YOU TAP, and nothing waits for
+       anything.
 
-       The overlay is opaque and pinned to the tapped card's rect, so
-       anything the deck does after it appears is behind it. Mounting on
-       the same frame as the tap meant the card's lift and the deck
-       parting around it were both covered by the thing they were
-       supposed to introduce — the gesture existed and was invisible.
+       There was a --expand-lead here: a beat before the overlay
+       mounted, so the deck could visibly react before the colour
+       covered it. It existed to serve the deck split, and the split
+       is gone — see .deck-card and the note where the parting used to
+       be. Without something to introduce, a lead is just latency, and
+       latency on the one control the whole screen exists to offer.
 
-       So nothing is mounted for --expand-lead. Home has already been
-       told which card was tapped and is lifting it and splitting the
-       deck around it; this window is that beat, and only then does the
-       colour start.
-
-       THE RECT IS MEASURED AT THE END OF IT, NOT AT THE TAP. This is
-       the close's own argument arriving on the other side: the card has
-       been moving for the whole lead, so the rect read on the tap is a
-       claim about where it USED to be. Landing the clip there would
-       start the expansion 14px below the card it is expanding from, and
-       the join would be a visible step. Ask the card where it is now.
-
-       The rect passed in is kept as the fallback. It is a frame or two
-       stale by here, which is far better than no expansion at all if
-       the card cannot be found — Home is unmounted only on the frame
-       after this, but nothing should be able to strand the launch.
+       So the rect measured on the tap is the rect the clip starts
+       from. Nothing has moved in between, because nothing moves any
+       more; the card is where the tap said it was. That also puts the
+       measurement back where it is most trustworthy — read off a deck
+       that is standing still, which is what the OPEN path always
+       wanted and only lost when the lead made the card a moving
+       target.
        --------------------------------------------------------------- */
-    window.clearTimeout(leadTimer.current);
-    leadTimer.current = window.setTimeout(() => {
-      const card = document.querySelector<HTMLElement>(`[data-mode="${id}"]`);
-      const r = card?.getBoundingClientRect();
-      setLaunch({
-        id,
-        rect: r
-          ? { top: r.top, left: r.left, right: r.right, bottom: r.bottom }
-          : rect,
-      });
-    }, motionMs("--expand-lead", 70));
+    setLaunch({ id, rect });
   }, []);
 
   useEffect(() => {
@@ -915,13 +890,21 @@ export default function App() {
           way down, and a click on a surface being removed from under
           the finger is not guaranteed to arrive at all.
 
-          There is no double-tap guard, and --expand-lead is the reason.
-          Nothing here exists until the lead has elapsed, so the window
-          in which a stray second tap could cancel an open it did not
-          mean to is a window in which there is nothing to tap. A guard
-          was tried and removed: any interval short enough to catch a
-          double tap also rejects an interrupt 10% into the expansion,
-          which is the case the requirement names.
+          There is no double-tap guard, and this is the one cost of
+          the colour leaving on the tap frame. --expand-lead used to be
+          that guard by accident — nothing was tappable until it had
+          elapsed — and removing the lead removes the cover with it. So
+          a genuine double tap on a card will open the mode and then
+          back straight out of it.
+
+          Accepted rather than solved, because the two cannot both be
+          had: any interval long enough to catch a double tap (100ms
+          and up) also rejects an interrupt 10% into the expansion,
+          which is 52ms in and is the case the requirement names. A
+          transition you can always abandon is worth more than a
+          double tap you can no longer fumble — and with no lead the
+          card answers instantly, which is what provokes the second
+          tap in the first place.
           --------------------------------------------------------------- */}
       {launch && !launch.reduced && (
         <div
