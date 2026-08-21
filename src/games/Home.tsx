@@ -21,6 +21,14 @@ interface HomeProps {
    * measured is a moving target.
    */
   returning?: ModeId | null;
+  /**
+   * Bumped by App when an expansion has been backed out of.
+   *
+   * A counter rather than a flag, because two aborts in a row are two
+   * events and a boolean that is already true says nothing the second
+   * time. Home does not care what the number is, only that it changed.
+   */
+  aborted?: number;
 }
 
 
@@ -464,9 +472,9 @@ let dealt = false;
  * The whole app's table of contents, dealt as a stack of overlapping cards.
  * Every mode is one tap away — no menus, no settings page.
  */
-export function Home({ onPick, returning }: HomeProps) {
+export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   /** True only on the first Home of the session. Claims it as it reads it. */
-  const [dealing] = useState(() => {
+  const [dealing, setDealing] = useState(() => {
     const first = !dealt;
     dealt = true;
     return first;
@@ -752,6 +760,61 @@ export function Home({ onPick, returning }: HomeProps) {
     return () => window.clearTimeout(t);
   }, [settling]);
 
+  /**
+   * THE DECK COMES BACK FROM WHEREVER IT HAD GOT TO.
+   *
+   * App has turned the colour round; this is the deck's half of the same
+   * moment. Every card that is on its way out of the stack is reversed
+   * IN PLACE — `reverse()` on the running animation, so a card that is
+   * 30% of the way off screen comes back from 30%, taking 30% of the
+   * time, and one that had already gone takes the whole way.
+   *
+   * The alternative was to clear `splitting` and let the rejoin play,
+   * and it is wrong in the way this whole commit is about: the rejoin
+   * starts from a full 100dvh out, so a deck caught 30% through would
+   * snap the rest of the way OUT before coming back. Reversing what is
+   * running is the only thing that has no jump in it.
+   *
+   * The lift goes back with them. It is a transition rather than an
+   * animation, so it needs no reversing — dropping `revealed` sends the
+   * card down on .deck-card's own curve, which is what a card being put
+   * back wants anyway.
+   *
+   * Skipped on the first render, when the counter is still at its
+   * initial value and there is nothing to back out of.
+   */
+  const abortedOnce = useRef(aborted);
+  useEffect(() => {
+    if (aborted === abortedOnce.current) return;
+    abortedOnce.current = aborted;
+
+    const cards = deckRef.current?.querySelectorAll<HTMLElement>("[data-split]");
+    let longest = 0;
+    cards?.forEach((card) => {
+      for (const a of card.getAnimations()) {
+        try {
+          a.reverse();
+          const t = Number(a.currentTime ?? 0);
+          if (t > longest) longest = t;
+        } catch {
+          /* One card that will not reverse must not strand the other
+             nine. The timeout below still clears the state. */
+        }
+      }
+    });
+
+    /* Released once the furthest-along card has had time to come back —
+       its own current time, because that is exactly how long its
+       reversal has to run. A timeout rather than `animationend` for the
+       reason this file gives twice already: it fires whether or not
+       anything painted, and there are ten races to lose here, not one. */
+    const t = window.setTimeout(() => {
+      setSplitting(null);
+      setRevealed(null);
+    }, longest + 60);
+    return () => window.clearTimeout(t);
+  }, [aborted]);
+
   /* THE REJOIN'S OWN CLOCK — the last card's delay plus its travel.
      Worked out from the token rather than written down, so retuning
      --stagger-step cannot leave this holding the attribute for the wrong
@@ -766,6 +829,34 @@ export function Home({ onPick, returning }: HomeProps) {
     const t = window.setTimeout(() => setRejoining(null), span);
     return () => window.clearTimeout(t);
   }, [rejoining]);
+
+  /**
+   * THE DEAL IS OVER, SO STOP CLAIMING IT IS HAPPENING.
+   *
+   * `dealing` used to be latched for the whole life of the first Home,
+   * which was harmless while nothing else touched these cards and became
+   * a bug the moment something did. `.home__deck--dealing .deck-card`
+   * is a live rule: any change that makes a card newly match it restarts
+   * `deck-deal` — and backing out of an expansion does exactly that, by
+   * taking `data-split` off ten cards at once. The whole deck flew in
+   * from below a second after the player had cancelled, on the one Home
+   * of the session where they had already watched it do that.
+   *
+   * The class was never meant to outlive the animation. It comes off
+   * once the last card has landed, and after that there is no rule left
+   * for an attribute change to re-trigger.
+   *
+   * A card is home at DECK_CARD_MS after its own delay, and the last
+   * card's delay is the widest — the same three numbers the ring already
+   * counts from, plus a margin so the class can never come off on the
+   * frame the animation is still using it.
+   */
+  useEffect(() => {
+    if (!dealing) return;
+    const span = (MODES.length - 1) * DECK_STAGGER_MS + DECK_CARD_MS + 120;
+    const t = window.setTimeout(() => setDealing(false), span);
+    return () => window.clearTimeout(t);
+  }, [dealing]);
 
   // Retire the ring the moment its last piece has gone out.
   useEffect(() => {

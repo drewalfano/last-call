@@ -713,6 +713,41 @@
   transform: translateZ(0);
 }
 
+/* ---------------------------------------------------------------
+   THE WAY OUT OF AN EXPANSION, AND WHY IT IS NOT THE OVERLAY
+   ITSELF.
+
+   The obvious thing is to hang the dismiss handler on .launch and
+   let the player tap the colour. It does not work, and the reason
+   is worth writing down because it is invisible until you test it:
+   CLIP-PATH CLIPS HIT-TESTING. The overlay's box is the whole
+   viewport, but only the part inside the clip can be touched — and
+   early in the expansion that part is the size of a playing card.
+
+   So a tap 10% of the way in, which is exactly the case the
+   requirement names, mostly misses. Worse, it does not miss into
+   nothing: Home is live underneath, so the tap lands on whatever
+   card is under the finger and starts a SECOND launch on top of
+   the one already flying.
+
+   An unclipped sheet of nothing, one layer below the colour. It
+   covers the display for the whole flight whatever the clip is
+   doing, so the target is the same size at 10% as at 95%, and the
+   deck underneath is sealed off while the transition owns the
+   screen.
+   --------------------------------------------------------------- */
+.launch-scrim {
+  position: fixed;
+  inset: 0;
+  /* Directly under .launch, which is 100. */
+  z-index: 99;
+  background: transparent;
+  /* iOS paints a grey flash on a touched element that carries a handler.
+     Across a full-screen sheet that is the most visible thing on the
+     display, and it would flash over the pack colour sitting on top. */
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Both directions are this one element. Opening clips a card's rect open to
    the full screen; closing clips the full screen back down to it. Neither has
    a rule of its own here — the geometry is measured in App.tsx and driven on

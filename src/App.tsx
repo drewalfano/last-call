@@ -200,6 +200,12 @@ export default function App() {
   const [launch, setLaunch] = useState<Launch | null>(null);
   /** The mode whose colour is still on screen, contracting, after it closed. */
   const [closing, setClosing] = useState<ModeId | null>(null);
+  /**
+   * Bumped when an expansion is backed out of, so Home can bring its deck
+   * back. A counter and not a boolean: two aborts in a row are two events,
+   * and a flag that is already true says nothing the second time.
+   */
+  const [aborted, setAborted] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
@@ -228,6 +234,9 @@ export default function App() {
   const homeScroll = useRef(0);
   /** The beat the deck gets to itself before the colour starts. See `open`. */
   const leadTimer = useRef<number>(undefined);
+  /** The expansion in flight, kept so it can be turned round. See `reverseLaunch`. */
+  const launchAnims = useRef<Animation[]>([]);
+  const reverseFailsafe = useRef<number>(undefined);
   const closeTimer = useRef<number>(undefined);
   const failsafe = useRef<number>(undefined);
   const { theme } = useTheme();
@@ -288,7 +297,13 @@ export default function App() {
   /* Every timer this component owns outlives a render but must not outlive
      the component. The launch and close effects clean up their own; the
      lead belongs to a callback, so it is retired here. */
-  useEffect(() => () => window.clearTimeout(leadTimer.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(leadTimer.current);
+      window.clearTimeout(reverseFailsafe.current);
+    },
+    [],
+  );
 
   /**
    * PUT THE DECK BACK BEFORE ANYTHING IS PAINTED.
@@ -627,14 +642,39 @@ export default function App() {
        and then goes. --ease-glide, because a fade that is ~95% done by its
        own halfway point (which is what --ease-out would give) reads as the
        title being snatched rather than released. */
-    faceInRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
-      duration: FACE_FADE_MS,
-      delay: FACE_HOLD_MS,
-      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-      fill: "forwards",
-    });
+    const faceAnim = faceInRef.current?.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      {
+        duration: FACE_FADE_MS,
+        delay: FACE_HOLD_MS,
+        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+        fill: "forwards",
+      },
+    );
+
+    /* ---------------------------------------------------------------
+       HELD, BECAUSE YOU CANNOT REVERSE AN ANIMATION YOU HAVE THROWN
+       AWAY.
+
+       Both of these used to be locals that went out of scope the moment
+       the effect returned, and the only thing kept was a pair of
+       handlers. That is what made the expansion a one-way trip: a
+       second tap could set new state and start a new animation, but it
+       had no way to reach the one already in flight — so it left it
+       running and stacked another on top, and what you saw was the clip
+       snapping back to a card rect and starting again.
+
+       An Animation object knows where it is. Keeping it is the whole of
+       the interruptibility: `reverse()` plays it back from its current
+       time, at its current position, with no measuring and nothing to
+       recompute. See `reverseLaunch`.
+       --------------------------------------------------------------- */
+    launchAnims.current = faceAnim ? [anim, faceAnim] : [anim];
 
     const finish = () => {
+      /* A reversed run finishes too, and it must not open the mode it
+         has just spent its time backing out of. */
+      if (anim.playbackRate < 0) return;
       setScreen(launch.id);
       // Hold the overlay one more frame so the swap happens underneath it.
       requestAnimationFrame(() => requestAnimationFrame(() => setLaunch(null)));
@@ -644,8 +684,67 @@ export default function App() {
     return () => {
       anim.onfinish = null;
       anim.oncancel = null;
+      launchAnims.current = [];
     };
   }, [launch]);
+
+  /**
+   * BACKING OUT OF AN EXPANSION FROM WHEREVER IT HAS GOT TO.
+   *
+   * The requirement this exists for is that no frame of the transition
+   * is a point of no return. Tap at 10% through and at 95% through and
+   * the same thing happens: everything that is moving turns round and
+   * goes back the way it came, from where it is.
+   *
+   * `reverse()` rather than a new animation to the starting value,
+   * and the difference is the whole point. A fresh animation would have
+   * to be told where to start, which means measuring a clip mid-flight
+   * and rebuilding an inset string from it — and it would restart the
+   * EASING, so a reversal caught at 90% would spend a full duration
+   * crawling back the last tenth. Reversing keeps the clock: caught at
+   * 90% it takes 90% of the time to come home, caught at 10% it takes
+   * 10%, which is what "from where it is" actually means.
+   *
+   * The deck is not reversed here. It is Home's, and Home reverses its
+   * own cards on the same signal — see `aborted` and the effect that
+   * reads it. App owns the colour, Home owns the deck, and the two only
+   * have to agree on the moment.
+   */
+  const reverseLaunch = useCallback(() => {
+    const anims = launchAnims.current;
+    if (!anims.length) return;
+    /* Already on the way out. A second tap during the reversal must not
+       turn it round again — that is a toggle, and nobody taps a closing
+       screen meaning to reopen it. */
+    if (anims[0].playbackRate < 0) return;
+
+    for (const a of anims) {
+      try {
+        a.reverse();
+      } catch {
+        /* An animation that has been cancelled or is otherwise not
+           reversible must not take the rest of them down with it. The
+           failsafe below still retires the overlay. */
+      }
+    }
+
+    /* Home clears the lift and brings the deck back on this. */
+    setAborted((n) => n + 1);
+
+    const done = () => {
+      setLaunch(null);
+      launchAnims.current = [];
+    };
+    anims[0].onfinish = done;
+    anims[0].oncancel = done;
+    /* The guarantee, not the ordinary path — the same argument as
+       CLOSE_FAILSAFE_MS. A stalled reversal would otherwise leave a
+       part-expanded field of pack colour over the app with nothing left
+       to dismiss it. It can never fire early: a reversal cannot take
+       longer than the run it is undoing. */
+    window.clearTimeout(reverseFailsafe.current);
+    reverseFailsafe.current = window.setTimeout(done, LAUNCH_MS + 120);
+  }, []);
 
   // Every screen starts at the top — a mode entered from the bottom of the
   // Home list should not open mid-scroll.
@@ -660,7 +759,42 @@ export default function App() {
 
   return (
     <div className="app" style={flood}>
-      <div className="app__frame">{renderScreen(screen, open, goHome, closing)}</div>
+      <div className="app__frame">{renderScreen(screen, open, goHome, closing, aborted)}</div>
+      {/* ---------------------------------------------------------------
+          TAP ANYWHERE TO TURN THE EXPANSION ROUND.
+
+          The acceptance test for this work is "tap it open, and part
+          way through, tap to go back", and until now there was nothing
+          to tap: the back chevron belongs to the game screen, and the
+          game screen mounts when the expansion ENDS — precisely when
+          you no longer need to interrupt it.
+
+          It is a sheet of nothing rather than a handler on the colour,
+          because clip-path clips hit-testing and the colour is only
+          touchable inside its clip; see .launch-scrim. It also seals
+          Home off for the flight, which is the other half of the fix —
+          a tap that missed the clip used to land on a deck card and
+          start a second launch underneath the first.
+
+          Pointer-down and not click: the reversal should start on the
+          way down, and a click on a surface being removed from under
+          the finger is not guaranteed to arrive at all.
+
+          There is no double-tap guard, and --expand-lead is the reason.
+          Nothing here exists until the lead has elapsed, so the window
+          in which a stray second tap could cancel an open it did not
+          mean to is a window in which there is nothing to tap. A guard
+          was tried and removed: any interval short enough to catch a
+          double tap also rejects an interrupt 10% into the expansion,
+          which is the case the requirement names.
+          --------------------------------------------------------------- */}
+      {launch && (
+        <div
+          className="launch-scrim"
+          aria-hidden="true"
+          onPointerDown={reverseLaunch}
+        />
+      )}
       {launch && (
         <div
           ref={overlayRef}
@@ -746,9 +880,10 @@ function renderScreen(
   open: (id: ModeId, rect?: Launch["rect"]) => void,
   goHome: () => void,
   closing: ModeId | null,
+  aborted: number,
 ) {
   if (screen === null) {
-    return <Home onPick={open} returning={closing} />;
+    return <Home onPick={open} returning={closing} aborted={aborted} />;
   }
 
   const mode = MODE_BY_ID[screen];
