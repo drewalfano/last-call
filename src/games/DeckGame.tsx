@@ -8,7 +8,6 @@ import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { fillPrompt } from "../lib/prompts";
 import { DRINK_IF } from "../data/drinkIf";
-import { audio } from "../lib/audio";
 
 /**
  * One screen, one mode — for now.
@@ -96,8 +95,6 @@ export function DeckGame({ mode, config, onBack }: DeckGameProps) {
         <div className="actions">
           <button
             className="btn btn--lg btn--block"
-            /* Drawing IS this mode — there is no other action. */
-            onPointerDown={() => audio.play("prompt")}
             onClick={deck.draw}
             disabled={!deck.current}
           >

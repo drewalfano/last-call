@@ -8,7 +8,6 @@ import { useContentMode } from "../state/contentMode";
 import { HOT_SEAT } from "../data/hotSeat";
 import { PlayerPicker } from "../components/VotePad";
 import { useRoster } from "../state/roster";
-import { audio } from "../lib/audio";
 
 /** Questions per hot seat before the phone rotates to someone new. */
 const ROUND_LENGTH = 4;
@@ -35,12 +34,7 @@ export function HotSeat({ mode, onBack }: Props) {
   const primed = useRef(false);
 
   // A fresh deck already has a card face-up; only advance on later pulls.
-  /* Every route to a new question comes through here — starting a seat,
-     answering, and being handed the next one — so the sound belongs here
-     rather than at three call sites. A fresh deck is already face-up, and
-     that card was dealt by the screen arriving, not by this. */
   const pullQuestion = useCallback(() => {
-    audio.play("prompt");
     if (primed.current) deck.draw();
     else primed.current = true;
   }, [deck]);
@@ -65,7 +59,6 @@ export function HotSeat({ mode, onBack }: Props) {
    * turn — the count stays where it is.
    */
   const swap = useCallback(() => {
-    audio.play("prompt");
     deck.draw();
   }, [deck]);
 

@@ -12,7 +12,6 @@ import { NEVER_HAVE_I_EVER } from "../data/neverHaveIEver";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import type { ModeDef } from "../data/modes";
-import { audio } from "../lib/audio";
 
 /**
  * KINGS CUP
@@ -95,12 +94,6 @@ export function KingsCup({ mode, onBack }: Props) {
   const drawer = currentPlayer ?? "Whoever drew it";
 
   const draw = useCallback(() => {
-    /* The card, from the press that turns it. Not inside the updater below:
-       a state updater can be run more than once for the same event, and a
-       sound is not something you want replayed because React re-derived a
-       value. This is also the one sound in the app that is an OBJECT rather
-       than a confirmation of a press, so it belongs to the deal itself. */
-    audio.play("card");
     setS((prev) => {
       const { card, rest } = deal(prev.deck);
       const rule = RULE_BY_RANK[card.rank];
