@@ -548,17 +548,49 @@
    than running down the deck in DOM order — the two look nothing
    alike, and only one of them reads as caused by the tap.
 
-   TRANSLATE ONLY, AND NOT A FADE. A deck that dissolves is a list
-   being dismissed; a deck that moves is a deck. The opacity drop
-   here is 0.12 and it is there to take the hard edge off a card
-   crossing the display boundary, not to do the work — set it to 1
-   and the gesture still reads, set the travel to 0 and nothing
-   does.
+   TRANSLATE ONLY, AND NO OPACITY WHATSOEVER — which this rule got
+   wrong once and is worth stating in full, because the reason is
+   already written thirty lines up under `deck-deal` and applies
+   here word for word.
+
+   A deck card that is not fully opaque is a WINDOW. The stack is
+   shingled: every card's squared bottom is hidden by the card in
+   front of it, and nothing else hides it. Drop a card to 0.88 and
+   you read straight through it to that flat cut — and, on this
+   screen, to the wordmark and the roster prompt and the titles of
+   every card behind it. Shipped at 0.88 it looked exactly like
+   what it was: the deck going transparent.
+
+   There is no version of this where a little opacity "softens the
+   edge". The edge it would soften is the display boundary, which
+   is a hard cut whatever the card does, and the cost is the one
+   illusion the whole stack is built on.
+
+   THEY MOVE AS TWO SLABS, NOT AS TEN CARDS, and that is the other
+   half of the same constraint. A shingle only holds while the
+   cards overlap — 40.8px of it, card height less --peek. Give
+   neighbours different delays and they draw apart the moment they
+   are moving quickly, and the card that was covering its
+   neighbour's bottom edge leaves first and uncovers it. That is
+   the flat red band under Odd One Out and the pink sliver under
+   Rank It: not a glitch on top of the animation, the animation
+   working exactly as it was written.
+
+   So the group above the tapped card leaves together and the group
+   below leaves together. Nothing inside a group moves relative to
+   anything else in it, so the overlap is preserved for the whole
+   travel and no squared bottom is ever in open air. The deck
+   parts, and each half is still a deck while it goes.
+
+   THE STAGGER IS BETWEEN THE HALVES, and --stagger-step still sets
+   it. The near half goes on the tap; the far half is one step
+   behind it, so the parting still reads as starting at your finger
+   and moving outward. It is one beat instead of ten, and one beat
+   is what a shingled deck can actually carry.
 
    100dvh whichever way it goes, so a card is clear of the display
-   from wherever it starts. Cheaper than it looks: this is one
-   composited transform per card and the cards are opaque
-   rectangles.
+   from wherever it starts. Cheaper than it looks: one composited
+   transform per card, and the cards are opaque rectangles.
 
    `forwards`, not the `backwards` the arrivals in this file use.
    That rule is about animations that SETTLE — a filled
@@ -569,10 +601,10 @@
    `forwards` for exactly the same reason.
    --------------------------------------------------------------- */
 @keyframes deck-split-up {
-  to { transform: translateY(-100dvh); opacity: 0.88; }
+  to { transform: translateY(-100dvh); }
 }
 @keyframes deck-split-down {
-  to { transform: translateY(100dvh); opacity: 0.88; }
+  to { transform: translateY(100dvh); }
 }
 
 .deck-card[data-split] {
@@ -582,7 +614,10 @@
      easing into a resting position is spending it off-screen. */
   animation-timing-function: var(--ease-glide);
   animation-fill-mode: forwards;
-  animation-delay: calc(var(--split-d, 0) * var(--stagger-step));
+  /* One step for the whole half, from --split-half: 0 for the half
+     nearest the tap, 1 for the other. Not --split-d, which is per card
+     and pulls the shingle apart; see above. */
+  animation-delay: calc(var(--split-half, 0) * var(--stagger-step));
 }
 
 .deck-card[data-split="up"] { animation-name: deck-split-up; }
@@ -610,10 +645,10 @@
    arrival, and it settles.
    --------------------------------------------------------------- */
 @keyframes deck-rejoin-up {
-  from { transform: translateY(-100dvh); opacity: 0.88; }
+  from { transform: translateY(-100dvh); }
 }
 @keyframes deck-rejoin-down {
-  from { transform: translateY(100dvh); opacity: 0.88; }
+  from { transform: translateY(100dvh); }
 }
 
 .deck-card[data-rejoin] {
@@ -623,8 +658,13 @@
      state would leave `transform: none` sitting on top of :active and the
      press would stop working on ten of the eleven cards. */
   animation-fill-mode: backwards;
+  /* Inverted: the FAR half comes back first, the near half last. The
+     contraction uncovers the edges of the screen before it uncovers the
+     card it is landing on, so each half arrives about when it becomes
+     possible to see it. Same one-step-per-half rule as the split — a
+     shingle cannot be staggered per card in either direction. */
   animation-delay: calc(
-    (var(--split-max, 0) - var(--split-d, 0)) * var(--stagger-step)
+    (1 - var(--split-half, 0)) * var(--stagger-step)
   );
 }
 
