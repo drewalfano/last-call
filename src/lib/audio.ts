@@ -459,7 +459,14 @@ class AudioManager {
           freq: 1700,
           q: 1.2,
           duration: 0.095,
-          gain: 0.012,
+          /* Judged on a bench where it was the only sound, which flattered it
+             badly: 0.012 is an order of magnitude under everything else in
+             this file, and on a phone it simply was not there. The swell
+             compounds it — this ramps up over 43 of its 95ms, so it touches
+             peak briefly, where `tap` sits at full level from its first
+             sample. A number that looks quiet here is quieter still in the
+             ear. Still the quietest thing in the app, by about three times. */
+          gain: 0.05,
           rise: 0.043,
           vary: true,
         });
