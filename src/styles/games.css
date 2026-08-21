@@ -220,6 +220,37 @@
    layout — this one only carries the smaller type. */
 .segmented--three { grid-template-columns: repeat(3, 1fr); }
 
+/* TEMPORARY — goes with the Audio session control in Settings, and is deleted
+   with it.
+
+   Deliberately NOT .segmented. That control's selected option is coloured to
+   sit on the fill that travels under it, so borrowing it means depending on
+   that fill landing in the right place — and a rig that exists to answer one
+   question should not also be a second caller of the app's trickiest little
+   component. Four flat buttons, no animation, nothing to go wrong. */
+.sesspick {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.sesspick button {
+  padding: 8px 2px;
+  border: var(--border-width) solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.sesspick button[data-on] {
+  background: var(--control-bg);
+  color: var(--control-text);
+  border-color: transparent;
+  opacity: 1;
+}
+
 .segmented__opt {
   /* Above the travelling fill. */
   position: relative;

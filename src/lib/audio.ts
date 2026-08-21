@@ -26,6 +26,26 @@
 const MUTE_KEY = "lastcall.audio.muted";
 
 /**
+ * TEMPORARY — remove with the Settings control that drives it.
+ *
+ * Which audio session the app asks iOS for. `playback` is the category meant
+ * for music and video: it plays through the ringer switch, which is why it was
+ * chosen, but it also opens Now Playing in the Dynamic Island and is specified
+ * not to mix with other audio — so it may be stopping whatever the table had
+ * on. The alternatives trade the ringer switch back for those.
+ *
+ * This is a setting rather than a decision because it cannot be settled off
+ * the device: an installed PWA and a Safari tab do not get the same treatment,
+ * and Safari owns the Now Playing session for its own tabs. The only place the
+ * question has a real answer is inside the installed app.
+ */
+const SESSION_KEY = "lastcall.audio.session";
+
+/** TEMPORARY. See SESSION_KEY. */
+export const SESSION_TYPES = ["playback", "transient", "ambient", "auto"] as const;
+export type SessionType = (typeof SESSION_TYPES)[number];
+
+/**
  * The vocabulary. Deliberately small and named for the EVENT rather than the
  * noise, so a call site says what happened and this file decides what that
  * sounds like.
@@ -89,6 +109,8 @@ class AudioManager {
   /** One buffer of white noise, reused by every burst. See `_noise`. */
   private noise: AudioBuffer | null = null;
   private muted = readMuted();
+  /** TEMPORARY — see SESSION_KEY. */
+  private session: SessionType = readSession();
   private unlocked = false;
   private tapIndex = 0;
 
@@ -132,18 +154,47 @@ class AudioManager {
       this.noise = makeNoise(this.ctx);
     }
 
-    /* iOS treats a page as media by default, which the ringer switch mutes.
-       This is a party app played on a phone that has been in a pocket all
-       evening — assume the switch is off and ask for playback anyway. */
-    const session = (navigator as AudioSessionNavigator).audioSession;
-    try {
-      if (session) session.type = "playback";
-    } catch {
-      /* not supported, which is every browser but Safari */
-    }
+    this.applySession();
 
     if (this.ctx.state === "suspended") void this.ctx.resume();
     this.unlocked = true;
+  }
+
+  // --- audio session (TEMPORARY — see SESSION_KEY) -----------------------
+
+  /**
+   * Ask iOS for the stored session type. Applied on every unlock, so a cold
+   * launch of the installed app comes up in whatever was last chosen — which
+   * is the only way to test this, since the Dynamic Island appears at launch
+   * and not on the first tap.
+   */
+  private applySession(): void {
+    const session = (navigator as AudioSessionNavigator).audioSession;
+    if (!session) return;
+    try {
+      session.type = this.session;
+    } catch {
+      /* not supported, which is every browser but Safari */
+    }
+  }
+
+  setSessionType(value: SessionType): void {
+    this.session = value;
+    try {
+      localStorage.setItem(SESSION_KEY, value);
+    } catch {
+      /* private mode: holds for this session and no longer */
+    }
+    this.applySession();
+  }
+
+  getSessionType(): SessionType {
+    return this.session;
+  }
+
+  /** What iOS actually reports back, which need not be what was asked for. */
+  getActualSessionType(): string | null {
+    return (navigator as AudioSessionNavigator).audioSession?.type ?? null;
   }
 
   /**
@@ -315,6 +366,16 @@ function readMuted(): boolean {
     return localStorage.getItem(MUTE_KEY) === "true";
   } catch {
     return false;
+  }
+}
+
+/** TEMPORARY — see SESSION_KEY. */
+function readSession(): SessionType {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY) as SessionType | null;
+    return raw && SESSION_TYPES.includes(raw) ? raw : "playback";
+  } catch {
+    return "playback";
   }
 }
 

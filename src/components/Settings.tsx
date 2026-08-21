@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
-import { audio } from "../lib/audio";
+import { audio, SESSION_TYPES, type SessionType } from "../lib/audio";
 
 /** Order is the control's order, and the index of the current one drives the
     travelling fill — see .segmented. Declared once so the two cannot drift. */
@@ -139,6 +139,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     audio.setMuted(!on);
     setSoundOn(on);
     if (on) audio.play("tap");
+  }, []);
+
+  /**
+   * TEMPORARY — remove this and the section below once the question is
+   * settled. See SESSION_KEY in lib/audio.ts.
+   *
+   * `playback` opens Now Playing in the Dynamic Island and is specified not to
+   * mix with other audio; the alternatives give that up to keep the ringer
+   * switch working. Which trade is right cannot be decided anywhere but on the
+   * installed app — a Safari tab does not get the same treatment, because
+   * Safari owns the Now Playing session for its own tabs.
+   */
+  const [session, setSession] = useState<SessionType>(() => audio.getSessionType());
+  const [actual, setActual] = useState<string | null>(null);
+
+  const chooseSession = useCallback((value: SessionType) => {
+    audio.unlock();
+    audio.setSessionType(value);
+    setSession(value);
+    setActual(audio.getActualSessionType());
+    audio.play("tap");
   }, []);
 
   /**
@@ -297,6 +318,35 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             "is this today" — no release number to remember to bump and no
             chance of it confidently stating the wrong answer. The time is what
             separates two pushes on the same day, which is most of them. */}
+        {/* TEMPORARY. Remove this whole section, `session`/`actual`/
+            `chooseSession` above, and the session API in lib/audio.ts once
+            the answer is known. It is deliberately last and deliberately
+            worded like a test rig rather than a setting — nobody at a table
+            should ever have a reason to read it. */}
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Audio session</span>
+            <span className="setting__hint">
+              Temporary. <b>playback</b> opens Now Playing and may stop other
+              music; the rest give that up and let the silent switch win.
+              Relaunch after changing — the island appears at launch.
+              {actual && actual !== session ? ` iOS reports: ${actual}.` : ""}
+            </span>
+          </div>
+          <div className="sesspick" role="group" aria-label="Audio session type">
+            {SESSION_TYPES.map((opt) => (
+              <button
+                key={opt}
+                data-on={session === opt || undefined}
+                aria-pressed={session === opt}
+                onClick={() => chooseSession(opt)}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <p className="sheet__build">Built {BUILT_AT}</p>
       </div>
     </div>
