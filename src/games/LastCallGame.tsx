@@ -8,6 +8,7 @@ import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { fillPrompt } from "../lib/prompts";
 import { LAST_CALL, WILDCARD_LABEL, type Wildcard } from "../data/lastCall";
+import { audio } from "../lib/audio";
 
 interface Props {
   mode: ModeDef;
@@ -68,6 +69,9 @@ export function LastCallGame({ mode, onBack }: Props) {
       setFinished(true);
       return;
     }
+    /* Only when a card is actually coming. Running out is the end of the
+       round, not another draw. */
+    audio.play("prompt");
     advance();
     deck.draw();
   }, [advance, deck]);
@@ -79,6 +83,7 @@ export function LastCallGame({ mode, onBack }: Props) {
   const nextTier = card && card.intensity < 3 ? card.intensity + 1 : null;
   const skipLevel = useCallback(() => {
     if (nextTier === null) return;
+    audio.play("prompt");
     advance();
     deck.skipTo((c) => c.intensity === nextTier);
   }, [advance, deck, nextTier]);

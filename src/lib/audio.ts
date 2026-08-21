@@ -92,6 +92,16 @@ export type Sound =
    */
   | "card"
   /**
+   * A new prompt dealt — Drink If, Last Call, Hot Seat, where drawing IS the
+   * game and nothing else happens. Kept separate from `card` because that one
+   * is a physical deck and this is the app handing you the next thing to read;
+   * they share a flip animation but they are not the same event.
+   *
+   * The most frequent sound in the app by some distance, which is the only
+   * thing that decided its level. See the note on the case.
+   */
+  | "prompt"
+  /**
    * The phone is going to the next player. Written but still UNWIRED: no mode
    * hands over with a sound yet, and it should be judged on a real phone
    * against the ones that do before it goes anywhere.
@@ -449,6 +459,32 @@ class AudioManager {
           duration: 0.12,
           gain: 0.075,
           rise: 0.042,
+          vary: true,
+        });
+        break;
+
+      /* THE QUIETEST THING IN HERE, AND IT HAS TO BE.
+         Drink If is nothing but draws; so are Last Call and Hot Seat. This
+         fires more often than the letter tap ever does, and a sound at that
+         rate is judged on the tenth one, not the first. Anything with presence
+         becomes a tic by the third game.
+
+         A narrow BAND rather than a highpass, which is what took the rattle
+         out: a highpass leaves everything above it in, all the way up, and
+         that unbounded top is what beads sound like. 1700Hz is low enough not
+         to read as hiss and high enough not to thicken into the body that made
+         the playing-card attempts sound like a broom.
+
+         It swells rather than strikes — see `rise` — because it sits under a
+         460ms card flip and a struck sound at the front of a half-second turn
+         detaches from it. */
+      case "prompt":
+        this.noiseBurst(t, {
+          freq: 1700,
+          q: 1.2,
+          duration: 0.095,
+          gain: 0.012,
+          rise: 0.043,
           vary: true,
         });
         break;
