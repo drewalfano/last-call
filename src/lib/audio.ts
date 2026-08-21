@@ -86,6 +86,12 @@ export type Sound =
    */
   | "match"
   /**
+   * A card turned over in Kings Cup or Ride the Bus. The only sound here that
+   * is a real object rather than a control, and the only one a player already
+   * knows what it should sound like.
+   */
+  | "card"
+  /**
    * The phone is going to the next player. Written but still UNWIRED: no mode
    * hands over with a sound yet, and it should be judged on a real phone
    * against the ones that do before it goes anywhere.
@@ -106,6 +112,25 @@ interface NoiseOptions {
   gain?: number;
   freq?: number;
   q?: number;
+  /**
+   * Sweep the filter here across the burst. A fixed filter on noise is a
+   * click; one that MOVES is something sliding, which is the whole difference
+   * between a button and a card.
+   */
+  slideTo?: number | null;
+  /**
+   * How long to reach full level. Zero — the default — starts at full and
+   * reads as a hit. Friction has to ramp into being, so anything that is
+   * meant to sound like contact rather than impact needs this.
+   */
+  rise?: number;
+  /**
+   * Start at a random point in the noise instead of the beginning, so a sound
+   * played over and over is never the identical waveform twice. Off by
+   * default: the sounds that fire once per event do not need it, and the ones
+   * already tuned should not quietly change.
+   */
+  vary?: boolean;
 }
 
 interface ToneOptions {
@@ -226,7 +251,10 @@ class AudioManager {
    * The decay lives entirely in the gain envelope for the same reason: it is
    * one scheduled ramp instead of a per-sample multiply.
    */
-  private noiseBurst(t: number, { duration = 0.03, gain = 0.35, freq = 2400, q = 1.2 }: NoiseOptions = {}): void {
+  private noiseBurst(
+    t: number,
+    { duration = 0.03, gain = 0.35, freq = 2400, q = 1.2, slideTo = null, rise = 0, vary = false }: NoiseOptions = {},
+  ): void {
     if (!this.ctx || !this.master || !this.noise) return;
 
     const src = this.ctx.createBufferSource();
@@ -234,15 +262,28 @@ class AudioManager {
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.frequency.value = freq;
+    filter.frequency.setValueAtTime(freq, t);
+    if (slideTo) filter.frequency.exponentialRampToValueAtTime(slideTo, t + duration);
     filter.Q.value = q;
 
     const env = this.ctx.createGain();
-    env.gain.setValueAtTime(gain, t);
+    if (rise > 0) {
+      /* Ramped up rather than struck. Same 0.0001 floor as `tone` uses, and
+         for the same reason: an exponential ramp cannot touch zero. */
+      env.gain.setValueAtTime(0.0001, t);
+      env.gain.exponentialRampToValueAtTime(gain, t + rise);
+    } else {
+      env.gain.setValueAtTime(gain, t);
+    }
     env.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
+    /* A different slice of the same noise each time — see `vary`. The buffer
+       is a quarter second and these are hundredths, so there is plenty of it
+       to be somewhere else in. */
+    const offset = vary ? Math.random() * Math.max(0, NOISE_SECONDS - duration) : 0;
+
     src.connect(filter).connect(env).connect(this.master);
-    src.start(t, 0, duration);
+    src.start(t, offset, duration);
   }
 
   /**
@@ -387,6 +428,30 @@ class AudioManager {
         }
         break;
       }
+
+      /* FRICTION, NOT A CLICK.
+         Four transients were tried first and all four were wrong, because
+         every other sound in this file is a button and a button is a hit. A
+         card is one face sliding across another: it has length, it ramps into
+         being rather than starting at full, and the sound moves while it
+         happens — hence the filter sweeping up rather than sitting still.
+
+         Quiet on purpose, and quieter than the version that established the
+         shape. Kings Cup deals over and over, and a card sound that announces
+         itself becomes a tic by the tenth draw; this one only has to stop the
+         card arriving in silence. `vary` keeps the repeats from being
+         literally the same waveform. */
+      case "card":
+        this.noiseBurst(t, {
+          freq: 900,
+          slideTo: 2600,
+          q: 0.7,
+          duration: 0.12,
+          gain: 0.075,
+          rise: 0.042,
+          vary: true,
+        });
+        break;
 
       /* Rising, because it hands over. The only sound here that goes up. */
       case "advance":

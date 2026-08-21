@@ -4,6 +4,7 @@ import { PlayingCard } from "../components/PlayingCard";
 import { deal, freshDeck, SUITS, type Card, type Suit } from "../lib/cards";
 import type { ModeDef } from "../data/modes";
 import { useRoster } from "../state/roster";
+import { audio } from "../lib/audio";
 
 /**
  * RIDE THE BUS
@@ -89,6 +90,12 @@ export function RideTheBus({ mode, onBack }: Props) {
   const { currentPlayer, advance, hasRoster } = useRoster();
 
   const guessSetup = useCallback((choice: string) => {
+    /* The card, from the press that turns it. Not inside the updater below:
+       a state updater can be run more than once for the same event, and a
+       sound is not something you want replayed because React re-derived a
+       value. This is also the one sound in the app that is an OBJECT rather
+       than a confirmation of a press, so it belongs to the deal itself. */
+    audio.play("card");
     setS((prev) => {
       const { card, rest } = deal(prev.deck);
       const correct = judgeSetup(prev.phase, choice, card, prev.table);
@@ -109,6 +116,12 @@ export function RideTheBus({ mode, onBack }: Props) {
   }, []);
 
   const continueSetup = useCallback(() => {
+    /* This one only sometimes deals: on the last setup round it flips the
+       bus's opening card, and before that it just moves the phase on. So the
+       sound is conditional on the same test the updater makes — asked out
+       here, where it can be asked once. Without it the one card the player
+       does not choose would be the one that arrives in silence. */
+    if (!SETUP_PHASES[SETUP_PHASES.indexOf(s.phase) + 1]) audio.play("card");
     setS((prev) => {
       const next = SETUP_PHASES[SETUP_PHASES.indexOf(prev.phase) + 1];
       if (next) return { ...prev, phase: next, verdict: null };
@@ -116,9 +129,10 @@ export function RideTheBus({ mode, onBack }: Props) {
       const { card, rest } = deal(prev.deck);
       return { ...prev, phase: "bus", deck: rest, busCard: card, verdict: null };
     });
-  }, []);
+  }, [s.phase]);
 
   const guessBus = useCallback((choice: "higher" | "lower") => {
+    audio.play("card");
     setS((prev) => {
       if (!prev.busCard) return prev;
       const { card, rest } = deal(prev.deck);
