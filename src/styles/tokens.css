@@ -382,6 +382,64 @@
   --dur-wheel: 4200ms;
 
   /* ----------------------------------------------------------
+     DELAY — the axis that had no tokens at all.
+
+     Easing, duration and the press were centralised here from the
+     start; delay never was. Every stagger step and every sequencing
+     pause in the app has been a literal sitting next to the rule
+     that used it, so there has been no way to retune the FEEL of a
+     staggered arrival without finding each one and editing it by
+     hand. These are that axis, named.
+
+     A stagger is a DISTANCE times a STEP, always. The rule supplies
+     the distance as a unitless custom property and multiplies by
+     the step here — never a table of per-element delays, because a
+     table cannot be retuned and silently rots the moment the number
+     of elements changes.
+
+         animation-delay: calc(var(--split-d) * var(--stagger-step));
+
+     Changing the step alone is meant to retune the whole gesture.
+     That is the test of whether these are tokens or decoration.
+     ---------------------------------------------------------- */
+
+  /* The deck dealing itself out on first open — eleven cards, one
+     per --i, counted from the bottom. Was a literal 46ms beside
+     .home__deck--dealing; the value is unchanged. Wide, because the
+     travel is a whole viewport and eleven cards have to read as
+     eleven arrivals rather than one wave. */
+  --stagger-deal: 46ms;
+
+  /* The deck parting around a card you have tapped, per unit of
+     distance from that card. Narrower than the deal by design: the
+     deal is the app introducing itself and can take a second, while
+     this is happening under a colour that is already on its way to
+     covering the screen. At 22ms the far end of an eleven-card deck
+     is moving 154ms after the near end — enough that the parting
+     reads as travelling outward, short enough that the whole deck is
+     underway before the overlay has covered much of it. */
+  --stagger-step: 22ms;
+
+  /* ----------------------------------------------------------
+     THE HEAD START THE DECK GETS BEFORE THE COLOUR MOVES.
+
+     The launch overlay is pinned to the tapped card's rect and is
+     opaque from its first frame, so anything that card does is
+     behind it — a lift under the overlay is a lift nobody sees. The
+     deck split has the same problem at its start: the cards nearest
+     the tap are the ones the clip covers first.
+
+     So the expansion waits this long while the card lifts and the
+     split gets underway, and only then starts growing. It is the
+     price of the gesture being visible at all, and it is small: one
+     stagger step, so the two are tuned by the same hand.
+
+     Set it to 0ms to have the colour leave on the same frame as the
+     tap, which is what shipped before the split existed.
+     ---------------------------------------------------------- */
+  --expand-lead: 70ms;
+
+  /* ----------------------------------------------------------
      THE PRESS. One curve, one duration, one scale, one dip —
      everywhere something is pressable.
 

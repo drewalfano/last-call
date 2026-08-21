@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { MODE_BY_ID, type ModeId } from "./data/modes";
 import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
+import { motionMs } from "./lib/motion";
 import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
 import { Home } from "./games/Home";
@@ -30,6 +31,35 @@ import { Imposter } from "./games/Imposter";
 /** Launch animation. Tuned to iOS sheet motion: decisive, then a long settle. */
 const LAUNCH_MS = 520;
 const LAUNCH_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
+
+/**
+ * HOW LONG THE CARD'S WRITING STAYS AT FULL STRENGTH ON THE WAY IN, and
+ * how long it then takes to clear.
+ *
+ * The close has the mirror of this pair — FACE_FROM_MS — and the two are
+ * deliberately not symmetrical, because the jobs are not. Closing, the
+ * writing ARRIVES: it is absent for most of the contraction and comes up
+ * at the end, on the card, so there is something for the colour to hand
+ * over to. Opening, it LEAVES: it is there from the first frame, because
+ * the whole fault being fixed is that it used to be gone from the first
+ * frame.
+ *
+ * So it holds through most of the expansion and clears near the end.
+ * 340ms is about 65% of the way, by which point the clip has passed well
+ * beyond the card's rect and the writing is a small label in a large
+ * field of colour rather than a card's title — which is the moment it
+ * stops meaning anything and starts being a thing left behind.
+ *
+ * The 150ms it takes to go is longer than it looks. It is spent while
+ * the colour is still growing, so what the eye follows is the expansion,
+ * not the fade; a shorter clear reads as the title being snatched.
+ *
+ * It is gone by 490ms, leaving 30ms of flat colour before the screen
+ * swaps underneath. That gap is deliberate — the swap should land on a
+ * plain field, not on the tail of something still clearing.
+ */
+const FACE_HOLD_MS = 340;
+const FACE_FADE_MS = 150;
 
 /**
  * CLOSING GOES BACK INTO THE CARD IT CAME OUT OF.
@@ -159,10 +189,47 @@ const FACE_FROM_MS = 240;
  */
 const CLOSE_FAILSAFE_MS = CLOSE_MS + 120;
 
+/**
+ * WHAT REDUCED MOTION GETS INSTEAD, AND WHY IT IS NOT NOTHING.
+ *
+ * It used to be nothing: both directions checked the media query and
+ * skipped straight to `setScreen`, so Home was replaced by a game screen
+ * between one frame and the next. That is a bypass rather than a
+ * designed path, and a hard cut is its own accessibility problem — the
+ * entire display changing colour and content in a single frame, with no
+ * indication that the two states are related, is exactly the kind of
+ * jarring transition the preference is usually set to avoid. Reduced
+ * motion asks for less movement, not for less continuity.
+ *
+ * So the colour still arrives and still leaves; it simply does not
+ * travel. The overlay comes up over Home, the screen swaps underneath
+ * it, and it clears onto the game — no expanding clip, no deck split, no
+ * lift, nothing that moves in space. What is left is a dip through the
+ * pack's own colour, which is the same handover the full transition
+ * makes and the same colour it makes it in.
+ *
+ * SPLIT IN TWO, because the swap has to happen at the covered moment.
+ * Half of it is the colour arriving, then the screen changes underneath
+ * an opaque field, then the other half is it clearing. That is the
+ * launch's own three-step sequence with the movement taken out.
+ *
+ * 130ms all in, inside the 150 this is meant to stay under. Deliberately
+ * not --dur-fast, which is 160 and would miss it; deliberately not
+ * --dur-instant either, because 90ms split in two is 45ms a side, which
+ * is three frames and reads as the cut it is replacing.
+ */
+const REDUCED_MS = 130;
+
+/** The reduced path covers everything from the first frame, so its "rect"
+ *  is the display. Kept so `Launch` needs no optional geometry. */
+const FULL_SCREEN_RECT = { top: 0, left: 0, right: 0, bottom: 0 };
+
 interface Launch {
   id: ModeId;
   /** Where on screen the tapped card was, in viewport pixels. */
   rect: { top: number; left: number; right: number; bottom: number };
+  /** No travel, just a dip through the colour. See REDUCED_MS. */
+  reduced?: boolean;
 }
 
 export default function App() {
@@ -170,9 +237,17 @@ export default function App() {
   const [launch, setLaunch] = useState<Launch | null>(null);
   /** The mode whose colour is still on screen, contracting, after it closed. */
   const [closing, setClosing] = useState<ModeId | null>(null);
+  /**
+   * Bumped when an expansion is backed out of, so Home can bring its deck
+   * back. A counter and not a boolean: two aborts in a row are two events,
+   * and a flag that is already true says nothing the second time.
+   */
+  const [aborted, setAborted] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
+  /** The writing riding the expansion out of the card. See FACE_HOLD_MS. */
+  const faceInRef = useRef<HTMLDivElement>(null);
   /**
    * WHERE HOME'S DECK WAS STANDING WHEN YOU LEFT IT.
    *
@@ -194,6 +269,11 @@ export default function App() {
    * is still true when you come back to the same list.
    */
   const homeScroll = useRef(0);
+  /** The beat the deck gets to itself before the colour starts. See `open`. */
+  const leadTimer = useRef<number>(undefined);
+  /** The expansion in flight, kept so it can be turned round. See `reverseLaunch`. */
+  const launchAnims = useRef<Animation[]>([]);
+  const reverseFailsafe = useRef<number>(undefined);
   const closeTimer = useRef<number>(undefined);
   const failsafe = useRef<number>(undefined);
   const { theme } = useTheme();
@@ -242,10 +322,29 @@ export default function App() {
    */
   const goHome = useCallback(() => {
     if (screen === null) return;
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (!reduced) setClosing(screen);
+    /* A launch that has been armed but has not started yet has no business
+       surviving a close. Nothing is on screen for it, so it would fire into
+       a Home that is already coming back and expand a card nobody tapped. */
+    window.clearTimeout(leadTimer.current);
+    /* Both directions get the colour, and under reduced motion both get
+       it without travel. The contraction reads the flag for itself — see
+       the effect on `closing` — so all that is decided here is that
+       there IS one, which used to be the thing reduced motion skipped.
+       Leaving a mode was a hard cut in exactly the way entering one was. */
+    setClosing(screen);
     setScreen(null);
   }, [screen]);
+
+  /* Every timer this component owns outlives a render but must not outlive
+     the component. The launch and close effects clean up their own; the
+     lead belongs to a callback, so it is retired here. */
+  useEffect(
+    () => () => {
+      window.clearTimeout(leadTimer.current);
+      window.clearTimeout(reverseFailsafe.current);
+    },
+    [],
+  );
 
   /**
    * PUT THE DECK BACK BEFORE ANYTHING IS PAINTED.
@@ -293,6 +392,33 @@ export default function App() {
 
     const card = document.querySelector<HTMLElement>(`[data-mode="${closing}"]`);
     card?.scrollIntoView({ block: "nearest", behavior: "auto" });
+
+    /* THE WAY OUT UNDER REDUCED MOTION, which is the way in backwards and
+       is just as short. The overlay is already covering — that is what
+       lets Home mount underneath it — so there is no colour to bring on,
+       only colour to take off. Half the budget, because only half the
+       cross-fade is left to do: the covered moment has already happened.
+
+       No contraction, no writing arriving on it, and no raised card to
+       land on: .deck-card[data-returning] is a transform, and the global
+       reduced-motion rule has already flattened it to nothing. What is
+       left is the pack colour clearing off the deck. */
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const fade = el.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: REDUCED_MS / 2,
+        easing: "linear",
+        fill: "forwards",
+      });
+      const finish = () => setClosing(null);
+      fade.onfinish = finish;
+      fade.oncancel = finish;
+      failsafe.current = window.setTimeout(finish, REDUCED_MS);
+      return () => {
+        fade.onfinish = null;
+        fade.oncancel = null;
+        window.clearTimeout(failsafe.current);
+      };
+    }
 
     const done = () => setClosing(null);
     let anim: Animation | undefined;
@@ -516,11 +642,55 @@ export default function App() {
        gets caught is the deck as the player last saw it either way. */
     homeScroll.current = document.querySelector(".screen.home")?.scrollTop ?? 0;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (!rect || reduced) {
+    if (reduced) {
+      /* No lead and no measuring: nothing is going to travel out of the
+         card, so there is nothing for the deck to get out of the way of
+         and no rect to expand from. The full-screen fade covers it. */
+      setLaunch({ id, rect: FULL_SCREEN_RECT, reduced: true });
+      return;
+    }
+    if (!rect) {
       setScreen(id);
       return;
     }
-    setLaunch({ id, rect });
+
+    /* ---------------------------------------------------------------
+       THE DECK MOVES FIRST, AND THE COLOUR FOLLOWS IT.
+
+       The overlay is opaque and pinned to the tapped card's rect, so
+       anything the deck does after it appears is behind it. Mounting on
+       the same frame as the tap meant the card's lift and the deck
+       parting around it were both covered by the thing they were
+       supposed to introduce — the gesture existed and was invisible.
+
+       So nothing is mounted for --expand-lead. Home has already been
+       told which card was tapped and is lifting it and splitting the
+       deck around it; this window is that beat, and only then does the
+       colour start.
+
+       THE RECT IS MEASURED AT THE END OF IT, NOT AT THE TAP. This is
+       the close's own argument arriving on the other side: the card has
+       been moving for the whole lead, so the rect read on the tap is a
+       claim about where it USED to be. Landing the clip there would
+       start the expansion 14px below the card it is expanding from, and
+       the join would be a visible step. Ask the card where it is now.
+
+       The rect passed in is kept as the fallback. It is a frame or two
+       stale by here, which is far better than no expansion at all if
+       the card cannot be found — Home is unmounted only on the frame
+       after this, but nothing should be able to strand the launch.
+       --------------------------------------------------------------- */
+    window.clearTimeout(leadTimer.current);
+    leadTimer.current = window.setTimeout(() => {
+      const card = document.querySelector<HTMLElement>(`[data-mode="${id}"]`);
+      const r = card?.getBoundingClientRect();
+      setLaunch({
+        id,
+        rect: r
+          ? { top: r.top, left: r.left, right: r.right, bottom: r.bottom }
+          : rect,
+      });
+    }, motionMs("--expand-lead", 70));
   }, []);
 
   useEffect(() => {
@@ -531,6 +701,54 @@ export default function App() {
       setLaunch(null);
       return;
     }
+    /* THE REDUCED PATH, WHICH IS THE SAME THREE STEPS WITHOUT THE
+       MOVEMENT. Colour arrives, screen swaps underneath it, colour
+       clears — see REDUCED_MS. It shares this effect rather than living
+       in one of its own so that the swap and the retirement stay in one
+       place; two copies of "when is it safe to change the screen" is how
+       one of them ends up wrong. */
+    if (launch.reduced) {
+      const half = REDUCED_MS / 2;
+      const cover = el.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: half,
+        easing: "linear",
+        fill: "forwards",
+      });
+      let clear: Animation | undefined;
+      const done = () => {
+        setLaunch(null);
+        launchAnims.current = [];
+      };
+      cover.onfinish = () => {
+        setScreen(launch.id);
+        /* One frame, so the swap lands under an opaque field — the same
+           reason the travelling path holds its overlay a frame longer. */
+        requestAnimationFrame(() => {
+          clear = el.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: half,
+            easing: "linear",
+            fill: "forwards",
+          });
+          clear.onfinish = done;
+          clear.oncancel = done;
+        });
+      };
+      cover.oncancel = done;
+      /* Nothing should be able to strand a full-screen field of colour
+         over the app, on this path any more than on the others. */
+      window.clearTimeout(reverseFailsafe.current);
+      reverseFailsafe.current = window.setTimeout(done, REDUCED_MS + 160);
+      return () => {
+        cover.onfinish = null;
+        cover.oncancel = null;
+        if (clear) {
+          clear.onfinish = null;
+          clear.oncancel = null;
+        }
+        window.clearTimeout(reverseFailsafe.current);
+      };
+    }
+
     const { top, left, right, bottom } = launch.rect;
     const from = `inset(${top}px ${window.innerWidth - right}px ${
       window.innerHeight - bottom
@@ -541,7 +759,45 @@ export default function App() {
       { duration: LAUNCH_MS, easing: LAUNCH_EASE, fill: "forwards" },
     );
 
+    /* The writing clears while the colour is still growing. Its own clock
+       rather than a keyframe on the overlay, because the two are different
+       shapes: the clip runs the whole duration on LAUNCH_EASE, this waits
+       and then goes. --ease-glide, because a fade that is ~95% done by its
+       own halfway point (which is what --ease-out would give) reads as the
+       title being snatched rather than released. */
+    const faceAnim = faceInRef.current?.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      {
+        duration: FACE_FADE_MS,
+        delay: FACE_HOLD_MS,
+        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+        fill: "forwards",
+      },
+    );
+
+    /* ---------------------------------------------------------------
+       HELD, BECAUSE YOU CANNOT REVERSE AN ANIMATION YOU HAVE THROWN
+       AWAY.
+
+       Both of these used to be locals that went out of scope the moment
+       the effect returned, and the only thing kept was a pair of
+       handlers. That is what made the expansion a one-way trip: a
+       second tap could set new state and start a new animation, but it
+       had no way to reach the one already in flight — so it left it
+       running and stacked another on top, and what you saw was the clip
+       snapping back to a card rect and starting again.
+
+       An Animation object knows where it is. Keeping it is the whole of
+       the interruptibility: `reverse()` plays it back from its current
+       time, at its current position, with no measuring and nothing to
+       recompute. See `reverseLaunch`.
+       --------------------------------------------------------------- */
+    launchAnims.current = faceAnim ? [anim, faceAnim] : [anim];
+
     const finish = () => {
+      /* A reversed run finishes too, and it must not open the mode it
+         has just spent its time backing out of. */
+      if (anim.playbackRate < 0) return;
       setScreen(launch.id);
       // Hold the overlay one more frame so the swap happens underneath it.
       requestAnimationFrame(() => requestAnimationFrame(() => setLaunch(null)));
@@ -551,8 +807,67 @@ export default function App() {
     return () => {
       anim.onfinish = null;
       anim.oncancel = null;
+      launchAnims.current = [];
     };
   }, [launch]);
+
+  /**
+   * BACKING OUT OF AN EXPANSION FROM WHEREVER IT HAS GOT TO.
+   *
+   * The requirement this exists for is that no frame of the transition
+   * is a point of no return. Tap at 10% through and at 95% through and
+   * the same thing happens: everything that is moving turns round and
+   * goes back the way it came, from where it is.
+   *
+   * `reverse()` rather than a new animation to the starting value,
+   * and the difference is the whole point. A fresh animation would have
+   * to be told where to start, which means measuring a clip mid-flight
+   * and rebuilding an inset string from it — and it would restart the
+   * EASING, so a reversal caught at 90% would spend a full duration
+   * crawling back the last tenth. Reversing keeps the clock: caught at
+   * 90% it takes 90% of the time to come home, caught at 10% it takes
+   * 10%, which is what "from where it is" actually means.
+   *
+   * The deck is not reversed here. It is Home's, and Home reverses its
+   * own cards on the same signal — see `aborted` and the effect that
+   * reads it. App owns the colour, Home owns the deck, and the two only
+   * have to agree on the moment.
+   */
+  const reverseLaunch = useCallback(() => {
+    const anims = launchAnims.current;
+    if (!anims.length) return;
+    /* Already on the way out. A second tap during the reversal must not
+       turn it round again — that is a toggle, and nobody taps a closing
+       screen meaning to reopen it. */
+    if (anims[0].playbackRate < 0) return;
+
+    for (const a of anims) {
+      try {
+        a.reverse();
+      } catch {
+        /* An animation that has been cancelled or is otherwise not
+           reversible must not take the rest of them down with it. The
+           failsafe below still retires the overlay. */
+      }
+    }
+
+    /* Home clears the lift and brings the deck back on this. */
+    setAborted((n) => n + 1);
+
+    const done = () => {
+      setLaunch(null);
+      launchAnims.current = [];
+    };
+    anims[0].onfinish = done;
+    anims[0].oncancel = done;
+    /* The guarantee, not the ordinary path — the same argument as
+       CLOSE_FAILSAFE_MS. A stalled reversal would otherwise leave a
+       part-expanded field of pack colour over the app with nothing left
+       to dismiss it. It can never fire early: a reversal cannot take
+       longer than the run it is undoing. */
+    window.clearTimeout(reverseFailsafe.current);
+    reverseFailsafe.current = window.setTimeout(done, LAUNCH_MS + 120);
+  }, []);
 
   // Every screen starts at the top — a mode entered from the bottom of the
   // Home list should not open mid-scroll.
@@ -567,21 +882,104 @@ export default function App() {
 
   return (
     <div className="app" style={flood}>
-      <div className="app__frame">{renderScreen(screen, open, goHome, closing)}</div>
+      <div className="app__frame">{renderScreen(screen, open, goHome, closing, aborted)}</div>
+      {/* ---------------------------------------------------------------
+          TAP ANYWHERE TO TURN THE EXPANSION ROUND.
+
+          The acceptance test for this work is "tap it open, and part
+          way through, tap to go back", and until now there was nothing
+          to tap: the back chevron belongs to the game screen, and the
+          game screen mounts when the expansion ENDS — precisely when
+          you no longer need to interrupt it.
+
+          It is a sheet of nothing rather than a handler on the colour,
+          because clip-path clips hit-testing and the colour is only
+          touchable inside its clip; see .launch-scrim. It also seals
+          Home off for the flight, which is the other half of the fix —
+          a tap that missed the clip used to land on a deck card and
+          start a second launch underneath the first.
+
+          Pointer-down and not click: the reversal should start on the
+          way down, and a click on a surface being removed from under
+          the finger is not guaranteed to arrive at all.
+
+          There is no double-tap guard, and --expand-lead is the reason.
+          Nothing here exists until the lead has elapsed, so the window
+          in which a stray second tap could cancel an open it did not
+          mean to is a window in which there is nothing to tap. A guard
+          was tried and removed: any interval short enough to catch a
+          double tap also rejects an interrupt 10% into the expansion,
+          which is the case the requirement names.
+          --------------------------------------------------------------- */}
+      {launch && !launch.reduced && (
+        <div
+          className="launch-scrim"
+          aria-hidden="true"
+          onPointerDown={reverseLaunch}
+        />
+      )}
       {launch && (
         <div
           ref={overlayRef}
           className="launch"
           style={{
             ...categoryStyle(MODE_BY_ID[launch.id].color),
-            // Painted correctly on the very first frame, so the animation
-            // never starts from a full-screen flash.
-            clipPath: `inset(${launch.rect.top}px ${
-              window.innerWidth - launch.rect.right
-            }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
+            /* Painted correctly on the very first frame, so the animation
+               never starts from a full-screen flash — and on the reduced
+               path, so it never starts from an opaque one. There the
+               overlay covers everything from the outset and only its
+               opacity moves, so it must arrive fully transparent and must
+               carry no clip at all. */
+            ...(launch.reduced
+              ? { opacity: 0 }
+              : {
+                  clipPath: `inset(${launch.rect.top}px ${
+                    window.innerWidth - launch.rect.right
+                  }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
+                }),
           }}
           aria-hidden="true"
-        />
+        >
+          {!launch.reduced && (
+          <>
+          {/* THE CARD'S OWN WRITING, CARRIED OUT OF THE DECK.
+
+              The overlay used to be a bare field of colour on the way in,
+              and that is what emptied the card on frame one: an opaque
+              rectangle lands exactly on the card you tapped, so the title
+              and tagline you were reading are covered before anything has
+              moved. What grew from there read as a blank surface loading,
+              not as the card opening.
+
+              Pinned to the same rect the clip starts from, at the card's
+              own inset, so on the first frame this copy sits exactly on
+              the pixels the real writing occupies. Nothing appears and
+              nothing moves; the overlay simply arrives already carrying
+              what the card was carrying, and the title stays legible while
+              the colour grows out around it.
+
+              Opacity is inline rather than left to the stylesheet for the
+              same reason the clip is: the effect that animates this runs
+              after the first paint, and .launch__face rests at 0 for the
+              CLOSE direction. Without a value here the writing would be
+              absent for exactly one frame, which is the bug this is
+              fixing, one frame shorter. */}
+          <div
+            className="launch__face"
+            data-open
+            ref={faceInRef}
+            style={{
+              top: launch.rect.top,
+              left: launch.rect.left,
+              width: launch.rect.right - launch.rect.left,
+              opacity: 1,
+            }}
+          >
+            <DeckFace mode={MODE_BY_ID[launch.id]} />
+          </div>
+          </>
+          )}
+        </div>
       )}
       {/* The colour on its way back into its card. Covering on the first
           frame — which is what lets the screen swap underneath it — and
@@ -617,9 +1015,10 @@ function renderScreen(
   open: (id: ModeId, rect?: Launch["rect"]) => void,
   goHome: () => void,
   closing: ModeId | null,
+  aborted: number,
 ) {
   if (screen === null) {
-    return <Home onPick={open} returning={closing} />;
+    return <Home onPick={open} returning={closing} aborted={aborted} />;
   }
 
   const mode = MODE_BY_ID[screen];

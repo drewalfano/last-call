@@ -4,6 +4,7 @@ import { useContentMode } from "../state/contentMode";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
 import { categoryStyle } from "../lib/style";
+import { motionMs } from "../lib/motion";
 import { DeckFace } from "../components/DeckFace";
 
 interface HomeProps {
@@ -20,6 +21,14 @@ interface HomeProps {
    * measured is a moving target.
    */
   returning?: ModeId | null;
+  /**
+   * Bumped by App when an expansion has been backed out of.
+   *
+   * A counter rather than a flag, because two aborts in a row are two
+   * events and a boolean that is already true says nothing the second
+   * time. Home does not care what the number is, only that it changed.
+   */
+  aborted?: number;
 }
 
 
@@ -463,9 +472,9 @@ let dealt = false;
  * The whole app's table of contents, dealt as a stack of overlapping cards.
  * Every mode is one tap away — no menus, no settings page.
  */
-export function Home({ onPick, returning }: HomeProps) {
+export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   /** True only on the first Home of the session. Claims it as it reads it. */
-  const [dealing] = useState(() => {
+  const [dealing, setDealing] = useState(() => {
     const first = !dealt;
     dealt = true;
     return first;
@@ -515,13 +524,63 @@ export function Home({ onPick, returning }: HomeProps) {
    */
   /** The card that is on its way DOWN — see .deck-card[data-settling]. */
   const [settling, setSettling] = useState<ModeId | null>(null);
+  /**
+   * THE CARD THE DECK IS PARTING AROUND.
+   *
+   * Set on the tap, alongside the lift, and it is what turns one card
+   * rising out of a stack that holds perfectly still into the deck getting
+   * out of that card's way. Every other card takes a direction from this
+   * — above it goes up, below it goes down — and a delay from how far it
+   * sits from it. See .deck-card[data-split].
+   *
+   * A separate flag from `revealed` even though the tap sets both, because
+   * the two do not always agree: the pick-for-me flourish lifts a card
+   * (`revealed`) a beat before it opens it, and the deck must not start
+   * parting until the mode is actually on its way.
+   */
+  const [splitting, setSplitting] = useState<ModeId | null>(null);
+  /**
+   * THE SAME PIVOT, HELD FOR AS LONG AS THE DECK IS STILL COMING BACK.
+   *
+   * `returning` cannot do this job. App clears it when the CONTRACTION
+   * ends, at CLOSE_MS, and the rejoin runs longer than that — the last
+   * card is still travelling for another 160ms after the colour has gone.
+   * Driving the attribute off `returning` pulled it mid-flight and every
+   * card that had not landed snapped to its slot, which is a pop in the
+   * exact place this animation exists to remove one.
+   *
+   * So it is latched at mount, from the prop, and released on its own
+   * clock. Claimed in the initialiser rather than an effect because the
+   * first render is the one that has to carry the attribute: a rejoin that
+   * starts a frame late starts a frame in.
+   */
+  const [rejoining, setRejoining] = useState<ModeId | null>(() => returning ?? null);
   const wasReturning = useRef<ModeId | null>(null);
   const deckRef = useRef<HTMLElement>(null);
   const timer = useRef<number>(undefined);
   const raf = useRef<number>(undefined);
 
+  /**
+   * A CARD YOU TAP COMES OUT OF THE DECK, THE SAME WAY A CARD THE APP
+   * PICKS FOR YOU DOES.
+   *
+   * `revealed` is the lift, and until now only the pick-for-me flourish
+   * ever set it — so the one card in the deck that did NOT rise was the
+   * one you had just chosen yourself. Tapping got the 4px `:active` nudge,
+   * which releases the instant your finger leaves, and then nothing: the
+   * colour simply took the screen from a deck that had not moved.
+   *
+   * The same state, set from the same place the rect is read, so a tap and
+   * a pick reach the mode by one path from here on.
+   *
+   * It is visible because App holds the colour back for --expand-lead
+   * before the overlay appears. Without that window this would be a lift
+   * happening underneath an opaque rectangle pinned to the card doing it.
+   */
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
+      setRevealed(id);
+      setSplitting(id);
       const r = el.getBoundingClientRect();
       onPick(id, { top: r.top, left: r.left, right: r.right, bottom: r.bottom });
     },
@@ -701,6 +760,104 @@ export function Home({ onPick, returning }: HomeProps) {
     return () => window.clearTimeout(t);
   }, [settling]);
 
+  /**
+   * THE DECK COMES BACK FROM WHEREVER IT HAD GOT TO.
+   *
+   * App has turned the colour round; this is the deck's half of the same
+   * moment. Every card that is on its way out of the stack is reversed
+   * IN PLACE — `reverse()` on the running animation, so a card that is
+   * 30% of the way off screen comes back from 30%, taking 30% of the
+   * time, and one that had already gone takes the whole way.
+   *
+   * The alternative was to clear `splitting` and let the rejoin play,
+   * and it is wrong in the way this whole commit is about: the rejoin
+   * starts from a full 100dvh out, so a deck caught 30% through would
+   * snap the rest of the way OUT before coming back. Reversing what is
+   * running is the only thing that has no jump in it.
+   *
+   * The lift goes back with them. It is a transition rather than an
+   * animation, so it needs no reversing — dropping `revealed` sends the
+   * card down on .deck-card's own curve, which is what a card being put
+   * back wants anyway.
+   *
+   * Skipped on the first render, when the counter is still at its
+   * initial value and there is nothing to back out of.
+   */
+  const abortedOnce = useRef(aborted);
+  useEffect(() => {
+    if (aborted === abortedOnce.current) return;
+    abortedOnce.current = aborted;
+
+    const cards = deckRef.current?.querySelectorAll<HTMLElement>("[data-split]");
+    let longest = 0;
+    cards?.forEach((card) => {
+      for (const a of card.getAnimations()) {
+        try {
+          a.reverse();
+          const t = Number(a.currentTime ?? 0);
+          if (t > longest) longest = t;
+        } catch {
+          /* One card that will not reverse must not strand the other
+             nine. The timeout below still clears the state. */
+        }
+      }
+    });
+
+    /* Released once the furthest-along card has had time to come back —
+       its own current time, because that is exactly how long its
+       reversal has to run. A timeout rather than `animationend` for the
+       reason this file gives twice already: it fires whether or not
+       anything painted, and there are ten races to lose here, not one. */
+    const t = window.setTimeout(() => {
+      setSplitting(null);
+      setRevealed(null);
+    }, longest + 60);
+    return () => window.clearTimeout(t);
+  }, [aborted]);
+
+  /* THE REJOIN'S OWN CLOCK — the last card's delay plus its travel.
+     Worked out from the token rather than written down, so retuning
+     --stagger-step cannot leave this holding the attribute for the wrong
+     length of time. A timeout and not `animationend`, which is this
+     file's rule twice over already: a timeout fires whether or not
+     anything painted, and there are ten animations here to lose the race
+     with rather than one. */
+  useEffect(() => {
+    if (!rejoining) return;
+    const span =
+      (MODES.length - 1) * motionMs("--stagger-step", 22) + SETTLE_MS + 60;
+    const t = window.setTimeout(() => setRejoining(null), span);
+    return () => window.clearTimeout(t);
+  }, [rejoining]);
+
+  /**
+   * THE DEAL IS OVER, SO STOP CLAIMING IT IS HAPPENING.
+   *
+   * `dealing` used to be latched for the whole life of the first Home,
+   * which was harmless while nothing else touched these cards and became
+   * a bug the moment something did. `.home__deck--dealing .deck-card`
+   * is a live rule: any change that makes a card newly match it restarts
+   * `deck-deal` — and backing out of an expansion does exactly that, by
+   * taking `data-split` off ten cards at once. The whole deck flew in
+   * from below a second after the player had cancelled, on the one Home
+   * of the session where they had already watched it do that.
+   *
+   * The class was never meant to outlive the animation. It comes off
+   * once the last card has landed, and after that there is no rule left
+   * for an attribute change to re-trigger.
+   *
+   * A card is home at DECK_CARD_MS after its own delay, and the last
+   * card's delay is the widest — the same three numbers the ring already
+   * counts from, plus a margin so the class can never come off on the
+   * frame the animation is still using it.
+   */
+  useEffect(() => {
+    if (!dealing) return;
+    const span = (MODES.length - 1) * DECK_STAGGER_MS + DECK_CARD_MS + 120;
+    const t = window.setTimeout(() => setDealing(false), span);
+    return () => window.clearTimeout(t);
+  }, [dealing]);
+
   // Retire the ring the moment its last piece has gone out.
   useEffect(() => {
     if (!sweeping) return;
@@ -849,12 +1006,33 @@ export function Home({ onPick, returning }: HomeProps) {
         className={dealing ? "home__deck home__deck--dealing" : "home__deck"}
         aria-label="Game modes"
         ref={deckRef}
+        /* The furthest any card can sit from any other, which the REJOIN
+           needs and the split does not: coming back, a card's delay is
+           counted from the far end of the deck rather than from the card,
+           so that the ones nearest the card returning arrive last. CSS can
+           subtract but it cannot count, so the count comes from here. */
+        style={{ ["--split-max" as string]: MODES.length - 1 }}
       >
-        {MODES.map((mode, i) => (
+        {MODES.map((mode, i) => {
+          /* WHICH CARD THE DECK IS MOVING AROUND, going out or coming back.
+             The same geometry serves both — only the direction of time
+             differs, and the stylesheet owns that. */
+          const pivot = splitting ?? rejoining ?? null;
+          const pivotIndex = pivot ? MODES.findIndex((m) => m.id === pivot) : -1;
+          /* The pivot itself is not part of the split. It is the thing being
+             made room for, and it has its own lift and its own settle. */
+          const parts = pivotIndex >= 0 && i !== pivotIndex;
+          return (
           <button
             key={mode.id}
             data-mode={mode.id}
             data-picked={revealed === mode.id || undefined}
+            /* Above the pivot leaves upward, below it leaves downward, so
+               the deck opens rather than sliding as a block. */
+            data-split={parts ? (i < pivotIndex ? "up" : "down") : undefined}
+            /* Set only while the deck is coming back, because the rejoin
+               reads its delay from the other end. */
+            data-rejoin={parts && !splitting && rejoining ? "" : undefined}
             /* Held up while the closing colour lands on it, then dropped —
                and the fall is its own state, because it needs its own
                transition. See .deck-card[data-settling]. */
@@ -867,12 +1045,20 @@ export function Home({ onPick, returning }: HomeProps) {
               ...categoryStyle(mode.color),
               zIndex: i + 1,
               ["--i" as string]: MODES.length - 1 - i,
+              /* HOW FAR THIS CARD IS FROM THE ONE BEING OPENED, in cards.
+                 Unitless and multiplied by --stagger-step in the rule, which
+                 is the whole reason one token can retune the gesture — see
+                 the DELAY block in tokens.css. A table of per-card delays
+                 would do the same thing today and rot the moment the deck
+                 gains a twelfth game. */
+              ...(parts ? { ["--split-d" as string]: Math.abs(i - pivotIndex) } : null),
             }}
             onClick={(e) => openCard(mode.id, e.currentTarget)}
           >
             <DeckFace mode={mode} />
           </button>
-        ))}
+          );
+        })}
       </nav>
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
