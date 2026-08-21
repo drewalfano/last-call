@@ -824,8 +824,11 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
      with rather than one. */
   useEffect(() => {
     if (!rejoining) return;
-    const span =
-      (MODES.length - 1) * motionMs("--stagger-step", 22) + SETTLE_MS + 60;
+    /* One step, because the parting is two halves rather than eleven
+       cards — the later half is a single --stagger-step behind the
+       earlier one. It was counted over the whole deck while the delay
+       was per card. */
+    const span = motionMs("--stagger-step", 22) + SETTLE_MS + 60;
     const t = window.setTimeout(() => setRejoining(null), span);
     return () => window.clearTimeout(t);
   }, [rejoining]);
@@ -1006,12 +1009,6 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
         className={dealing ? "home__deck home__deck--dealing" : "home__deck"}
         aria-label="Game modes"
         ref={deckRef}
-        /* The furthest any card can sit from any other, which the REJOIN
-           needs and the split does not: coming back, a card's delay is
-           counted from the far end of the deck rather than from the card,
-           so that the ones nearest the card returning arrive last. CSS can
-           subtract but it cannot count, so the count comes from here. */
-        style={{ ["--split-max" as string]: MODES.length - 1 }}
       >
         {MODES.map((mode, i) => {
           /* WHICH CARD THE DECK IS MOVING AROUND, going out or coming back.
@@ -1045,13 +1042,31 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
               ...categoryStyle(mode.color),
               zIndex: i + 1,
               ["--i" as string]: MODES.length - 1 - i,
-              /* HOW FAR THIS CARD IS FROM THE ONE BEING OPENED, in cards.
-                 Unitless and multiplied by --stagger-step in the rule, which
-                 is the whole reason one token can retune the gesture — see
-                 the DELAY block in tokens.css. A table of per-card delays
-                 would do the same thing today and rot the moment the deck
-                 gains a twelfth game. */
-              ...(parts ? { ["--split-d" as string]: Math.abs(i - pivotIndex) } : null),
+              /* WHICH HALF OF THE PARTING THIS CARD IS IN: 0 for the half
+                 that goes first, 1 for the half a step behind it.
+
+                 It was the card's DISTANCE from the tapped card, and that
+                 was wrong on a shingled deck. Neighbours with different
+                 delays draw apart as soon as they are moving, and the card
+                 that was hiding its neighbour's squared bottom leaves
+                 first and uncovers it — see .deck-card[data-split]. Each
+                 half moves as one piece now, so the overlap survives the
+                 whole travel.
+
+                 Which half goes first depends on where the tapped card is:
+                 whichever side has fewer cards is quicker to clear, so it
+                 leads and the longer side follows. On a tap near the top of
+                 the deck that is the cards above; near the bottom it is the
+                 cards below. Still multiplied by --stagger-step in the
+                 rule, so the one token retunes the parting. */
+              ...(parts
+                ? {
+                    ["--split-half" as string]:
+                      (i < pivotIndex) === (pivotIndex <= MODES.length - 1 - pivotIndex)
+                        ? 0
+                        : 1,
+                  }
+                : null),
             }}
             onClick={(e) => openCard(mode.id, e.currentTarget)}
           >
