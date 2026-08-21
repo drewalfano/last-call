@@ -640,10 +640,39 @@
   pointer-events: none;
 }
 
+/* ---------------------------------------------------------------
+   THE WAY IN WANTS THE CARD'S INSET EXACTLY, and the way out does
+   not.
+
+   Closing, this copy fades up on a card that is already underneath
+   it at full strength — the two are cross-fading, and the 4px the
+   rule above comes up short has never been visible because nothing
+   ever sees the two apart.
+
+   Opening, there is no cross-fade. This copy lands ON the real
+   writing on the first frame and then covers it for the rest of the
+   expansion, so any offset between them is a 4px jump at the moment
+   the overlay appears — the title nudging upward as it is replaced.
+   The card's padding is --card-inset less its 2px stroke; this is
+   that, so the two sets of pixels coincide and the swap is invisible.
+   --------------------------------------------------------------- */
+.launch__face[data-open] {
+  padding: calc(var(--card-inset) - 2px);
+}
+
 /* The card's inset changes at the tablet breakpoint; so does this. */
 @media (min-width: 640px) and (min-height: 600px) {
   .launch__face {
     gap: var(--sp-1);
+    padding: var(--sp-6) var(--sp-8);
+  }
+
+  /* Restated for the open direction, because an attribute selector
+     outranks this block and would otherwise hold the phone's inset at
+     tablet size. The two directions want the SAME padding here — the
+     tablet card has no 2px stroke to discount — so this is the general
+     rule being put back, not a third value. */
+  .launch__face[data-open] {
     padding: var(--sp-6) var(--sp-8);
   }
 }

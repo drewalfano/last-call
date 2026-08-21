@@ -32,6 +32,35 @@ const LAUNCH_MS = 520;
 const LAUNCH_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
 
 /**
+ * HOW LONG THE CARD'S WRITING STAYS AT FULL STRENGTH ON THE WAY IN, and
+ * how long it then takes to clear.
+ *
+ * The close has the mirror of this pair — FACE_FROM_MS — and the two are
+ * deliberately not symmetrical, because the jobs are not. Closing, the
+ * writing ARRIVES: it is absent for most of the contraction and comes up
+ * at the end, on the card, so there is something for the colour to hand
+ * over to. Opening, it LEAVES: it is there from the first frame, because
+ * the whole fault being fixed is that it used to be gone from the first
+ * frame.
+ *
+ * So it holds through most of the expansion and clears near the end.
+ * 340ms is about 65% of the way, by which point the clip has passed well
+ * beyond the card's rect and the writing is a small label in a large
+ * field of colour rather than a card's title — which is the moment it
+ * stops meaning anything and starts being a thing left behind.
+ *
+ * The 150ms it takes to go is longer than it looks. It is spent while
+ * the colour is still growing, so what the eye follows is the expansion,
+ * not the fade; a shorter clear reads as the title being snatched.
+ *
+ * It is gone by 490ms, leaving 30ms of flat colour before the screen
+ * swaps underneath. That gap is deliberate — the swap should land on a
+ * plain field, not on the tail of something still clearing.
+ */
+const FACE_HOLD_MS = 340;
+const FACE_FADE_MS = 150;
+
+/**
  * CLOSING GOES BACK INTO THE CARD IT CAME OUT OF.
  *
  * The colour contracts to the rect of that mode's card on Home, which is the
@@ -173,6 +202,8 @@ export default function App() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
+  /** The writing riding the expansion out of the card. See FACE_HOLD_MS. */
+  const faceInRef = useRef<HTMLDivElement>(null);
   /**
    * WHERE HOME'S DECK WAS STANDING WHEN YOU LEFT IT.
    *
@@ -541,6 +572,19 @@ export default function App() {
       { duration: LAUNCH_MS, easing: LAUNCH_EASE, fill: "forwards" },
     );
 
+    /* The writing clears while the colour is still growing. Its own clock
+       rather than a keyframe on the overlay, because the two are different
+       shapes: the clip runs the whole duration on LAUNCH_EASE, this waits
+       and then goes. --ease-glide, because a fade that is ~95% done by its
+       own halfway point (which is what --ease-out would give) reads as the
+       title being snatched rather than released. */
+    faceInRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: FACE_FADE_MS,
+      delay: FACE_HOLD_MS,
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+      fill: "forwards",
+    });
+
     const finish = () => {
       setScreen(launch.id);
       // Hold the overlay one more frame so the swap happens underneath it.
@@ -581,7 +625,43 @@ export default function App() {
             }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
           }}
           aria-hidden="true"
-        />
+        >
+          {/* THE CARD'S OWN WRITING, CARRIED OUT OF THE DECK.
+
+              The overlay used to be a bare field of colour on the way in,
+              and that is what emptied the card on frame one: an opaque
+              rectangle lands exactly on the card you tapped, so the title
+              and tagline you were reading are covered before anything has
+              moved. What grew from there read as a blank surface loading,
+              not as the card opening.
+
+              Pinned to the same rect the clip starts from, at the card's
+              own inset, so on the first frame this copy sits exactly on
+              the pixels the real writing occupies. Nothing appears and
+              nothing moves; the overlay simply arrives already carrying
+              what the card was carrying, and the title stays legible while
+              the colour grows out around it.
+
+              Opacity is inline rather than left to the stylesheet for the
+              same reason the clip is: the effect that animates this runs
+              after the first paint, and .launch__face rests at 0 for the
+              CLOSE direction. Without a value here the writing would be
+              absent for exactly one frame, which is the bug this is
+              fixing, one frame shorter. */}
+          <div
+            className="launch__face"
+            data-open
+            ref={faceInRef}
+            style={{
+              top: launch.rect.top,
+              left: launch.rect.left,
+              width: launch.rect.right - launch.rect.left,
+              opacity: 1,
+            }}
+          >
+            <DeckFace mode={MODE_BY_ID[launch.id]} />
+          </div>
+        </div>
       )}
       {/* The colour on its way back into its card. Covering on the first
           frame — which is what lets the screen swap underneath it — and
