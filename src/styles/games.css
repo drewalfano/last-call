@@ -372,7 +372,7 @@
    and its shrunk sides expose the edges of the cards it is meant to
    be flush with.
 
-   46ms, and --ease-out over --ease-glide. The travel here is the
+   --stagger-deal, and --ease-out over --ease-glide. The travel here is the
    height of the screen rather than a nudge, so the curve wants to
    land the card rather than glide it, and the stagger has to be
    wide enough that eleven cards read as eleven arrivals instead of
@@ -392,7 +392,7 @@
    that hides this one's bottom is already in place before it lands. */
 .home__deck--dealing .deck-card {
   animation: deck-deal 620ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 46ms);
+  animation-delay: calc(var(--i, 0) * var(--stagger-deal));
 }
 
 @media (prefers-reduced-motion: reduce) {
