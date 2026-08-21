@@ -8,97 +8,94 @@ import type { Pools } from "./pools";
  * READS — the picker lays all of it out — so the order of the list is
  * something a table sees and the adult entries belong at the top of it.
  *
- * A prompt only works if it's broad enough that two people will almost
- * certainly say different things first, but narrow enough that they can
- * converge in a few rounds. "Fast food" is the shape: dozens of valid answers,
- * but a small enough world that McDonald's and Taco Bell have an obvious
- * middle. "Things" would be too wide; "Big Mac" too narrow to have a middle at
- * all.
+ * THE FILTER. This mode rewards convergence, not creativity. A prompt earns
+ * its place on two counts at once: a large answer space AND strong gravity —
+ * dozens of valid answers exist, but one or two dominate what people reach
+ * for first. "Fast food" is the benchmark: hundreds of valid answers, and
+ * McDonald's pulls hard.
  *
- * PLURAL OR MASS NOUN, NEVER "a <thing>". This is the rule the list above
- * follows and it is the difference between a prompt that plays and one that
- * does not. "A sport" asks for one instance, so both players reach for the
- * name of a sport and the only moves left are sideways — soccer, tennis,
- * hockey — with no way to close the gap. "Sports" asks for the territory, so
- * "soccer field" and "half time" are as legal as "soccer", and a pair who
- * opened miles apart has somewhere to meet.
+ * The test is one question, asked out loud: NAME THE DOMINANT ANSWER. If it
+ * comes back as a single word — Monopoly, pepperoni, Nike, ice, Tinder — the
+ * prompt plays. If naming it produces three or four equally likely answers,
+ * the prompt is divergent and does not belong here however good it reads.
+ * That is what removed Countries, Cities, Snacks, Drinks, Jobs and
+ * Superheroes, all of which are perfectly nice categories with no gravity:
+ * "name a country" is the textbook way to make two people say different
+ * things forever.
  *
- * "Fast food" was already right, which is how the rule got noticed: it is the
- * example this note has always held up, and most of the list was not shaped
- * like it. The adjective prompts take Letter Rip's phrasing — "Things that are
- * cold" — so the two modes that both put a category in front of a table word
- * them the same way.
+ * Three phrasings fail structurally and none of them survived the pass:
+ *
+ *   "Things you'd <verb>"   asks for a personal hypothetical, so a player
+ *                           answers about themselves rather than about the
+ *                           category, and the table plays for the laugh.
+ *   "Reasons to <verb>"     the same, plus it invites invention — the point
+ *                           of an answer becomes that nobody else had it.
+ *   "Things in a <place>"   produces an inventory, and an inventory splits
+ *                           by which object you happen to picture first.
+ *
+ * A qualifier clause is the other killer: it shrinks a wide space down to a
+ * handful. "Things you'd lie about on a profile" has maybe six answers once
+ * "on a profile" has done its work, and six answers is not a game.
+ *
+ * "Things that are <adjective>" is kept, but only for properties with a
+ * prototype object behind them — cold is ice, round is a ball, wet is water.
+ * Degree and judgement adjectives have no prototype (expensive, heavy, loud,
+ * sticky) and send everyone to a private example instead.
+ *
+ * PLURAL OR MASS NOUN, NEVER "a <thing>". "A sport" asks for one instance, so
+ * both players reach for the name of a sport and the only moves left are
+ * sideways — soccer, tennis, hockey — with no way to close the gap. "Sports"
+ * asks for the territory, so "soccer field" and "half time" are as legal as
+ * "soccer", and a pair who opened miles apart has somewhere to meet.
  *
  * These are only the OPENING word. After that the players' own two answers
  * become the prompt, which is the game — so the pool doesn't need the depth a
  * per-turn deck would.
+ *
+ * SIZE. The night and filthy tiers are down to four entries between them,
+ * which is not a bug and is not finished either: the 19+ pool was written
+ * almost entirely in the two phrasings above, and what was left after the
+ * filter is what genuinely converges. It wants refilling with categories
+ * shaped like "Dating apps" — a wide adult territory with an obvious first
+ * answer — rather than with more confessions.
  */
 export const SAY_THE_SAME_THING: Pools<string> = {
   safe: [
-    "Fast food", "Things that are cold", "Holiday destinations",
-    "Things in a kitchen", "Famous dogs", "Things you queue for",
-    "Board games", "Things that are round", "Breakfast foods",
-    "Things that are expensive", "Cartoon characters", "Things that are loud",
-    "Sports", "Things in your pocket", "Colours",
-    "Things that smell good", "Car brands", "Things that are wet",
-    "Superheroes", "Things you'd take camping", "Pizza toppings",
-    "Things that are heavy", "Bands", "Things in a hospital",
-    "Drinks", "Things you lose", "Countries",
-    "Things that are sticky", "Jobs", "Things in a garden",
-    "Zoo animals", "Things you'd never share", "Cities",
-    "Things you sit on", "Movie villains", "Things in a bar",
-    "Snacks", "Things you charge", "Seasons",
-    "Things that are always late", "Instruments", "Things in a hotel room",
-    "Shoe brands", "Things you throw",
+    "Fast food", "Things that are cold", "Board games",
+    "Things that are round", "Sports", "Pizza toppings",
+    "Things that are wet", "Bands", "Zoo animals",
+    "Famous dogs", "Instruments", "Movie villains",
+    "Shoe brands", "Camping gear", "Colours",
+    "Seasons",
   ],
   night: [
-    "Red flags",
-    "Things you'd hide before a date comes over",
-    "Bad pickup lines",
-    "Things you'd never text your ex",
-    "Dating app clichés",
-    "Things worth lying about",
-    "Reasons to leave early",
-    "Things you'd regret at 3am",
-    "Excuses for not replying",
-    "Things you'd never do sober",
-    "Bad tattoos",
-    "Things you'd delete",
-    "Reasons to block someone",
-    "Things you'd never split",
-    "Icebreakers that fail",
-    "Things you'd fake",
-    "Reasons to unmatch",
-    "Things you'd take back",
-    "Bad first date questions",
-    "Things you'd never admit",
-    "Questionable decisions",
-    "Things you'd blame on the drinks",
-    "Reasons your friends staged an intervention",
-    "Things you'd swipe left on",
-    "Morning-after realisations",
-    "Things you'd hide from your mum",
-    "Reasons to change your number",
-    "Things you'd never post",
-    "Overrated nights out",
-    "Things you'd lie about on a profile",
-    "Reasons to ghost",
-    "Things you'd do for a dare",
+    "Dating apps",
+    "Pickup lines",
+    "Hangovers",
   ],
   filthy: [
-    "Things you'd never admit sober",
-    "Reasons to lie to a partner",
-    "Things you've taken",
-    "Places you've been sick",
-    "Things you'd delete right now",
-    "Worst things to be caught doing",
-    "Reasons someone blocked you",
-    "Things you've done for money",
-    "Reasons to call in sick",
-    "Things you'd deny under oath",
-    "Worst places to wake up",
-    "Things that would end a friendship",
-    "Reasons to leave the country",
-    "Things you'd never say in front of your mum",
+    "Drugs",
   ],
 };
+
+/**
+ * WARM-UPS — valid, but never two in a round.
+ *
+ * These are the near-pure convergence prompts: the answer space is a small
+ * closed set everyone already shares, so the pair matches almost immediately.
+ * That is a fine way to open — it teaches the game in one attempt — and a
+ * miserable way to spend a whole round, because nothing about the second one
+ * is different from the first.
+ *
+ * The distinction is the closed set, not merely a short list. "Colours" and
+ * "Seasons" are sets a table agrees on before anyone speaks. "Things in your
+ * pocket" is also short but it is short *personally*, which is a divergent
+ * prompt wearing a convergent prompt's size — it was cut rather than tagged.
+ *
+ * Nothing enforces this yet and nothing needs to: a round serves exactly one
+ * opening word, so the constraint holds by construction today. The tag is
+ * here so that an arranger which ever deals more than one per round has the
+ * list to check against, rather than having to rediscover which entries these
+ * were.
+ */
+export const SAY_THE_SAME_THING_WARMUPS: readonly string[] = ["Colours", "Seasons"];
