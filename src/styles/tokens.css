@@ -397,7 +397,7 @@
      table cannot be retuned and silently rots the moment the number
      of elements changes.
 
-         animation-delay: calc(var(--split-d) * var(--stagger-step));
+         animation-delay: calc(var(--i) * var(--stagger-deal));
 
      Changing the step alone is meant to retune the whole gesture.
      That is the test of whether these are tokens or decoration.
@@ -410,34 +410,25 @@
      eleven arrivals rather than one wave. */
   --stagger-deal: 46ms;
 
-  /* The deck parting around a card you have tapped, per unit of
-     distance from that card. Narrower than the deal by design: the
-     deal is the app introducing itself and can take a second, while
-     this is happening under a colour that is already on its way to
-     covering the screen. At 22ms the far end of an eleven-card deck
-     is moving 154ms after the near end — enough that the parting
-     reads as travelling outward, short enough that the whole deck is
-     underway before the overlay has covered much of it. */
-  --stagger-step: 22ms;
+  /* THE PARTING'S OWN STEP, AND THE HEAD START THE DECK GOT BEFORE
+     THE COLOUR MOVED, both removed with the thing they timed.
 
-  /* ----------------------------------------------------------
-     THE HEAD START THE DECK GETS BEFORE THE COLOUR MOVES.
+     --stagger-step spaced the deck parting around a tapped card;
+     --expand-lead was the beat the overlay waited so that parting
+     could be seen before the colour covered it. The parting is gone —
+     see the note where it used to be in games.css — so both were
+     timing nothing, and --expand-lead had turned into plain latency
+     on the app's primary control.
 
-     The launch overlay is pinned to the tapped card's rect and is
-     opaque from its first frame, so anything that card does is
-     behind it — a lift under the overlay is a lift nobody sees. The
-     deck split has the same problem at its start: the cards nearest
-     the tap are the ones the clip covers first.
-
-     So the expansion waits this long while the card lifts and the
-     split gets underway, and only then starts growing. It is the
-     price of the gesture being visible at all, and it is small: one
-     stagger step, so the two are tuned by the same hand.
-
-     Set it to 0ms to have the colour leave on the same frame as the
-     tap, which is what shipped before the split existed.
+     Recorded here rather than silently dropped, because the rule at
+     the top of this block still stands and the next stagger to be
+     written should read it: a stagger is a DISTANCE times a STEP,
+     supplied as a unitless custom property and multiplied here. What
+     the parting proved is that the rule is necessary and not
+     sufficient — a shingled deck cannot carry a per-element stagger
+     at all, however it is expressed, because its cards have to stay
+     overlapped to hide each other's squared edges.
      ---------------------------------------------------------- */
-  --expand-lead: 70ms;
 
   /* ----------------------------------------------------------
      THE PRESS. One curve, one duration, one scale, one dip —
