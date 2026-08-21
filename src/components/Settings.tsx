@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
+import { audio } from "../lib/audio";
 
 /** Order is the control's order, and the index of the current one drives the
     travelling fill — see .segmented. Declared once so the two cannot drift. */
 const APPEARANCE = ["light", "dark", "device"] as const;
+
+/** Same deal, and On leads because it is the state the app ships in. */
+const SOUND = ["on", "off"] as const;
 
 /**
  * THE CONTENT TIERS, AS A DOT AND TWO FLAMES.
@@ -115,6 +119,27 @@ export function SettingsButton({ onOpen }: { onOpen: () => void }) {
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { mode, tier, setMode } = useContentMode();
   const { preference, setPreference } = useTheme();
+  /**
+   * Sound is the one setting held outside React, in the audio manager, because
+   * every reader of it is a sound about to play rather than something on
+   * screen — see lib/audio.ts. This is the single exception: the control has
+   * to show which way it is set. Seeded from the manager rather than mirrored
+   * into it, so the stored preference is still the one source.
+   */
+  const [soundOn, setSoundOn] = useState(!audio.isMuted());
+
+  /**
+   * Turning it on plays a tap, which is the only way to find out it worked.
+   * Settings is a silent screen by nature and the sounds live inside the
+   * games, so without this the control's whole job is invisible until you have
+   * left, started a mode and pressed something. Nothing plays when switching
+   * off, obviously.
+   */
+  const setSound = useCallback((on: boolean) => {
+    audio.setMuted(!on);
+    setSoundOn(on);
+    if (on) audio.play("tap");
+  }, []);
 
   /**
    * THE SHEET LEAVES AS WELL AS ARRIVES.
@@ -227,6 +252,33 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 className="segmented__opt"
                 data-on={preference === opt || undefined}
                 onClick={() => setPreference(opt)}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Sound</span>
+            <span className="setting__hint">
+              Taps, clocks and buzzers. Made on the phone, so it works offline.
+            </span>
+          </div>
+          <div
+            className="segmented"
+            role="group"
+            aria-label="Sound"
+            style={{ ["--n" as string]: SOUND.length, ["--i" as string]: soundOn ? 0 : 1 }}
+          >
+            {SOUND.map((opt) => (
+              <button
+                key={opt}
+                className="segmented__opt"
+                data-on={(opt === "on") === soundOn || undefined}
+                aria-pressed={(opt === "on") === soundOn}
+                onClick={() => setSound(opt === "on")}
               >
                 {opt}
               </button>

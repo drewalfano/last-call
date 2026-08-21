@@ -1617,7 +1617,7 @@
               opacity var(--dur-press) ease-out,
               background var(--dur-base) var(--ease-out);
 }
-.lw__letter:active:not(:disabled) {
+.lw__letter:active:not([data-locked]) {
   transform: scale(var(--press-scale));
   opacity: var(--press-dim);
 }
@@ -1876,7 +1876,7 @@
     font-size: calc(var(--ring-d) * 0.0539);
   }
   /* Composed, or the press would throw away the placement. */
-  .lw__letter:active:not(:disabled) {
+  .lw__letter:active:not([data-locked]) {
     transform: var(--place) scale(var(--press-scale));
   }
 

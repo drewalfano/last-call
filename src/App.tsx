@@ -4,6 +4,7 @@ import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
 import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
+import { unlockOnFirstGesture } from "./lib/audio";
 import { Home } from "./games/Home";
 import { DeckGame, DECK_GAMES, isDeckGame, type DeckGameConfig } from "./games/DeckGame";
 import { LastCallGame } from "./games/LastCallGame";
@@ -286,6 +287,14 @@ export default function App() {
   const closeTimer = useRef<number>(undefined);
   const failsafe = useRef<number>(undefined);
   const { theme } = useTheme();
+
+  /**
+   * Audio starts suspended on every phone and only a real touch can start it.
+   * Registered here rather than on any particular control, because the first
+   * thing a player touches is not knowable — see unlockOnFirstGesture. It
+   * retires itself on the first press and costs nothing after that.
+   */
+  useEffect(unlockOnFirstGesture, []);
 
   /**
    * The colour the whole device shows, status bar included. Home is the shell;

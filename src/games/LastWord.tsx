@@ -6,6 +6,7 @@ import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
 import { LAST_WORD_CATEGORIES } from "../data/lastWord";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { audio } from "../lib/audio";
 
 /**
  * LAST WORD
@@ -186,6 +187,25 @@ export function LastWord({ mode, onBack }: Props) {
     [used, startTurn],
   );
 
+  /**
+   * THE SOUND GOES ON THE PRESS, NOT ON THE CLICK.
+   *
+   * `click` arrives on release. On a board being played at the speed of a
+   * thumb that is late enough to hear as lag against the finger, and this is
+   * the one screen in the app where presses come in a run rather than one at a
+   * time. pointerdown is the first event of a press, so the sound lands on the
+   * frame the letter is touched — before the letter has locked, which is the
+   * right order for the same reason the tile's own press animation is.
+   *
+   * It is also the only place both answers are known. A free letter and one
+   * already gone are the same gesture, and by the time anything has changed
+   * the difference is gone with it.
+   */
+  const pressLetter = useCallback(
+    (letter: string) => audio.play(used.includes(letter) ? "reject" : "tap"),
+    [used],
+  );
+
   const seconds = Math.ceil(remaining / 1000);
   const progress = remaining / (TURN_SECONDS * 1000);
   const category = chosen ?? deck.current ?? "";
@@ -347,7 +367,14 @@ export function LastWord({ mode, onBack }: Props) {
                      grid ignores it. See .lw__ring in games.css. */
                   style={{ ["--i" as string]: i }}
                   data-locked={used.includes(letter) || undefined}
-                  disabled={used.includes(letter)}
+                  /* aria-disabled, NOT disabled. A disabled control is inert
+                     to input — no click, and on WebKit no pointer events at
+                     all — so a letter that is already gone had no way to say
+                     so. It is still announced as disabled and `lockLetter`'s
+                     own guard is what actually refuses the press; the flag
+                     here was never the thing keeping the letter down. */
+                  aria-disabled={used.includes(letter) || undefined}
+                  onPointerDown={() => pressLetter(letter)}
                   onClick={() => lockLetter(letter)}
                   aria-label={`${letter}${used.includes(letter) ? " (already used)" : ""}`}
                 >
