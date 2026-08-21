@@ -4,7 +4,7 @@ import { SHELL_TOKEN, useAppBackground } from "./lib/appBackground";
 import { categoryStyle } from "./lib/style";
 import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
-import { soundCardFlips, unlockOnFirstGesture } from "./lib/audio";
+import { unlockOnFirstGesture } from "./lib/audio";
 import { Home } from "./games/Home";
 import { DeckGame, DECK_GAMES, isDeckGame, type DeckGameConfig } from "./games/DeckGame";
 import { LastCallGame } from "./games/LastCallGame";
@@ -295,13 +295,6 @@ export default function App() {
    * retires itself on the first press and costs nothing after that.
    */
   useEffect(unlockOnFirstGesture, []);
-
-  /**
-   * Every card that turns over sounds, wherever it is. Registered once here
-   * rather than at each deal — the flip animation is the event, so listening
-   * for it catches every mode at once. See soundCardFlips.
-   */
-  useEffect(soundCardFlips, []);
 
   /**
    * The colour the whole device shows, status bar included. Home is the shell;

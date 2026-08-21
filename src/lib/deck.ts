@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { audio } from "./audio";
 
 /** Fisher–Yates. Returns a new array; never mutates the source pool. */
 export function shuffle<T>(source: readonly T[]): T[] {
@@ -90,7 +91,21 @@ export function useDeck<T>(source: readonly T[], arrange?: Arrange<T>): Deck<T> 
     setState(initial(source, arrangeRef.current));
   }, [source]);
 
+  /**
+   * A CARD BEING DRAWN IS THE SOUND, not a card being on screen.
+   *
+   * This lives here rather than at the eleven call sites because this is the
+   * event — every mode that deals a prompt comes through this function, and
+   * nothing else does. It was briefly hung off the flip animation instead,
+   * which catches far more: every phase change flips a card too, so Odd One
+   * Out's cover screens and every mode opening made a noise. Those are
+   * transitions between screens. Drawing is the game.
+   *
+   * Outside the updater below, which React may run more than once for one
+   * event.
+   */
   const draw = useCallback(() => {
+    audio.play("card");
     setState((prev) => {
       if (prev.queue.length === 0) return prev;
       if (prev.index + 1 < prev.queue.length) {
@@ -106,12 +121,19 @@ export function useDeck<T>(source: readonly T[], arrange?: Arrange<T>): Deck<T> 
     });
   }, []);
 
-  const reset = useCallback(
-    () => setState(initial(sourceRef.current, arrangeRef.current)),
-    [],
-  );
+  /* Also a deal. Last Call's New round is the only caller: the deck has run
+     out, and this puts a fresh prompt on screen. The source-change effect
+     above rebuilds state directly rather than through here, so opening a mode
+     still arrives in silence. */
+  const reset = useCallback(() => {
+    audio.play("card");
+    setState(initial(sourceRef.current, arrangeRef.current));
+  }, []);
 
+  /* Last Call's skip-a-level. It deals a card like any other draw — it just
+     chooses which one — so it sounds like one. */
   const skipTo = useCallback((match: (card: T) => boolean) => {
+    audio.play("card");
     setState((prev) => {
       for (let i = prev.index + 1; i < prev.queue.length; i++) {
         if (match(prev.queue[i])) {

@@ -4,6 +4,7 @@ import { PlayingCard } from "../components/PlayingCard";
 import { deal, freshDeck, SUITS, type Card, type Suit } from "../lib/cards";
 import type { ModeDef } from "../data/modes";
 import { useRoster } from "../state/roster";
+import { audio } from "../lib/audio";
 
 /**
  * RIDE THE BUS
@@ -89,6 +90,9 @@ export function RideTheBus({ mode, onBack }: Props) {
   const { currentPlayer, advance, hasRoster } = useRoster();
 
   const guessSetup = useCallback((choice: string) => {
+    /* A real card off a real deck — the most literal case of the card being
+       the game. Outside the updater, which can run twice for one event. */
+    audio.play("card");
     setS((prev) => {
       const { card, rest } = deal(prev.deck);
       const correct = judgeSetup(prev.phase, choice, card, prev.table);
@@ -109,6 +113,10 @@ export function RideTheBus({ mode, onBack }: Props) {
   }, []);
 
   const continueSetup = useCallback(() => {
+    /* Only sometimes deals: the last setup round flips the bus's opening card,
+       the rounds before it just move the phase on. Asked out here, where it can
+       be asked once. */
+    if (!SETUP_PHASES[SETUP_PHASES.indexOf(s.phase) + 1]) audio.play("card");
     setS((prev) => {
       const next = SETUP_PHASES[SETUP_PHASES.indexOf(prev.phase) + 1];
       if (next) return { ...prev, phase: next, verdict: null };
@@ -116,9 +124,10 @@ export function RideTheBus({ mode, onBack }: Props) {
       const { card, rest } = deal(prev.deck);
       return { ...prev, phase: "bus", deck: rest, busCard: card, verdict: null };
     });
-  }, []);
+  }, [s.phase]);
 
   const guessBus = useCallback((choice: "higher" | "lower") => {
+    audio.play("card");
     setS((prev) => {
       if (!prev.busCard) return prev;
       const { card, rest } = deal(prev.deck);

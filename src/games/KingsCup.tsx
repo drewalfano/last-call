@@ -12,6 +12,7 @@ import { NEVER_HAVE_I_EVER } from "../data/neverHaveIEver";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import type { ModeDef } from "../data/modes";
+import { audio } from "../lib/audio";
 
 /**
  * KINGS CUP
@@ -94,6 +95,9 @@ export function KingsCup({ mode, onBack }: Props) {
   const drawer = currentPlayer ?? "Whoever drew it";
 
   const draw = useCallback(() => {
+    /* A real card off a real deck — the most literal case of the card being
+       the game. Outside the updater, which can run twice for one event. */
+    audio.play("card");
     setS((prev) => {
       const { card, rest } = deal(prev.deck);
       const rule = RULE_BY_RANK[card.rank];

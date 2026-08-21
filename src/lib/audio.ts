@@ -105,8 +105,11 @@ export type Sound =
    * handing you something to read — but the app has always drawn them with a
    * single flip animation, and a table watching it sees one thing happen.
    *
-   * Nothing calls this directly. It is fired by the flip itself; see
-   * `soundCardFlips`.
+   * Fired where a card is actually DRAWN — `useDeck`'s draw, and the two modes
+   * that deal from a real 52-card deck. Not from the flip animation, which was
+   * the obvious hook and the wrong one: every phase change flips a card too, so
+   * it sounded Odd One Out's cover screens and every mode opening. Those are
+   * transitions. A card being drawn is the game.
    *
    * The most frequent sound in the app by a distance, which is the only thing
    * that decided its level. See the note on the case.
@@ -530,48 +533,6 @@ export const audio = new AudioManager();
  *
  * Returns its own teardown, for the effect that owns it.
  */
-/**
- * EVERY CARD THAT TURNS OVER MAKES THE SOUND, WITHOUT BEING ASKED.
- *
- * The flip is one CSS animation — `card-flip-in`, on prompt cards, on the
- * playing cards in Kings Cup and Ride the Bus, and on Last Call's tier panel.
- * So the animation is the event, and listening for it beats wiring a call at
- * every site that deals: it catches Letter Rip's Random, a mode opening, a
- * phase changing, and anything added later, none of which anyone has to
- * remember.
- *
- * Captured on `document`, because animationstart does bubble but a listener
- * on window would miss nothing and gain nothing — this keeps it off the app's
- * own event paths entirely.
- *
- * IT SURVIVES REDUCED MOTION, which is not luck so much as a choice made
- * elsewhere: the global block zeroes `animation-duration` to 0.01ms rather
- * than setting `animation: none`, and a zero-length animation still fires
- * animationstart. Someone who has turned motion off still hears their cards.
- * If that rule ever becomes `none`, this goes silent with it.
- *
- * DEDUPED PER FRAME. Last Call deliberately flips two things on the same beat
- * — the tier panel and the prompt underneath it — "so the table sees one card
- * turn over and find the level written on it". One event, one sound; without
- * this it would double exactly where the design took most care not to.
- *
- * Returns its own teardown, for the effect that owns it.
- */
-export function soundCardFlips(): () => void {
-  let last = -1;
-  const onStart = (e: AnimationEvent) => {
-    if (e.animationName !== "card-flip-in") return;
-    /* Two cards on one beat is one deal. 40ms is comfortably under the
-       gap between any two deals a thumb can make. */
-    const now = performance.now();
-    if (now - last < 40) return;
-    last = now;
-    audio.play("card");
-  };
-  document.addEventListener("animationstart", onStart, true);
-  return () => document.removeEventListener("animationstart", onStart, true);
-}
-
 export function unlockOnFirstGesture(): () => void {
   const open = () => audio.unlock();
   window.addEventListener("pointerdown", open, { once: true });
