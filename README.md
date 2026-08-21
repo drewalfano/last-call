@@ -218,7 +218,7 @@ fixed square card at the longest copy to confirm nothing clips.
 | Letter Rip categories | 94 | 46 |
 | Rank It sets | 24 | 16 |
 | Most Likely To | 60 | 60 |
-| Same Page prompts | 44 | 32 |
+| Same Page prompts | 35 | 25 |
 | Overbid categories | 40 | 26 |
 | Drink If… | 60 | 60 |
 | Hot Seat | 60 | 60 |
@@ -226,6 +226,14 @@ fixed square card at the longest copy to confirm nothing clips.
 
 The 19+ column is what that pool ADDS, not what it becomes — see the policy
 below. A mode's real 19+ deck is both columns together.
+
+Same Page filters on how OPEN a prompt is, not on how well it reads. Hundreds
+of valid answers and no clause narrowing the field — players cluster on the
+common ones by themselves, and several strong answers is a healthy prompt
+rather than a broken one. What gets cut is the closed space: a qualifier that
+leaves six answers, or a phrasing that asks for a joke. The rule is documented
+at the top of `sayTheSameThing.ts`, along with the inverted version of it that
+was applied once by mistake and withdrawn.
 
 **Night policy** is per file, documented at the top of each, and every one of
 them ADDS. The choice is settled by one question — does a player read this
