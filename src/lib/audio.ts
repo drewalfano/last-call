@@ -231,10 +231,21 @@ class AudioManager {
          row is the sound of a machine, not of twenty buttons. The variation is
          small enough that nobody notices it and large enough that a fast run
          down the letter bank stops sounding like one key stuck down. */
+      /* NOISE ONLY, AND NO PITCHED BODY.
+         It had one: 190Hz falling to 120, which is the frequency a phone
+         speaker turns into buzz rather than weight. On a desk it read as a
+         button; in a hand it read as a boom, and the click it was supposed to
+         be giving weight to was the part that got buried. Taking the layer out
+         was better than balancing it — judged against four alternatives on the
+         device, which is the only place this question can be settled.
+
+         1700Hz is low enough to have a surface to it rather than reading as a
+         tick, and far enough from the 3kHz region that it does not turn shrill
+         on a small speaker. The level is up a little from the burst that used
+         to sit under the body, because now it is carrying the whole sound. */
       case "tap": {
         const detune = [1, 1.06, 0.95, 1.02][this.tapIndex++ % 4];
-        this.noiseBurst(t, { duration: 0.025, gain: 0.3, freq: 2600 * detune, q: 1.4 });
-        this.tone(t, { freq: 190 * detune, duration: 0.05, gain: 0.28, slideTo: 120 * detune });
+        this.noiseBurst(t, { duration: 0.022, gain: 0.4, freq: 1700 * detune, q: 1.2 });
         break;
       }
 
