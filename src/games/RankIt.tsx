@@ -246,7 +246,16 @@ export function RankIt({ mode, onBack }: Props) {
                  rather than by the flag. */
               aria-disabled={!complete || undefined}
               data-off={!complete || undefined}
-              onPointerDown={() => audio.play(complete ? "tap" : "reject")}
+              /* NOT the tap the items use. Ordering the list and declaring it
+                 finished are different things, and giving them one sound made
+                 the last item and the commit indistinguishable — you could not
+                 hear whether you had ranked a fifth thing or ended your turn.
+
+                 `advance` because that is what this press is: Lock it in ends
+                 the Ranker's private pass and gives the phone to the table.
+                 The same rising pair the phone makes everywhere it changes
+                 hands. */
+              onPointerDown={() => audio.play(complete ? "advance" : "reject")}
               onClick={() => {
                 if (!complete) return;
                 buzz([90, 60, 140]);
