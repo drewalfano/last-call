@@ -80,15 +80,39 @@ export function MostLikelyTo({ mode, onBack }: Props) {
               </div>
             </>
           ) : (
-            <div className="actions">
+            <>
+              {/* A prompt this table is not going to answer — it has come up
+                  already, it names someone who left, it is simply flat. The
+                  only way past it was to point at somebody anyway and spend a
+                  round on it, because every control on the screen ran the
+                  count-in.
+
+                  Under the card, not beside the action: it rejects the PROMPT,
+                  where Everyone ready commits the table to it. Same control as
+                  Hot Seat's New question and Overbid's New category, and the
+                  draw sounds itself through the deck.
+
+                  Only before the count-in. Once everyone has pointed, the
+                  round is spent and the primary action is already Next
+                  prompt — a second button doing the same thing, one of them
+                  quiet, is worse than no button. */}
               <button
-                className="btn btn--lg btn--block"
-                onClick={() => setPhase("counting")}
+                className="gfoot__skip"
+                onClick={deck.draw}
                 disabled={!deck.current}
               >
-                Everyone ready
+                New card
               </button>
-            </div>
+              <div className="actions">
+                <button
+                  className="btn btn--lg btn--block"
+                  onClick={() => setPhase("counting")}
+                  disabled={!deck.current}
+                >
+                  Everyone ready
+                </button>
+              </div>
+            </>
           )}
         </CardBody>
       )}
