@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
-import { getBank, setBank, type Bank } from "../lib/letterBank";
 
 /** Order is the control's order, and the index of the current one drives the
     travelling fill — see .segmented. Declared once so the two cannot drift. */
@@ -10,9 +9,6 @@ const APPEARANCE = ["light", "dark", "device"] as const;
 
 /** Same deal, and On leads because it is the state the app ships in. */
 const SOUND = ["on", "off"] as const;
-
-/** Same again. Grid leads because it is what the app does without asking. */
-const BANKS: Bank[] = ["grid", "rings"];
 
 /**
  * THE CONTENT TIERS, AS A DOT AND TWO FLAMES.
@@ -131,8 +127,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
    * into it, so the stored preference is still the one source.
    */
   const [soundOn, setSoundOn] = useState(!audio.isMuted());
-  /* Same arrangement as Sound, and temporary — see lib/letterBank.ts. */
-  const [bank, setBankState] = useState(getBank);
 
   /**
    * Turning it on plays a tap, which is the only way to find out it worked.
@@ -285,44 +279,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 data-on={(opt === "on") === soundOn || undefined}
                 aria-pressed={(opt === "on") === soundOn}
                 onClick={() => setSound(opt === "on")}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* TEMPORARY — remove with lib/letterBank.ts and the .lw__board
-            rings rules in games.css. It is here so Letter Rip's board can be
-            judged on a phone at a table instead of from a screenshot; the
-            measurements already favour the grid and are not the question.
-            The precedent is the audio session picker, which shipped here,
-            answered its question on the device, and came out again. */}
-        <section className="setting">
-          <div className="setting__label">
-            <span className="setting__name">Letter board</span>
-            <span className="setting__hint">
-              Letter Rip's twenty letters. Rings put the clock in the middle and
-              make each letter about a fifth smaller. Trying it out.
-            </span>
-          </div>
-          <div
-            className="segmented"
-            role="group"
-            aria-label="Letter board layout"
-            style={{ ["--n" as string]: BANKS.length, ["--i" as string]: BANKS.indexOf(bank) }}
-          >
-            {BANKS.map((opt) => (
-              <button
-                key={opt}
-                className="segmented__opt"
-                data-on={bank === opt || undefined}
-                aria-pressed={bank === opt}
-                onClick={() => {
-                  setBank(opt);
-                  setBankState(opt);
-                  audio.play("tap");
-                }}
               >
                 {opt}
               </button>
