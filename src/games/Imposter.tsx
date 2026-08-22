@@ -258,9 +258,13 @@ export function Imposter({ mode, onBack }: Props) {
                    for the next screen would be telling the person who has
                    already been handed the phone.
 
-                   Silent on the last player. Nothing is being passed then;
-                   the deal is finished and the game starts. */
-                if (s.at + 1 < s.count) audio.play("advance");
+                   The last press is a different event, which is why it gets a
+                   different sound rather than none. Nothing is being passed on
+                   — the deal is finished and the round starts — so it takes
+                   `go`, the same sound the 3 · 2 · 1 lands on elsewhere. This
+                   is the one moment in the mode where the phone stops being
+                   private and the table starts playing, and it was silent. */
+                audio.play(s.at + 1 < s.count ? "advance" : "go");
                 setS((prev) => {
                   const next = prev.at + 1;
                   // Always back to a cover screen — never straight to the next
