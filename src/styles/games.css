@@ -315,7 +315,7 @@
      rounded the two curves met at each seam: the card behind curved
      IN at its bottom corner while the card in front curved in at its
      top corner, and the shell showed through the notch between them.
-     Eleven cards, eleven notches — a scalloped edge running down both
+     Ten cards, ten notches — a scalloped edge running down both
      sides of the deck.
 
      Square the bottom and the card behind stays full width right
@@ -340,7 +340,7 @@
 /* ---------------------------------------------------------------
    THE DECK DEALS ITSELF OUT, ONCE.
 
-   Eleven cards used to be simply there — the app's front door, and
+   Ten cards used to be simply there — the app's front door, and
    the one screen whose whole idea is a deck, arriving fully formed
    while the category grid two taps away dealt itself.
 
@@ -375,7 +375,7 @@
    --stagger-deal, and --ease-out over --ease-glide. The travel here is the
    height of the screen rather than a nudge, so the curve wants to
    land the card rather than glide it, and the stagger has to be
-   wide enough that eleven cards read as eleven arrivals instead of
+   wide enough that ten cards read as ten arrivals instead of
    one wave. Last card home just past a second — the longest thing
    in the app, and the only one that only ever plays once.
 
@@ -542,7 +542,7 @@
    thing the eye is tracking is a rectangle of colour rushing
    outward — and everything else on screen moving at the same time
    does not read as the deck making way. It reads as the screen
-   coming apart. Eleven cards travelling under an expanding field is
+   coming apart. Ten cards travelling under an expanding field is
    simply too much happening at once in too little time.
 
    Held still, the deck is what it looks like: a stack, being
@@ -580,7 +580,7 @@
    type changes, and the tablet ramp changes it.
 
    Left alone, the frame went from 480 to 980 while the slabs
-   stayed 124px tall, so eleven near-square cards became eleven
+   stayed 124px tall, so ten near-square cards became ten
    letterbox strips with the title pinned to the top-left of a wide
    empty field. The deck stopped reading as a stack of cards and
    started reading as a list of coloured bars.
@@ -755,7 +755,7 @@
    Every other control on Home is a card you already want; this one is
    an invitation to let the app choose, which nothing about a plain
    outlined pill says. So the grey pill keeps its outline, and one
-   short line runs round it, on loop: the eleven packs in dealing
+   short line runs round it, on loop: the ten packs in dealing
    order, butted hard against each other, a fifth of the way round the
    button end to end.
 
@@ -764,7 +764,7 @@
    screen.
 
    A gradient in the border — the two-background padding-box /
-   border-box trick — BLENDS. Eleven packs melting into each other is
+   border-box trick — BLENDS. Ten packs melting into each other is
    a smear the length of the button: no mode is its own colour
    anywhere, which is the exact opposite of what the edge is for.
 
@@ -775,7 +775,7 @@
    stretched round the caps.
 
    And colouring the WHOLE edge, however cleanly, makes the button
-   shout. It sits above a stack of eleven already-saturated cards; a
+   shout. It sits above a stack of ten already-saturated cards; a
    full rainbow ring competes with the deck it is offering to pick
    from. A short line moving over a grey pill reads as one thing in
    motion rather than as another coloured object.
@@ -784,7 +784,7 @@
    renormalises the perimeter to MODES.length * RING_SPAN units at any
    button size, so `stroke-dasharray: 1px ...` is exactly one mode's
    share of the line, and offsetting each arc by its own index butts
-   all eleven into one contiguous streak. Equal lengths, hard stops,
+   all ten into one contiguous streak. Equal lengths, hard stops,
    and it follows the pill exactly because it IS the pill.
 
    Nothing is measured and no script runs: the geometry is CSS, so the

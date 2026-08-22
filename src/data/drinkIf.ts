@@ -1,7 +1,18 @@
 import type { Pools } from "./pools";
 
 /**
- * DRINK IF…
+ * DRINK IF… — RETIRED, AND KEPT ON PURPOSE.
+ *
+ * The mode is gone: it was the last entry in a deck-game registry that had
+ * held five, and like Never Have I Ever and Happy Hour Qs before it, sharing
+ * that loop was the only thing it did. Nothing imports this file.
+ *
+ * The 130 statements below are the reason it is still here. They are written
+ * to complete the words "DRINK IF…", so they are not drop-in prompts for
+ * another mode — but retiering them into Last Call's `drink` kind is the
+ * obvious home if they are ever wanted back, which is exactly what happened
+ * to Happy Hour Qs. Deleting the file is the one move that cannot be undone.
+ *
  * Night policy: SUPPLEMENT — the 19+ cards join the safe ones.
  * The Safe deck is self-deprecating and social; the Night deck is about
  * sex, hookups and the people actually in the room. Mixing them would

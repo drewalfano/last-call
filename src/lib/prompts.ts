@@ -31,8 +31,9 @@ export function fillPrompt(text: string, ctx: PromptContext = {}): string {
   });
   // Only when the prompt OPENS with a token does the substitution affect the
   // first letter — "{name}, what's…" falling back to a phrase needs lifting.
-  // Everything else is left exactly as written, which matters: Drink If's
-  // statements start lowercase on purpose, completing the card's eyebrow.
+  // Everything else is left exactly as written, which matters wherever a
+  // prompt completes its card's eyebrow rather than standing alone — Most
+  // Likely To does, and the retired Drink If deck is written that way too.
   if (!text.startsWith("{")) return filled;
   return filled.charAt(0).toUpperCase() + filled.slice(1);
 }

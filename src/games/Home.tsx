@@ -47,14 +47,14 @@ interface HomeProps {
  * enough for the dark ones — Imposter's teal, Kings Cup's navy, Hot Seat's
  * near-black brown — to arrive as part of a ramp rather than as a gap. That
  * was the problem when the line was a third of the perimeter and each pack
- * had ~26px: the eleven swing hard in lightness, so the line crossed a full
+ * had ~26px: the ten swing hard in lightness, so the line crossed a full
  * dark-to-light cycle every ~50px and read as blotchy however finely it was
  * cut. Room, not resolution, was the fix.
  */
 const RING_SPAN = 1;
 
 /**
- * Sub-segments per pack. This is what turns eleven flat colours into a
+ * Sub-segments per pack. This is what turns ten flat colours into a
  * gradient that follows the path.
  *
  * An svg stroke CAN take a gradient, but a `linearGradient` maps to the
@@ -76,7 +76,7 @@ const RING_SPAN = 1;
  * The count is nearly free in the way that matters — see .pick-me__ring,
  * where the whole ramp moves on ONE animation rather than one each — so the
  * cost is DOM nodes and per-frame style recalc, not animation objects.
- * Dropping this to 1 is the whole way back to eleven hard bands: the same
+ * Dropping this to 1 is the whole way back to ten hard bands: the same
  * design with the blending turned off.
  */
 const RING_STEPS = 32;
@@ -91,14 +91,14 @@ const RING_STEPS = 32;
  * another pack's. The ring is a gradient. What it wants is neighbours that are
  * near each other.
  *
- * So this is a bottleneck tour: of every way of arranging the eleven into a
+ * So this is a bottleneck tour: of every way of arranging the ten into a
  * loop, the one whose WORST neighbouring pair is as good as possible. Measured
  * as the largest single rgb step between two abutting sub-segments once the
  * pair is blended over RING_STEPS, which is what "I can see a band" actually
  * is. The deck order's worst pair steps 36.2; this one steps 10.1, and the
  * average step falls from 8.4 to about 5. That is the whole of the smoothness
  * and it costs nothing — no extra sub-segments, no extra nodes, just a better
- * route through the same eleven colours.
+ * route through the same ten colours.
  *
  * The loop is CUT at Ride the Bus, and the cut is the only free choice left
  * once the tour is fixed — every adjacency is already decided, so all it picks
@@ -110,7 +110,7 @@ const RING_STEPS = 32;
  * IT NAMES GAMES BUT IT IS A SEQUENCE OF COLOURS, and those two came apart
  * when the deck was recoloured. The tour is solved over hexes — it is a route
  * through the palette — so when the palette was dealt out differently across
- * the eleven games (see PACK COLORS in tokens.css), every id here had to be
+ * the ten games (see PACK COLORS in tokens.css), every id here had to be
  * rewritten to whichever game now wears the colour that id used to carry. The
  * gradient is byte-for-byte the one that was solved; only the names changed.
  *
@@ -135,13 +135,15 @@ const RING_ORDER: ModeId[] = [
   "last-word",
   "kings-cup",
   "the-number-game",
-  "hot-seat",
   "rank-it",
   "say-the-same-thing",
-  "drink-if",
+  "hot-seat",
   "imposter",
-  // Closed: back onto the pack it started from. ELEVEN transitions now, not
-  // ten, and the wrap is the whole point rather than an oversight. The line is
+  // Closed: back onto the pack it started from. TEN transitions now — the
+  // ring lost one with Drink If, and Hot Seat took that slot along with the
+  // brown, because this order is a sequence of COLOURS and the game names
+  // are only how they are spelled. The wrap is the whole point rather than
+  // an oversight. The line is
   // born and dies at the same spot on the pill, so with an open ramp those two
   // points are different colours butted against each other — a hue seam
   // sitting exactly where the eye is waiting for the line to arrive. Ending
@@ -333,7 +335,7 @@ const HALO_BEATS = RING_BEATS.filter((_, beat) => beat % HALO_EVERY === 0);
  *
  * RING_MS is that beat: the button says "Picking…", the line races round it,
  * and NOTHING else moves. It has to come first because the reveal scrolls the
- * chosen card into view, and on a deck eleven cards long that carries the
+ * chosen card into view, and on a deck ten cards long that carries the
  * button off the top of the screen — so the flourish that says the app is
  * choosing used to be dragged out of sight the instant it started.
  *
@@ -561,12 +563,12 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   /**
    * MILD DOES NOT GET HANDED A DRINKING GAME.
    *
-   * The tier says it plays sober, and three of the eleven cannot: Kings Cup's
-   * rules ARE drink instructions, Ride the Bus is a forfeit ladder, and Drink
-   * If is the verb in its own title. Offering one to a table that has just
-   * said nobody is drinking is the app not listening.
+   * The tier says it plays sober, and two of the ten cannot: Kings Cup's
+   * rules ARE drink instructions and Ride the Bus is a forfeit ladder.
+   * Offering one to a table that has just said nobody is drinking is the app
+   * not listening. It was three of eleven until Drink If… was retired.
    *
-   * It gates the PICKER and nothing else. All eleven stay on the deck at every
+   * It gates the PICKER and nothing else. All ten stay on the deck at every
    * level and a table that wants Kings Cup can tap it — the rule everywhere
    * else in this app is that a tier adds and never takes away, and hiding
    * cards would be the one place that broke it. What Mild changes is what the
@@ -790,8 +792,8 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
             tagline — "11 games. No wifi. Just play." — which was the only line
             in the app that said what the app was, and was carrying that for an
             audience of one: whoever opened it the first time. Everyone after
-            that is being handed a phone at a table, and the deck says eleven
-            games by being eleven cards. The wrapper went with the line, so the
+            that is being handed a phone at a table, and the deck says ten
+            games by being ten cards. The wrapper went with the line, so the
             head is two things now and can simply centre them. */}
         <h1 className="home__wordmark">Last Call</h1>
         <SettingsButton onOpen={() => setSettingsOpen(true)} />
@@ -801,7 +803,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
 
       <button className="pick-me" onClick={pickForMe} disabled={!!picked}>
         {/* One line running round the button's grey edge, a third of the way
-            round, graded through all eleven packs — see .pick-me__ring. The
+            round, graded through all ten packs — see .pick-me__ring. The
             grey stroke is the button's own border and stays put; this only
             travels over it. */}
         {(picked || sweeping) && (

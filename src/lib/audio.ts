@@ -73,10 +73,18 @@ export type Sound =
   /** The clock hit zero. The tone the ticks were climbing towards. */
   | "buzzer"
   /**
-   * The end of a 3 · 2 · 1 that everyone acts ON — Point, Say it. The same
-   * three pips lead into it as into `buzzer`, but this is a starting gun and
-   * that is an ending, so it lands brighter and shorter. Two opposite events
-   * should not wear the same sound however alike their run-ups are.
+   * A ROUND STARTS. The end of a 3 · 2 · 1 that everyone acts ON — Point, Say
+   * it. The same three pips lead into it as into `buzzer`, but this is a
+   * starting gun and that is an ending, so it lands brighter and shorter. Two
+   * opposite events should not wear the same sound however alike their run-ups
+   * are.
+   *
+   * It also fires with NO run-up at all, on the last Hide role in Odd One Out:
+   * the deal is done, the phone stops being private, and the table starts.
+   * Named for the event rather than the noise, so the absence of pips does not
+   * make it a different one — but it is worth knowing that this is the naked
+   * case, and that the two it lands on elsewhere are simultaneous instants
+   * where this is a round opening into talk.
    */
   | "go"
   /**
@@ -116,9 +124,10 @@ export type Sound =
    */
   | "card"
   /**
-   * The phone is going to the next player. Written but still UNWIRED: no mode
-   * hands over with a sound yet, and it should be judged on a real phone
-   * against the ones that do before it goes anywhere.
+   * The phone is going to the next player, or a screen is handing on to the
+   * next thing: each Hide role in Odd One Out except the last, and locking a
+   * complete ranking in. Rising, because something is being passed rather than
+   * finished — the last hand-over in a deal is `go`, not this.
    */
   | "advance";
 
@@ -454,8 +463,8 @@ class AudioManager {
       }
 
       /* THE QUIETEST THING IN HERE, AND IT HAS TO BE.
-         Drink If is nothing but draws; so are Last Call and Hot Seat. This
-         fires more often than the letter tap ever does, and a sound at that
+         Last Call and Hot Seat are nothing but draws (so was Drink If, which
+         is retired). This fires more often than the letter tap ever does, and a sound at that
          rate is judged on the tenth one, not the first. Anything with presence
          becomes a tic by the third game.
 

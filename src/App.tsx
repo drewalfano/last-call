@@ -6,7 +6,6 @@ import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
 import { unlockOnFirstGesture } from "./lib/audio";
 import { Home } from "./games/Home";
-import { DeckGame, DECK_GAMES, isDeckGame, type DeckGameConfig } from "./games/DeckGame";
 import { LastCallGame } from "./games/LastCallGame";
 import { HotSeat } from "./games/HotSeat";
 import { RideTheBus } from "./games/RideTheBus";
@@ -1026,18 +1025,6 @@ function renderScreen(
   }
 
   const mode = MODE_BY_ID[screen];
-
-  // The plain prompt decks share one component and differ by config.
-  if (isDeckGame(screen)) {
-    return (
-      <DeckGame
-        key={screen}
-        mode={mode}
-        config={DECK_GAMES[screen] as unknown as DeckGameConfig<never>}
-        onBack={goHome}
-      />
-    );
-  }
 
   switch (screen) {
     case "last-call":
