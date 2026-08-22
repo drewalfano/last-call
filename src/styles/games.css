@@ -4141,9 +4141,24 @@
   rotate: calc(var(--v) * 1.8deg);
 }
 
-.dial__target-casing {
+/* SELECTOR SPECIFICITY IS LOAD-BEARING HERE, so this is written as
+   `line.dial__target-casing` rather than the bare class.
+
+   The casing is a <line> inside .dial__target, which means the rule below it
+   — `.dial__target line` — also matches it, at 0,1,1 against the bare class's
+   0,1,0. The casing lost, got restyled as a second copy of the needle in the
+   needle's own colour and width, and the reveal shipped with no white outline
+   at all while the element sat correctly in the DOM the whole time. Qualifying
+   the class with the element takes this to 0,2,1 and it wins. */
+.dial__target line.dial__target-casing {
   stroke: var(--card-surface, #FFFFFF);
-  stroke-width: 11;
+  /* Nine against the needle's five, so two viewBox units of white show either
+     side. At the phone's rendered size the dial is 300 CSS px across a
+     320-unit viewBox, which puts that at about 1.9 CSS px a side — enough to
+     read as an outline and not so much that the needle starts looking like a
+     white line with a green core. It was eleven, which was three units and
+     did exactly that. */
+  stroke-width: 9;
   stroke-linecap: round;
   stroke-dasharray: 132;
   stroke-dashoffset: 0;

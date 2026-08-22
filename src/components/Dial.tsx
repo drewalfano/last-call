@@ -103,6 +103,21 @@ export function Dial({
   const [touched, setTouched] = useState(false);
   /** Which multiple of 5 the value last sat in, for the tick. */
   const lastNotch = useRef(Math.floor(value / 5));
+  /**
+   * THE LIVE VALUE, FOR THE KEYBOARD TO STEP FROM.
+   *
+   * An arrow key reads the current position and commits one more than it. Read
+   * from the `value` PROP that is the position as of the last render, so two
+   * key events arriving before React has re-rendered both step from the same
+   * number and the second overwrites the first instead of adding to it. Key
+   * repeat on a held arrow is comfortably slower than a render, so this does
+   * not bite in normal use — but a burst of events in one tick silently
+   * collapses to a single step, which is the kind of fault that only ever
+   * shows up somewhere inconvenient. The ref is written on every render and
+   * on every commit, so it is current within the tick as well as across it.
+   */
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const interactive = typeof onChange === "function";
 
@@ -126,6 +141,7 @@ export function Dial({
     (next: number, withTick = true) => {
       if (!onChange) return;
       const v = Math.round(clamp(next, 0, 100) * 10) / 10;
+      valueRef.current = v;
       if (withTick) notch(v);
       onChange(v);
     },
@@ -200,9 +216,10 @@ export function Dial({
     (e: React.KeyboardEvent) => {
       if (!interactive) return;
       const step = e.shiftKey ? 10 : 1;
+      const from = valueRef.current;
       let next: number | null = null;
-      if (e.key === "ArrowRight" || e.key === "ArrowUp") next = value + step;
-      else if (e.key === "ArrowLeft" || e.key === "ArrowDown") next = value - step;
+      if (e.key === "ArrowRight" || e.key === "ArrowUp") next = from + step;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowDown") next = from - step;
       else if (e.key === "Home") next = 0;
       else if (e.key === "End") next = 100;
       if (next === null) return;
@@ -210,7 +227,7 @@ export function Dial({
       setTouched(true);
       commit(next);
     },
-    [interactive, value, commit],
+    [interactive, commit],
   );
 
   /* The notch reference has to follow a value the dial did not set — a new
