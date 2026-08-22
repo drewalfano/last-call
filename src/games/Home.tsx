@@ -129,38 +129,42 @@ const RING_STEPS = 32;
  * roughest join in its most-watched spot.
  */
 const RING_ORDER: ModeId[] = [
-  "ride-the-bus",
-  "rank-it",
   "say-the-same-thing",
-  "last-call",
-  "imposter",
+  "ballpark",
+  "the-number-game",
+  "ride-the-bus",
   "kings-cup",
   "most-likely-to",
-  "last-word",
   "hot-seat",
-  "the-number-game",
-  "ballpark",
-  // Closed: back onto the pack it started from. ELEVEN transitions — the ring
-  // lost one when Drink If retired and gained it back with Ballpark. The wrap
-  // is the point rather than an oversight: the line is born and dies at the
-  // same spot on the pill, so with an open ramp those two points are
-  // different colours butted against each other — a hue seam sitting exactly
-  // where the eye is waiting for the line to arrive. Ending where it began
-  // leaves only a difference in brightness there.
+  "last-word",
+  "last-call",
+  "imposter",
+  "rank-it",
+  // Closed: back onto the pack it started from, so the seam is a difference
+  // in brightness and nothing else.
   //
-  // THIS LIST IS IDS AND IS READ AS COLOURS, and that is the whole reason it
-  // survives a re-deal. The deck has now been re-dealt three times over
-  // Ballpark's arrival and the ring's colour sequence has not moved once:
-  // each time, the ids here are permuted so that the same hues stay in the
-  // same order. Its weakest join is Hot Seat into Overbid at 0.151 — which
-  // in colours is the teal into the brown, and has been that pair throughout
-  // whatever names were on them.
+  // SOLVED RATHER THAN ARRANGED. This is the maximum-bottleneck Hamiltonian
+  // cycle over the eleven packs: of every way of walking all of them and
+  // returning to the start, it is the one whose WEAKEST join is strongest.
+  // That join is green into orange at 0.317, against 0.151 for the order
+  // this replaced — the ring's roughest transition is now better than its
+  // average one used to be, and no pair on it is under 0.3.
   //
-  // The old comment here warned that wrapping invents a twelfth colour, and
-  // it was right about the ORDER it was describing: brown mixed toward red
-  // lands on a dark muddy red that is in no pack. Gold back to gold mixes
-  // with itself.
-  "ride-the-bus",
+  // WHERE THE SEAM SITS IS A SEPARATE DECISION from the order, because a
+  // cycle can be rotated without changing a single join. Two things decide
+  // it. The run-up and run-out are the dimmest beats of the sweep and they
+  // land on the packs either side of the seam, so both want to be light —
+  // that is the fault the note on EDGE_ARC describes, dim beats reaching
+  // back into a near-black pack and the birth not reading at all. And the
+  // seam is the most-watched spot on the button, so it must not be the
+  // weakest join. Pink into green satisfies both: 0.348 rather than the
+  // 0.317 bottleneck, and L 0.62 against L 0.65, no dark pack near it.
+  //
+  // THIS LIST IS IDS AND IS READ AS COLOURS. The deck has been re-dealt
+  // three times over Ballpark's arrival and this sequence held every time by
+  // permuting names; this is the first change since that is a change to the
+  // COLOUR order itself.
+  "say-the-same-thing",
 ];
 
 const RING_COLOURS = RING_ORDER.map(
