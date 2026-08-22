@@ -1,5 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" fill="#1A1714"/>
-  <circle cx="32" cy="32" r="19" fill="none" stroke="#F5EFE2" stroke-width="6"/>
-  <circle cx="32" cy="32" r="7.5" fill="#F5EFE2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- The app icon as vector, for the browser tab. Same drawing as
+       icons/square.svg, which is what the PNGs are rendered from; the only
+       difference is the ground.
+
+       THIS IS THE ONE GROUND THAT CAN ACTUALLY FOLLOW THE THEME. A PNG on the
+       home screen is a fixed picture and iOS will not tint or darken it, so
+       apple-touch-icon.png is white in both appearances. An SVG favicon is
+       re-rendered by the browser, so a media query here is honoured live, and
+       a white tile stops punching a hole in a dark tab strip. Light stays
+       white, matching the PNGs and the way the deck was drawn. Dark takes the
+       app's own near black, the same one in the manifest.
+
+       Replaces the ring and dot mark, which was not the app's. -->
+  <style>
+    .ground { fill: #FFFFFF; }
+    @media (prefers-color-scheme: dark) { .ground { fill: #141414; } }
+  </style>
+  <rect class="ground" width="1024" height="1024"/>
+  <path fill="#E0070F" d="M107,180a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V316H107Z"/>
+  <path fill="#CAC307" d="M107,413a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V549H107Z"/>
+  <path fill="#E43E70" d="M107,646a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V782H107Z"/>
+  <path fill="#273287" d="M107,879a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V1024H107Z"/>
 </svg>
