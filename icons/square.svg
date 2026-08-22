@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Four cards shingled down the frame, the last one running off the bottom
+       edge the way the deck runs off the bottom of Home.
+
+       GEOMETRY IS THE DRAWING, SCALED. Every number here is the original
+       export multiplied by 810/736, which is what it takes to bring the side
+       margin from 144 to 107. Nothing is stretched: the card stays 810 wide by
+       233 deep, the same 3.47:1 it was drawn at, and the corner radius scales
+       with it. An earlier pass widened more than it deepened and flattened
+       every card by five percent, which reads as wrong long before anyone can
+       say why.
+
+       The bottom card is deeper than the others (242 against 233) because it
+       is a whole card leaving the frame, not a strip. That was true of the
+       export too and it survives the scale.
+
+       WHITE, NOT THE APP NEAR BLACK. iOS composites any transparency to black,
+       so the ground has to be painted either way. White is how the deck was
+       drawn and it is the only ground the navy card reads against: #273287 on
+       #141414 is 1.7:1, which loses the deck's bottom edge entirely.
+
+       Colours are the pack palette, from the cat block in tokens.css. -->
+  <rect width="1024" height="1024" fill="#FFFFFF"/>
+  <path fill="#E0070F" d="M107,180a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V316H107Z"/>
+  <path fill="#CAC307" d="M107,413a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V549H107Z"/>
+  <path fill="#E43E70" d="M107,646a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V782H107Z"/>
+  <path fill="#273287" d="M107,879a97,97 0 0 1 97,-97h616a97,97 0 0 1 97,97V1024H107Z"/>
+</svg>
