@@ -148,6 +148,27 @@ export const ZONES = [
   { within: 15, name: "Nearly." },
 ] as const;
 
+/**
+ * DISTANCE, SAID IN DEGREES.
+ *
+ * The 0–100 scale is internal — it is how the dial stores a position and it is
+ * never drawn. There are no ticks on the arc and no numbers at either end, so
+ * "off by 12" is an integer with nothing on screen to be twelve OF, and the
+ * first thing anyone asks is twelve what.
+ *
+ * Degrees are the one unit the dial actually has: the arc is a real half
+ * circle, so the gap between two needles is an angle a player can see. The
+ * conversion is written as the sweep over the scale rather than as 1.8 so it
+ * stays true to the geometry it comes from — if the arc ever stops being 180
+ * degrees, this is wrong in the same edit that makes it wrong.
+ */
+export const ARC_DEGREES = 180;
+export const SCALE_MAX = 100;
+
+export function degreesOff(distance: number): number {
+  return Math.round((distance * ARC_DEGREES) / SCALE_MAX);
+}
+
 /** The zone a distance lands in, or null for a miss beyond the outermost. */
 export function zoneFor(distance: number): (typeof ZONES)[number] | null {
   for (const zone of ZONES) {

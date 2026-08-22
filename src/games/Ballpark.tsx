@@ -4,7 +4,7 @@ import { Dial } from "../components/Dial";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
-import { BALLPARK, randomTarget, zoneFor, type Spectrum } from "../data/ballpark";
+import { BALLPARK, degreesOff, randomTarget, zoneFor, type Spectrum } from "../data/ballpark";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { audio } from "../lib/audio";
@@ -362,15 +362,15 @@ export function Ballpark({ mode, onBack }: Props) {
                   lockedGuess={locked}
                   revealing
                 />
-                {/* THE ZONE NAMES THE RESULT AND THE NUMBER QUALIFIES IT.
-                    "Off by 6" alone is a quantity in units nobody has an
-                    instinct for; "Close." alone throws away the one precise
-                    thing the round produced. Together the arcs behind them
-                    are what teach the number what it means. */}
+                {/* THE ZONE NAMES THE RESULT AND THE ANGLE QUALIFIES IT.
+                    "Close." alone throws away the one precise thing the round
+                    produced, and a bare number was worse — the 0–100 scale is
+                    internal and undrawn, so it read as a quantity of nothing.
+                    Degrees are the unit the arc actually has. */}
                 <p className="card__meta bp-reveal__gap">
                   {distance === 0
                     ? "Dead on."
-                    : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${distance}.`}
+                    : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${degreesOff(distance)}°.`}
                 </p>
               </article>
             </div>
