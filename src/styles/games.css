@@ -1583,60 +1583,6 @@
   .lw__letter { font-size: min(clamp(1.6rem, 7vw, 2.1rem), 11.25cqh); }
 }
 
-/* ---------------------------------------------------------------
-   THE RINGS — TEMPORARY, AND OFF UNLESS SETTINGS SAYS OTHERWISE.
-
-   Two concentric loops with the clock in the hole, which is what
-   this screen used to be. It is here so the choice can be made on a
-   phone at a table; see lib/letterBank.ts, which also carries the
-   numbers and the reason the grid wins on every one of them.
-
-   Everything is a share of a SQUARE stage, so the whole board scales
-   with whatever the phone gives it and the two rings cannot drift
-   apart from each other. The seats come from the module — a
-   stylesheet computing sin() would decide this on the device.
-   --------------------------------------------------------------- */
-.lw__board[data-bank="rings"] {
-  /* One row: the clock is inside the stage now, not above it. */
-  grid-template-rows: 1fr;
-}
-
-/* A share of the SQUARE stage, which is what makes this a plain percentage
-   and not a container query — see the note in LastWord.tsx on why the board
-   could not be asked its own height. The hole the inner ring leaves is 25.2%
-   of the stage across; this sits inside it with a margin. */
-.lw__board[data-bank="rings"] .lw__timer {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  width: 23%;
-  height: auto;
-}
-.lw__board[data-bank="rings"] .lw__seconds { font-size: 9cqw; }
-.lw__board[data-bank="rings"] .lw__track,
-.lw__board[data-bank="rings"] .lw__sweep { stroke-width: 9; }
-
-/* The stage. Square by the smaller axis, exactly as the grid is. */
-.lw__board[data-bank="rings"] .lw__grid {
-  display: block;
-  position: relative;
-  width: min(100%, 100cqh);
-  aspect-ratio: 1;
-  container-type: size;
-  gap: 0;
-}
-
-.lw__board[data-bank="rings"] .lw__letter {
-  position: absolute;
-  /* RING_D in lib/letterBank.ts. Change one, change the other. */
-  width: 18.2%;
-  height: auto;
-  aspect-ratio: 1;
-  translate: -50% -50%;
-  font-size: 8.4cqw;
-}
-
 .lw__letter {
   /* No aspect-ratio of its own — the cell fills its track, and the track is
      square because the grid's ratio makes it so. Keeping it here would have
