@@ -7,6 +7,7 @@ import { useContentMode } from "../state/contentMode";
 import { LAST_WORD_CATEGORIES } from "../data/lastWord";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { audio } from "../lib/audio";
+import { getBank, ringSeats } from "../lib/letterBank";
 
 /**
  * LAST WORD
@@ -18,6 +19,9 @@ import { audio } from "../lib/audio";
  * a thumb-sized ring on a phone where 26 do not.
  */
 const LETTERS = "ABCDEFGHIJKLMNOPRSTW".split("");
+
+/** Ring seats, computed once for the twenty. Unused by the grid. */
+const seats = ringSeats(LETTERS.length);
 
 /** Seconds on the clock for each player's turn. */
 const TURN_SECONDS = 10;
@@ -75,6 +79,11 @@ export function LastWord({ mode, onBack }: Props) {
    * else; waiting on `animationend` would strand a dead letter grid over a
    * finished round.
    */
+  /* Read once on the way in. Changing it mid-round is not a thing anyone
+     needs and re-laying the board under a running clock would be worse than
+     the question it answers. See lib/letterBank.ts — this is temporary. */
+  const [bank] = useState(getBank);
+
   const [leaving, setLeaving] = useState(false);
   const exit = useRef<number>(undefined);
   const [remaining, setRemaining] = useState(TURN_SECONDS * 1000);
@@ -359,39 +368,55 @@ export function LastWord({ mode, onBack }: Props) {
     );
   }
 
+  const clock = (
+    <div className="lw__timer" data-low={seconds <= 3 || undefined}>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle className="lw__track" cx="50" cy="50" r="44" />
+        <circle
+          className="lw__sweep"
+          cx="50"
+          cy="50"
+          r="44"
+          style={{ strokeDashoffset: 276.5 * (1 - progress) }}
+        />
+      </svg>
+      <span className="lw__seconds">{seconds}</span>
+    </div>
+  );
+
   return (
     /* The category is the one thing a player has to keep in their head for
        the whole round — see GameHeader's `subtitle`. */
     <GameScreen mode={mode} subtitle={category} onBack={onBack}>
       <div className="focal lw" data-leaving={leaving || undefined}>
-        <div className="lw__board">
-          {/* Its own row, not a centre overlay — a letter can't cover it. */}
-          <div className="lw__timer" data-low={seconds <= 3 || undefined}>
-            <svg viewBox="0 0 100 100" aria-hidden="true">
-              <circle className="lw__track" cx="50" cy="50" r="44" />
-              <circle
-                className="lw__sweep"
-                cx="50"
-                cy="50"
-                r="44"
-                style={{ strokeDashoffset: 276.5 * (1 - progress) }}
-              />
-            </svg>
-            <span className="lw__seconds">{seconds}</span>
-          </div>
+        <div className="lw__board" data-bank={bank}>
+          {/* On the grid: its own row, not a centre overlay — a letter can't
+              cover it. On the rings: inside the square stage, because that is
+              the only box in this subtree that knows how big the ring is.
+
+              Not a cosmetic choice. The board is a flex item that merely
+              stretches, and `container-type: size` reports ZERO height for one
+              of those — the same trap .lw__keys is a grid for, written up
+              above. Sizing the clock off the board gave a 0x0 clock. Sizing it
+              off the stage is a plain percentage of a square. */}
+          {bank === "grid" && clock}
 
           {/* The keys take whatever height is left after the timer, and the
               grid sizes itself against it — see .lw__keys. */}
           <div className="lw__keys">
             <div className="lw__grid">
+              {bank === "rings" && clock}
               {LETTERS.map((letter, i) => (
                 <button
                   key={letter}
                   className="lw__letter"
-                  /* Its place on the ring, at the sizes that get one — 20
-                     letters, 18° apart, A at the top going clockwise. The
-                     grid ignores it. See .lw__ring in games.css. */
-                  style={{ ["--i" as string]: i }}
+                  /* On the rings, its seat. The grid ignores both and lays
+                     itself out from the stylesheet. See lib/letterBank.ts. */
+                  style={
+                    bank === "rings"
+                      ? { left: `${seats[i].x}%`, top: `${seats[i].y}%` }
+                      : undefined
+                  }
                   data-locked={used.includes(letter) || undefined}
                   /* aria-disabled, NOT disabled. A disabled control is inert
                      to input — no click, and on WebKit no pointer events at
