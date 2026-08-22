@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- The Android maskable variant. A separate drawing, not a crop.
+  <!-- The Android maskable variant: the same untouched paths, moved and
+       scaled as one group so the drawing itself is never edited.
 
-       Android guarantees only the centre circle of radius 40 percent, and
-       masks the rest to whatever shape the launcher likes. So the deck is the
-       same drawing at 0.78 scale, sat high enough that all eight rounded
-       corners and all three shingle lines clear that circle with room to
-       spare: the worst corner lands 385 out of 410, the lowest shingle line
-       348 out of 410.
+       Android guarantees only the centre circle of radius 40 percent. At 0.71,
+       centred, every corner of the deck clears it: the square bottom corners
+       land 401 of 410 and the rounded top corners 375 of 410.
 
-       The navy card still leaves the frame. Bleeding is the point of a
-       maskable icon, not a mistake in one: a launcher that masks to a
-       rounded square shows the deck running off the bottom exactly as the
-       home screen icon does, and a launcher that masks to a circle cuts the
-       navy where it is a solid block and the cut cannot be seen. Ending the
-       card inside the circle instead would leave a small deck floating in a
-       white field on every non circular launcher. -->
+       IT DOES NOT BLEED OFF THE BOTTOM, AND IT CANNOT. Sitting the deck low
+       enough for the bottom card to leave the frame pushes the lowest shingle
+       line out past the safe circle at every scale there is; the algebra has
+       no solution, it is not a matter of picking a better number. Given the
+       choice between the bottom card leaving the frame and the pink to navy
+       line surviving a circular mask, the line wins, because it is one of the
+       three that make this read as a deck at all. -->
   <rect width="1024" height="1024" fill="#FFFFFF"/>
-  <path fill="#E0070F" d="M225,284a69,69 0 0 1 69,-69h436a69,69 0 0 1 69,69V380H225Z"/>
-  <path fill="#CAC307" d="M225,449a69,69 0 0 1 69,-69h436a69,69 0 0 1 69,69V545H225Z"/>
-  <path fill="#E43E70" d="M225,614a69,69 0 0 1 69,-69h436a69,69 0 0 1 69,69V710H225Z"/>
-  <path fill="#273287" d="M225,779a69,69 0 0 1 69,-69h436a69,69 0 0 1 69,69V1024H225Z"/>
+  <g transform="translate(148.48,88.84) scale(0.71)">
+  <path id="card-1" fill="#E0070F" d="M144,256c0-48.60106,39.39894-88,88-88h560c48.60107,0,88,39.39894,88,88v212H144v-212Z"/>
+  <path id="card-2" fill="#CAC307" d="M144,468c0-48.60104,39.39894-88,88-88h560c48.60107,0,88,39.39896,88,88v212H144v-212Z"/>
+  <path id="card-3" fill="#E43E70" d="M144,680c0-48.60107,39.39894-88,88-88h560c48.60107,0,88,39.39893,88,88v212H144v-212Z"/>
+  <path id="card-4" fill="#273287" d="M144,892c0-48.60107,39.39894-88,88-88h560c48.60107,0,88,39.39893,88,88v132H144v-132Z"/>
+  </g>
 </svg>

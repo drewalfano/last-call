@@ -1,13 +1,19 @@
 # Icon masters
 
-`square.svg` is the app icon. `maskable.svg` is the Android variant, which is a
-separate drawing rather than a crop, for the reasons written into the file.
-Both are 1024 square with an opaque white ground, and both carry their own
-notes about why the numbers are what they are.
+`square.svg` is the app icon: the export's four paths verbatim, in their own
+1024 coordinates, with one white rectangle behind them. `maskable.svg` is the
+same four paths moved and scaled as a group for Android. Both files carry their
+own notes on why they are the way they are.
 
 `public/favicon.svg` is `square.svg` with the ground behind a
 `prefers-color-scheme` query, since a vector favicon is the one icon here a
 browser re-renders and can therefore follow the theme.
+
+**Do not rebuild the cards from their visible bands.** Each card is 300 deep
+and the next covers all but 212 of it; that overlap is what fills the notch at
+each card's shoulder with the colour of the card above. Redraw them as their
+visible 212 and the notches show the ground, which at icon sizes turns the deck
+into four loose stripes. Edit the transform, never the path data.
 
 ## Rendering the PNGs
 
@@ -32,6 +38,6 @@ where `page.html` is the SVG inlined under
 | `public/icon-maskable-512.png` | `maskable.svg` | 512 |
 
 Worth re-checking after any change: every PNG is exactly its named size, no
-pixel is less than fully opaque, and in the maskable one nothing red, yellow or
-pink reaches further than 40% of the width from the centre. Navy is expected
-out there — that is the card leaving the frame.
+pixel is less than fully opaque, nothing but ground falls outside 40% of the
+width from the centre of the maskable one, and the notch above each card is the
+colour of the card above rather than white.
