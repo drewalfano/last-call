@@ -87,8 +87,8 @@ sit at the top, because eleven cards scroll past a single screen.
 | # | Mode | Type |
 |---|---|---|
 | 1 | Last Call ★ | wildcard deck |
-| 2 | Letter Rip | timer game |
-| 3 | Odd One Out | social deduction |
+| 2 | Odd One Out | social deduction |
+| 3 | Letter Rip | timer game |
 | 4 | Rank It | ranking + guessing |
 | 5 | Most Likely To | deck + pointing |
 | 6 | Kings Cup | card game |
@@ -280,8 +280,8 @@ two foregrounds. Ratios are the ones recorded beside each token in
 | Mode | Token | Colour | Ink | Ratio |
 |---|---|---|---|---|
 | Last Call | `--cat-last-call` | `#E0070F` | white | 4.99 |
-| Letter Rip | `--cat-last-word` | `#EE4620` | `#141414` | 4.85 |
 | Odd One Out | `--cat-imposter` | `#CAC307` | `#141414` | 9.93 |
+| Letter Rip | `--cat-last-word` | `#EE4620` | `#141414` | 4.85 |
 | Rank It | `--cat-rank-it` | `#A5C0EA` | `#141414` | 9.94 |
 | Most Likely To | `--cat-most-likely-to` | `#E43E70` | `#141414` | 4.58 |
 | Kings Cup | `--cat-kings-cup` | `#273287` | white | 11.10 |
@@ -298,10 +298,11 @@ rows named the colour each game wore before the colours were dealt across the
 slots — so it is rebuilt here from `tokens.css` with every ratio recomputed
 rather than carried forward.
 
-**The deal is currently broken.** Letter Rip's orange sits directly under Last
-Call's red at an OKLab distance of 0.069, where the arrangement was built to
-hold the weakest neighbouring pair at 0.295. See the note on the pack colours
-in `tokens.css`.
+Since the orange and the pink swapped games the weakest neighbouring pair is
+Odd One Out against Letter Rip at an OKLab distance of 0.282, a little under
+the 0.295 the arrangement was dealt to hold. Odd One Out sits second
+specifically to keep Letter Rip's orange off Last Call's red, which touch at
+0.069. See the note on the pack colours in `tokens.css`.
 
 ### Card treatment
 
