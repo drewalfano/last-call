@@ -59,31 +59,10 @@ export function setBank(value: Bank): void {
  */
 const OUTER = 13;
 
-/**
- * Diameter and the two ring radii, as fractions of the stage's side, solved
- * so that NOTHING is noticeably tighter than anything else.
- *
- * The first pass sized each constraint on its own and got three different
- * clearances — 4.8pt between outer neighbours, 3.7pt between the rings and
- * 2.1pt between inner neighbours. The inner ring was the tight one, and since
- * S and T are inner neighbours that is the pair that showed it.
- *
- * These are solved together instead: the inner radius is set from the letter
- * it has to clear rather than from the ring it sits on, and the diameter is
- * the largest that keeps every gap at or above the target. 6.3pt between
- * inner neighbours and between the rings, 8.3pt between outer neighbours.
- *
- * DEAD EQUAL IS NOT AVAILABLE, and it is worth writing down so nobody spends
- * an afternoon on it. Scale the whole figure so both rings have the same
- * centre spacing and the closest ring-to-ring distance comes to 0.938 of it,
- * whatever the angle — so a ring-to-ring pair is always tighter than a
- * within-ring pair, and the outer ring, pinned to the edge of the stage, is
- * always the loosest. Equal inner and cross gaps with a wider outer one is
- * the flattest this arrangement goes.
- */
-export const RING_D = 0.174;
-const R_OUTER = 0.413;
-const R_INNER = 0.22127;
+/** Diameter, and the two ring radii. Fractions of the stage's side. */
+export const RING_D = 0.182;
+const R_OUTER = 0.409;
+const R_INNER = 0.2166;
 
 export function ringSeats(count: number): { x: number; y: number }[] {
   return Array.from({ length: count }, (_, i) => {
@@ -91,13 +70,8 @@ export function ringSeats(count: number): { x: number; y: number }[] {
     const n = outer ? OUTER : count - OUTER;
     const step = outer ? i : i - OUTER;
     const r = outer ? R_OUTER : R_INNER;
-    /* A at the top, going clockwise, the way the grid reads left to right.
-       The inner ring is turned a half-TURN, not half a step. 13 and 7 are
-       coprime, so the two rings drift in and out of alignment however they
-       are offset, and the angle that pushes the closest pair furthest apart
-       is 180° — checked at every tenth of a degree. Half a step, which is the
-       obvious guess and what this used to be, is one of the worse ones. */
-    const angle = -Math.PI / 2 + (2 * Math.PI * step) / n + (outer ? 0 : Math.PI);
+    /* A at the top, going clockwise, the way the grid reads left to right. */
+    const angle = -Math.PI / 2 + (2 * Math.PI * step) / n + (outer ? 0 : Math.PI / n);
     return { x: 50 + r * 100 * Math.cos(angle), y: 50 + r * 100 * Math.sin(angle) };
   });
 }

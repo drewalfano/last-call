@@ -412,24 +412,10 @@ export function LastWord({ mode, onBack }: Props) {
                   className="lw__letter"
                   /* On the rings, its seat. The grid ignores both and lays
                      itself out from the stylesheet. See lib/letterBank.ts. */
-                  /* --i drives the entrance stagger for both layouts — see
-                     lw-key-in.
-
-                     The seat is handed over as CUSTOM PROPERTIES rather than
-                     as `left` and `top`, because an inline `left` outranks
-                     every stylesheet and this screen already has another ring
-                     at tablet sizes that positions with a transform. Inline
-                     coordinates followed the letters into that layout and bent
-                     it. A custom property nothing reads is inert, so only the
-                     phone rules that consume these two are affected. */
                   style={
                     bank === "rings"
-                      ? {
-                          ["--i" as string]: i,
-                          ["--x" as string]: `${seats[i].x}%`,
-                          ["--y" as string]: `${seats[i].y}%`,
-                        }
-                      : { ["--i" as string]: i }
+                      ? { left: `${seats[i].x}%`, top: `${seats[i].y}%` }
+                      : undefined
                   }
                   data-locked={used.includes(letter) || undefined}
                   /* aria-disabled, NOT disabled. A disabled control is inert
