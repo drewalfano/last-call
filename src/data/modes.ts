@@ -1,6 +1,6 @@
 /**
  * MODE REGISTRY
- * The single source of truth for the eleven game modes.
+ * The single source of truth for the ten game modes.
  * Home cards, the spin wheel and the screen state machine all read
  * from this list, so adding a mode means editing exactly one array.
  *
@@ -19,7 +19,6 @@ export type ModeId =
   | "say-the-same-thing"
   | "rank-it"
   | "the-number-game"
-  | "drink-if"
   | "hot-seat";
 
 export interface ModeDef {
@@ -34,8 +33,9 @@ export interface ModeDef {
   signature?: boolean;
   /**
    * A drinking game at heart: the drinking IS the mechanic, not a prompt it
-   * happens to carry. Kings Cup's rules ARE drink instructions, Ride the Bus
-   * is a forfeit ladder, and Drink If is the verb in its own title.
+   * happens to carry. Kings Cup's rules ARE drink instructions and Ride the
+   * Bus is a forfeit ladder. Drink If… was the third and is retired; its two
+   * hundred-odd prompts are still in src/data/drinkIf.ts, unimported.
    *
    * They are exempt from anything that tries to make the app sober, because
    * there is nothing left of them once you do. What it gates is
@@ -48,7 +48,7 @@ export interface ModeDef {
 
 /**
  * Order is deliberate: highest-replay modes sit at the top, because
- * eleven cards scroll past a single screen.
+ * ten cards scroll past a single screen.
  */
 export const MODES: ModeDef[] = [
   {
@@ -107,13 +107,6 @@ export const MODES: ModeDef[] = [
     title: "Overbid",
     tagline: "Bid high. Get called out.",
     color: "--cat-the-number-game",
-  },
-  {
-    id: "drink-if",
-    drinking: true,
-    title: "Drink If…",
-    tagline: "No turns, no setup. Call yourself out.",
-    color: "--cat-drink-if",
   },
   {
     id: "hot-seat",

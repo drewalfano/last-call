@@ -403,11 +403,11 @@
      That is the test of whether these are tokens or decoration.
      ---------------------------------------------------------- */
 
-  /* The deck dealing itself out on first open — eleven cards, one
+  /* The deck dealing itself out on first open — ten cards, one
      per --i, counted from the bottom. Was a literal 46ms beside
      .home__deck--dealing; the value is unchanged. Wide, because the
-     travel is a whole viewport and eleven cards have to read as
-     eleven arrivals rather than one wave. */
+     travel is a whole viewport and ten cards have to read as
+     ten arrivals rather than one wave. */
   --stagger-deal: 46ms;
 
   /* THE PARTING'S OWN STEP, AND THE HEAD START THE DECK GOT BEFORE
@@ -488,7 +488,7 @@
 
      THE ASSIGNMENT IS DEALT FOR THE DECK, NOT PICKED PER GAME.
 
-     Home is eleven cards that overlap, so the only thing a pack's
+     Home is ten cards that overlap, so the only thing a pack's
      colour has to do there is not look like the one it is touching.
      Chosen one at a time, that is exactly what nothing guarantees:
      Letter Rip's pink sat directly on Rank It's yellow at a distance
@@ -517,9 +517,9 @@
      the order, a constraint on it. Anything that moves the orange up
      one slot has to move the red as well.
 
-     So the eleven are acceptably dealt rather than optimally. Only a
+     So the pack is acceptably dealt rather than optimally. Only a
      re-deal against the current colours recovers the rest, and it is
-     the whole eleven-slot arrangement or nothing — moving one card off
+     the whole arrangement or nothing — moving one card off
      a bad join lands it on another.
 
      Ink travels with colour, always. It is chosen for the colour it
@@ -557,11 +557,16 @@
   --cat-say-the-same-thing-ink: #FFFFFF; /* 10.10 */
   --cat-the-number-game: #E990A2;
   --cat-the-number-game-ink: #141414;    /* 7.87 */
-  /* The darkest pack in the app, and it is on Drink If now. */
-  --cat-drink-if: #441B07;
-  --cat-drink-if-ink: #FFFFFF;           /* 14.94 */
-  --cat-hot-seat: #B9A3E3;
-  --cat-hot-seat-ink: #141414;           /* 8.26 */
+  /* The darkest pack in the app. It was Drink If's; that mode is retired and
+     Hot Seat has it, ink and all — near-black cannot be read on this one.
+
+     There were eleven packs and there are ten. The lavender #B9A3E3 that Hot
+     Seat used to wear is retired with the mode that freed this one up, rather
+     than left defined for nothing to point at. It is written down here
+     because a hex is the one thing a palette cannot recover once it is gone
+     from the file. */
+  --cat-hot-seat: #441B07;
+  --cat-hot-seat-ink: #FFFFFF;           /* 14.94 */
 
   /* Fallback foreground for any subtree that hasn't set --category-ink. */
   --cat-ink: #FFFFFF;
@@ -596,7 +601,7 @@
    changed a great deal and the rest changed a little.
 
    Every mode inherits from here. That is the point of it being
-   here: eleven modes were not touched to make this happen.
+   here: ten modes were not touched to make this happen.
    ================================================================ */
 @media (min-width: 640px) and (min-height: 600px) {
   :root {

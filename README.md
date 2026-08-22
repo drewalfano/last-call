@@ -1,6 +1,6 @@
 # Last Call
 
-Offline pass-the-phone party game. Eleven modes, one home screen, no accounts,
+Offline pass-the-phone party game. Ten modes, one home screen, no accounts,
 no network, no ads.
 
 ```bash
@@ -78,11 +78,11 @@ Reach for this principle before adding anything that keeps score.
 
 ---
 
-## The eleven modes
+## The ten modes
 
 Listed in the order Home deals them, which is `MODES` in `src/data/modes.ts` —
 the single source for titles, taglines and pack colours. Highest-replay modes
-sit at the top, because eleven cards scroll past a single screen.
+sit at the top, because ten cards scroll past a single screen.
 
 | # | Mode | Type |
 |---|---|---|
@@ -95,8 +95,7 @@ sit at the top, because eleven cards scroll past a single screen.
 | 7 | Ride the Bus | card game |
 | 8 | Same Page | timed convergence |
 | 9 | Overbid | bidding + challenge |
-| 10 | Drink If… | deck |
-| 11 | Hot Seat | turn structure + voting |
+| 10 | Hot Seat | turn structure + voting |
 
 **Ids are not titles.** Four modes were renamed and their ids deliberately were
 not, because nothing a player sees is attached to them: Odd One Out is
@@ -107,6 +106,13 @@ nothing on screen.
 
 Odd One Out is a rename of the MODE only. The role it deals is still called the
 Imposter and the in-game copy still says so.
+
+**Drink If… was retired**, taking the count from eleven to ten. It was the last
+entry in a deck-game registry that had held five; like Never Have I Ever and
+Happy Hour Qs before it, sharing that one reveal-and-draw loop was all it did,
+and it had already lost the elimination tracker that was its only mechanic. Its
+130 statements are kept, unimported, in `src/data/drinkIf.ts`. Hot Seat took the
+brown it wore; the lavender `#B9A3E3` Hot Seat used to wear is retired with it.
 
 ### Mode notes
 
@@ -220,7 +226,7 @@ fixed square card at the longest copy to confirm nothing clips.
 | Most Likely To | 60 | 60 |
 | Same Page prompts | 35 | 25 |
 | Overbid categories | 40 | 26 |
-| Drink If… | 60 | 60 |
+| Drink If… *(retired; file kept)* | 60 | 60 |
 | Hot Seat | 60 | 60 |
 | Never Have I Ever *(Kings Cup's Jack)* | 60 | 60 |
 
@@ -242,7 +248,7 @@ list, or is it dealt blind?
 | Policy | Used by | Behaviour |
 |---|---|---|
 | `lead` | Letter Rip, Odd One Out, Rank It, Same Page, Overbid | 19+ entries in front, safe ones interleaved through. The order matters because these are browsed in a picker; a straight concatenation puts a wall of one register at the top. |
-| `supplement` | Last Call, Drink If…, Most Likely To, Hot Seat, Never Have I Ever | Safe + 19+. No claim about order — everything reading this shuffles. |
+| `supplement` | Last Call, Most Likely To, Hot Seat, Never Have I Ever | Safe + 19+. No claim about order — everything reading this shuffles. |
 
 There is no policy that drops the safe pool. `replace` existed once, was the
 default, and was removed outright — not merely left unused, because a third
@@ -273,7 +279,7 @@ with the primary action grounded 20px off the bottom in every mode, so nothing
 moves between prompts.
 
 **Two neutrals app-wide:** flat white and `#141414`. Every pack colour ships
-with the ink that sits on it, and all eleven clear WCAG AA against just those
+with the ink that sits on it, and all ten clear WCAG AA against just those
 two foregrounds. Ratios are the ones recorded beside each token in
 `tokens.css`; the table below is in Home's dealing order.
 
@@ -288,17 +294,16 @@ two foregrounds. Ratios are the ones recorded beside each token in
 | Ride the Bus | `--cat-ride-the-bus` | `#FFAE00` | `#141414` | 9.92 |
 | Same Page | `--cat-say-the-same-thing` | `#0F4A42` | white | 10.10 |
 | Overbid | `--cat-the-number-game` | `#E990A2` | `#141414` | 7.87 |
-| Drink If… | `--cat-drink-if` | `#441B07` | white | 14.94 |
-| Hot Seat | `--cat-hot-seat` | `#B9A3E3` | `#141414` | 8.26 |
+| Hot Seat | `--cat-hot-seat` | `#441B07` | white | 14.94 |
 
 The token column is there because the ids never changed: Odd One Out's colour
 lives under `--cat-imposter`, and looking for `--cat-odd-one-out` finds nothing.
-The table above had drifted a whole re-deal out of date — nine of the eleven
+The table above had drifted a whole re-deal out of date — nine of the then-eleven
 rows named the colour each game wore before the colours were dealt across the
 slots — so it is rebuilt here from `tokens.css` with every ratio recomputed
 rather than carried forward.
 
-Colours have moved by hand since the eleven were dealt, so the weakest
+Colours have moved by hand since the packs were dealt, so the weakest
 neighbouring pair is now Letter Rip against Odd One Out at an OKLab distance
 of 0.282, a little under the 0.295 the arrangement was dealt to hold. Odd One
 Out sits third rather than second to keep its orange off Last Call's red,
