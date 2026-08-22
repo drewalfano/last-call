@@ -463,8 +463,8 @@ class AudioManager {
       }
 
       /* THE QUIETEST THING IN HERE, AND IT HAS TO BE.
-         Drink If is nothing but draws; so are Last Call and Hot Seat. This
-         fires more often than the letter tap ever does, and a sound at that
+         Last Call and Hot Seat are nothing but draws (so was Drink If, which
+         is retired). This fires more often than the letter tap ever does, and a sound at that
          rate is judged on the tenth one, not the first. Anything with presence
          becomes a tic by the third game.
 
