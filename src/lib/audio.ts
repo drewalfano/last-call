@@ -129,7 +129,30 @@ export type Sound =
    * complete ranking in. Rising, because something is being passed rather than
    * finished — the last hand-over in a deal is `go`, not this.
    */
-  | "advance";
+  | "advance"
+  /**
+   * A DETENT ON BALLPARK'S DIAL, every five units the needle crosses. Takes a
+   * `step` — which notch of the twenty-one it just passed — and climbs across
+   * them, so a sweep of the whole arc audibly travels.
+   *
+   * This is now the fastest-repeating sound in the app, past `tap`: a single
+   * confident drag from end to end crosses twenty of them in under a second.
+   * Everything about how it is written is that rate.
+   */
+  | "dial"
+  /** The group commits to a position. Short, down, and done deciding. */
+  | "lock"
+  /**
+   * THE RESULT OF A BALLPARK ROUND, and it takes the DISTANCE between the
+   * guess and the answer as its step rather than a beat index — the one sound
+   * in here whose shape is the game state.
+   *
+   * It was keyed to a score until the mode stopped keeping one. Distance is
+   * the better handle anyway: it is the thing already printed on the screen
+   * underneath it, so the sound and the line agree without a table of points
+   * in between them deciding what the number means.
+   */
+  | "verdict";
 
 /**
  * iOS lets a page opt into playing through the ringer switch, and it is not in
@@ -508,6 +531,79 @@ class AudioManager {
         this.tone(t, { freq: 420, duration: 0.07, gain: 0.24 });
         this.tone(t + 0.06, { freq: 630, duration: 0.09, gain: 0.24 });
         break;
+
+      /* TRIANGLE, NOT SQUARE, AND NOWHERE NEAR THE BOTTOM OF THE RANGE.
+         It was specified as a square wave, and this file has now twice
+         written down what square costs: `reject` was one at 130Hz and was the
+         loudest thing in the app for the smallest event in it, and `tap` had
+         a pitched body at 190Hz that read as a boom in the hand. A detent
+         firing twenty times a second inherits both faults at once, so it gets
+         the shape those two ended up with.
+
+         The climb is the dial's position, 880Hz at the left end to about
+         1280 at the right — small enough that no single tick sounds like a
+         note being played, wide enough that running the needle across the
+         whole arc goes somewhere. It sits in the same region as `tap`
+         deliberately: the two never sound in the same mode.
+
+         The gain is the machine-gun guard. 0.06 is just above `card`, which
+         is the quietest thing here, because twenty of these in a row is a
+         texture and a texture is judged by its loudest moment. */
+      case "dial": {
+        const n = Math.min(20, Math.max(0, step | 0));
+        this.tone(t, {
+          freq: 880 + n * 20,
+          duration: 0.015,
+          gain: 0.06,
+          type: "triangle",
+          attack: 0.003,
+        });
+        break;
+      }
+
+      /* Two notes down. `advance` is the same gesture inverted and that is
+         the point of the pair: one hands the phone on, this one closes a
+         decision the table argued its way to. Down, and quick about it. */
+      case "lock":
+        this.tone(t, { freq: 780, duration: 0.06, gain: 0.22, type: "triangle" });
+        this.tone(t + 0.055, { freq: 520, duration: 0.11, gain: 0.24, type: "triangle" });
+        break;
+
+      /* THREE OUTCOMES, ONE GESTURE, READ OFF HOW CLOSE THEY GOT.
+         Notes get added the nearer the guess landed rather than the figure
+         changing shape, so the outcomes are recognisably the same sound doing
+         better or worse — which is what lets a table learn it in one round.
+
+         COARSE ON PURPOSE. It would be easy to give this four steps and fine
+         thresholds, and that would be a scoring table living in the audio
+         file after the mode deliberately threw one away. Close, near, and
+         nowhere is all a sound can say anyway.
+
+         The miss is the odd one out and has to be: a sag rather than a short
+         version of the others, borrowed from `miss`, which exists for exactly
+         this feeling. It is quieter than the wins, not louder. A miss is the
+         funny part. */
+      case "verdict": {
+        const gap = Math.max(0, step | 0);
+        if (gap > 15) {
+          this.tone(t, {
+            freq: 440, slideTo: 240, duration: 0.28, gain: 0.18,
+            type: "triangle", attack: 0.01,
+          });
+          break;
+        }
+        const figure = gap <= 5 ? [620, 780, 1040] : [620, 830];
+        for (let i = 0; i < figure.length; i++) {
+          this.tone(t + i * 0.075, {
+            freq: figure[i],
+            duration: i === figure.length - 1 ? 0.26 : 0.09,
+            gain: 0.2,
+            type: "triangle",
+            attack: 0.006,
+          });
+        }
+        break;
+      }
     }
   }
 }

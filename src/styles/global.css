@@ -236,24 +236,31 @@ button { font: inherit; color: inherit; }
    is passing behind it.
    --------------------------------------------------------------- */
 .btn--float {
-  /* AN EDGE, BECAUSE THE FILL IS NOT ALWAYS ITS OWN.
-     .btn fills with --category-ink, and on the four dark packs that ink is
-     #FFFFFF — the same white as --card-surface, which is the picker's card
-     stock. So on Same Page, Kings Cup, Drink If and Last Call this button was
-     a white pill with the same corner radius as the white cards it floats
-     over, and it disappeared into them. The other seven packs never showed it
-     because their ink is near-black.
+  /* AN EDGE, BUT ONLY WHERE THE FILL IS WHITE.
+     .btn fills with --category-ink, and on the four packs whose ink is
+     #FFFFFF that is the same white as --card-surface, which is the picker's
+     card stock. So on those four this button was a white pill with the same
+     corner radius as the white cards it floats over, and it disappeared into
+     them. The other seven fill near-black and were never at risk.
+
      Forcing it black everywhere is the fix that looks obvious and is wrong:
      white ink exists on those four precisely BECAUSE their fields are dark, so
-     a black button would sink into the background instead of the cards.
-     The pack colour is the one thing the cards never carry, so an edge in it
-     separates the button from them without touching the seven that already
-     work — against a flat field of that same colour it is invisible, and it
-     only appears where a card passes behind, which is where it is needed.
+     a black button would sink into the background instead of the cards. The
+     pack colour is the one thing the cards never carry, so an edge in it
+     separates the button from them — against a flat field of that same colour
+     it is invisible, and it only appears where a card passes behind.
+
+     IT USED TO BE DRAWN ON ALL ELEVEN, which put a visible stroke around
+     seven near-black buttons that had nothing to be separated from — a ring
+     with no job, most obvious on the pale packs where the pack-coloured edge
+     sits light against a dark fill. The edge now ships per pack, defined only
+     where the ink is white, and everything else falls through to transparent.
+     See --cat-*-edge in tokens.css.
+
      The darker cut is the recipe .deck-card already uses for its own edge; it
      reads as an edge rather than as a highlight, and reusing it means there is
      one such recipe in the app rather than two. */
-  border-color: color-mix(in srgb, var(--category) 80%, #000 20%);
+  border-color: var(--category-edge, transparent);
   box-shadow: 0 6px 22px -8px rgba(0, 0, 0, 0.55);
 }
 

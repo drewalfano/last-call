@@ -1,6 +1,6 @@
 /**
  * MODE REGISTRY
- * The single source of truth for the ten game modes.
+ * The single source of truth for the eleven game modes.
  * Home cards, the spin wheel and the screen state machine all read
  * from this list, so adding a mode means editing exactly one array.
  *
@@ -19,7 +19,8 @@ export type ModeId =
   | "say-the-same-thing"
   | "rank-it"
   | "the-number-game"
-  | "hot-seat";
+  | "hot-seat"
+  | "ballpark";
 
 export interface ModeDef {
   id: ModeId;
@@ -48,7 +49,7 @@ export interface ModeDef {
 
 /**
  * Order is deliberate: highest-replay modes sit at the top, because
- * ten cards scroll past a single screen.
+ * eleven cards scroll past a single screen.
  */
 export const MODES: ModeDef[] = [
   {
@@ -59,28 +60,38 @@ export const MODES: ModeDef[] = [
     signature: true,
   },
   {
-    id: "last-word",
-    title: "Letter Rip",
-    tagline: "Category, letter, pass. Don't freeze.",
-    color: "--cat-last-word",
-  },
-  {
     id: "imposter",
     title: "Odd One Out",
     tagline: "One of you doesn't know the word.",
     color: "--cat-imposter",
   },
   {
+    id: "last-word",
+    title: "Letter Rip",
+    tagline: "Category, letter, pass. Don't freeze.",
+    color: "--cat-last-word",
+  },
+  /*
+   * FOURTH, and it is the pool that puts it there rather than the mode being
+   * new. Almost everything below it is spent by being played: a Rank It set,
+   * a Hot Seat question and a Most Likely To card are each used up the first
+   * time a table sees them, so the count in the file is very close to the
+   * number of rounds in it. Ballpark's sixty pairs are not — the target moves
+   * every round and the clue-giver changes with it, so "Underrated /
+   * Overrated" is a different argument the fourth time it comes up. The three
+   * above it are the namesake and the two that already behave this way.
+   */
+  {
+    id: "ballpark",
+    title: "Ballpark",
+    tagline: "One clue, one dial. Get close.",
+    color: "--cat-ballpark",
+  },
+  {
     id: "rank-it",
     title: "Rank It",
     tagline: "Guess how they'd rank it.",
     color: "--cat-rank-it",
-  },
-  {
-    id: "most-likely-to",
-    title: "Most Likely To",
-    tagline: "Count to three, then point.",
-    color: "--cat-most-likely-to",
   },
   {
     id: "kings-cup",
@@ -101,6 +112,12 @@ export const MODES: ModeDef[] = [
     title: "Same Page",
     tagline: "Two people, one word. Keep converging.",
     color: "--cat-say-the-same-thing",
+  },
+  {
+    id: "most-likely-to",
+    title: "Most Likely To",
+    tagline: "Count to three, then point.",
+    color: "--cat-most-likely-to",
   },
   {
     id: "the-number-game",

@@ -53,7 +53,7 @@ export interface Pools<T> {
   /**
    * Optional, deliberately. A game with nothing written at this tier simply
    * plays the two below it — which is what lets the tier ship one game at a
-   * time instead of all ten at once.
+   * time instead of all eleven at once.
    */
   filthy?: readonly T[];
 }

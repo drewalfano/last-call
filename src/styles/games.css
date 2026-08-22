@@ -315,7 +315,7 @@
      rounded the two curves met at each seam: the card behind curved
      IN at its bottom corner while the card in front curved in at its
      top corner, and the shell showed through the notch between them.
-     Ten cards, ten notches — a scalloped edge running down both
+     Eleven cards, eleven notches — a scalloped edge running down both
      sides of the deck.
 
      Square the bottom and the card behind stays full width right
@@ -340,7 +340,7 @@
 /* ---------------------------------------------------------------
    THE DECK DEALS ITSELF OUT, ONCE.
 
-   Ten cards used to be simply there — the app's front door, and
+   Eleven cards used to be simply there — the app's front door, and
    the one screen whose whole idea is a deck, arriving fully formed
    while the category grid two taps away dealt itself.
 
@@ -375,7 +375,7 @@
    --stagger-deal, and --ease-out over --ease-glide. The travel here is the
    height of the screen rather than a nudge, so the curve wants to
    land the card rather than glide it, and the stagger has to be
-   wide enough that ten cards read as ten arrivals instead of
+   wide enough that eleven cards read as eleven arrivals instead of
    one wave. Last card home just past a second — the longest thing
    in the app, and the only one that only ever plays once.
 
@@ -542,7 +542,7 @@
    thing the eye is tracking is a rectangle of colour rushing
    outward — and everything else on screen moving at the same time
    does not read as the deck making way. It reads as the screen
-   coming apart. Ten cards travelling under an expanding field is
+   coming apart. Eleven cards travelling under an expanding field is
    simply too much happening at once in too little time.
 
    Held still, the deck is what it looks like: a stack, being
@@ -580,7 +580,7 @@
    type changes, and the tablet ramp changes it.
 
    Left alone, the frame went from 480 to 980 while the slabs
-   stayed 124px tall, so ten near-square cards became ten
+   stayed 124px tall, so eleven near-square cards became eleven
    letterbox strips with the title pinned to the top-left of a wide
    empty field. The deck stopped reading as a stack of cards and
    started reading as a list of coloured bars.
@@ -755,7 +755,7 @@
    Every other control on Home is a card you already want; this one is
    an invitation to let the app choose, which nothing about a plain
    outlined pill says. So the grey pill keeps its outline, and one
-   short line runs round it, on loop: the ten packs in dealing
+   short line runs round it, on loop: the eleven packs in dealing
    order, butted hard against each other, a fifth of the way round the
    button end to end.
 
@@ -764,7 +764,7 @@
    screen.
 
    A gradient in the border — the two-background padding-box /
-   border-box trick — BLENDS. Ten packs melting into each other is
+   border-box trick — BLENDS. Eleven packs melting into each other is
    a smear the length of the button: no mode is its own colour
    anywhere, which is the exact opposite of what the edge is for.
 
@@ -775,7 +775,7 @@
    stretched round the caps.
 
    And colouring the WHOLE edge, however cleanly, makes the button
-   shout. It sits above a stack of ten already-saturated cards; a
+   shout. It sits above a stack of eleven already-saturated cards; a
    full rainbow ring competes with the deck it is offering to pick
    from. A short line moving over a grey pill reads as one thing in
    motion rather than as another coloured object.
@@ -784,7 +784,7 @@
    renormalises the perimeter to MODES.length * RING_SPAN units at any
    button size, so `stroke-dasharray: 1px ...` is exactly one mode's
    share of the line, and offsetting each arc by its own index butts
-   all ten into one contiguous streak. Equal lengths, hard stops,
+   all eleven into one contiguous streak. Equal lengths, hard stops,
    and it follows the pill exactly because it IS the pill.
 
    Nothing is measured and no script runs: the geometry is CSS, so the
@@ -4024,5 +4024,366 @@
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
+}
+
+
+/* ---------------- Ballpark ---------------- */
+
+/*
+   THE DIAL IS THE MODE.
+
+   A semicircle the table drags a needle across, and the only thing the app
+   gives the group to do — the prompt is two words and the clue is spoken out
+   loud. Everything below is in the SVG's own user units, scaled by the one
+   width rule on .dial__svg, so the numbers here match the geometry constants
+   in Dial.tsx rather than being a second set to keep in step.
+*/
+.dial {
+  width: 100%;
+  /* THE PACK COLOUR, TAKEN DOWN FAR ENOUGH TO READ ON WHITE CARD STOCK.
+     Ballpark's own lavender is 2.2:1 against a white card, which is no use
+     for the most important mark of the round. The hue is still right — it is
+     the one colour the card never uses, so it cannot be confused with the
+     black guess needle beside it — it just needs the value. Derived once
+     here and used by the answer needle and all three zones, so they are
+     visibly one family; mixed toward the card's ink rather than replaced, so
+     the dark packs, whose colours already carry, barely move. */
+  --dial-accent: color-mix(in oklab, var(--category, currentColor) 72%, var(--card-ink, #141414));
+  /* WITHOUT THIS THE DIAL STUTTERS AND THE PAGE MOVES.
+     A drag across an arc is half vertical by definition — the needle goes up
+     to reach the middle — and the browser reads that vertical component as a
+     scroll unless the element has opted out of panning entirely. The gesture
+     then fights the page for the same pointer and the needle drops frames on
+     the way past the top. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.dial__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.dial__svg[data-interactive] { cursor: grab; }
+.dial__svg[data-interactive][data-dragging] { cursor: grabbing; }
+
+/* THE ONE FOCUS RING IN THE APP, AND IT IS GATED.
+   global.css clears :focus-visible outright, because WebKit resolves it for a
+   TOUCH on some elements and the primary action then sat in a hard ring after
+   every press, reading as an error state. That note ends by saying the rule to
+   put back belongs behind a fine-pointer query — this is the first thing in
+   the app that needs it, since the dial is genuinely operable from the
+   keyboard and a slider you cannot see the focus of is not.
+
+   Gated exactly as that note prescribes, so a thumb never sees it. */
+@media (hover: hover) and (pointer: fine) {
+  .dial__svg:focus-visible {
+    outline: 3px solid var(--category, currentColor);
+    outline-offset: 6px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+.dial__track {
+  fill: none;
+  stroke: var(--card-edge, rgba(20, 20, 20, 0.2));
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+
+/* --- the needles ---------------------------------------------------------
+
+   All three turn about the hub, 1.8deg per unit of value, which is the whole
+   reason they are drawn pointing at 0 and rotated rather than positioned.
+   `transform-box: view-box` is what lets the origin be written as the hub's
+   coordinates in user units. */
+.dial__needle,
+.dial__target,
+.dial__guess,
+.dial__drift {
+  transform-box: view-box;
+  transform-origin: 160px 160px;
+}
+
+.dial__needle {
+  rotate: calc(var(--v) * 1.8deg);
+  transition: rotate var(--dur-fast) var(--ease-out);
+}
+
+/* NO EASING UNDER THE FINGER.
+   The transition is there for the keyboard, where the needle jumps a unit at
+   a time and should glide. During a drag it is the enemy: every pointermove
+   starts a fresh 160ms ease toward a target the next move has already
+   replaced, so the needle runs permanently behind the thumb and the dial
+   feels like it is buffering. Off while dragging, on the moment it is let go. */
+.dial__svg[data-dragging] .dial__needle { transition: none; }
+
+/* Round cap, and it is load-bearing rather than styling: the needle now ends
+   on the track's centreline, so the cap is the whole of what sits inside the
+   bar. A butt cap here would read as the line being cut off by the track. */
+.dial__needle line,
+.dial__guess line {
+  stroke: var(--card-ink, currentColor);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.dial__hub {
+  fill: var(--card-ink, currentColor);
+}
+
+/* The answer. Sits under the guess marker's weight deliberately: it is a
+   reference line, and the thing the table wants to look at is the gap. */
+.dial__target {
+  rotate: calc(var(--v) * 1.8deg);
+}
+
+.dial__target-casing {
+  stroke: var(--card-surface, #FFFFFF);
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-dasharray: 132;
+  stroke-dashoffset: 0;
+}
+
+.dial__target line {
+  stroke: var(--dial-accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 132;
+  stroke-dashoffset: 0;
+}
+
+.dial__guess {
+  rotate: calc(var(--v) * 1.8deg);
+}
+
+/* --- the zones -----------------------------------------------------------
+
+   Three arcs of the same track, widest underneath, growing out of the answer.
+   They carry no points — the mode keeps no score — and exist only so that
+   "off by six" has something to be six of. Same stroke width as the track so
+   they sit IN it rather than on top of it.
+
+   The steps are alpha off one colour rather than three separate ones: the
+   zones are a single thing getting weaker with distance, and three hues would
+   read as three categories. */
+.dial__zone {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: butt;
+  transform-box: view-box;
+  /* The answer's point on the arc, handed down per zone. Growing from here is
+     what makes them read as coming out of the answer. */
+  transform-origin: var(--ox) var(--oy);
+}
+
+/* A LADDER IN VALUE, NOT IN ALPHA.
+
+   Three strengths of one colour over white was the obvious way to do this and
+   it does not work: fading a pack colour toward the card moves lightness and
+   chroma together and the three steps land within a few percent of each other
+   — on the pale packs the outer two were all but the same tint, and you could
+   not tell the zones apart, which is the entire job of drawing them.
+
+   So the ramp runs dark → pack → pale, mixing toward the card's INK at the
+   middle and toward the card's SURFACE at the edge. That is a real spread of
+   lightness whatever the pack is, and it happens to say the right thing:
+   the closer the zone, the heavier it sits. */
+.dial__zone[data-zone="0"] { stroke: color-mix(in oklab, var(--category, currentColor) 62%, var(--card-ink, #141414)); }
+.dial__zone[data-zone="1"] { stroke: var(--category, currentColor); }
+.dial__zone[data-zone="2"] { stroke: color-mix(in oklab, var(--category, currentColor) 42%, var(--card-surface, #FFFFFF)); }
+
+/* --- the reveal ----------------------------------------------------------
+
+   ONE SEQUENCE, NOT THREE EFFECTS. The answer draws itself along its own
+   length, the guess marker settles as it arrives, and the sound lands with
+   them. The delays are written as one ladder here so the whole thing can be
+   read in one place:
+
+     0ms    innermost zone
+     60ms   middle zone              (--zone-i * 60ms)
+     120ms  outer zone
+     200ms  the answer starts drawing
+     300ms  the guess marker settles
+     380ms  the verdict sounds       (in Ballpark.tsx)
+
+   Every step is an entrance whose end state IS the element's resting style,
+   so the global prefers-reduced-motion rule collapsing durations lands the
+   whole sequence correctly on its final frame rather than stranding it.
+*/
+@keyframes bp-zone-in {
+  from { opacity: 0; scale: 0.1; }
+  to   { opacity: 1; scale: 1; }
+}
+
+.dial__zones[data-revealing] .dial__zone {
+  animation: bp-zone-in var(--dur-base) var(--ease-out) backwards;
+  animation-delay: calc(var(--zone-i) * 60ms);
+}
+
+@keyframes bp-target-draw {
+  from { stroke-dashoffset: 132; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.dial__target[data-revealing] line {
+  animation: bp-target-draw var(--dur-base) var(--ease-out) 200ms backwards;
+}
+
+/* A SETTLE, NOT AN ENTRANCE. The marker is already on screen at the position
+   the group locked — it does not arrive, it stops. So the overshoot is on
+   scale alone and small: enough to say "this is the thing being measured",
+   not enough to look like it moved after the table committed. */
+@keyframes bp-guess-settle {
+  0%   { scale: 1; }
+  55%  { scale: 1.32; }
+  100% { scale: 1; }
+}
+
+.dial__guess[data-revealing] circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bp-guess-settle var(--dur-base) var(--ease-spring) 300ms backwards;
+}
+
+/* --- the ambient drift ---------------------------------------------------
+
+   About a degree and a half of sway before the first touch, which is the only
+   thing on the screen saying the dial can be grabbed. Killed permanently on
+   the first pointerdown — see `touched` in Dial.tsx — because after that the
+   needle's position is an answer the group is arguing about and nothing
+   should be moving it but them. */
+@keyframes bp-drift {
+  from { rotate: -0.75deg; }
+  to   { rotate: 0.75deg; }
+}
+
+.dial__drift[data-drift] {
+  animation: bp-drift 4s var(--ease-in-out) infinite alternate;
+}
+
+/* The global reduce rule collapses durations, which lands every entrance above
+   on its end state correctly — but an infinite alternate has no end state to
+   land on, so the drift is taken out by name instead. Same treatment
+   .gheader__live gets in global.css. */
+@media (prefers-reduced-motion: reduce) {
+  .dial__drift[data-drift] { animation: none; }
+}
+
+/* --- the ends ------------------------------------------------------------ */
+/* THE ENDS LINE UP WITH THE ENDS OF THE ARC, not with the edges of the box.
+
+   The track's PAINTED end, not its geometric one. The arc's path starts 28
+   units into a 320-unit viewBox, but the track is stroked 14 units wide with
+   a round cap, so the ink actually reaches 7 units further out again, to 21.
+   Aligning to 28 lines the labels up with a point that nothing on screen is
+   drawn at — off by half a stroke, which is exactly the amount that reads as
+   a near miss rather than as a deliberate inset. 21/320 is 6.5625%.
+
+   Written as a percentage rather than a pixel value because the SVG is scaled
+   by its width: the inset has to scale with it or the alignment only holds at
+   one size. */
+.dial__ends {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding-inline: 6.5625%;
+  margin-top: calc(var(--sp-2) * -1);
+}
+
+.dial__end {
+  flex: 1;
+  min-width: 0;
+  /* EXPLICIT, because .card centres its text and these are the two things on
+     it that must not be centred. Inherited, each label floated in the middle
+     of its own half — which reads as a caption for that half rather than as a
+     marker for the end of the arc, and undoes the alignment above. */
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+  color: var(--card-ink, currentColor);
+}
+
+.dial__end--right { text-align: right; }
+
+/* --- the screens ---------------------------------------------------------
+
+   THE ONE LIVE LINE IN THE APP SIZED FOR LENGTH.
+
+   Every other mode's is a label — a category, a turn, a count — and --fs-2xl
+   black uppercase is right for those. Ballpark's is a PAIR, two phrases and a
+   slash, and the longest of them is "Insignificant cultural event /
+   Significant cultural event". At the shared size that set three lines of
+   black caps, which took the header well past the height it reserves and
+   pushed the card down the screen with it.
+
+   Smaller, and still uppercase: the case is the app's voice on this line and
+   the length is what actually needed solving. Scoped by :has on the mode's
+   own screens, the way global.css already scopes Letter Rip's round-over
+   header, rather than by adding a variant to a component eleven modes share.
+*/
+.screen:has(.bp) .gheader__now {
+  font-size: var(--fs-lg);
+  letter-spacing: var(--tracking-wide);
+}
+
+
+.bp-handoff__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-prompt);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  text-wrap: balance;
+}
+
+.bp-reveal__gap {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE SPECTRUM ON THE BACK OF THE CLUE CARD.
+   Both ends stacked with the slash between them, so the Reader knows what
+   they are about to be asked before they turn it over — the pair is public,
+   only the point on it is not.
+
+   A slash and not an arrow, here and on the picker cards both. An arrow
+   points, which says the pair runs one way and that the right-hand end is
+   the good one — and several of these deliberately run the other way, so the
+   table cannot learn to read the dial instead of the clue. A slash sets two
+   things side by side and takes no view, which is what a spectrum is. */
+.bp-clue__pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-prompt-sm);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  text-wrap: balance;
+}
+
+.bp-clue__arrow {
+  font-size: var(--fs-lg);
+  opacity: 0.35;
+  line-height: 1;
+}
+
+/* The dial has to fit a square card alongside an eyebrow and a line of copy,
+   which the full-width arc does not. Pulled in so the card breathes. */
+.bp-clue .dial,
+.card .dial {
+  width: min(100%, 300px);
 }
 

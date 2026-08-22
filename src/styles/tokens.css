@@ -403,11 +403,11 @@
      That is the test of whether these are tokens or decoration.
      ---------------------------------------------------------- */
 
-  /* The deck dealing itself out on first open — ten cards, one
+  /* The deck dealing itself out on first open — eleven cards, one
      per --i, counted from the bottom. Was a literal 46ms beside
      .home__deck--dealing; the value is unchanged. Wide, because the
-     travel is a whole viewport and ten cards have to read as
-     ten arrivals rather than one wave. */
+     travel is a whole viewport and eleven cards have to read as
+     eleven arrivals rather than one wave. */
   --stagger-deal: 46ms;
 
   /* THE PARTING'S OWN STEP, AND THE HEAD START THE DECK GOT BEFORE
@@ -488,7 +488,7 @@
 
      THE ASSIGNMENT IS DEALT FOR THE DECK, NOT PICKED PER GAME.
 
-     Home is ten cards that overlap, so the only thing a pack's
+     Home is eleven cards that overlap, so the only thing a pack's
      colour has to do there is not look like the one it is touching.
      Chosen one at a time, that is exactly what nothing guarantees:
      Letter Rip's pink sat directly on Rank It's yellow at a distance
@@ -502,25 +502,34 @@
      different job (see MODES). Only which colour each game wears
      changed.
 
-     COLOURS HAVE MOVED BY HAND SINCE, so the arrangement below is no
-     longer the solved one. Most Likely To took Letter Rip's pink,
-     Letter Rip took Odd One Out's yellow, and Odd One Out took the
-     orange. The weakest pair is now Letter Rip against Odd One Out at
-     0.282 — a little under the 0.295 the deal had held, still well
-     clear of the 0.223 that started it, and every other join is 0.295
-     or better.
+     RE-DEALT AGAINST A BETTER MEASURE. The deal above, and every
+     hand-adjustment after it, scored only pairs that TOUCH. That is
+     the wrong test for this screen: the cards overlap and scroll, so
+     three or four are in view at once and a colour is judged against
+     its neighbour AND against the one past it.
 
-     THE ORANGE MUST NOT SIT SECOND. Against Last Call's red it
-     measures 0.069, by a distance the worst pair the deck has ever
-     had and two touching cards that do not read as two colours. That
-     is the whole reason Odd One Out is third: not a preference about
-     the order, a constraint on it. Anything that moves the orange up
-     one slot has to move the red as well.
+     Measured that way the old arrangement had a much worse fault than
+     the one it was tracking. Odd One Out's orange sat two cards below
+     Last Call's red at 0.069 — the closest pair in the palette — with
+     a single yellow card between them. The rule that put it there
+     ("the orange must not sit SECOND, it measures 0.069 against the
+     red") was right about the number and wrong about the remedy:
+     one slot of separation does not separate anything you can see
+     both halves of.
 
-     So the pack is acceptably dealt rather than optimally. Only a
-     re-deal against the current colours recovers the rest, and it is
-     the whole arrangement or nothing — moving one card off
-     a bad join lands it on another.
+     So four packs were re-dealt in a cycle — Odd One Out took the
+     yellow, Letter Rip took the navy, Kings Cup took the pink and
+     Most Likely To took the orange — which puts the red and the
+     orange eight slots apart and buries the navy between them. No
+     two cards within two positions of each other are now closer than
+     0.169, against 0.069 before, and the orange no longer constrains
+     the running order at all.
+
+     The running order is Home's, sorted by replay value, and it is a
+     different job (see MODES). Letter Rip and Odd One Out traded
+     places there in the same pass; the colours did not follow them,
+     because slot two wants the yellow and slot three the navy
+     whichever game is standing in them.
 
      Ink travels with colour, always. It is chosen for the colour it
      sits on rather than for the game, so a pairing moves as a unit
@@ -528,45 +537,87 @@
      that hex — none of them are re-derived, because none of them
      changed. The file already did this once, for the bus.
 
-     Last Call, Kings Cup and Ride the Bus kept theirs.
+     Last Call, Rank It, Ride the Bus, Same Page, Overbid and Hot
+     Seat kept theirs.
      ---------------------------------------------------------- */
   --cat-last-call: #E0070F;
   --cat-last-call-ink: #FFFFFF;          /* 4.99 */
-  --cat-kings-cup: #273287;
-  --cat-kings-cup-ink: #FFFFFF;          /* 11.10 */
+  /* AN EDGE ONLY WHERE THE INK IS WHITE — see .btn--float in global.css.
+     A floating button fills with the pack's INK, so on these four it comes
+     out white, the same white as the picker's card stock, and needs an edge
+     to separate it from the cards passing behind. The other seven fill
+     near-black against that stock and an edge on them is a stroke drawn
+     around a button that was already perfectly visible. Ships beside the ink
+     because it is a property OF the ink, and the two move together. */
+  --cat-last-call-edge: color-mix(in srgb, var(--cat-last-call) 80%, #000 20%);
+  /* The pink, off Most Likely To in the re-deal. Near-black ink now, so this
+     pack no longer carries a float-button edge — see the note on the ink
+     above and .btn--float in global.css. */
+  --cat-kings-cup: #E43E70;
+  --cat-kings-cup-ink: #141414;          /* 4.58 */
   /* Yellow because it is a bus. Swapped with Say the Same Thing, ink and
      all — the ink is chosen for the colour it sits on, so it moves with it. */
   --cat-ride-the-bus: #FFAE00;
   --cat-ride-the-bus-ink: #141414;       /* 9.92 */
 
-  /* The orange, off Letter Rip. Third in the deck rather than second
-     precisely so it is not touching Last Call's red — see the note above. */
-  --cat-imposter: #EE4620;
-  --cat-imposter-ink: #141414;           /* 4.85 */
-  /* Was teal, then pink, then the orange; the yellow came off Odd One Out
-     and is what actually sits here. */
-  --cat-last-word: #CAC307;
-  --cat-last-word-ink: #141414;          /* 9.93 */
+  /* The yellow, off Letter Rip, and this pack is second in the deck now.
+     It used to be the orange and used to be third for exactly that reason;
+     the re-deal took the orange off it and the constraint went with it. */
+  --cat-imposter: #CAC307;
+  --cat-imposter-ink: #141414;           /* 9.93 */
+  /* Was teal, then pink, then the orange, then the yellow off Odd One Out —
+     and now the navy off Kings Cup, which is the first colour this pack has
+     worn that brings white ink with it. That makes it one of the four
+     white-ink packs and it takes an edge with it. */
+  --cat-last-word: #273287;
+  --cat-last-word-ink: #FFFFFF;          /* 11.10 */
+  --cat-last-word-edge: color-mix(in srgb, var(--cat-last-word) 80%, #000 20%);
   /* Was yellow — the other half of it. */
   --cat-rank-it: #A5C0EA;
   --cat-rank-it-ink: #141414;            /* 9.94 */
-  /* The pink, straight off Letter Rip. */
-  --cat-most-likely-to: #E43E70;
-  --cat-most-likely-to-ink: #141414;     /* 4.58 */
+  /* The orange, off Odd One Out. Ninth in the deck, which is the point of it
+     being here: eight slots clear of Last Call's red, which it measures 0.069
+     against and had spent the whole life of the palette being kept away
+     from. */
+  --cat-most-likely-to: #EE4620;
+  --cat-most-likely-to-ink: #141414;     /* 4.85 */
   --cat-say-the-same-thing: #0F4A42;
   --cat-say-the-same-thing-ink: #FFFFFF; /* 10.10 */
+  --cat-say-the-same-thing-edge: color-mix(in srgb, var(--cat-say-the-same-thing) 80%, #000 20%);
   --cat-the-number-game: #E990A2;
   --cat-the-number-game-ink: #141414;    /* 7.87 */
   /* The darkest pack in the app. It was Drink If's; that mode is retired and
-     Hot Seat has it, ink and all — near-black cannot be read on this one.
-
-     There were eleven packs and there are ten. The lavender #B9A3E3 that Hot
-     Seat used to wear is retired with the mode that freed this one up, rather
-     than left defined for nothing to point at. It is written down here
-     because a hex is the one thing a palette cannot recover once it is gone
-     from the file. */
+     Hot Seat has it, ink and all — near-black cannot be read on this one. */
   --cat-hot-seat: #441B07;
   --cat-hot-seat-ink: #FFFFFF;           /* 14.94 */
+  --cat-hot-seat-edge: color-mix(in srgb, var(--cat-hot-seat) 80%, #000 20%);
+
+  /* THE GREEN, AND IT IS THE ONE COLOUR THE DECK NEVER HAD.
+     Ten packs covered the wheel from pink round through red, brown, gold and
+     yellow, then jumped to Same Page's dark blue-green and on to the blues —
+     there was no true green anywhere in it, and the largest empty stretch
+     after that was the purple between Kings Cup and Overbid.
+
+     The purple is where this started. Hot Seat's retired lavender #B9A3E3 was
+     free, had provenance and sat in that gap, and it still could not be used:
+     it is within 0.076 of Rank It in OKLab, because the two share a lightness
+     AND a chroma and differ only by 41 degrees of hue. That is a quarter of
+     what the arrangement was dealt to hold, and it would have been the
+     weakest pair in the palette by a distance. A hex being available is not
+     the same as it being free.
+
+     The green is not a compromise on that. It clears every existing pack by
+     at least 0.192, it keeps near-black ink so the deck stays at four white-
+     ink packs rather than five, and on the ring it goes between Most Likely
+     To and Last Call — the pink-to-red join at 0.097 that has been the
+     palette's worst since the packs were dealt. Splitting it costs nothing
+     and leaves 0.348 and 0.353 in its place, so adding an eleventh pack made
+     the ring better rather than worse. See RING_ORDER in Home.tsx.
+
+     The lavender goes back into retirement, and the hex stays written here
+     because that is still the one thing a palette cannot recover. */
+  --cat-ballpark: #2FA84F;
+  --cat-ballpark-ink: #141414;           /* 6.00 */
 
   /* Fallback foreground for any subtree that hasn't set --category-ink. */
   --cat-ink: #FFFFFF;
@@ -601,7 +652,7 @@
    changed a great deal and the rest changed a little.
 
    Every mode inherits from here. That is the point of it being
-   here: ten modes were not touched to make this happen.
+   here: eleven modes were not touched to make this happen.
    ================================================================ */
 @media (min-width: 640px) and (min-height: 600px) {
   :root {

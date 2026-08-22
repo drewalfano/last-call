@@ -8,6 +8,7 @@ import { unlockOnFirstGesture } from "./lib/audio";
 import { Home } from "./games/Home";
 import { LastCallGame } from "./games/LastCallGame";
 import { HotSeat } from "./games/HotSeat";
+import { Ballpark } from "./games/Ballpark";
 import { RideTheBus } from "./games/RideTheBus";
 import { LastWord } from "./games/LastWord";
 import { MostLikelyTo } from "./games/MostLikelyTo";
@@ -1047,5 +1048,7 @@ function renderScreen(
       return <NumberGame mode={mode} onBack={goHome} />;
     case "imposter":
       return <Imposter mode={mode} onBack={goHome} />;
+    case "ballpark":
+      return <Ballpark mode={mode} onBack={goHome} />;
   }
 }
