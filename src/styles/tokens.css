@@ -497,10 +497,27 @@
 
      So the eleven were dealt across the eleven slots to make the
      WEAKEST neighbouring pair as strong as it can be — 0.223 up to
-     0.295, and the worst join in the deck is now Most Likely To
-     against Same Page. The deck's running order did not move; it is
-     sorted by replay value and that is a different job (see MODES).
-     Only which colour each game wears changed.
+     0.295, at Letter Rip against Rank It. The deck's running order
+     did not move; it is sorted by replay value and that is a
+     different job (see MODES). Only which colour each game wears
+     changed.
+
+     THAT DEAL NO LONGER HOLDS, and this is the note saying so rather
+     than a claim that quietly went stale. Two changes were made by
+     hand afterwards: Letter Rip and Odd One Out swapped places in
+     MODES, and the orange and the pink swapped games. Each was asked
+     for on its own and neither is wrong on its own; together they put
+     Letter Rip's new orange directly under Last Call's red.
+
+     That join measures 0.069 — three times closer than the 0.223 that
+     the deal existed to fix, and by a distance the worst pair the deck
+     has ever had. Two touching cards at that distance do not read as
+     two colours. The rest of the run is unchanged from 0.365 up.
+
+     Fixing it is a re-deal, not a tweak: the constraint is the whole
+     eleven-slot arrangement, so moving one card to get away from the
+     red lands it against something else. Nothing here should be
+     described as dealt until that has been run again.
 
      Ink travels with colour, always. It is chosen for the colour it
      sits on rather than for the game, so a pairing moves as a unit
@@ -522,17 +539,17 @@
   /* Was teal; the yellow came from Rank It. */
   --cat-imposter: #CAC307;
   --cat-imposter-ink: #141414;           /* 9.93 */
-  /* Was pink — the half of the closest pair in the old deck. */
-  --cat-last-word: #E43E70;
-  --cat-last-word-ink: #141414;          /* 4.58 */
+  /* The one hue the supplied swatch sheet didn't cover, and near-black is
+     the ink that clears AA on it where white does not. Moved here off Most
+     Likely To, which took the pink that used to be on this line. */
+  --cat-last-word: #EE4620;
+  --cat-last-word-ink: #141414;          /* 4.85 */
   /* Was yellow — the other half of it. */
   --cat-rank-it: #A5C0EA;
   --cat-rank-it-ink: #141414;            /* 9.94 */
-  /* The one hue the supplied swatch sheet didn't cover. Muted rather than
-     saturated like the rest, which flips which ink works: near-black clears AA
-     where white does not. It sits on Most Likely To now. */
-  --cat-most-likely-to: #EE4620;
-  --cat-most-likely-to-ink: #141414;     /* 4.85 */
+  /* The pink, straight off Letter Rip. */
+  --cat-most-likely-to: #E43E70;
+  --cat-most-likely-to-ink: #141414;     /* 4.58 */
   --cat-say-the-same-thing: #0F4A42;
   --cat-say-the-same-thing-ink: #FFFFFF; /* 10.10 */
   --cat-the-number-game: #E990A2;

@@ -59,16 +59,16 @@ export const MODES: ModeDef[] = [
     signature: true,
   },
   {
-    id: "imposter",
-    title: "Odd One Out",
-    tagline: "One of you doesn't know the word.",
-    color: "--cat-imposter",
-  },
-  {
     id: "last-word",
     title: "Letter Rip",
     tagline: "Category, letter, pass. Don't freeze.",
     color: "--cat-last-word",
+  },
+  {
+    id: "imposter",
+    title: "Odd One Out",
+    tagline: "One of you doesn't know the word.",
+    color: "--cat-imposter",
   },
   {
     id: "rank-it",
