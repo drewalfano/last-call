@@ -82,6 +82,13 @@ export function Imposter({ mode, onBack }: Props) {
     setS((prev) => ({ ...prev, count: next }));
   }, []);
 
+  /**
+   * Deals: a word, an Imposter, an order, back to the first reveal. Called
+   * from Deal roles and from Start over, which are the same act — the second
+   * one just happens to be abandoning a deal already in progress. Everything
+   * the table chose (the count, the category) is carried through, because
+   * neither of those is what went wrong.
+   */
   const startRound = useCallback(() => {
     setS((prev) => {
       // A custom entry isn't a category — it IS the word. Otherwise draw from
@@ -214,6 +221,31 @@ export function Imposter({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* A DEAL CAN GO WRONG HALFWAY THROUGH, and until now the only way
+              out was the chevron, which leaves the mode altogether and loses
+              the category and the player count with it.
+
+              Two people looking at one screen, someone tapping past their
+              word without reading it, the phone going round the table the
+              wrong way — none of those can be repaired by carrying on, and
+              all of them need the same thing: a different word and a
+              different Imposter, dealt again from the top. It throws away the
+              reveals already done, which is the point.
+
+              ON THE COVER SCREEN AND NOWHERE ELSE. The role screen is the one
+              thing in this app nobody but its owner may see, and a control
+              that rerolls who the Imposter is has no business living behind
+              that — a player who did not like their role could tap it while
+              the phone was face down and nobody would know a round had been
+              thrown. Here it is under the neutral screen, in the open,
+              between two hands. From a role, Hide it first: the cover is
+              where the phone is being passed anyway.
+
+              Quiet, per .gfoot__skip: on almost every deal this is the last
+              thing anyone wants. */}
+          <button className="gfoot__skip" onClick={startRound}>
+            Start over
+          </button>
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
