@@ -65,27 +65,27 @@ export const MODES: ModeDef[] = [
     tagline: "One of you doesn't know the word.",
     color: "--cat-imposter",
   },
-  {
-    id: "last-word",
-    title: "Letter Rip",
-    tagline: "Category, letter, pass. Don't freeze.",
-    color: "--cat-last-word",
-  },
   /*
-   * FOURTH, and it is the pool that puts it there rather than the mode being
+   * THIRD, and it is the pool that puts it there rather than the mode being
    * new. Almost everything below it is spent by being played: a Rank It set,
    * a Hot Seat question and a Most Likely To card are each used up the first
    * time a table sees them, so the count in the file is very close to the
    * number of rounds in it. Ballpark's sixty pairs are not — the target moves
    * every round and the clue-giver changes with it, so "Underrated /
-   * Overrated" is a different argument the fourth time it comes up. The three
-   * above it are the namesake and the two that already behave this way.
+   * Overrated" is a different argument the fourth time it comes up. The two
+   * above it are the namesake and the one that already behaves this way.
    */
   {
     id: "ballpark",
     title: "Ballpark",
     tagline: "One clue, one dial. Get close.",
     color: "--cat-ballpark",
+  },
+  {
+    id: "last-word",
+    title: "Letter Rip",
+    tagline: "Category, letter, pass. Don't freeze.",
+    color: "--cat-last-word",
   },
   {
     id: "rank-it",
@@ -114,16 +114,16 @@ export const MODES: ModeDef[] = [
     color: "--cat-say-the-same-thing",
   },
   {
-    id: "most-likely-to",
-    title: "Most Likely To",
-    tagline: "Count to three, then point.",
-    color: "--cat-most-likely-to",
-  },
-  {
     id: "the-number-game",
     title: "Overbid",
     tagline: "Bid high. Get called out.",
     color: "--cat-the-number-game",
+  },
+  {
+    id: "most-likely-to",
+    title: "Most Likely To",
+    tagline: "Count to three, then point.",
+    color: "--cat-most-likely-to",
   },
   {
     id: "hot-seat",

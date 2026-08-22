@@ -44,7 +44,7 @@ interface HomeProps {
  * button.
  *
  * Spread over the whole ring, each pack holds ~73px, which is more than
- * enough for the dark ones — Letter Rip's navy, Same Page's teal, Hot Seat's
+ * enough for the dark ones — Kings Cup's navy, Hot Seat's teal, Overbid's
  * near-black brown — to arrive as part of a ramp rather than as a gap. That
  * was the problem when the line was a third of the perimeter and each pack
  * had ~26px: the eleven swing hard in lightness, so the line crossed a full
@@ -130,45 +130,36 @@ const RING_STEPS = 32;
  */
 const RING_ORDER: ModeId[] = [
   "ride-the-bus",
-  "kings-cup",
-  // BALLPARK'S GREEN GOES ON THE PALETTE'S WORST JOIN, ON PURPOSE.
-  //
-  // Pink straight into red was 0.097 apart and had been the weakest pair on
-  // this ring since the packs were dealt — the one place the line crossed
-  // two colours the eye reads as the same colour. An eleventh pack had to go
-  // somewhere, and the green is far enough from both (0.348 and 0.353) that
-  // dropping it in here does not weaken a join, it removes the worst one.
-  //
-  // So the ring's weakest pair is now Same Page into Hot Seat at 0.151, and
-  // the relative order of the original ten is untouched: this is an
-  // insertion, not a re-deal. Nothing swapped colours to make room.
-  "ballpark",
-  "last-call",
-  "imposter",
-  "last-word",
-  "the-number-game",
   "rank-it",
   "say-the-same-thing",
-  "hot-seat",
+  "last-call",
+  "imposter",
+  "kings-cup",
   "most-likely-to",
-  // Closed: back onto the pack it started from. ELEVEN transitions now — the
-  // ring lost one with Drink If and Hot Seat took that slot along with the
-  // brown, then Ballpark brought the count back up on a green that was never
-  // in the deck at all, because this order is a sequence of COLOURS and the
-  // game names are only how they are spelled — which is also why Ballpark
-  // sits fourth in MODES and second here, and why those two facts have
-  // nothing to say to each other. The wrap is the whole point
-  // rather than an oversight. The line is
-  // born and dies at the same spot on the pill, so with an open ramp those two
-  // points are different colours butted against each other — a hue seam
-  // sitting exactly where the eye is waiting for the line to arrive. Ending
-  // where it began leaves only a difference in brightness there, which is what
-  // the softening was always meant to be.
+  "last-word",
+  "hot-seat",
+  "the-number-game",
+  "ballpark",
+  // Closed: back onto the pack it started from. ELEVEN transitions — the ring
+  // lost one when Drink If retired and gained it back with Ballpark. The wrap
+  // is the point rather than an oversight: the line is born and dies at the
+  // same spot on the pill, so with an open ramp those two points are
+  // different colours butted against each other — a hue seam sitting exactly
+  // where the eye is waiting for the line to arrive. Ending where it began
+  // leaves only a difference in brightness there.
   //
-  // The old comment here warned that wrapping invents a twelfth colour, and it
-  // was right about the ORDER it was describing: brown mixed toward red lands
-  // on a dark muddy red that is in no pack. Gold back to gold mixes with
-  // itself.
+  // THIS LIST IS IDS AND IS READ AS COLOURS, and that is the whole reason it
+  // survives a re-deal. The deck has now been re-dealt three times over
+  // Ballpark's arrival and the ring's colour sequence has not moved once:
+  // each time, the ids here are permuted so that the same hues stay in the
+  // same order. Its weakest join is Hot Seat into Overbid at 0.151 — which
+  // in colours is the teal into the brown, and has been that pair throughout
+  // whatever names were on them.
+  //
+  // The old comment here warned that wrapping invents a twelfth colour, and
+  // it was right about the ORDER it was describing: brown mixed toward red
+  // lands on a dark muddy red that is in no pack. Gold back to gold mixes
+  // with itself.
   "ride-the-bus",
 ];
 

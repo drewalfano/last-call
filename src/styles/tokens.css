@@ -540,84 +540,95 @@
      Last Call, Rank It, Ride the Bus, Same Page, Overbid and Hot
      Seat kept theirs.
      ---------------------------------------------------------- */
+  /* --- the eleven pairings ------------------------------------
+     Each is colour + ink, and where the ink is white, + edge + key
+     face. Those last two are consequences OF the ink, not of the
+     game: `-edge` is the floating button's outline (see .btn--float
+     in global.css) and `-key`/`-key-ink` are Letter Rip's letter
+     bank (see .lw__letter in games.css). Both are defined only on
+     the white-ink packs; everything else falls through to the
+     defaults in style.ts.
+
+     The bank is why the chip is a token at all. It was a fixed
+     near-black chip, chosen because a PALE pack gave dark-on-dark
+     letters. Correct at the time — and then Letter Rip was dealt
+     the navy and the chip became near-black on near-black, the
+     same fault from the other side. A pack's ink already knows
+     which way round this goes.
+
+     So a pairing moves as colour + ink + edge + key face, together
+     or not at all.
+     ---------------------------------------------------------- */
   --cat-last-call: #E0070F;
   --cat-last-call-ink: #FFFFFF;          /* 4.99 */
-  /* AN EDGE ONLY WHERE THE INK IS WHITE — see .btn--float in global.css.
-     A floating button fills with the pack's INK, so on these four it comes
-     out white, the same white as the picker's card stock, and needs an edge
-     to separate it from the cards passing behind. The other seven fill
-     near-black against that stock and an edge on them is a stroke drawn
-     around a button that was already perfectly visible. Ships beside the ink
-     because it is a property OF the ink, and the two move together. */
   --cat-last-call-edge: color-mix(in srgb, var(--cat-last-call) 80%, #000 20%);
-  /* The pink, off Most Likely To in the re-deal. Near-black ink now, so this
-     pack no longer carries a float-button edge — see the note on the ink
-     above and .btn--float in global.css. */
-  --cat-kings-cup: #E43E70;
-  --cat-kings-cup-ink: #141414;          /* 4.58 */
-  /* Yellow because it is a bus. Swapped with Say the Same Thing, ink and
-     all — the ink is chosen for the colour it sits on, so it moves with it. */
+  --cat-last-call-key: #F4F2ED;
+  --cat-last-call-key-ink: #141414;
+
+  /* The yellow, and this pack is second in the deck. It wore the orange for
+     most of the palette's life and sat third precisely to keep that orange
+     off Last Call's red; the orange is on Same Page now and the constraint
+     went with it. */
+  --cat-imposter: #CAC307;
+  --cat-imposter-ink: #141414;           /* 9.93 */
+
+  /* The orange. Ballpark opened on a green that was new to the deck, and
+     traded it away in the re-deal that gave Kings Cup its navy. */
+  --cat-ballpark: #EE4620;
+  --cat-ballpark-ink: #141414;           /* 4.85 */
+
+  /* Was teal, then pink, then orange, then yellow, then the navy — and now
+     the pale blue off Rank It. Pale means near-black ink, which means the
+     letter bank goes back to the dark chip on its own. That is the whole
+     point of the key tokens: this pack changes colour more than any other in
+     the app and the bank has to follow without being told. */
+  --cat-last-word: #A5C0EA;
+  --cat-last-word-ink: #141414;          /* 9.94 */
+
+  /* The pink, off Kings Cup. */
+  --cat-rank-it: #E43E70;
+  --cat-rank-it-ink: #141414;            /* 4.58 */
+
+  /* THE NAVY, which is the colour this re-deal was actually for. Kings Cup
+     wore the pink briefly and it never suited the game; everything else here
+     moved to get this pairing. White ink, so it takes an edge and a key
+     face. */
+  --cat-kings-cup: #273287;
+  --cat-kings-cup-ink: #FFFFFF;          /* 11.10 */
+  --cat-kings-cup-edge: color-mix(in srgb, var(--cat-kings-cup) 80%, #000 20%);
+  --cat-kings-cup-key: #F4F2ED;
+  --cat-kings-cup-key-ink: #141414;
+
+  /* Yellow because it is a bus. The one pairing that has never moved and the
+     only one chosen for the game rather than dealt to it. */
   --cat-ride-the-bus: #FFAE00;
   --cat-ride-the-bus-ink: #141414;       /* 9.92 */
 
-  /* The yellow, off Letter Rip, and this pack is second in the deck now.
-     It used to be the orange and used to be third for exactly that reason;
-     the re-deal took the orange off it and the constraint went with it. */
-  --cat-imposter: #CAC307;
-  --cat-imposter-ink: #141414;           /* 9.93 */
-  /* Was teal, then pink, then the orange, then the yellow off Odd One Out —
-     and now the navy off Kings Cup, which is the first colour this pack has
-     worn that brings white ink with it. That makes it one of the four
-     white-ink packs and it takes an edge with it. */
-  --cat-last-word: #273287;
-  --cat-last-word-ink: #FFFFFF;          /* 11.10 */
-  --cat-last-word-edge: color-mix(in srgb, var(--cat-last-word) 80%, #000 20%);
-  /* Was yellow — the other half of it. */
-  --cat-rank-it: #A5C0EA;
-  --cat-rank-it-ink: #141414;            /* 9.94 */
-  /* The orange, off Odd One Out. Ninth in the deck, which is the point of it
-     being here: eight slots clear of Last Call's red, which it measures 0.069
-     against and had spent the whole life of the palette being kept away
-     from. */
-  --cat-most-likely-to: #EE4620;
-  --cat-most-likely-to-ink: #141414;     /* 4.85 */
-  --cat-say-the-same-thing: #0F4A42;
-  --cat-say-the-same-thing-ink: #FFFFFF; /* 10.10 */
-  --cat-say-the-same-thing-edge: color-mix(in srgb, var(--cat-say-the-same-thing) 80%, #000 20%);
-  --cat-the-number-game: #E990A2;
-  --cat-the-number-game-ink: #141414;    /* 7.87 */
-  /* The darkest pack in the app. It was Drink If's; that mode is retired and
-     Hot Seat has it, ink and all — near-black cannot be read on this one. */
-  --cat-hot-seat: #441B07;
-  --cat-hot-seat-ink: #FFFFFF;           /* 14.94 */
+  /* The green, off Ballpark. It is the newest hex in the deck — there was no
+     true green in the palette before Ballpark was added, and it stayed when
+     that mode traded down to the orange. */
+  --cat-say-the-same-thing: #2FA84F;
+  --cat-say-the-same-thing-ink: #141414; /* 6.00 */
+
+  /* The darkest pack in the app, off Hot Seat. It was Drink If's before that;
+     that mode is retired. White ink — near-black cannot be read on this one. */
+  --cat-the-number-game: #441B07;
+  --cat-the-number-game-ink: #FFFFFF;    /* 14.94 */
+  --cat-the-number-game-edge: color-mix(in srgb, var(--cat-the-number-game) 80%, #000 20%);
+  --cat-the-number-game-key: #F4F2ED;
+  --cat-the-number-game-key-ink: #141414;
+
+  /* The pale pink, off Overbid. */
+  --cat-most-likely-to: #E990A2;
+  --cat-most-likely-to-ink: #141414;     /* 7.87 */
+
+  /* The teal, off Same Page. */
+  --cat-hot-seat: #0F4A42;
+  --cat-hot-seat-ink: #FFFFFF;           /* 10.10 */
   --cat-hot-seat-edge: color-mix(in srgb, var(--cat-hot-seat) 80%, #000 20%);
+  --cat-hot-seat-key: #F4F2ED;
+  --cat-hot-seat-key-ink: #141414;
 
-  /* THE GREEN, AND IT IS THE ONE COLOUR THE DECK NEVER HAD.
-     Ten packs covered the wheel from pink round through red, brown, gold and
-     yellow, then jumped to Same Page's dark blue-green and on to the blues —
-     there was no true green anywhere in it, and the largest empty stretch
-     after that was the purple between Kings Cup and Overbid.
-
-     The purple is where this started. Hot Seat's retired lavender #B9A3E3 was
-     free, had provenance and sat in that gap, and it still could not be used:
-     it is within 0.076 of Rank It in OKLab, because the two share a lightness
-     AND a chroma and differ only by 41 degrees of hue. That is a quarter of
-     what the arrangement was dealt to hold, and it would have been the
-     weakest pair in the palette by a distance. A hex being available is not
-     the same as it being free.
-
-     The green is not a compromise on that. It clears every existing pack by
-     at least 0.192, it keeps near-black ink so the deck stays at four white-
-     ink packs rather than five, and on the ring it goes between Most Likely
-     To and Last Call — the pink-to-red join at 0.097 that has been the
-     palette's worst since the packs were dealt. Splitting it costs nothing
-     and leaves 0.348 and 0.353 in its place, so adding an eleventh pack made
-     the ring better rather than worse. See RING_ORDER in Home.tsx.
-
-     The lavender goes back into retirement, and the hex stays written here
-     because that is still the one thing a palette cannot recover. */
-  --cat-ballpark: #2FA84F;
-  --cat-ballpark-ink: #141414;           /* 6.00 */
 
   /* Fallback foreground for any subtree that hasn't set --category-ink. */
   --cat-ink: #FFFFFF;

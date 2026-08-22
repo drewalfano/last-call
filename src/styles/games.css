@@ -1597,11 +1597,25 @@
      on a short screen the columns stop shrinking and go oblong. */
   min-width: 0;
   min-height: 0;
-  /* Fixed dark chip with white letters rather than the pack's ink pair. Pale
-     packs gave dark-on-dark letters that had to be read one at a time; white
-     on near-black is the same everywhere, so the alphabet skims. */
-  background: #141414;
-  color: #FFFFFF;
+  /* THE CHIP IS DEALT BY THE PACK, and it has to be.
+
+     It was a fixed near-black chip with white letters, and the reasoning
+     written here was sound: the pack's own ink pair gave dark-on-dark letters
+     on a PALE pack, so a fixed dark chip read the same everywhere and the
+     alphabet skimmed. Then Letter Rip was dealt the navy, and a near-black
+     chip on a near-black field is that identical fault seen from the other
+     end — twenty holes in the board rather than twenty keys.
+
+     What was actually needed was not a fixed colour but the one thing a pack
+     already knows: which of the two neutrals reads on it. Dark packs get a
+     card-stock chip with a near-black letter, pale packs keep the dark chip
+     and the white letter, and the defaults in style.ts mean a pack that says
+     nothing behaves exactly as this did before. See --cat-*-key in tokens.css.
+
+     Card stock rather than pure white: at full white, twenty tiles under a
+     white timer ring read as one sheet of paper with holes punched in it. */
+  background: var(--category-key, #141414);
+  color: var(--category-key-ink, #FFFFFF);
   font-family: var(--font-display);
   /* Same size as ever while the width is what binds; the cqh term only
      takes over on a screen short enough that the tiles have shrunk, so the

@@ -88,14 +88,14 @@ sit at the top, because eleven cards scroll past a single screen.
 |---|---|---|
 | 1 | Last Call ★ | wildcard deck |
 | 2 | Odd One Out | social deduction |
-| 3 | Letter Rip | timer game |
-| 4 | Ballpark | hidden position + dial |
+| 3 | Ballpark | hidden position + dial |
+| 4 | Letter Rip | timer game |
 | 5 | Rank It | ranking + guessing |
 | 6 | Kings Cup | card game |
 | 7 | Ride the Bus | card game |
 | 8 | Same Page | timed convergence |
-| 9 | Most Likely To | deck + pointing |
-| 10 | Overbid | bidding + challenge |
+| 9 | Overbid | bidding + challenge |
+| 10 | Most Likely To | deck + pointing |
 | 11 | Hot Seat | turn structure + voting |
 
 **Ids are not titles.** Four modes were renamed and their ids deliberately were
@@ -304,15 +304,15 @@ two foregrounds. Ratios are the ones recorded beside each token in
 |---|---|---|---|---|
 | Last Call | `--cat-last-call` | `#E0070F` | white | 4.99 |
 | Odd One Out | `--cat-imposter` | `#CAC307` | `#141414` | 9.93 |
-| Letter Rip | `--cat-last-word` | `#273287` | white | 11.10 |
-| Ballpark | `--cat-ballpark` | `#2FA84F` | `#141414` | 6.00 |
-| Rank It | `--cat-rank-it` | `#A5C0EA` | `#141414` | 9.94 |
-| Kings Cup | `--cat-kings-cup` | `#E43E70` | `#141414` | 4.58 |
+| Ballpark | `--cat-ballpark` | `#EE4620` | `#141414` | 4.85 |
+| Letter Rip | `--cat-last-word` | `#A5C0EA` | `#141414` | 9.94 |
+| Rank It | `--cat-rank-it` | `#E43E70` | `#141414` | 4.58 |
+| Kings Cup | `--cat-kings-cup` | `#273287` | white | 11.10 |
 | Ride the Bus | `--cat-ride-the-bus` | `#FFAE00` | `#141414` | 9.92 |
-| Same Page | `--cat-say-the-same-thing` | `#0F4A42` | white | 10.10 |
-| Most Likely To | `--cat-most-likely-to` | `#EE4620` | `#141414` | 4.85 |
-| Overbid | `--cat-the-number-game` | `#E990A2` | `#141414` | 7.87 |
-| Hot Seat | `--cat-hot-seat` | `#441B07` | white | 14.94 |
+| Same Page | `--cat-say-the-same-thing` | `#2FA84F` | `#141414` | 6.00 |
+| Overbid | `--cat-the-number-game` | `#441B07` | white | 14.94 |
+| Most Likely To | `--cat-most-likely-to` | `#E990A2` | `#141414` | 7.87 |
+| Hot Seat | `--cat-hot-seat` | `#0F4A42` | white | 10.10 |
 
 The token column is there because the ids never changed: Odd One Out's colour
 lives under `--cat-imposter`, and looking for `--cat-odd-one-out` finds nothing.
@@ -321,32 +321,29 @@ rows named the colour each game wore before the colours were dealt across the
 slots — so it is rebuilt here from `tokens.css` with every ratio recomputed
 rather than carried forward.
 
-**The packs were re-dealt against a better measure.** Every arrangement before
-this one scored only pairs that TOUCH, which is the wrong test for this screen:
-Home's cards overlap and scroll, so three or four are in view at once and a
-colour is judged against its neighbour *and* the one past it.
+**The packs are re-dealt, and the measure changed first.** Every arrangement
+before this scored only pairs that TOUCH, which is the wrong test for Home: the
+cards overlap and scroll, so three or four are in view at once. Measured that
+way the old deck's worst fault was one it had documented and mis-fixed — Odd
+One Out's orange sat two cards under Last Call's red at **0.069**, the closest
+pair in the palette, separated by a single yellow card. The rule that put it
+there ("the orange must not sit second, it measures 0.069 against the red") had
+the number right and the remedy wrong: one slot does not separate two things
+you see at the same time.
 
-Measured that way the old deck had a far worse fault than the one it was
-tracking. Odd One Out's orange sat two cards under Last Call's red at **0.069**
-— the closest pair in the palette — with one yellow card between them. The rule
-that put it there ("the orange must not sit second, it measures 0.069 against
-the red") had the number right and the remedy wrong: one slot of separation
-does not separate two things you can see at the same time.
+Then the weighting was set deliberately. **Touching pairs are the metric;
+pairs one apart are considered but do not decide.** On that basis the deck was
+re-dealt to put the navy on Kings Cup, which is the pairing the whole exercise
+was for. No two touching cards are now closer than **0.257** — the first time
+the deck has had no weak join at all. One-apart still shows red against orange
+at 0.069, at slots one and three, which is a known and accepted cost rather
+than an oversight.
 
-Four packs were re-dealt in a cycle to fix it — Odd One Out took the yellow,
-Letter Rip took the navy, Kings Cup took the pink, Most Likely To took the
-orange. No two cards within two positions are now closer than **0.169**, and
-the red and the orange are eight slots apart, so the orange no longer
-constrains the running order at all. Letter Rip and Odd One Out also swapped
-places in the running order in the same pass; the colours did not travel with
-them, because slot two wants the yellow and slot three the navy whichever game
-stands in them.
-
-Home's pill ring is a **separate** sequence — see `RING_ORDER` in `Home.tsx`,
-which is written as ids and read as colours precisely so a re-deal like this
-moves names without moving the palette. Its weakest join is Same Page into Hot
-Seat at 0.151, improved from 0.097 when Ballpark's green split the old pink-
-into-red pair.
+Home's pill ring is a **separate** sequence — see `RING_ORDER` in `Home.tsx`.
+It is written as ids and read as colours precisely so a re-deal moves names and
+not the palette: the deck has been re-dealt three times since Ballpark arrived
+and the ring's colour order has not moved once. Its weakest join is the teal
+into the brown at 0.151, whatever names happen to be on them.
 
 ### Card treatment
 
