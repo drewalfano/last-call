@@ -502,25 +502,25 @@
      different job (see MODES). Only which colour each game wears
      changed.
 
-     THE ORANGE AND THE PINK HAVE SINCE SWAPPED GAMES — Letter Rip
-     wears #EE4620, Most Likely To #E43E70 — which moved the weakest
-     pair off the one the deal had chosen. It is now Odd One Out
-     against Letter Rip at 0.282, yellow to orange, a little under the
-     0.295 the arrangement had held and well clear of the 0.223 that
-     started it. Every other join is 0.295 or better.
+     COLOURS HAVE MOVED BY HAND SINCE, so the arrangement below is no
+     longer the solved one. Most Likely To took Letter Rip's pink,
+     Letter Rip took Odd One Out's yellow, and Odd One Out took the
+     orange. The weakest pair is now Letter Rip against Odd One Out at
+     0.282 — a little under the 0.295 the deal had held, still well
+     clear of the 0.223 that started it, and every other join is 0.295
+     or better.
 
-     The order matters more than it looks. With Letter Rip second, its
-     orange sat straight under Last Call's red at 0.069 — by a distance
-     the worst pair the deck has ever had, two touching cards that did
-     not read as two colours. Odd One Out's yellow sits between them
-     instead, and that is the whole reason these two are in this order
-     rather than the other one.
+     THE ORANGE MUST NOT SIT SECOND. Against Last Call's red it
+     measures 0.069, by a distance the worst pair the deck has ever
+     had and two touching cards that do not read as two colours. That
+     is the whole reason Odd One Out is third: not a preference about
+     the order, a constraint on it. Anything that moves the orange up
+     one slot has to move the red as well.
 
-     So the eleven are no longer optimally dealt, only acceptably so.
-     A re-deal against the current colours is the thing that would
-     recover the last of it, and it is the whole eleven-slot
-     arrangement or nothing — moving one card off a bad join lands it
-     on another.
+     So the eleven are acceptably dealt rather than optimally. Only a
+     re-deal against the current colours recovers the rest, and it is
+     the whole eleven-slot arrangement or nothing — moving one card off
+     a bad join lands it on another.
 
      Ink travels with colour, always. It is chosen for the colour it
      sits on rather than for the game, so a pairing moves as a unit
@@ -539,14 +539,14 @@
   --cat-ride-the-bus: #FFAE00;
   --cat-ride-the-bus-ink: #141414;       /* 9.92 */
 
-  /* Was teal; the yellow came from Rank It. */
-  --cat-imposter: #CAC307;
-  --cat-imposter-ink: #141414;           /* 9.93 */
-  /* The one hue the supplied swatch sheet didn't cover, and near-black is
-     the ink that clears AA on it where white does not. Moved here off Most
-     Likely To, which took the pink that used to be on this line. */
-  --cat-last-word: #EE4620;
-  --cat-last-word-ink: #141414;          /* 4.85 */
+  /* The orange, off Letter Rip. Third in the deck rather than second
+     precisely so it is not touching Last Call's red — see the note above. */
+  --cat-imposter: #EE4620;
+  --cat-imposter-ink: #141414;           /* 4.85 */
+  /* Was teal, then pink, then the orange; the yellow came off Odd One Out
+     and is what actually sits here. */
+  --cat-last-word: #CAC307;
+  --cat-last-word-ink: #141414;          /* 9.93 */
   /* Was yellow — the other half of it. */
   --cat-rank-it: #A5C0EA;
   --cat-rank-it-ink: #141414;            /* 9.94 */
