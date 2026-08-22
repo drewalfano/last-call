@@ -1062,6 +1062,31 @@ button { font: inherit; color: inherit; }
   }
 
   .screen--private .slot { width: min(100%, 448px); }
+
+  /* AND SQUARE AGAIN, which the width override alone could not deliver.
+     The card is `position: absolute; inset: 0` inside the slot, so it takes
+     whatever rectangle the slot has. Narrowing the slot to a phone column
+     while its height stayed at the row's --slot-h did not give a portrait
+     card so much as a stretched one: 448 x 652 on a 13in iPad, holding 119px
+     of eyebrow, line and meta, with 267px of empty stock above and below it.
+     That is the exact failure --slot-h was written to avoid — see the note
+     on it in tokens.css, which measures the same dead band and rejects it.
+
+     So the slot takes the private width on BOTH axes and centres itself in
+     the row. The ROW is still --slot-h and is still untouched, which is what
+     the note above is about: the live line is positioned against it and must
+     not move. What changes is the box inside the row, which is the thing
+     that was the wrong shape.
+
+     Scoped to a slot holding a CARD, like `container-type` above and for the
+     same reason: Rank It's private pass is the other screen in here and it
+     renders a five-item list into this box, which has been given the row's
+     full height on purpose. It keeps it. */
+  .screen--private .slot:has(.card) {
+    width: min(100%, 448px, var(--slot-h));
+    height: min(448px, var(--slot-h));
+    align-self: center;
+  }
 }
 
 /* Small non-card elements that still need to arrive with weight. */
