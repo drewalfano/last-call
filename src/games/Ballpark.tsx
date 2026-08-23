@@ -68,7 +68,7 @@ export function Ballpark({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { players, hasRoster } = useRoster();
   /* WHICH INSTRUMENT, and it is a temporary control — see state/dialStyle. */
-  const { style, zone, clue } = useDialStyle();
+  const { style } = useDialStyle();
   /* SUPPLEMENT, not lead: the pool IS browsable through the picker, but the
      Night tier is empty, so there is no ordering claim to make about it yet.
      Worth revisiting to `lead` the day 19+ pairs are written. */
@@ -245,19 +245,11 @@ export function Ballpark({ mode, onBack }: Props) {
     showZones?: boolean;
     lockedGuess?: number | null;
     revealing?: boolean;
-    zonesOnly?: boolean;
   }) =>
     style === "meter" ? (
       <Meter {...props} left={prompt.left} right={prompt.right} />
     ) : (
-      <Dial
-        {...props}
-        left={prompt.left}
-        right={prompt.right}
-        sweep={sweep}
-        bare={bare}
-        zoneShape={zone}
-      />
+      <Dial {...props} left={prompt.left} right={prompt.right} sweep={sweep} bare={bare} />
     );
 
   /**
@@ -413,7 +405,7 @@ export function Ballpark({ mode, onBack }: Props) {
         flipped &&
         (bare ? (
           bareScreen(
-            instrument({ value: target, target, showZones: true, zonesOnly: clue === "zone" }),
+            instrument({ value: target, target, showZones: true }),
             "Say one thing that sits right there.",
             <button
               className="btn btn--lg btn--block"
@@ -432,7 +424,7 @@ export function Ballpark({ mode, onBack }: Props) {
               <div className="cardstage">
                 <article className="card card--dealt bp-clue" key="face">
                   <span className="card__eyebrow">Your clue</span>
-                  {instrument({ value: target, target, showZones: true, zonesOnly: clue === "zone" })}
+                  {instrument({ value: target, target, showZones: true })}
                   <p className="card__meta">Say one thing that sits right there.</p>
                 </article>
               </div>

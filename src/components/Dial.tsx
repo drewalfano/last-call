@@ -90,53 +90,7 @@ function arcPath(from: number, to: number, sweep: number, radius = R): string {
   return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${radius} ${radius} 0 ${large} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
 }
 
-/**
- * WHERE A CUT WEDGE STARTS, as a fraction of the radius.
- *
- * The number is set by what it has to leave alone rather than by taste: both
- * needles run from the hub to the track, and the reveal is READ as the gap
- * between them, so the inner run of that gap has to stay on clean stock. Just
- * under half gets the hub, the pivot and the first stretch of both needles
- * clear while still leaving the wedge two thirds of its length.
- */
-const STUB_INNER = 0.46;
-
-/** A filled sector from the hub out to the track. */
-function wedgePath(from: number, to: number, sweep: number): string {
-  const a = pointOnArc(from, sweep);
-  const b = pointOnArc(to, sweep);
-  const large = (Math.abs(to - from) / 100) * sweep > 180 ? 1 : 0;
-  return `M ${CX} ${CY} L ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)} Z`;
-}
-
-/**
- * The same sector with its inner end cut off — an annular one.
- *
- * The inner arc is traced BACKWARDS, which is what the 0 sweep flag is doing:
- * the path runs up the leading edge, round the outside, down the trailing
- * edge and then has to come home the other way. Give it the same flag as the
- * outer arc and it doubles back over itself, which fills as an hourglass.
- */
-function stubPath(from: number, to: number, sweep: number): string {
-  const ri = R * STUB_INNER;
-  const ao = pointOnArc(from, sweep);
-  const bo = pointOnArc(to, sweep);
-  const ai = pointOnArc(from, sweep, ri);
-  const bi = pointOnArc(to, sweep, ri);
-  const large = (Math.abs(to - from) / 100) * sweep > 180 ? 1 : 0;
-  return [
-    `M ${ai.x.toFixed(2)} ${ai.y.toFixed(2)}`,
-    `L ${ao.x.toFixed(2)} ${ao.y.toFixed(2)}`,
-    `A ${R} ${R} 0 ${large} 1 ${bo.x.toFixed(2)} ${bo.y.toFixed(2)}`,
-    `L ${bi.x.toFixed(2)} ${bi.y.toFixed(2)}`,
-    `A ${ri.toFixed(2)} ${ri.toFixed(2)} 0 ${large} 0 ${ai.x.toFixed(2)} ${ai.y.toFixed(2)}`,
-    "Z",
-  ].join(" ");
-}
-
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
-
-export type ZoneShape = "bar" | "wedge" | "stub";
 
 interface DialProps {
   /** Where the needle sits. */
@@ -177,17 +131,6 @@ interface DialProps {
    * identical, because the card was never what limited it.
    */
   bare?: boolean;
-  /** How the zones are drawn. See ZONE_SHAPES in state/dialStyle. */
-  zoneShape?: ZoneShape;
-  /**
-   * Strip the instrument back to the zones and the two ends.
-   *
-   * For the Reader's clue card under the `zone` setting: no track to read a
-   * position along and no needle to read it with, because the Reader is not
-   * being asked for a position. The zone's own centre IS the answer, and how
-   * far it spreads is the slack they have to clue inside.
-   */
-  zonesOnly?: boolean;
 }
 
 /**
@@ -212,8 +155,6 @@ export function Dial({
   revealing = false,
   sweep = 180,
   bare = false,
-  zoneShape = "bar",
-  zonesOnly = false,
 }: DialProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -383,8 +324,7 @@ export function Dial({
    * casing to survive crossing the darkest band and the live one does not. It
    * sat on top in flat black and ate the edge the casing exists to give.
    */
-  const showLiveNeedle =
-    !zonesOnly && lockedGuess === null && (interactive || target === null);
+  const showLiveNeedle = lockedGuess === null && (interactive || target === null);
 
   const shown = Math.round(value);
   const targetPoint = target === null ? null : pointOnArc(target, sweep, R);
@@ -438,20 +378,6 @@ export function Dial({
         onPointerCancel={endDrag}
         onKeyDown={onKeyDown}
       >
-        {/* THE TRACK AND THE HUB STAY IN `zonesOnly`. ONLY THE NEEDLE GOES.
-
-            Taking the track out too was the first attempt and it was wrong in
-            a way that is obvious once drawn: the zone had nothing to be
-            positioned AGAINST, so the fan floated in white pointing
-            somewhere, and a third of the way along could not be told from a
-            quarter without mentally rebuilding the arc that had been removed.
-            Then a hairline version of it, which is the same mistake at a
-            lower weight — a spectrum you have to squint at is not a spectrum.
-
-            The needle is the whole of what is being removed, and it is enough,
-            because the needle is the part that reports a VALUE. Without it the
-            card says here is your region and how much room it gives you; with
-            it the card says you are at seventy-one. */}
         <path className="dial__track" d={arcPath(0, 100, sweep)} />
 
         {/* THE THREE ZONES. Widest first in document order so the tighter
@@ -459,40 +385,24 @@ export function Dial({
             from the innermost outward, which is what makes them read as
             growing out of the answer rather than closing in on it. */}
         {showZones && target !== null && targetPoint && (
-          <g
-            className="dial__zones"
-            data-shape={zoneShape}
-            data-revealing={revealing || undefined}
-          >
-            {[...ZONES.keys()].reverse().map((i) => {
-              const from = clamp(target - ZONES[i].within, 0, 100);
-              const to = clamp(target + ZONES[i].within, 0, 100);
-              return (
-                <path
-                  key={ZONES[i].within}
-                  className="dial__zone"
-                  data-zone={i}
-                  style={{
-                    ["--zone-i" as string]: i,
-                    /* A bar grows out of its own point on the arc, because
-                       that is where it lives. A wedge is already anchored at
-                       the hub and has to grow from there, or it swings in
-                       from the side like a door. */
-                    ["--ox" as string]:
-                      zoneShape === "bar" ? `${targetPoint.x}px` : `${CX}px`,
-                    ["--oy" as string]:
-                      zoneShape === "bar" ? `${targetPoint.y}px` : `${CY}px`,
-                  }}
-                  d={
-                    zoneShape === "wedge"
-                      ? wedgePath(from, to, sweep)
-                      : zoneShape === "stub"
-                        ? stubPath(from, to, sweep)
-                        : arcPath(from, to, sweep)
-                  }
-                />
-              );
-            })}
+          <g className="dial__zones" data-revealing={revealing || undefined}>
+            {[...ZONES.keys()].reverse().map((i) => (
+              <path
+                key={ZONES[i].within}
+                className="dial__zone"
+                data-zone={i}
+                style={{
+                  ["--zone-i" as string]: i,
+                  ["--ox" as string]: `${targetPoint.x}px`,
+                  ["--oy" as string]: `${targetPoint.y}px`,
+                }}
+                d={arcPath(
+                  clamp(target - ZONES[i].within, 0, 100),
+                  clamp(target + ZONES[i].within, 0, 100),
+                  sweep,
+                )}
+              />
+            ))}
           </g>
         )}
 
@@ -500,7 +410,7 @@ export function Dial({
             A stroke-dashoffset draw rather than a fade, because the needle
             arriving along its own length is the thing that points — a fade
             puts it on screen without ever having travelled to where it is. */}
-        {target !== null && !zonesOnly && (
+        {target !== null && (
           <g
             className="dial__target"
             data-revealing={revealing || undefined}

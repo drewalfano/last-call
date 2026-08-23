@@ -4234,7 +4234,6 @@
   stroke-linecap: round;
 }
 
-
 /* --- the needles ---------------------------------------------------------
 
    All three turn about the hub, 1.8deg per unit of value, which is the whole
@@ -4335,31 +4334,14 @@
    The steps are alpha off one colour rather than three separate ones: the
    zones are a single thing getting weaker with distance, and three hues would
    read as three categories. */
-/* A BAR IS STROKED AND A WEDGE IS FILLED, which is the one structural
-   difference between the three shapes — everything else is the path.
-
-   So the colour is held on the zone as --zone-c and spent as whichever
-   property the shape needs. Writing it the other way round, with a stroke
-   colour on one rule and a fill colour on another, means every palette below
-   is stated twice and the two drift the first time one of them is edited. */
 .dial__zone {
-  transform-box: view-box;
-  /* A bar grows out of its own point on the arc; a wedge grows out of the hub
-     it is already anchored to. Dial.tsx hands down whichever applies. */
-  transform-origin: var(--ox) var(--oy);
-}
-
-.dial__zones[data-shape="bar"] .dial__zone {
   fill: none;
-  stroke: var(--zone-c);
   stroke-width: 14;
   stroke-linecap: butt;
-}
-
-.dial__zones[data-shape="wedge"] .dial__zone,
-.dial__zones[data-shape="stub"] .dial__zone {
-  fill: var(--zone-c);
-  stroke: none;
+  transform-box: view-box;
+  /* The answer's point on the arc, handed down per zone. Growing from here is
+     what makes them read as coming out of the answer. */
+  transform-origin: var(--ox) var(--oy);
 }
 
 /* A LADDER IN VALUE, NOT IN ALPHA.
@@ -4374,9 +4356,9 @@
    middle and toward the card's SURFACE at the edge. That is a real spread of
    lightness whatever the pack is, and it happens to say the right thing:
    the closer the zone, the heavier it sits. */
-.dial__zone[data-zone="0"] { --zone-c: color-mix(in oklab, var(--category, currentColor) 62%, var(--card-ink, #141414)); }
-.dial__zone[data-zone="1"] { --zone-c: var(--category, currentColor); }
-.dial__zone[data-zone="2"] { --zone-c: color-mix(in oklab, var(--category, currentColor) 42%, var(--card-surface, #FFFFFF)); }
+.dial__zone[data-zone="0"] { stroke: color-mix(in oklab, var(--category, currentColor) 62%, var(--card-ink, #141414)); }
+.dial__zone[data-zone="1"] { stroke: var(--category, currentColor); }
+.dial__zone[data-zone="2"] { stroke: color-mix(in oklab, var(--category, currentColor) 42%, var(--card-surface, #FFFFFF)); }
 
 /* --- the reveal ----------------------------------------------------------
 
@@ -4682,14 +4664,11 @@
   stroke: rgba(255, 255, 255, 0.34);
 }
 
-.dial[data-bare] .dial__zone[data-zone="2"] { --zone-c: rgba(255, 255, 255, 0.55); }
-.dial[data-bare] .dial__zone[data-zone="1"] { --zone-c: rgba(255, 255, 255, 0.78); }
-.dial[data-bare] .dial__zone[data-zone="0"] { --zone-c: #FFFFFF; }
-
-/* The meter has one shape and always will — a wedge needs a hub to be
-   anchored at and a bar has none — so it keeps the stroke directly. */
+.dial[data-bare] .dial__zone[data-zone="2"],
 .meter__zone[data-zone="2"] { stroke: rgba(255, 255, 255, 0.55); }
+.dial[data-bare] .dial__zone[data-zone="1"],
 .meter__zone[data-zone="1"] { stroke: rgba(255, 255, 255, 0.78); }
+.dial[data-bare] .dial__zone[data-zone="0"],
 .meter__zone[data-zone="0"] { stroke: #FFFFFF; }
 
 /* The casing's JOB is unchanged — an edge where the answer needle crosses the
