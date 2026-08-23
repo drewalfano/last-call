@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
+import { RING_STYLES, useRingStyle } from "../state/ringOrder";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
 
@@ -119,6 +120,7 @@ export function SettingsButton({ onOpen }: { onOpen: () => void }) {
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { mode, tier, setMode } = useContentMode();
   const { preference, setPreference } = useTheme();
+  const { ring, setRing } = useRingStyle();
   /**
    * Sound is the one setting held outside React, in the audio manager, because
    * every reader of it is a sound about to play rather than something on
@@ -279,6 +281,42 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 data-on={(opt === "on") === soundOn || undefined}
                 aria-pressed={(opt === "on") === soundOn}
                 onClick={() => setSound(opt === "on")}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* A JUDGING CONTROL, AND IT COMES OUT WHEN THE JUDGING IS DONE.
+            Both tours walk the same eleven packs; they are solved for
+            different things and the difference is a question about what the
+            line looks like, which is not settleable anywhere but a phone. */}
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Button glow</span>
+            <span className="setting__hint">
+              {ring === "tour"
+                ? "Tour. Every pack distinct from its neighbours; three laps of hue."
+                : "Spectrum. Under two laps of hue; neighbours a little closer."}
+            </span>
+          </div>
+          <div
+            className="segmented"
+            role="group"
+            aria-label="Button glow"
+            style={{
+              ["--n" as string]: RING_STYLES.length,
+              ["--i" as string]: RING_STYLES.indexOf(ring),
+            }}
+          >
+            {RING_STYLES.map((opt) => (
+              <button
+                key={opt}
+                className="segmented__opt"
+                data-on={ring === opt || undefined}
+                aria-pressed={ring === opt}
+                onClick={() => setRing(opt)}
               >
                 {opt}
               </button>

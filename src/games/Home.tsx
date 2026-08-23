@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
+import { useRingStyle } from "../state/ringOrder";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
 import { categoryStyle } from "../lib/style";
@@ -167,15 +168,66 @@ const RING_ORDER: ModeId[] = [
   "say-the-same-thing",
 ];
 
-const RING_COLOURS = RING_ORDER.map(
-  (id) => MODES.find((mode) => mode.id === id)!.color,
-);
+/**
+ * THE SAME ELEVEN PACKS, SOLVED FOR A DIFFERENT THING.
+ *
+ * RING_ORDER above maximises the BOTTLENECK: of every tour of the palette, it
+ * is the one whose most-similar neighbouring pair is as distinct as possible,
+ * so no two packs on the line ever look like each other. It does that well —
+ * 0.317 at its weakest join, nothing under 0.3 — and it is blind to something
+ * the objective never asked about.
+ *
+ * WHAT IT IS BLIND TO IS HOW FAR THE HUE WANDERS. The ramp mixes in oklch, so
+ * every pair walks the short way ROUND the wheel at full chroma rather than
+ * cutting across it — see RING_RAMP for why. Add those legs up on this tour
+ * and they come to 1115 degrees: the line sweeps every hue on the wheel three
+ * times over, most of them belonging to no pack. Gold to navy alone crosses
+ * orange, red, magenta and purple on the way. That is what "there seem to be
+ * too many colours in it" is, and it is not wrong — there are eleven packs and
+ * far more than eleven colours.
+ *
+ * So this is the minimum-travel tour subject to keeping the bottleneck near
+ * where it was: 674 degrees against 1115, for a weakest join of 0.281 against
+ * 0.317. Just under two laps rather than just over three, and every pair still
+ * clearly two colours rather than one.
+ *
+ * It is NOT the hue-sorted order, which is the obvious answer and a bad one.
+ * Sorting by hue gets a perfect single lap — 360 degrees — and drops the
+ * bottleneck to 0.069, because it puts the two pinks side by side and they
+ * stop reading as two packs at all. One lap is not worth a join nobody can
+ * see.
+ *
+ * The seam is chosen the same way RING_ORDER's is: cut where both neighbours
+ * are light and the join is strong. Ballpark into Same Page is L 0.63 against
+ * L 0.65 with a join of 0.317 — stronger than the tour's own bottleneck, so
+ * the roughest pair is nowhere near the most-watched point.
+ */
+const RING_ORDER_SPECTRUM: ModeId[] = [
+  "say-the-same-thing",
+  "hot-seat",
+  "last-word",
+  "kings-cup",
+  "most-likely-to",
+  "the-number-game",
+  "rank-it",
+  "ride-the-bus",
+  "last-call",
+  "imposter",
+  "ballpark",
+  // Closed, as above.
+  "say-the-same-thing",
+];
+
+const coloursOf = (order: ModeId[]) =>
+  order.map((id) => MODES.find((mode) => mode.id === id)!.color);
+
+const RING_COLOURS = coloursOf(RING_ORDER);
 
 /**
  * The packs blended into each other along that order.
  */
-const RING_RAMP = [
-  ...RING_COLOURS.slice(0, -1).flatMap((colour, i) =>
+const rampFor = (colours: string[]) => [
+  ...colours.slice(0, -1).flatMap((colour, i) =>
     Array.from(
       { length: RING_STEPS },
       (_, step) =>
@@ -196,12 +248,19 @@ const RING_RAMP = [
         // red, orange rather than through mud.
         `color-mix(in oklch, var(${colour}) ${
           100 - (step * 100) / RING_STEPS
-        }%, var(${RING_COLOURS[i + 1]}))`,
+        }%, var(${colours[i + 1]}))`,
     ),
   ),
   // Lands on the last pack itself rather than stopping just short of it.
-  `var(${RING_COLOURS[RING_COLOURS.length - 1]})`,
+  `var(${colours[colours.length - 1]})`,
 ];
+
+const RING_RAMP = rampFor(RING_COLOURS);
+
+/* Same length by construction — same eleven packs, same RING_STEPS — so every
+   constant derived from RING_RAMP below is right for both, and switching
+   between them changes the colours and nothing else. */
+const RING_RAMP_SPECTRUM = rampFor(coloursOf(RING_ORDER_SPECTRUM));
 
 const RING_PATH = RING_RAMP.length * RING_SPAN;
 
@@ -484,6 +543,11 @@ let dealt = false;
  * Every mode is one tap away — no menus, no settings page.
  */
 export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
+  /* WHICH TOUR THE RING SWEEPS — a judging control, see state/ringOrder.
+     Both ramps are the same length, so this changes the colours and nothing
+     else: every constant derived from RING_RAMP still applies to either. */
+  const { ring } = useRingStyle();
+  const ramp = ring === "spectrum" ? RING_RAMP_SPECTRUM : RING_RAMP;
   /** True only on the first Home of the session. Claims it as it reads it. */
   const [dealing, setDealing] = useState(() => {
     const first = !dealt;
@@ -894,7 +958,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
                   key={beat}
                   pathLength={RING_PATH}
                   style={{
-                    stroke: RING_RAMP[seat],
+                    stroke: ramp[seat],
                     ["--seg" as string]: seat,
                     ["--beat" as string]: beat,
                     ["--edge" as string]: edge,
@@ -915,7 +979,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
                   key={beat}
                   pathLength={RING_PATH}
                   style={{
-                    stroke: RING_RAMP[seat],
+                    stroke: ramp[seat],
                     ["--seg" as string]: seat,
                     ["--beat" as string]: beat,
                     ["--edge" as string]: edge,
