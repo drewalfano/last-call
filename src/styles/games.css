@@ -4180,15 +4180,21 @@
 */
 .dial {
   width: 100%;
-  /* THE PACK COLOUR, TAKEN DOWN FAR ENOUGH TO READ ON WHITE CARD STOCK.
-     Ballpark's own lavender is 2.2:1 against a white card, which is no use
-     for the most important mark of the round. The hue is still right — it is
-     the one colour the card never uses, so it cannot be confused with the
-     black guess needle beside it — it just needs the value. Derived once
-     here and used by the answer needle and all three zones, so they are
-     visibly one family; mixed toward the card's ink rather than replaced, so
-     the dark packs, whose colours already carry, barely move. */
-  --dial-accent: color-mix(in oklab, var(--category, currentColor) 72%, var(--card-ink, #141414));
+  /* THE ANSWER IS THE PACK COLOUR ITSELF, not a version of it.
+
+     It used to be mixed most of the way to ink, on the grounds that the raw
+     colour was too light to carry the most important mark of the round. That
+     was true while the zones were ALSO drawn in the pack colour: the needle
+     had to separate itself from the bands it was lying on, so it went dark,
+     and the round's answer ended up in a muddied brick that appears nowhere
+     else in the app.
+
+     The zones have moved off the hue entirely — see the ramp below — so the
+     conflict is gone and the needle can be the thing it was always meant to
+     be. One colour on this card, and it is the answer. Everything else is
+     stock, ink and grey, which is what makes a single orange line read as
+     the point rather than as one more mark among several. */
+  --dial-accent: var(--category, currentColor);
   /* WITHOUT THIS THE DIAL STUTTERS AND THE PAGE MOVES.
      A drag across an arc is half vertical by definition — the needle goes up
      to reach the middle — and the browser reads that vertical component as a
@@ -4344,21 +4350,39 @@
   transform-origin: var(--ox) var(--oy);
 }
 
-/* A LADDER IN VALUE, NOT IN ALPHA.
+/* A LADDER IN VALUE, AND THE PACK COLOUR ITSELF IS SPOKEN FOR.
 
-   Three strengths of one colour over white was the obvious way to do this and
-   it does not work: fading a pack colour toward the card moves lightness and
-   chroma together and the three steps land within a few percent of each other
-   — on the pale packs the outer two were all but the same tint, and you could
-   not tell the zones apart, which is the entire job of drawing them.
+   The answer needle takes the raw pack colour now, so no band is allowed to
+   be it. The ramp still runs dark to light — closer is heavier, which is the
+   only thing these bands say — and still has to read as this pack's family
+   rather than as generic shading.
 
-   So the ramp runs dark → pack → pale, mixing toward the card's INK at the
-   middle and toward the card's SURFACE at the edge. That is a real spread of
-   lightness whatever the pack is, and it happens to say the right thing:
-   the closer the zone, the heavier it sits. */
-.dial__zone[data-zone="0"] { stroke: color-mix(in oklab, var(--category, currentColor) 62%, var(--card-ink, #141414)); }
-.dial__zone[data-zone="1"] { stroke: var(--category, currentColor); }
-.dial__zone[data-zone="2"] { stroke: color-mix(in oklab, var(--category, currentColor) 42%, var(--card-surface, #FFFFFF)); }
+   THE MIX PARTNER IS THE WHOLE OF IT, and it took four wrong ramps to see.
+   Mixing a colour toward black or toward white moves lightness and CHROMA
+   together, and chroma is what carries the hue: fade orange toward ink and it
+   goes brown, fade it toward stock and it goes beige. Those are not near
+   misses, they are the two ways this ramp fails — one reads as dirt, the
+   other as skin — and both are what you get for free from the obvious
+   `color-mix(..., var(--category) N%, black/white)`.
+
+   So both ends anchor on SATURATED colours instead, which moves lightness
+   across a full span while holding chroma near the top of it: .20 at the
+   closest band, .18 in the middle, .14 at the widest.
+
+   THE ANCHORS ARE ALSO CLOSE IN HUE, which is the second thing that went
+   wrong. A deep red anchor and a bright amber one hold chroma perfectly well
+   and spread the ramp from 31 degrees to 64, at which point it stops being
+   three shades of one colour and becomes red, orange and yellow — a heat
+   scale borrowed from somewhere else. Pulled in to 34 / 37 / 44 around the
+   pack's own 37, it is one orange getting lighter, which is what it is for.
+
+   The middle band sits at L .705: a clear step lighter than the needle lying
+   in it at .628, and a clear step darker than it looks like it wants to be —
+   at .73 the top two bands start closing up and the ladder loses its middle
+   rung. */
+.dial__zone[data-zone="0"] { stroke: color-mix(in oklab, var(--category, currentColor) 45%, oklch(0.40 0.19 34)); }
+.dial__zone[data-zone="1"] { stroke: color-mix(in oklab, var(--category, currentColor) 71%, oklch(0.88 0.115 50)); }
+.dial__zone[data-zone="2"] { stroke: color-mix(in oklab, var(--category, currentColor) 25%, oklch(0.88 0.115 50)); }
 
 /* --- the reveal ----------------------------------------------------------
 
