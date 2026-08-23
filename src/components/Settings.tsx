@@ -3,7 +3,6 @@ import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/conten
 import { DIAL_STYLES, useDialStyle } from "../state/dialStyle";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
-import { checkForUpdate, type UpdateCheck } from "../lib/swUpdate";
 
 /** Order is the control's order, and the index of the current one drives the
     travelling fill — see .segmented. Declared once so the two cannot drift. */
@@ -92,52 +91,6 @@ const BUILT_AT = new Date(__BUILT_AT__).toLocaleString(undefined, {
  */
 const LEAVE_MS = 160;
 
-/** Busy is this component's own; the other three are the check's answers. */
-type CheckState = "idle" | "busy" | UpdateCheck;
-
-/**
- * THE UPDATE CHECK, AS FOUR WORDS IN ONE BUTTON.
- *
- * The wait lives in the control that started it, so there is no status line
- * and no spinner parked elsewhere — the button is the only thing that can
- * report, which is also the only reason it exists. Under `autoUpdate` a check
- * has two observable endings and neither of them is "updated": either nothing
- * is new, or something is and this page is about to be reloaded out from under
- * the sentence it is in the middle of.
- *
- * "updating" therefore reads the same as "busy" and stays there. A button that
- * flashed "up to date" a beat before the app restarted would be lying, and the
- * restart is the confirmation — the build stamp below is what it lands on.
- *
- * No connection covers offline AND having no worker at all, which is the same
- * sentence from the reader's side: the app could not go and look. See
- * lib/swUpdate.ts for the three cases that produce it.
- */
-const CHECK_COPY: Record<CheckState, string> = {
-  idle: "Check for update",
-  busy: "Checking",
-  updating: "Checking",
-  current: "Up to date",
-  unavailable: "No connection",
-};
-
-/** How long a settled answer is held before the button offers itself again. */
-const CHECK_SETTLE_MS = 2600;
-
-/**
- * The backstop under "updating", and it should never be reached.
- *
- * Finding an update normally ends this page: the worker installs, skips
- * waiting, claims the client and registerSW reloads. But an install can fail
- * — the precache is every asset in the build, and a connection good enough to
- * fetch one worker script is not necessarily good enough to finish that — and
- * the reload that was coming then never arrives. Without this the button sits
- * on "Checking" for the life of the page, which is the one shape the control
- * is not allowed to take. Long enough that a slow install is never cut off
- * mid-download; the wrong answer here is a false "gave up", not a long wait.
- */
-const CHECK_RELOAD_MS = 20_000;
-
 /**
  * SETTINGS
  * ---------------------------------------------------------------
@@ -223,49 +176,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   useEffect(() => () => window.clearTimeout(exit.current), []);
-
-  /**
-   * THE UPDATE CHECK.
-   *
-   * Idle -> busy -> a settled answer that returns to idle on its own, so the
-   * control ends every check offering the next one. See CHECK_COPY for why
-   * "updating" is not an answer you get to read.
-   *
-   * Guarded rather than disabled while it runs. A disabled button drops its
-   * focus and stops being announced, and the label IS the report here — but a
-   * press that is going to be ignored must not answer with the press
-   * animation either, or the control mimes doing something twice. That
-   * exclusion lives in the CSS, keyed off the same data-state.
-   *
-   * `live` because the sheet can be dismissed mid-check: the promise
-   * outlives it, and without the guard the resolve would arm a twenty second
-   * timer on a component that is already gone. Set on the way in as well as
-   * cleared on the way out, for StrictMode's double mount.
-   */
-  const [check, setCheck] = useState<CheckState>("idle");
-  const settle = useRef<number>(undefined);
-  const live = useRef(true);
-
-  useEffect(() => {
-    live.current = true;
-    return () => {
-      live.current = false;
-      window.clearTimeout(settle.current);
-    };
-  }, []);
-
-  const runCheck = useCallback(async () => {
-    if (check === "busy" || check === "updating") return;
-    window.clearTimeout(settle.current);
-    setCheck("busy");
-    const result = await checkForUpdate();
-    if (!live.current) return;
-    setCheck(result);
-    settle.current = window.setTimeout(
-      () => setCheck("idle"),
-      result === "updating" ? CHECK_RELOAD_MS : CHECK_SETTLE_MS,
-    );
-  }, [check]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
@@ -419,28 +329,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               </button>
             ))}
           </div>
-        </section>
-
-        {/* The stamp below says WHICH build; nothing said how to get the next
-            one, and "force-quit and relaunch" is not guessable. Placed
-            directly above it on purpose: after a check, the stamp is the
-            thing that answers "did that work". */}
-        <section className="setting">
-          <div className="setting__label">
-            <span className="setting__name">Updates</span>
-            <span className="setting__hint">
-              The app only looks for a new build on a cold launch. This asks now.
-            </span>
-          </div>
-          <button
-            className="setting__action"
-            data-state={check}
-            onClick={runCheck}
-            aria-busy={check === "busy" || check === "updating"}
-            aria-live="polite"
-          >
-            {CHECK_COPY[check]}
-          </button>
         </section>
 
         {/* Not decoration, and not an about box. This exists because an
