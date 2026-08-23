@@ -4452,14 +4452,23 @@
    is 0; widen the arc and the ends climb inward as they curl under, so the
    labels have to follow them. A percentage rather than a pixel value because
    the SVG is scaled by its width — the inset has to scale with it or the
-   alignment only holds at one size. */
+   alignment only holds at one size.
+
+   THE MARGIN IS POSITIVE NOW, AND IT USED TO BE THE SAME NUMBER NEGATIVE.
+
+   Pulling the labels up by 8px tucked them into the gap a small semicircle
+   left under its own caps, and that gap does not exist any more: a 180
+   degree arc paints right down to the bottom edge of its box, so once the
+   arc grew the pull was 8px straight into the ink and "Basic" sat on the
+   cap it was labelling. Pushed down by the same amount instead, which is a
+   16px swing and the whole of the fix. */
 .dial__ends {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--sp-3);
   padding-inline: var(--end-inset, 0%);
-  margin-top: calc(var(--sp-2) * -1);
+  margin-top: var(--sp-2);
 }
 
 .dial__end {
@@ -4580,6 +4589,43 @@
    absence of a bleed is deliberate, so the next person to notice the empty space
    does not spend it again. */
 
+/* THE DIAL CARD SPREADS ITS THREE THINGS OUT, rather than stacking them in
+   the middle of a card that is mostly empty.
+
+   .card centres its contents as a group on 12px gaps, which is right for a
+   prompt — one block of type wants to sit in the middle of the stock. This
+   card is not one block: it is a label, an instrument and a line of
+   direction, and each of the three has its own job at its own end. Measured
+   before the change, they used 12px gaps inside 103px of unused height, so
+   the card read as a small thing marooned on a large sheet.
+
+   Scoped by :has to the cards that hold a dial, so the handoff card — which
+   IS one block of type, and correctly centred — is left alone.
+
+   SPACE-EVENLY, AND THE BLOCK PADDING GOES WITH IT. The two have to be one
+   decision: `space-between` pinned the chip to the padding edge, so the space
+   above it was the card's 20px and the space below it was whatever was left
+   over — 31px — and the chip read as stuck to the top rather than placed.
+   Zeroing the block padding hands the whole height to flex, and four equal
+   gaps then put the chip dead centre between the card's edge and the top of
+   the arc, with the hint centred the same way between the arc and the bottom.
+
+   Horizontal padding is untouched. That one is doing real work: it is the
+   inset the arc is aligned to, and the reason the caps are not shaved by the
+   corner radius. */
+.card:has(.dial) {
+  justify-content: space-evenly;
+  padding-block: 0;
+  /* AND THE GAP GOES TOO, or three of these decisions fight each other.
+     `space-evenly` divides what is left AFTER the gaps and then adds the gap
+     back between items — so the two inner spaces come out 12px larger than
+     the two outer ones and the distribution is even everywhere except where
+     you are looking. Measured: 19 / 32 / 32 / 20 against a wanted 23 / 23 /
+     23 / 23. The separation here is the distribution's job, so it is the only
+     one that gets to do it. */
+  gap: 0;
+}
+
 /* --- the bare instruments ------------------------------------------------
 
    Both alternatives are drawn onto the pack colour instead of onto card
@@ -4640,10 +4686,10 @@
   line-height: var(--lh-tight);
 }
 
-/* NO PULL-UP ON A WIDE ARC. The -sp-2 above tucks the labels under a
-   semicircle, whose ends stop level with the bottom of its box and leave a
-   gap the size of the cap. A wider arc's ends curl down INTO that gap, so the
-   same pull walks the labels straight into the ink. */
+/* A WIDE ARC NEEDS NONE OF THAT SPACE. Its ends curl inward and stop short
+   of the box's bottom edge, so the clearance the semicircle has to be given
+   is already there in the geometry — adding it again just detaches the
+   labels from the ends they are marking. */
 .dial[data-bare] .dial__ends {
   margin-top: 0;
 }
