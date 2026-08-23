@@ -137,7 +137,40 @@ button { font: inherit; color: inherit; }
      their content size and the layout stops filling the phone. */
   min-height: 0;
   padding: var(--gutter) var(--gutter) var(--action-inset);
-  animation: screen-in var(--dur-base) var(--ease-out) both;
+  /* ---------------------------------------------------------------
+     `backwards`, NOT `both`, AND THE DIFFERENCE IS A BUG.
+
+     `forwards` holds an animation's end state after it finishes. The
+     end state here is `transform: none` — so holding it looks free,
+     and is not: a held `none` computes to matrix(1,0,0,1,0,0), and an
+     IDENTITY matrix is still a transform. An element with a transform
+     is a containing block for `position: fixed` descendants, which
+     means every screen in this app quietly became the viewport as far
+     as anything fixed inside it was concerned, permanently, from the
+     moment its entrance finished.
+
+     What that cost was the settings sheet. `.modal-backdrop` is
+     `position: fixed; inset: 0` and was being anchored to `.screen`
+     instead of the display — and `.screen.home` is the scroll
+     container for the deck, so the overlay scrolled away with the
+     cards behind it. Measured: scroll Home 300px with the sheet open
+     and the backdrop moves 300px. It reads exactly as reported, like
+     the overlay is still part of the page.
+
+     `backwards` keeps the half that was doing work — the from-state
+     applied before the animation starts, which is what stops a frame
+     of un-animated screen showing through — and drops the half that
+     only ever held a value the element already has at rest. There is
+     nothing to hold: the end state IS the resting style, which is the
+     same property that lets the global prefers-reduced-motion rule
+     collapse this to nothing and still land correctly.
+
+     THE TRAP IS GENERAL, so it is worth naming here rather than at
+     the modal: any transform on any ancestor does this, including one
+     that resolves to nothing, and it fails silently — the fixed thing
+     still looks fixed until something behind it scrolls.
+     --------------------------------------------------------------- */
+  animation: screen-in var(--dur-base) var(--ease-out) backwards;
 }
 
 @keyframes screen-in {
