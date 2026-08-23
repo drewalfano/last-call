@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
-import { DIAL_STYLES, useDialStyle } from "../state/dialStyle";
+import { CLUE_MODES, DIAL_STYLES, ZONE_SHAPES, useDialStyle } from "../state/dialStyle";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
 
@@ -120,7 +120,14 @@ export function SettingsButton({ onOpen }: { onOpen: () => void }) {
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { mode, tier, setMode } = useContentMode();
   const { preference, setPreference } = useTheme();
-  const { style: dialStyle, setStyle: setDialStyle } = useDialStyle();
+  const {
+    style: dialStyle,
+    setStyle: setDialStyle,
+    zone: zoneShape,
+    setZone: setZoneShape,
+    clue: clueMode,
+    setClue: setClueMode,
+  } = useDialStyle();
   /**
    * Sound is the one setting held outside React, in the audio manager, because
    * every reader of it is a sound about to play rather than something on
@@ -324,6 +331,72 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 data-on={dialStyle === opt || undefined}
                 aria-pressed={dialStyle === opt}
                 onClick={() => setDialStyle(opt)}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Scoring zone</span>
+            <span className="setting__hint">
+              {zoneShape === "bar"
+                ? "Bar. A thick segment of the track, as it ships."
+                : zoneShape === "wedge"
+                  ? "Wedge. A filled slice from the hub out to the track."
+                  : "Stub. The slice with its inner half cut away."}
+            </span>
+          </div>
+          <div
+            className="segmented segmented--three"
+            role="group"
+            aria-label="Scoring zone"
+            style={{
+              ["--n" as string]: ZONE_SHAPES.length,
+              ["--i" as string]: ZONE_SHAPES.indexOf(zoneShape),
+            }}
+          >
+            {ZONE_SHAPES.map((opt) => (
+              <button
+                key={opt}
+                className="segmented__opt"
+                data-on={zoneShape === opt || undefined}
+                aria-pressed={zoneShape === opt}
+                onClick={() => setZoneShape(opt)}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Your clue</span>
+            <span className="setting__hint">
+              {clueMode === "dial"
+                ? "Dial. The Reader sees the whole instrument."
+                : "Zone. The scoring zone alone, no needle and no hub."}
+            </span>
+          </div>
+          <div
+            className="segmented"
+            role="group"
+            aria-label="Your clue"
+            style={{
+              ["--n" as string]: CLUE_MODES.length,
+              ["--i" as string]: CLUE_MODES.indexOf(clueMode),
+            }}
+          >
+            {CLUE_MODES.map((opt) => (
+              <button
+                key={opt}
+                className="segmented__opt"
+                data-on={clueMode === opt || undefined}
+                aria-pressed={clueMode === opt}
+                onClick={() => setClueMode(opt)}
               >
                 {opt}
               </button>

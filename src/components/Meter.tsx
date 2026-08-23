@@ -53,6 +53,14 @@ interface MeterProps {
   showZones?: boolean;
   lockedGuess?: number | null;
   revealing?: boolean;
+  /**
+   * The bar's version of the Dial's: zones only, no track and no cursor.
+   *
+   * The track stays and the cursor goes, which is the whole of it: the bar is
+   * the spectrum and has to be there for the segment to sit anywhere on, and
+   * the cursor is the part that reports a value.
+   */
+  zonesOnly?: boolean;
 }
 
 export function Meter({
@@ -64,6 +72,7 @@ export function Meter({
   showZones = false,
   lockedGuess = null,
   revealing = false,
+  zonesOnly = false,
 }: MeterProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -177,7 +186,8 @@ export function Meter({
    * casing to survive crossing the darkest band and the live one does not. It
    * sat on top in flat black and ate the edge the casing exists to give.
    */
-  const showLiveNeedle = lockedGuess === null && (interactive || target === null);
+  const showLiveNeedle =
+    !zonesOnly && lockedGuess === null && (interactive || target === null);
 
   const shown = Math.round(value);
   const valueText =
@@ -243,7 +253,7 @@ export function Meter({
           </g>
         )}
 
-        {target !== null && (
+        {target !== null && !zonesOnly && (
           <g
             className="meter__target"
             data-revealing={revealing || undefined}
