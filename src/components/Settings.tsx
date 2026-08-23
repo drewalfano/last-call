@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
-import { DIAL_STYLES, useDialStyle } from "../state/dialStyle";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
 
@@ -120,7 +119,6 @@ export function SettingsButton({ onOpen }: { onOpen: () => void }) {
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { mode, tier, setMode } = useContentMode();
   const { preference, setPreference } = useTheme();
-  const { style: dialStyle, setStyle: setDialStyle } = useDialStyle();
   /**
    * Sound is the one setting held outside React, in the audio manager, because
    * every reader of it is a sound about to play rather than something on
@@ -281,49 +279,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 data-on={(opt === "on") === soundOn || undefined}
                 aria-pressed={(opt === "on") === soundOn}
                 onClick={() => setSound(opt === "on")}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* A JUDGING CONTROL, AND IT COMES OUT WHEN THE JUDGING IS DONE.
-
-            The dial that ships puts a quarter of Ballpark's card into margin
-            around the only object in the mode, and the two ways out of that
-            cannot be told apart on a desktop preview — one makes the arc
-            bigger by taking the card away, the other stops being an arc. So
-            both are built and the phone decides. It sits below the real
-            settings and above the build stamp, which is the other thing here
-            that exists for the developer rather than for the table. */}
-        <section className="setting">
-          <div className="setting__label">
-            <span className="setting__name">Ballpark dial</span>
-            <span className="setting__hint">
-              {dialStyle === "card"
-                ? "Card. The semicircle on white stock, as it ships."
-                : dialStyle === "wide"
-                  ? "Wide. No card, 260\u00B0, arc out to the gutter."
-                  : "Meter. No card, a vertical bar with the ends stacked."}
-            </span>
-          </div>
-          <div
-            className="segmented segmented--three"
-            role="group"
-            aria-label="Ballpark dial"
-            style={{
-              ["--n" as string]: DIAL_STYLES.length,
-              ["--i" as string]: DIAL_STYLES.indexOf(dialStyle),
-            }}
-          >
-            {DIAL_STYLES.map((opt) => (
-              <button
-                key={opt}
-                className="segmented__opt"
-                data-on={dialStyle === opt || undefined}
-                aria-pressed={dialStyle === opt}
-                onClick={() => setDialStyle(opt)}
               >
                 {opt}
               </button>

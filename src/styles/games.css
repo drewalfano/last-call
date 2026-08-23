@@ -4258,12 +4258,12 @@
   transform-origin: 139px 139px;
 }
 
-/* --start-deg and --per-deg come from Dial.tsx and are the sweep written as
-   the two numbers a rotation needs: where value 0 points once the line has
-   been drawn due left, and how far one unit turns it. At the shipped 180 they
-   resolve to 0deg and 1.8deg, which is what these rules said in longhand. */
+/* 1.8deg per unit of value: 180 degrees of arc over a 100-point scale. This
+   is the number ARC_DEGREES / SCALE_MAX names in data/ballpark.ts, and the
+   two have to agree — the reveal reports the gap in the same degrees this
+   turns the needle through. */
 .dial__needle {
-  rotate: calc(var(--start-deg) + var(--v) * var(--per-deg));
+  rotate: calc(var(--v) * 1.8deg);
   transition: rotate var(--dur-fast) var(--ease-out);
 }
 
@@ -4292,7 +4292,7 @@
 /* The answer. Sits under the guess marker's weight deliberately: it is a
    reference line, and the thing the table wants to look at is the gap. */
 .dial__target {
-  rotate: calc(var(--start-deg) + var(--v) * var(--per-deg));
+  rotate: calc(var(--v) * 1.8deg);
 }
 
 /* SELECTOR SPECIFICITY IS LOAD-BEARING HERE, so this is written as
@@ -4327,7 +4327,7 @@
 }
 
 .dial__guess {
-  rotate: calc(var(--start-deg) + var(--v) * var(--per-deg));
+  rotate: calc(var(--v) * 1.8deg);
 }
 
 /* --- the zones -----------------------------------------------------------
@@ -4471,27 +4471,16 @@
    exactly the amount that reads as a near miss rather than as a deliberate
    inset.
 
-   --end-inset comes from Dial.tsx because the answer now depends on the
-   sweep. On the semicircle the ink reaches the very edge of the box and it
-   is 0; widen the arc and the ends climb inward as they curl under, so the
-   labels have to follow them. A percentage rather than a pixel value because
-   the SVG is scaled by its width — the inset has to scale with it or the
-   alignment only holds at one size.
-
-   THE MARGIN IS POSITIVE NOW, AND IT USED TO BE THE SAME NUMBER NEGATIVE.
-
-   Pulling the labels up by 8px tucked them into the gap a small semicircle
-   left under its own caps, and that gap does not exist any more: a 180
-   degree arc paints right down to the bottom edge of its box, so once the
-   arc grew the pull was 8px straight into the ink and "Basic" sat on the
-   cap it was labelling. Pushed down by the same amount instead, which is a
-   16px swing and the whole of the fix. */
+   The viewBox is tight to the paint, so on a semicircle the ink reaches the
+   very edge of the box and the labels need no inset at all — they line up
+   with the caps by sitting flush against the same content box the arc does.
+   This was briefly a computed percentage, for a sweep that could vary and
+   pulled its ends inward as it curled under; there is one sweep again. */
 .dial__ends {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--sp-3);
-  padding-inline: var(--end-inset, 0%);
   margin-top: var(--sp-2);
 }
 
@@ -4649,266 +4638,3 @@
      one that gets to do it. */
   gap: 0;
 }
-
-/* --- the bare instruments ------------------------------------------------
-
-   Both alternatives are drawn onto the pack colour instead of onto card
-   stock, which is a palette swap and nothing else — the geometry is the same,
-   because the card was never what limited it. A 353px card on a 393pt phone
-   is 20px narrower than the screen, so leaving it buys 12% and costs the
-   sheet.
-
-   The track goes to a wash of white and the ink stays black, which is the
-   same pairing the other way up. --card-ink and --card-surface are what the
-   needles and the casing read, so they are re-pointed here rather than every
-   rule below being duplicated. */
-.dial[data-bare],
-.meter {
-  --card-ink: var(--category-ink, #141414);
-  /* The answer needle. The pack colour taken most of the way to ink, so it is
-     still recognisably the pack's hue and still reads both on the pale bands
-     and on the field itself. */
-  --dial-accent: color-mix(in oklab, var(--category, currentColor) 45%, #141414);
-}
-
-/* THE ZONE RAMP INVERTS ON THE PACK COLOUR, and it is not a preference.
-
-   On card stock the bands run dark -> pack -> pale, because the pack colour
-   is the one thing a white card never uses. Here the pack colour IS the
-   field, so a band painted in it does not read as a band — it reads as a hole
-   in the track, which is exactly what the first version drew: the middle two
-   zones came out at and around #EE4620 on #EE4620 and erased a third of the
-   arc they were supposed to be sitting in.
-
-   So the ramp runs on WHITE instead, from a little above the track's own wash
-   up to solid, and the reading is the same one it always was: the closer the
-   guess, the heavier the band. */
-.dial[data-bare] .dial__track,
-.meter__track {
-  stroke: rgba(255, 255, 255, 0.34);
-}
-
-.dial[data-bare] .dial__zone[data-zone="2"],
-.meter__zone[data-zone="2"] { stroke: rgba(255, 255, 255, 0.55); }
-.dial[data-bare] .dial__zone[data-zone="1"],
-.meter__zone[data-zone="1"] { stroke: rgba(255, 255, 255, 0.78); }
-.dial[data-bare] .dial__zone[data-zone="0"],
-.meter__zone[data-zone="0"] { stroke: #FFFFFF; }
-
-/* The casing's JOB is unchanged — an edge where the answer needle crosses the
-   busiest part of the track — but the value it needs is the opposite one,
-   because the band under it is now the lightest thing on the screen rather
-   than the darkest, and the stretch that actually needs help is the open
-   field on either side of it. */
-.dial[data-bare] .dial__target line.dial__target-casing,
-.meter__target line.meter__target-casing {
-  stroke: rgba(255, 255, 255, 0.9);
-}
-
-.dial[data-bare] .dial__end {
-  font-size: var(--fs-2xl);
-  line-height: var(--lh-tight);
-}
-
-/* A WIDE ARC NEEDS NONE OF THAT SPACE. Its ends curl inward and stop short
-   of the box's bottom edge, so the clearance the semicircle has to be given
-   is already there in the geometry — adding it again just detaches the
-   labels from the ends they are marking. */
-.dial[data-bare] .dial__ends {
-  margin-top: 0;
-}
-
-/* The screen with no card: the instrument centred in what the header and the
-   action leave over, its caption under it. */
-.bp-bare__stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-4);
-  min-height: 0;
-}
-
-/* THE BAR NEEDS A HEIGHT HANDED TO IT. THE ARC DOES NOT.
-
-   An arc is sized by its width and works out its own height from the
-   viewBox, so `.focal__center` — which sizes to content and centres what it
-   finds — is exactly right for it. A vertical bar has no width to be sized
-   by. Its height has to come from the column, and a content-sized parent has
-   none to give: the whole chain was `flex: 1` inside a box that was itself
-   auto, so every grow factor resolved against content instead of against the
-   screen.
-
-   Chrome papered over it by taking an intrinsic aspect ratio off the viewBox
-   and inflating the SVG to fill; Safari does not, so on an actual phone the
-   stack collapsed to the default 300x150 replaced-element box and the meter
-   came out at about a third of the height it had in the preview. The two
-   engines disagreeing is the tell that nothing in the chain was definite.
-
-   So the meter's stage takes the column instead of hugging its contents, and
-   the height flows down a chain that has a real number at the top of it. */
-.bp-bare__stage:has(.meter) {
-  margin-block: 0;
-  flex: 1;
-  min-height: 0;
-}
-
-.bp-bare__meta {
-  margin: 0;
-  text-align: center;
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-medium);
-  font-variant-numeric: tabular-nums;
-  color: color-mix(in oklab, var(--category-ink, #141414) 72%, transparent);
-}
-
-/* --- the meter -----------------------------------------------------------
-
-   Ballpark's other instrument, and the one bound by HEIGHT rather than
-   width — which is the whole reason it comes out smaller. A bar can only be
-   as long as the column is tall; an arc of the same width folds half again
-   as much line into the space. See the note at the top of Meter.tsx. */
-.meter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-3);
-  min-height: 0;
-  flex: 1;
-  /* Full column, not label-width. The stage centres its children, so without
-     this the meter is only as wide as its longest end label — which makes the
-     drag target depend on the spectrum, wide for "Insignificant cultural
-     event" and a thumb's width for "Ugly". */
-  width: 100%;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* WIDTH IS STATED, HEIGHT IS TAKEN, and the graphic fits itself to the
-   result — `xMidYMid meet` on the element scales the bar to whichever
-   dimension runs out first, which for this instrument is always the height.
-
-   `width: auto` was the other half of the Safari fault above: it asked the
-   engine to derive a width from an intrinsic ratio in a box whose height was
-   not yet known, which is a question with no good answer. Full width also
-   makes the whole column a drag target, and since the mapping only reads the
-   pointer's y that is a straight win — the bar is 30px wide and the thumb
-   does not have to find it. */
-.meter__svg {
-  display: block;
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  overflow: visible;
-}
-
-.meter__svg[data-interactive] { cursor: grab; }
-.meter__svg[data-interactive][data-dragging] { cursor: grabbing; }
-
-@media (hover: hover) and (pointer: fine) {
-  .meter__svg:focus-visible {
-    outline: 3px solid var(--card-ink);
-    outline-offset: 6px;
-    border-radius: var(--radius-lg);
-  }
-}
-
-/* THE END LABELS ARE THE ONE THING THE BAR WINS ON.
-   Each gets the whole column instead of half of it, so they run at --fs-3xl
-   where the arc's sit at --fs-2xl and the shipped card's at --fs-sm. */
-.meter__end {
-  font-family: var(--font-display);
-  font-size: var(--fs-3xl);
-  font-weight: var(--fw-bold);
-  line-height: var(--lh-tight);
-  text-align: center;
-  text-wrap: balance;
-  color: var(--card-ink);
-}
-
-.meter__track {
-  stroke-width: 26;
-  stroke-linecap: round;
-}
-
-/* TRANSLATED, NOT REPOSITIONED — the bar's equivalent of the dial's rotate,
-   and for the same reason. -4 user units per unit of value is the 400-unit
-   travel over the 100-point scale; see TRAVEL in Meter.tsx. */
-.meter__needle,
-.meter__target,
-.meter__guess,
-.meter__drift {
-  transform-box: view-box;
-}
-
-.meter__needle {
-  translate: 0 calc(var(--v) * -4px);
-  transition: translate var(--dur-fast) var(--ease-out);
-}
-
-.meter__svg[data-dragging] .meter__needle { transition: none; }
-
-.meter__needle line,
-.meter__guess line {
-  stroke: var(--card-ink);
-  stroke-width: 11;
-  stroke-linecap: round;
-}
-
-.meter__target {
-  translate: 0 calc(var(--v) * -4px);
-}
-
-.meter__guess {
-  translate: 0 calc(var(--v) * -4px);
-}
-
-/* Qualified with the element for the reason the dial's casing is — the rule
-   under it matches `.meter__target line` at 0,1,1 and would otherwise win,
-   restyling the casing as a second copy of the needle. */
-.meter__target line.meter__target-casing {
-  stroke-width: 19;
-  stroke-linecap: round;
-}
-
-.meter__target line {
-  stroke: var(--dial-accent);
-  stroke-width: 11;
-  stroke-linecap: round;
-}
-
-.meter__zone {
-  stroke-width: 26;
-  stroke-linecap: butt;
-  transform-box: view-box;
-  transform-origin: 33px var(--oy);
-}
-
-.meter__zones[data-revealing] .meter__zone {
-  animation: bp-zone-in var(--dur-base) var(--ease-out) backwards;
-  animation-delay: calc(var(--zone-i) * 60ms);
-}
-
-.meter__target[data-revealing] line {
-  animation: bp-meter-target-in var(--dur-base) var(--ease-out) 200ms backwards;
-}
-
-@keyframes bp-meter-target-in {
-  from { opacity: 0; scale: 0.2 1; }
-  to   { opacity: 1; scale: 1 1; }
-}
-
-@keyframes bp-meter-drift {
-  from { translate: 0 -3px; }
-  to   { translate: 0 3px; }
-}
-
-.meter__drift[data-drift] {
-  animation: bp-meter-drift 4s var(--ease-in-out) infinite alternate;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .meter__drift[data-drift] { animation: none; }
-}
-
