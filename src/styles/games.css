@@ -4659,6 +4659,30 @@
   min-height: 0;
 }
 
+/* THE BAR NEEDS A HEIGHT HANDED TO IT. THE ARC DOES NOT.
+
+   An arc is sized by its width and works out its own height from the
+   viewBox, so `.focal__center` — which sizes to content and centres what it
+   finds — is exactly right for it. A vertical bar has no width to be sized
+   by. Its height has to come from the column, and a content-sized parent has
+   none to give: the whole chain was `flex: 1` inside a box that was itself
+   auto, so every grow factor resolved against content instead of against the
+   screen.
+
+   Chrome papered over it by taking an intrinsic aspect ratio off the viewBox
+   and inflating the SVG to fill; Safari does not, so on an actual phone the
+   stack collapsed to the default 300x150 replaced-element box and the meter
+   came out at about a third of the height it had in the preview. The two
+   engines disagreeing is the tell that nothing in the chain was definite.
+
+   So the meter's stage takes the column instead of hugging its contents, and
+   the height flows down a chain that has a real number at the top of it. */
+.bp-bare__stage:has(.meter) {
+  margin-block: 0;
+  flex: 1;
+  min-height: 0;
+}
+
 .bp-bare__meta {
   margin: 0;
   text-align: center;
@@ -4681,16 +4705,31 @@
   gap: var(--sp-3);
   min-height: 0;
   flex: 1;
+  /* Full column, not label-width. The stage centres its children, so without
+     this the meter is only as wide as its longest end label — which makes the
+     drag target depend on the spectrum, wide for "Insignificant cultural
+     event" and a thumb's width for "Ugly". */
+  width: 100%;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
+/* WIDTH IS STATED, HEIGHT IS TAKEN, and the graphic fits itself to the
+   result — `xMidYMid meet` on the element scales the bar to whichever
+   dimension runs out first, which for this instrument is always the height.
+
+   `width: auto` was the other half of the Safari fault above: it asked the
+   engine to derive a width from an intrinsic ratio in a box whose height was
+   not yet known, which is a question with no good answer. Full width also
+   makes the whole column a drag target, and since the mapping only reads the
+   pointer's y that is a straight win — the bar is 30px wide and the thumb
+   does not have to find it. */
 .meter__svg {
   display: block;
   flex: 1;
   min-height: 0;
-  width: auto;
+  width: 100%;
   overflow: visible;
 }
 
