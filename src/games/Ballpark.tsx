@@ -405,7 +405,7 @@ export function Ballpark({ mode, onBack }: Props) {
         flipped &&
         (bare ? (
           bareScreen(
-            instrument({ value: target, target }),
+            instrument({ value: target, target, showZones: true }),
             "Say one thing that sits right there.",
             <button
               className="btn btn--lg btn--block"
@@ -424,7 +424,7 @@ export function Ballpark({ mode, onBack }: Props) {
               <div className="cardstage">
                 <article className="card card--dealt bp-clue" key="face">
                   <span className="card__eyebrow">Your clue</span>
-                  {instrument({ value: target, target })}
+                  {instrument({ value: target, target, showZones: true })}
                   <p className="card__meta">Say one thing that sits right there.</p>
                 </article>
               </div>

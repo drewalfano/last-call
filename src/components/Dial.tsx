@@ -101,7 +101,15 @@ interface DialProps {
   right: string;
   /** Draws the answer needle. Null until the reveal, or on the Reader's screen. */
   target?: number | null;
-  /** Paints the three proximity zones out from `target`. Reveal only. */
+  /**
+   * Paints the three proximity zones out from `target`.
+   *
+   * On the reveal, where they say how close the group got — and on the
+   * Reader's clue card, where they say the same thing before the fact. A
+   * needle alone tells the Reader a point, and a point is not what they have
+   * to clue: they have to clue a REGION, and how wide that region is before
+   * the table stops calling it close is exactly what the bands draw.
+   */
   showZones?: boolean;
   /** Marks where the group locked in, alongside the answer. Reveal only. */
   lockedGuess?: number | null;
@@ -304,6 +312,20 @@ export function Dial({
     if (!dragging) lastNotch.current = Math.floor(value / 5);
   }, [value, dragging]);
 
+  /**
+   * THE LIVE NEEDLE IS THE GROUP'S POSITION, so it only belongs on a screen
+   * where the group has one.
+   *
+   * The Reader's clue card draws an answer by passing it as BOTH `value` and
+   * `target`, which is the shortest way to put a needle at a point — and it
+   * used to put two there, one on top of the other. Invisible while the card
+   * showed a bare needle on white; not invisible once the card started
+   * showing the zones underneath it, because the answer needle carries a
+   * casing to survive crossing the darkest band and the live one does not. It
+   * sat on top in flat black and ate the edge the casing exists to give.
+   */
+  const showLiveNeedle = lockedGuess === null && (interactive || target === null);
+
   const shown = Math.round(value);
   const targetPoint = target === null ? null : pointOnArc(target, sweep, R);
   const vbH = viewBoxHeight(sweep);
@@ -429,7 +451,7 @@ export function Dial({
             once pointing at 0 and turned by --per-deg per unit, the needle's
             position, its easing and the ambient sway are all one property
             that composes for free. */}
-        {lockedGuess === null && (
+        {showLiveNeedle && (
           <g className="dial__drift" data-drift={interactive && !touched && !dragging ? "" : undefined}>
             <g className="dial__needle" style={{ ["--v" as string]: value }}>
               <line x1={CX} y1={CY} x2={CX - NEEDLE_R} y2={CY} />

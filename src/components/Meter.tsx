@@ -49,6 +49,7 @@ interface MeterProps {
   /** Value 100, at the top. */
   right: string;
   target?: number | null;
+  /** See the Dial's note — the reveal and the Reader's clue card both. */
   showZones?: boolean;
   lockedGuess?: number | null;
   revealing?: boolean;
@@ -164,6 +165,20 @@ export function Meter({
     if (!dragging) lastNotch.current = Math.floor(value / 5);
   }, [value, dragging]);
 
+  /**
+   * THE LIVE NEEDLE IS THE GROUP'S POSITION, so it only belongs on a screen
+   * where the group has one.
+   *
+   * The Reader's clue card draws an answer by passing it as BOTH `value` and
+   * `target`, which is the shortest way to put a needle at a point — and it
+   * used to put two there, one on top of the other. Invisible while the card
+   * showed a bare needle on white; not invisible once the card started
+   * showing the zones underneath it, because the answer needle carries a
+   * casing to survive crossing the darkest band and the live one does not. It
+   * sat on top in flat black and ate the edge the casing exists to give.
+   */
+  const showLiveNeedle = lockedGuess === null && (interactive || target === null);
+
   const shown = Math.round(value);
   const valueText =
     shown <= 2
@@ -256,7 +271,7 @@ export function Meter({
             rotation. y1/y2 are attributes and nothing can transition them, so
             the cursor is drawn once at value 0 and moved by a CSS translate
             that the easing and the drift both compose onto. */}
-        {lockedGuess === null && (
+        {showLiveNeedle && (
           <g className="meter__drift" data-drift={interactive && !touched && !dragging ? "" : undefined}>
             <g className="meter__needle" style={{ ["--v" as string]: value }}>
               <line x1={CX - arm} y1={Y0} x2={CX + arm} y2={Y0} />

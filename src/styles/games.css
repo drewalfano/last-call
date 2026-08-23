@@ -4560,20 +4560,25 @@
 
    Nothing else in the card moves. The gain is entirely in what was already
    empty. */
-/* THE ARC BLEEDS, THE LABELS DO NOT, and that division is the whole rule.
+/* THE ARC KEEPS THE CARD'S OWN INSET. It is not a bled graphic.
 
-   The arc is a graphic and has no business honouring a text inset, so it
-   takes the card's side padding back. The end labels are TEXT, and the card
-   clips: bled with it, "Not beer" sat hard against the rounded edge and
-   anything longer would have lost characters to the corner radius. They keep
-   the content box, which leaves them half a stroke short of the ink rather
-   than aligned to it — a worse alignment than the semicircle used to have,
-   and a much better one than a word with its tail cut off. */
-.bp-clue .dial__svg,
-.card .dial__svg {
-  width: calc(100% + var(--sp-4) * 2);
-  margin-inline: calc(var(--sp-4) * -1);
-}
+   It was bled — the argument being that an arc has no business honouring a
+   text inset — and the argument was wrong for one reason that only shows up
+   on stock: the card clips, and it clips to a 34px corner radius. A track
+   stroked 14 units wide ends in a round cap, and a cap sitting exactly on the
+   card's edge gets shaved flat by it. The instrument read as cropped rather
+   than as full-bleed, which is the one thing worse than being slightly
+   smaller.
+
+   So the arc lines up with the eyebrow and the caption above and below it.
+   That costs about 8% of the radius against the bled version and buys back
+   the alignment the ends were designed around: with no bleed the painted ink
+   and the labels both start at the content box, so they agree exactly
+   instead of missing each other by half a stroke.
+
+   The base rule already sets width: 100%. This is here to say that the
+   absence of a bleed is deliberate, so the next person to notice the empty space
+   does not spend it again. */
 
 /* --- the bare instruments ------------------------------------------------
 
@@ -4628,11 +4633,6 @@
 .dial[data-bare] .dial__target line.dial__target-casing,
 .meter__target line.meter__target-casing {
   stroke: rgba(255, 255, 255, 0.9);
-}
-
-.dial[data-bare] .dial__svg {
-  width: 100%;
-  margin-inline: 0;
 }
 
 .dial[data-bare] .dial__end {
