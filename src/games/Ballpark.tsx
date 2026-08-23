@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Dial } from "../components/Dial";
+import { Meter } from "../components/Meter";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import { BALLPARK, degreesOff, randomTarget, zoneFor, type Spectrum } from "../data/ballpark";
 import { useContentMode } from "../state/contentMode";
+import { useDialStyle } from "../state/dialStyle";
 import { useRoster } from "../state/roster";
 import { audio } from "../lib/audio";
 import { buzz } from "../lib/useCountdown";
@@ -46,6 +48,17 @@ function labelFor(s: Spectrum): string {
   return `${s.left} / ${s.right}`;
 }
 
+/**
+ * THE WIDE ARC'S SWEEP.
+ *
+ * 260 rather than 240 or 280. The radius is capped by the column whatever
+ * happens, so every degree past 180 is bought out of the empty bottom corners
+ * — but the ends have to stay recognisably a LEFT and a RIGHT, and much past
+ * this they start curling under far enough to read as a ring with a bite out
+ * of it rather than as a spectrum laid out end to end.
+ */
+const WIDE_SWEEP = 260;
+
 interface Props {
   mode: ModeDef;
   onBack: () => void;
@@ -54,6 +67,8 @@ interface Props {
 export function Ballpark({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
   const { players, hasRoster } = useRoster();
+  /* WHICH INSTRUMENT, and it is a temporary control — see state/dialStyle. */
+  const { style } = useDialStyle();
   /* SUPPLEMENT, not lead: the pool IS browsable through the picker, but the
      Night tier is empty, so there is no ordering claim to make about it yet.
      Worth revisiting to `lead` the day 19+ pairs are written. */
@@ -92,6 +107,34 @@ export function Ballpark({ mode, onBack }: Props) {
 
   const prompt = chosen ?? deck.current;
   const distance = locked === null ? 0 : Math.round(Math.abs(locked - target));
+
+  /**
+   * THE TWO WAYS THE INSTRUMENT CHANGES THE SCREEN AROUND IT.
+   *
+   * `bare` is the layout question, not a colour one: both alternatives are
+   * drawn onto the pack colour instead of onto card stock, which means the
+   * card, the eyebrow and the caption's home all go with them. `sweep` is
+   * only ever read by the arc.
+   */
+  const bare = style !== "card";
+  const sweep = style === "wide" ? WIDE_SWEEP : 180;
+
+  /**
+   * HOW FAR OFF, SAID IN A UNIT THAT IS ACTUALLY ON THE SCREEN.
+   *
+   * The arc has degrees, and a wider arc has more of them for the same miss —
+   * correctly, because the two needles really are further apart on it. The
+   * meter has no degrees at all, so it falls back to a percentage of the run,
+   * and that is a genuine cost of the bar rather than a wording problem: the
+   * one thing this line has always refused to print is a bare number off an
+   * undrawn 0-100 scale, and on the meter that is the only unit there is.
+   */
+  const gapLine =
+    distance === 0
+      ? "Dead on."
+      : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${
+          style === "meter" ? `${distance}%` : `${degreesOff(distance, sweep)}\u00B0`
+        }.`;
 
   /**
    * THE ONE REAL LEAK IN PASS-THE-PHONE.
@@ -189,6 +232,56 @@ export function Ballpark({ mode, onBack }: Props) {
     );
   }
 
+  /**
+   * THE INSTRUMENT, WHICHEVER ONE IS ON.
+   *
+   * One call site per phase rather than a branch inside each of them, so the
+   * three screens keep reading as three screens and the choice is made once.
+   */
+  const instrument = (props: {
+    value: number;
+    onChange?: (v: number) => void;
+    target?: number | null;
+    showZones?: boolean;
+    lockedGuess?: number | null;
+    revealing?: boolean;
+  }) =>
+    style === "meter" ? (
+      <Meter {...props} left={prompt.left} right={prompt.right} />
+    ) : (
+      <Dial {...props} left={prompt.left} right={prompt.right} sweep={sweep} bare={bare} />
+    );
+
+  /**
+   * Whether the instrument is the thing on screen — which is also exactly
+   * when the header's live line is a DUPLICATE of it. Both ends of the
+   * spectrum are printed on the instrument itself, in bigger type than the
+   * header can give them, so on these screens the line above is a second copy
+   * of a pair the player is already reading. It goes, and the height it was
+   * holding goes into the instrument.
+   *
+   * Only on the bare layouts. In the card, the arc's own end labels are small
+   * enough that the header is genuinely doing work — which is the note above
+   * `subtitle` below, and still true.
+   */
+  const instrumentUp =
+    (phase === "reading" && flipped) || phase === "guessing" || phase === "reveal";
+
+  /**
+   * A screen with no card: the instrument centred in what the header and the
+   * actions leave, with its caption under it. `.focal__center` is how every
+   * other cardless screen in the app grounds its action — see global.css.
+   */
+  const bareScreen = (content: ReactNode, caption: ReactNode, action: ReactNode) => (
+    <div className="focal bp bp-bare">
+      <div className="focal__center bp-bare__stage">
+        {content}
+        <p className="bp-bare__meta">{caption}</p>
+      </div>
+      <div className="actions">{action}</div>
+    </div>
+  );
+
   return (
     <GameScreen
       mode={mode}
@@ -203,8 +296,13 @@ export function Ballpark({ mode, onBack }: Props) {
          above it; "Underrated / Overrated" is already the whole thought, and
          these pairs run long enough — "Insignificant cultural event" is one
          end of one — that a label would cost a third line in a header that
-         reserves its height. */
-      subtitle={`${prompt.left} / ${prompt.right}`}
+         reserves its height.
+
+         The bare layouts drop it while the instrument is up, because there it
+         is the same pair twice. See `instrumentUp`. */
+      subtitle={
+        bare && instrumentUp ? undefined : `${prompt.left} / ${prompt.right}`
+      }
       /* The Reader's card is the one thing in here one person reads. */
       isPrivate={phase === "reading"}
       onBack={onBack}
@@ -265,26 +363,26 @@ export function Ballpark({ mode, onBack }: Props) {
           smear invites everyone to lean in and see what it is hiding.
 
           The flip is the same one the decks deal with — remounting on a key,
-          which replays .card--dealt. See PromptCard. */}
-      {phase === "reading" && (
+          which replays .card--dealt. See PromptCard.
+
+          NO WAY BACK TO FACE DOWN. There was one, on the grounds that a
+          Reader who gets up mid-round otherwise hands over a live answer —
+          but the visibility handler above already turns the card back over
+          the moment the screen sleeps or the app is backgrounded, which is
+          how a phone actually changes hands, and the button was the only
+          second action on any screen in the mode. */}
+      {phase === "reading" && !flipped && (
         <CardBody
           className="bp bp-reading"
           card={
             <div className="cardstage">
-              <article className="card card--dealt bp-clue" key={flipped ? "face" : "back"}>
+              <article className="card card--dealt bp-clue" key="back">
                 <span className="card__eyebrow">Your clue</span>
                 {/* The spectrum is NOT repeated on the card. It is in the
                     header directly above, and the one thing this app's header
                     has already been stripped of once is lines that restate
                     the card underneath them. */}
-                {flipped ? (
-                  <>
-                    <Dial value={target} left={prompt.left} right={prompt.right} target={target} />
-                    <p className="card__meta">Say one thing that sits right there.</p>
-                  </>
-                ) : (
-                  <p className="card__meta">Turn it over when nobody else can see.</p>
-                )}
+                <p className="card__meta">Turn it over when nobody else can see.</p>
               </article>
             </div>
           }
@@ -293,96 +391,140 @@ export function Ballpark({ mode, onBack }: Props) {
             <button
               className="btn btn--lg btn--block"
               onClick={() => {
-                if (flipped) {
-                  audio.play("advance");
-                  setPhase("guessing");
-                } else {
-                  audio.play("card");
-                  setFlipped(true);
-                }
+                audio.play("card");
+                setFlipped(true);
               }}
             >
-              {flipped ? "Good, next" : "Flip"}
+              Flip
             </button>
-
-            {/* A WAY BACK TO FACE DOWN, and it is not decoration. Without it
-                the only route off this screen is forward, so a Reader who
-                gets up mid-round hands over a phone with the answer on it.
-                Turning it back over costs one tap and removes the only state
-                in the mode that cannot be undone. */}
-            {flipped && (
-              <button className="btn btn--ghost btn--block" onClick={() => setFlipped(false)}>
-                Flip back
-              </button>
-            )}
           </div>
         </CardBody>
       )}
 
-      {phase === "guessing" && (
-        <CardBody
-          className="bp bp-guessing"
-          card={
-            <div className="cardstage">
-              <article className="card card--dealt" key={`guess-${roundIndex}`}>
-                <span className="card__eyebrow">Where is it?</span>
-                <Dial value={guess} onChange={onDial} left={prompt.left} right={prompt.right} />
-                <p className="card__meta">
-                  {hasMovedDial ? "Everyone agree?" : "Drag anywhere on the dial."}
-                </p>
-              </article>
+      {phase === "reading" &&
+        flipped &&
+        (bare ? (
+          bareScreen(
+            instrument({ value: target, target }),
+            "Say one thing that sits right there.",
+            <button
+              className="btn btn--lg btn--block"
+              onClick={() => {
+                audio.play("advance");
+                setPhase("guessing");
+              }}
+            >
+              Good, next
+            </button>,
+          )
+        ) : (
+          <CardBody
+            className="bp bp-reading"
+            card={
+              <div className="cardstage">
+                <article className="card card--dealt bp-clue" key="face">
+                  <span className="card__eyebrow">Your clue</span>
+                  {instrument({ value: target, target })}
+                  <p className="card__meta">Say one thing that sits right there.</p>
+                </article>
+              </div>
+            }
+          >
+            <div className="actions">
+              <button
+                className="btn btn--lg btn--block"
+                onClick={() => {
+                  audio.play("advance");
+                  setPhase("guessing");
+                }}
+              >
+                Good, next
+              </button>
             </div>
-          }
-        >
-          <div className="actions">
-            {/* DISABLED UNTIL THE DIAL HAS ACTUALLY MOVED. A guess that
-                defaults to the middle and submits is a round the group can
-                sit out, and the middle is a defensible answer often enough
-                that they would. */}
+          </CardBody>
+        ))}
+
+      {phase === "guessing" &&
+        /* DISABLED UNTIL THE DIAL HAS ACTUALLY MOVED. A guess that defaults
+           to the middle and submits is a round the group can sit out, and the
+           middle is a defensible answer often enough that they would. */
+        (bare ? (
+          bareScreen(
+            instrument({ value: guess, onChange: onDial }),
+            hasMovedDial ? "Everyone agree?" : "Drag anywhere on the dial.",
             <button className="btn btn--lg btn--block" onClick={lockIn} disabled={!hasMovedDial}>
               Lock it in
-            </button>
-          </div>
-        </CardBody>
-      )}
-
-      {phase === "reveal" && (
-        <CardBody
-          className="bp bp-reveal"
-          card={
-            <div className="cardstage">
-              <article className="card card--dealt" key={`reveal-${roundIndex}`}>
-                <span className="card__eyebrow">Results</span>
-                <Dial
-                  value={locked ?? guess}
-                  left={prompt.left}
-                  right={prompt.right}
-                  target={target}
-                  showZones
-                  lockedGuess={locked}
-                  revealing
-                />
-                {/* THE ZONE NAMES THE RESULT AND THE ANGLE QUALIFIES IT.
-                    "Close." alone throws away the one precise thing the round
-                    produced, and a bare number was worse — the 0–100 scale is
-                    internal and undrawn, so it read as a quantity of nothing.
-                    Degrees are the unit the arc actually has. */}
-                <p className="card__meta bp-reveal__gap">
-                  {distance === 0
-                    ? "Dead on."
-                    : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${degreesOff(distance)}°.`}
-                </p>
-              </article>
+            </button>,
+          )
+        ) : (
+          <CardBody
+            className="bp bp-guessing"
+            card={
+              <div className="cardstage">
+                <article className="card card--dealt" key={`guess-${roundIndex}`}>
+                  <span className="card__eyebrow">Where is it?</span>
+                  {instrument({ value: guess, onChange: onDial })}
+                  <p className="card__meta">
+                    {hasMovedDial ? "Everyone agree?" : "Drag anywhere on the dial."}
+                  </p>
+                </article>
+              </div>
+            }
+          >
+            <div className="actions">
+              <button className="btn btn--lg btn--block" onClick={lockIn} disabled={!hasMovedDial}>
+                Lock it in
+              </button>
             </div>
-          }
-        >
-          <div className="actions">
+          </CardBody>
+        ))}
+
+      {phase === "reveal" &&
+        (bare ? (
+          bareScreen(
+            instrument({
+              value: locked ?? guess,
+              target,
+              showZones: true,
+              lockedGuess: locked,
+              revealing: true,
+            }),
+            gapLine,
             <button className="btn btn--lg btn--block" onClick={nextRound}>
               Next round
-            </button>
-          </div>
-        </CardBody>
-      )}
+            </button>,
+          )
+        ) : (
+          <CardBody
+            className="bp bp-reveal"
+            card={
+              <div className="cardstage">
+                <article className="card card--dealt" key={`reveal-${roundIndex}`}>
+                  <span className="card__eyebrow">Results</span>
+                  {instrument({
+                    value: locked ?? guess,
+                    target,
+                    showZones: true,
+                    lockedGuess: locked,
+                    revealing: true,
+                  })}
+                  {/* THE ZONE NAMES THE RESULT AND THE ANGLE QUALIFIES IT.
+                      "Close." alone throws away the one precise thing the
+                      round produced, and a bare number was worse — the 0-100
+                      scale is internal and undrawn, so it read as a quantity
+                      of nothing. Degrees are the unit the arc actually has. */}
+                  <p className="card__meta bp-reveal__gap">{gapLine}</p>
+                </article>
+              </div>
+            }
+          >
+            <div className="actions">
+              <button className="btn btn--lg btn--block" onClick={nextRound}>
+                Next round
+              </button>
+            </div>
+          </CardBody>
+        ))}
     </GameScreen>
   );
 }

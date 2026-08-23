@@ -156,17 +156,28 @@ export const ZONES = [
  * "off by 12" is an integer with nothing on screen to be twelve OF, and the
  * first thing anyone asks is twelve what.
  *
- * Degrees are the one unit the dial actually has: the arc is a real half
- * circle, so the gap between two needles is an angle a player can see. The
+ * Degrees are the one unit the dial actually has: the arc is a real piece of
+ * a circle, so the gap between two needles is an angle a player can see. The
  * conversion is written as the sweep over the scale rather than as 1.8 so it
  * stays true to the geometry it comes from — if the arc ever stops being 180
  * degrees, this is wrong in the same edit that makes it wrong.
+ *
+ * AND IT DID, so the sweep is now an argument. A wider dial turns further per
+ * unit of value, which means the SAME miss is a bigger number of degrees on
+ * it — correctly, because the two needles really are further apart. The
+ * caller passes the sweep it drew with; ARC_DEGREES is only the default.
+ *
+ * The vertical meter has no degrees at all and must not borrow these. It is a
+ * bar, its gap is a length, and the honest unit is a percentage of the run —
+ * which is a real weakness of that instrument rather than a wording problem,
+ * because the mode's whole reason for not printing a 0-100 number is that the
+ * scale is undrawn. See `gapUnit`.
  */
 export const ARC_DEGREES = 180;
 export const SCALE_MAX = 100;
 
-export function degreesOff(distance: number): number {
-  return Math.round((distance * ARC_DEGREES) / SCALE_MAX);
+export function degreesOff(distance: number, sweep: number = ARC_DEGREES): number {
+  return Math.round((distance * sweep) / SCALE_MAX);
 }
 
 /** The zone a distance lands in, or null for a miss beyond the outermost. */

@@ -6,19 +6,37 @@ import { ZONES } from "../data/ballpark";
 /**
  * THE DIAL
  * ---------------------------------------------------------------
- * A semicircle, flat side down, that the table drags a needle across. It is
- * the whole of Ballpark: the prompt is two words and the clue is spoken out
- * loud, so this is the only thing the app actually gives the group to do.
+ * An arc, flat side down, that the table drags a needle across. It is the
+ * whole of Ballpark: the prompt is two words and the clue is spoken out loud,
+ * so this is the only thing the app actually gives the group to do.
  *
  * Everything here is in the viewBox's own units and scaled by CSS, so the
  * geometry below is fixed and readable rather than recomputed per breakpoint.
+ *
+ * THE VIEWBOX IS TIGHT TO THE PAINT, and that is worth 37% of the instrument.
+ *
+ * It used to be 320 wide for an arc that paints 278 of them — 21 units of
+ * empty either side, inside a card that then adds 16px of padding of its own.
+ * Between the two, and a `width: min(100%, 300px)` cap on top, the drawn arc
+ * came to 261px in a 353px card: a quarter of the card was margin around the
+ * only object in the mode. The box is now exactly the ink, so a width given
+ * to the dial is a width the arc actually gets.
  */
-const VB_W = 320;
-const VB_H = 190;
-/** Centre of the arc — the hub the needle pivots on. */
-const CX = 160;
-const CY = 160;
+/** The track's centreline. Every other length here is derived from it. */
 const R = 132;
+const TRACK = 14;
+/** Half the track's stroke, which is how far the round cap reaches past R. */
+const PAD = TRACK / 2;
+/**
+ * The hub, which is also the box's own centre horizontally and its top-left
+ * inset vertically. Constant across every sweep — only the height below it
+ * changes — so the CSS can name one transform-origin and be right for all of
+ * them. See --hub in games.css.
+ */
+const CX = R + PAD;
+const CY = R + PAD;
+const VB_W = 2 * (R + PAD);
+
 /**
  * THE NEEDLE RUNS TO THE MIDDLE OF THE TRACK AND STOPS THERE.
  *
@@ -35,26 +53,41 @@ const R = 132;
  */
 const NEEDLE_R = R;
 
-/** Value (0–100) to angle in radians. 0 is due left, 100 is due right. */
-function valueToAngle(value: number): number {
-  return Math.PI * (1 - value / 100);
-}
+/**
+ * WHERE VALUE 0 SITS, IN MATHS DEGREES, FOR A GIVEN SWEEP.
+ *
+ * A sweep of 180 puts it due left and 100 due right, which is the dial as it
+ * shipped. Anything wider is centred on the same vertical, so the two ends
+ * drop below the horizontal by equal amounts and the instrument stays
+ * symmetrical about the value it is nowhere near — the middle.
+ */
+const startAngle = (sweep: number) => 90 + sweep / 2;
 
-function pointOnArc(value: number, radius = R): { x: number; y: number } {
-  const a = valueToAngle(value);
+/** How far the arc's ends hang below the hub, in user units. 0 at 180. */
+const belowHub = (sweep: number) => Math.max(0, -R * Math.cos((sweep * Math.PI) / 360));
+
+const viewBoxHeight = (sweep: number) => CY + belowHub(sweep) + PAD;
+
+function pointOnArc(value: number, sweep: number, radius = R): { x: number; y: number } {
+  const a = ((startAngle(sweep) - (sweep * value) / 100) * Math.PI) / 180;
   return { x: CX + radius * Math.cos(a), y: CY - radius * Math.sin(a) };
 }
 
 /**
- * An arc path between two values at a given radius. Always the short way
- * round — nothing here spans more than the semicircle itself — and always
- * clockwise on screen, which for a y-down coordinate system means the sweep
- * flag is 1 and the path runs left-to-right over the top.
+ * An arc path between two values at a given radius, clockwise on screen —
+ * which for a y-down coordinate system means the sweep flag is 1.
+ *
+ * The large-arc flag is COMPUTED rather than nailed to 0. At a sweep of 180
+ * nothing drawn here could span more than a semicircle, so it never mattered;
+ * a wider dial makes the full track itself the counter-example, and an arc
+ * asked to go the long way round with the flag clear silently goes the short
+ * way instead — it does not fail, it draws the complement.
  */
-function arcPath(from: number, to: number, radius = R): string {
-  const a = pointOnArc(from, radius);
-  const b = pointOnArc(to, radius);
-  return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${radius} ${radius} 0 0 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
+function arcPath(from: number, to: number, sweep: number, radius = R): string {
+  const a = pointOnArc(from, sweep, radius);
+  const b = pointOnArc(to, sweep, radius);
+  const large = (Math.abs(to - from) / 100) * sweep > 180 ? 1 : 0;
+  return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${radius} ${radius} 0 ${large} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
 }
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -74,6 +107,22 @@ interface DialProps {
   lockedGuess?: number | null;
   /** Runs the reveal sequence's entrance on the bands and the answer needle. */
   revealing?: boolean;
+  /**
+   * Total arc, in degrees. 180 is the semicircle the mode shipped with.
+   *
+   * Widening it is the one way to buy scale that width cannot: the radius is
+   * capped by the column either way, so past 180 the extra length comes out
+   * of the empty bottom corners a semicircle can never reach into.
+   */
+  sweep?: number;
+  /**
+   * Drawn straight onto the pack colour rather than onto white card stock.
+   *
+   * Only the palette changes — the track goes to a wash of white and the ink
+   * stays black, which is the same pairing the other way up. The geometry is
+   * identical, because the card was never what limited it.
+   */
+  bare?: boolean;
 }
 
 /**
@@ -96,6 +145,8 @@ export function Dial({
   showZones = false,
   lockedGuess = null,
   revealing = false,
+  sweep = 180,
+  bare = false,
 }: DialProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -151,26 +202,42 @@ export function Dial({
   /**
    * Pointer position to value.
    *
-   * CLAMPED BEFORE THE MAPPING, and the clamp is not a `min`/`max` pair. Drop
-   * the pointer below the flat edge of the semicircle and `atan2` goes
-   * negative; squeezing that into [0, PI] with min/max sends everything below
-   * the line to 0 radians, which is the RIGHT-hand end — so a drag that
+   * THE DEAD WEDGE IS RESOLVED BY WHICH END IS NEARER, not by squeezing the
+   * angle into range. Below the flat edge of a semicircle `atan2` goes
+   * negative, and forcing that into [0, PI] with a min/max sends everything
+   * under the line to 0 radians — the RIGHT-hand end — so a drag that
    * wanders off the bottom-left corner throws the needle across the whole
-   * dial to 100. Below the line the sensible answer is whichever end the
-   * pointer is nearest, so the sign of dx picks it and the angle is set
-   * outright rather than squeezed.
+   * dial to 100.
+   *
+   * Written as a full turn's worth of value and then bisected, so the same
+   * reasoning holds for a wider sweep, where the wedge is narrower and no
+   * longer symmetrical about straight down in value terms.
    */
-  const valueAt = useCallback((clientX: number, clientY: number): number | null => {
-    const svg = svgRef.current;
-    const ctm = svg?.getScreenCTM();
-    if (!svg || !ctm) return null;
-    const p = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+  const valueAt = useCallback(
+    (clientX: number, clientY: number): number | null => {
+      const svg = svgRef.current;
+      const ctm = svg?.getScreenCTM();
+      if (!svg || !ctm) return null;
+      const p = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
 
-    const dx = p.x - CX;
-    const dy = CY - p.y; // invert: screen y grows downward
-    const angle = dy < 0 ? (dx < 0 ? Math.PI : 0) : Math.atan2(dy, dx);
-    return (1 - angle / Math.PI) * 100;
-  }, []);
+      const dx = p.x - CX;
+      const dy = CY - p.y; // invert: screen y grows downward
+      let deg = (Math.atan2(dy, dx) * 180) / Math.PI;
+      const a0 = startAngle(sweep);
+      /* Into the half-open turn that ends at value 0, so the whole dial plus
+         its wedge is one monotonic run of value rather than two branches. */
+      while (deg > a0) deg -= 360;
+      while (deg <= a0 - 360) deg += 360;
+
+      const v = ((a0 - deg) / sweep) * 100;
+      if (v <= 100) return v;
+      /* In the wedge. Its far side is 0 and its near side 100, so the
+         midpoint in value terms is the watershed. */
+      const wedge = ((360 - sweep) / sweep) * 100;
+      return v > 100 + wedge / 2 ? 0 : 100;
+    },
+    [sweep],
+  );
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
@@ -238,7 +305,22 @@ export function Dial({
   }, [value, dragging]);
 
   const shown = Math.round(value);
-  const targetPoint = target === null ? null : pointOnArc(target, R);
+  const targetPoint = target === null ? null : pointOnArc(target, sweep, R);
+  const vbH = viewBoxHeight(sweep);
+  /**
+   * The two numbers the stylesheet needs to place a needle at a value: where
+   * value 0 points once the line has been drawn due left, and how far a
+   * single unit turns it. At 180 they come out 0 and 1.8, which is what the
+   * three rotate rules said in longhand before the sweep could vary.
+   */
+  const geometry = {
+    ["--start-deg" as string]: `${(90 - sweep / 2).toFixed(3)}deg`,
+    ["--per-deg" as string]: `${(sweep / 100).toFixed(4)}deg`,
+    /* How far the painted ends of the track are inset from the box's own
+       edge, as a percentage of its width, so the labels under the arc can
+       line up with the ends of the ink at any sweep. */
+    ["--end-inset" as string]: `${((pointOnArc(0, sweep).x - PAD) / VB_W) * 100}%`,
+  };
 
   /**
    * Reads as a POSITION, not a number. "62" tells a screen reader nothing
@@ -254,11 +336,11 @@ export function Dial({
           : `${shown}% of the way from ${left} to ${right}`;
 
   return (
-    <div className="dial">
+    <div className="dial" data-bare={bare || undefined} style={geometry}>
       <svg
         ref={svgRef}
         className="dial__svg"
-        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        viewBox={`0 0 ${VB_W} ${vbH.toFixed(2)}`}
         role={interactive ? "slider" : "img"}
         aria-label={interactive ? `Dial between ${left} and ${right}` : `${left} to ${right}`}
         aria-valuenow={interactive ? shown : undefined}
@@ -274,7 +356,7 @@ export function Dial({
         onPointerCancel={endDrag}
         onKeyDown={onKeyDown}
       >
-        <path className="dial__track" d={arcPath(0, 100)} />
+        <path className="dial__track" d={arcPath(0, 100, sweep)} />
 
         {/* THE THREE ZONES. Widest first in document order so the tighter
             ones paint over them; the entrance stagger runs the other way,
@@ -295,6 +377,7 @@ export function Dial({
                 d={arcPath(
                   clamp(target - ZONES[i].within, 0, 100),
                   clamp(target + ZONES[i].within, 0, 100),
+                  sweep,
                 )}
               />
             ))}
@@ -343,7 +426,7 @@ export function Dial({
             ROTATED, NOT REPOSITIONED. A <line>'s x1/y1/x2/y2 are attributes
             and not CSS geometry properties, so nothing can transition them
             and the drift would have to be recomputed per frame in JS. Drawn
-            once pointing at 0 and turned 1.8deg per unit, the needle's
+            once pointing at 0 and turned by --per-deg per unit, the needle's
             position, its easing and the ambient sway are all one property
             that composes for free. */}
         {lockedGuess === null && (

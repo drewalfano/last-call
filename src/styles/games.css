@@ -84,6 +84,42 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
+  /* ---------------------------------------------------------------
+     IT SCROLLS NOW, BECAUSE IT STOPPED FITTING.
+
+     Measured at 390pt, not guessed at: the stack comes to 840px
+     against the 804 the backdrop leaves it. It did not fail
+     gracefully. The backdrop CENTRES the sheet, so the 36px of
+     overflow is split between both ends — the word SETTINGS goes off
+     the top and the build stamp goes off the bottom — and neither
+     end was reachable, because nothing here scrolled.
+
+     Two sections landed at once to cause it and only one is
+     permanent: Updates is 121px and the Ballpark dial control above
+     it is 116px and temporary. Take that one back out and this fits
+     with 104px to spare. The scroll stays anyway — the sheet is one
+     setting away from this every time, and it should not be a
+     measurement that keeps it working.
+
+     `max-height` against the backdrop's content box, which is the
+     viewport less its --sp-5 of padding, so the sheet keeps that
+     margin at both ends rather than running to the display edge.
+
+     `flex: none` is what stops the flex CENTRING from being
+     overridden into a stretch once a max-height exists, and
+     `overscroll-behavior: contain` is what keeps a scroll that has
+     hit the end of this list from being handed to the deck behind
+     the overlay — which is the one thing an open modal must not do.
+
+     No fade at the cut, deliberately. `.picker__scroll` has one
+     because its rows are uniform and a clean edge through them reads
+     as the end of the list; this cuts through a labelled section
+     mid-sentence, which already says "there is more" without help.
+     --------------------------------------------------------------- */
+  flex: none;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: modal-in var(--dur-base) var(--ease-spring) both;
 }
 
@@ -165,6 +201,96 @@
 }
 
 .setting__hint { font-size: var(--fs-sm); color: var(--text-muted); line-height: var(--lh-snug); }
+
+/* ---------------------------------------------------------------
+   AN ACTION INSIDE A SETTING, AT THE WEIGHT OF THE CONTROLS ABOVE IT.
+
+   NOT `.btn`. That is the app's general button and it is built to be
+   read from across a table: a filled pill, --fs-lg in the display
+   face, --control-height tall. Dropped into this sheet it outranks
+   every actual setting above it — three quiet segmented pills, and
+   then a shout. The loudest thing in Settings should not be its
+   least used control.
+
+   So it takes the SEGMENTED TRACK'S shape instead: --border-width of
+   --border-soft, a pill, transparent, and --control-md, which is the
+   height a .segmented__opt already stands at. The Updates row then
+   measures the same as Content, Appearance and Sound, and reads as
+   one more setting rather than as a feature bolted to the bottom.
+
+   Full ink where the segmented options rest at --text-muted, which
+   is the one place it deliberately differs from them. Those are
+   options waiting to be chosen; this is a verb, and it happens the
+   moment you touch it.
+   --------------------------------------------------------------- */
+.setting__action {
+  width: 100%;
+  min-height: var(--control-md);
+  padding: 0 var(--sp-4);
+  border: var(--border-width) solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
+              color var(--dur-fast) var(--ease-out);
+}
+
+/* Anything that is not idle is the button reporting rather than offering, so
+   it drops to the same grey the hint above it is written in. It is saying
+   what happened, not asking to be pressed. */
+.setting__action:not([data-state="idle"]) { color: var(--text-muted); }
+
+/* ---------------------------------------------------------------
+   THE ONE THING IN THIS SHEET THAT CAN BE WAITING ON A NETWORK.
+
+   A word alone was nearly enough — "Checking" is a different word
+   from "Check for update" and on a good connection it is gone in
+   under a second. It is the BAD connection this is for: a fetch that
+   is going to time out holds that word still for several seconds
+   with nothing else on the screen moving, and a static label is
+   exactly what a stuck one looks like. The breath says the wait is
+   the network's, not the button's.
+
+   Opacity only, and no scale. --control-md across the full sheet is
+   a wide object, and pulse's 1.12 — which is right for a countdown's
+   two digits — would have this one visibly grow and shrink against
+   the segmented pills it is meant to line up with. This has its own
+   keyframe rather than borrowing that one for exactly that reason.
+   --------------------------------------------------------------- */
+.setting__action[data-state="busy"],
+.setting__action[data-state="updating"] {
+  animation: checking 1400ms var(--ease-in-out) infinite;
+  cursor: default;
+}
+
+@keyframes checking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The copy change and the drop to muted ink carry the busy state on their
+     own — which is what every un-animated button in the world does. */
+  .setting__action[data-state="busy"],
+  .setting__action[data-state="updating"] { animation: none; }
+}
+
+/* The shared press, minus the presses that are going to be ignored. A check
+   already running does not start another one — see runCheck — and answering
+   that tap with the press animation would have the control mime doing
+   something it is not about to do. Every other state is live: pressing a
+   settled answer starts the next check. */
+.setting__action:active:not([data-state="busy"]):not([data-state="updating"]) {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-dim);
+}
 
 /* Two states side by side, so the current one is visible without reading a
    label — a lone switch never says which way is on. */
@@ -4114,16 +4240,24 @@
    reason they are drawn pointing at 0 and rotated rather than positioned.
    `transform-box: view-box` is what lets the origin be written as the hub's
    coordinates in user units. */
+/* THE HUB, IN THE VIEWBOX'S OWN UNITS, and it is a constant across every
+   sweep — R plus half the track, both horizontally and vertically. Only the
+   height BELOW it changes when the arc widens, and a viewBox growing at the
+   bottom leaves its origin where it was. See CX/CY in Dial.tsx. */
 .dial__needle,
 .dial__target,
 .dial__guess,
 .dial__drift {
   transform-box: view-box;
-  transform-origin: 160px 160px;
+  transform-origin: 139px 139px;
 }
 
+/* --start-deg and --per-deg come from Dial.tsx and are the sweep written as
+   the two numbers a rotation needs: where value 0 points once the line has
+   been drawn due left, and how far one unit turns it. At the shipped 180 they
+   resolve to 0deg and 1.8deg, which is what these rules said in longhand. */
 .dial__needle {
-  rotate: calc(var(--v) * 1.8deg);
+  rotate: calc(var(--start-deg) + var(--v) * var(--per-deg));
   transition: rotate var(--dur-fast) var(--ease-out);
 }
 
@@ -4152,7 +4286,7 @@
 /* The answer. Sits under the guess marker's weight deliberately: it is a
    reference line, and the thing the table wants to look at is the gap. */
 .dial__target {
-  rotate: calc(var(--v) * 1.8deg);
+  rotate: calc(var(--start-deg) + var(--v) * var(--per-deg));
 }
 
 /* SELECTOR SPECIFICITY IS LOAD-BEARING HERE, so this is written as
@@ -4187,7 +4321,7 @@
 }
 
 .dial__guess {
-  rotate: calc(var(--v) * 1.8deg);
+  rotate: calc(var(--start-deg) + var(--v) * var(--per-deg));
 }
 
 /* --- the zones -----------------------------------------------------------
@@ -4306,22 +4440,25 @@
 /* --- the ends ------------------------------------------------------------ */
 /* THE ENDS LINE UP WITH THE ENDS OF THE ARC, not with the edges of the box.
 
-   The track's PAINTED end, not its geometric one. The arc's path starts 28
-   units into a 320-unit viewBox, but the track is stroked 14 units wide with
-   a round cap, so the ink actually reaches 7 units further out again, to 21.
-   Aligning to 28 lines the labels up with a point that nothing on screen is
-   drawn at — off by half a stroke, which is exactly the amount that reads as
-   a near miss rather than as a deliberate inset. 21/320 is 6.5625%.
+   The track's PAINTED end, not its geometric one — the arc's path stops at R
+   but the stroke is 14 wide with a round cap, so the ink reaches 7 units
+   further out again. Aligning to the path's endpoint lines the labels up with
+   a point that nothing on screen is drawn at: off by half a stroke, which is
+   exactly the amount that reads as a near miss rather than as a deliberate
+   inset.
 
-   Written as a percentage rather than a pixel value because the SVG is scaled
-   by its width: the inset has to scale with it or the alignment only holds at
-   one size. */
+   --end-inset comes from Dial.tsx because the answer now depends on the
+   sweep. On the semicircle the ink reaches the very edge of the box and it
+   is 0; widen the arc and the ends climb inward as they curl under, so the
+   labels have to follow them. A percentage rather than a pixel value because
+   the SVG is scaled by its width — the inset has to scale with it or the
+   alignment only holds at one size. */
 .dial__ends {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--sp-3);
-  padding-inline: 6.5625%;
+  padding-inline: var(--end-inset, 0%);
   margin-top: calc(var(--sp-2) * -1);
 }
 
@@ -4409,10 +4546,260 @@
   line-height: 1;
 }
 
-/* The dial has to fit a square card alongside an eyebrow and a line of copy,
-   which the full-width arc does not. Pulled in so the card breathes. */
-.bp-clue .dial,
-.card .dial {
-  width: min(100%, 300px);
+/* THE IN-CARD DIAL RUNS THE FULL CONTENT WIDTH AND THEN SOME.
+
+   It was capped at 300px inside a card whose content box is 321, on top of a
+   viewBox that was itself 42 units wider than the ink in it. Between the
+   three the painted arc came to 261px in a 353px card — a quarter of the card
+   was margin around the only object in the mode.
+
+   The viewBox is tight to the paint now (see Dial.tsx), and the negative
+   margin here spends the card's own side padding as well: the arc is a
+   graphic and does not need the text inset the eyebrow and the caption do.
+   The ends travel with it, which is what keeps the labels under the ink.
+
+   Nothing else in the card moves. The gain is entirely in what was already
+   empty. */
+/* THE ARC BLEEDS, THE LABELS DO NOT, and that division is the whole rule.
+
+   The arc is a graphic and has no business honouring a text inset, so it
+   takes the card's side padding back. The end labels are TEXT, and the card
+   clips: bled with it, "Not beer" sat hard against the rounded edge and
+   anything longer would have lost characters to the corner radius. They keep
+   the content box, which leaves them half a stroke short of the ink rather
+   than aligned to it — a worse alignment than the semicircle used to have,
+   and a much better one than a word with its tail cut off. */
+.bp-clue .dial__svg,
+.card .dial__svg {
+  width: calc(100% + var(--sp-4) * 2);
+  margin-inline: calc(var(--sp-4) * -1);
+}
+
+/* --- the bare instruments ------------------------------------------------
+
+   Both alternatives are drawn onto the pack colour instead of onto card
+   stock, which is a palette swap and nothing else — the geometry is the same,
+   because the card was never what limited it. A 353px card on a 393pt phone
+   is 20px narrower than the screen, so leaving it buys 12% and costs the
+   sheet.
+
+   The track goes to a wash of white and the ink stays black, which is the
+   same pairing the other way up. --card-ink and --card-surface are what the
+   needles and the casing read, so they are re-pointed here rather than every
+   rule below being duplicated. */
+.dial[data-bare],
+.meter {
+  --card-ink: var(--category-ink, #141414);
+  /* The answer needle. The pack colour taken most of the way to ink, so it is
+     still recognisably the pack's hue and still reads both on the pale bands
+     and on the field itself. */
+  --dial-accent: color-mix(in oklab, var(--category, currentColor) 45%, #141414);
+}
+
+/* THE ZONE RAMP INVERTS ON THE PACK COLOUR, and it is not a preference.
+
+   On card stock the bands run dark -> pack -> pale, because the pack colour
+   is the one thing a white card never uses. Here the pack colour IS the
+   field, so a band painted in it does not read as a band — it reads as a hole
+   in the track, which is exactly what the first version drew: the middle two
+   zones came out at and around #EE4620 on #EE4620 and erased a third of the
+   arc they were supposed to be sitting in.
+
+   So the ramp runs on WHITE instead, from a little above the track's own wash
+   up to solid, and the reading is the same one it always was: the closer the
+   guess, the heavier the band. */
+.dial[data-bare] .dial__track,
+.meter__track {
+  stroke: rgba(255, 255, 255, 0.34);
+}
+
+.dial[data-bare] .dial__zone[data-zone="2"],
+.meter__zone[data-zone="2"] { stroke: rgba(255, 255, 255, 0.55); }
+.dial[data-bare] .dial__zone[data-zone="1"],
+.meter__zone[data-zone="1"] { stroke: rgba(255, 255, 255, 0.78); }
+.dial[data-bare] .dial__zone[data-zone="0"],
+.meter__zone[data-zone="0"] { stroke: #FFFFFF; }
+
+/* The casing's JOB is unchanged — an edge where the answer needle crosses the
+   busiest part of the track — but the value it needs is the opposite one,
+   because the band under it is now the lightest thing on the screen rather
+   than the darkest, and the stretch that actually needs help is the open
+   field on either side of it. */
+.dial[data-bare] .dial__target line.dial__target-casing,
+.meter__target line.meter__target-casing {
+  stroke: rgba(255, 255, 255, 0.9);
+}
+
+.dial[data-bare] .dial__svg {
+  width: 100%;
+  margin-inline: 0;
+}
+
+.dial[data-bare] .dial__end {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-tight);
+}
+
+/* NO PULL-UP ON A WIDE ARC. The -sp-2 above tucks the labels under a
+   semicircle, whose ends stop level with the bottom of its box and leave a
+   gap the size of the cap. A wider arc's ends curl down INTO that gap, so the
+   same pull walks the labels straight into the ink. */
+.dial[data-bare] .dial__ends {
+  margin-top: 0;
+}
+
+/* The screen with no card: the instrument centred in what the header and the
+   action leave over, its caption under it. */
+.bp-bare__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+.bp-bare__meta {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklab, var(--category-ink, #141414) 72%, transparent);
+}
+
+/* --- the meter -----------------------------------------------------------
+
+   Ballpark's other instrument, and the one bound by HEIGHT rather than
+   width — which is the whole reason it comes out smaller. A bar can only be
+   as long as the column is tall; an arc of the same width folds half again
+   as much line into the space. See the note at the top of Meter.tsx. */
+.meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 0;
+  flex: 1;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.meter__svg {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  width: auto;
+  overflow: visible;
+}
+
+.meter__svg[data-interactive] { cursor: grab; }
+.meter__svg[data-interactive][data-dragging] { cursor: grabbing; }
+
+@media (hover: hover) and (pointer: fine) {
+  .meter__svg:focus-visible {
+    outline: 3px solid var(--card-ink);
+    outline-offset: 6px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* THE END LABELS ARE THE ONE THING THE BAR WINS ON.
+   Each gets the whole column instead of half of it, so they run at --fs-3xl
+   where the arc's sit at --fs-2xl and the shipped card's at --fs-sm. */
+.meter__end {
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  text-align: center;
+  text-wrap: balance;
+  color: var(--card-ink);
+}
+
+.meter__track {
+  stroke-width: 26;
+  stroke-linecap: round;
+}
+
+/* TRANSLATED, NOT REPOSITIONED — the bar's equivalent of the dial's rotate,
+   and for the same reason. -4 user units per unit of value is the 400-unit
+   travel over the 100-point scale; see TRAVEL in Meter.tsx. */
+.meter__needle,
+.meter__target,
+.meter__guess,
+.meter__drift {
+  transform-box: view-box;
+}
+
+.meter__needle {
+  translate: 0 calc(var(--v) * -4px);
+  transition: translate var(--dur-fast) var(--ease-out);
+}
+
+.meter__svg[data-dragging] .meter__needle { transition: none; }
+
+.meter__needle line,
+.meter__guess line {
+  stroke: var(--card-ink);
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+
+.meter__target {
+  translate: 0 calc(var(--v) * -4px);
+}
+
+.meter__guess {
+  translate: 0 calc(var(--v) * -4px);
+}
+
+/* Qualified with the element for the reason the dial's casing is — the rule
+   under it matches `.meter__target line` at 0,1,1 and would otherwise win,
+   restyling the casing as a second copy of the needle. */
+.meter__target line.meter__target-casing {
+  stroke-width: 19;
+  stroke-linecap: round;
+}
+
+.meter__target line {
+  stroke: var(--dial-accent);
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+
+.meter__zone {
+  stroke-width: 26;
+  stroke-linecap: butt;
+  transform-box: view-box;
+  transform-origin: 33px var(--oy);
+}
+
+.meter__zones[data-revealing] .meter__zone {
+  animation: bp-zone-in var(--dur-base) var(--ease-out) backwards;
+  animation-delay: calc(var(--zone-i) * 60ms);
+}
+
+.meter__target[data-revealing] line {
+  animation: bp-meter-target-in var(--dur-base) var(--ease-out) 200ms backwards;
+}
+
+@keyframes bp-meter-target-in {
+  from { opacity: 0; scale: 0.2 1; }
+  to   { opacity: 1; scale: 1 1; }
+}
+
+@keyframes bp-meter-drift {
+  from { translate: 0 -3px; }
+  to   { translate: 0 3px; }
+}
+
+.meter__drift[data-drift] {
+  animation: bp-meter-drift 4s var(--ease-in-out) infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter__drift[data-drift] { animation: none; }
 }
 
