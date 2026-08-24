@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
-import { useRingStyle } from "../state/ringOrder";
 import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
 import { categoryStyle } from "../lib/style";
@@ -92,21 +91,41 @@ const RING_STEPS = 32;
  * another pack's. The ring is a gradient. What it wants is neighbours that are
  * near each other.
  *
- * So this is a bottleneck tour: of every way of arranging the eleven into a
- * loop, the one whose WORST neighbouring pair is as good as possible. Measured
- * as the largest single rgb step between two abutting sub-segments once the
- * pair is blended over RING_STEPS, which is what "I can see a band" actually
- * is. The deck order's worst pair steps 36.2; this one steps 10.1, and the
- * average step falls from 8.4 to about 5. That is the whole of the smoothness
- * and it costs nothing — no extra sub-segments, no extra nodes, just a better
- * route through the same eleven colours.
+ * TWO THINGS ARE BEING SOLVED FOR AT ONCE, and the first one on its own is
+ * not enough. The first is the BOTTLENECK: of every way of arranging the
+ * eleven into a loop, prefer the one whose WORST neighbouring pair is as good
+ * as possible, so no two packs on the line ever read as the same colour.
+ * Measured as the largest single rgb step between two abutting sub-segments
+ * once the pair is blended over RING_STEPS, which is what "I can see a band"
+ * actually is. The deck order's worst pair steps 36.2; a solved tour steps
+ * 10.1, and the average step falls from 8.4 to about 5. That is the whole of
+ * the smoothness and it costs nothing — no extra sub-segments, no extra nodes,
+ * just a better route through the same eleven colours.
  *
- * The loop is CUT at Ride the Bus, and the cut is the only free choice left
- * once the tour is fixed — every adjacency is already decided, so all it picks
- * is which pack sits on the seam. Ride the Bus is the lightest pack in the
- * app, and the seam is the bottom midpoint, where the line is dimmest as it
- * gathers and thins. Its two neighbours round the loop step 8.1 and 6.4, so
- * the roughest joins are nowhere near the place the eye is waiting.
+ * The second is HOW FAR THE HUE WANDERS, which a bottleneck tour is blind to
+ * because the objective never asks about it. The ramp mixes in oklch, so every
+ * pair walks the short way ROUND the wheel at full chroma rather than cutting
+ * across it — see RING_RAMP for why. The pure maximum-bottleneck tour scores
+ * 0.317 at its weakest join and pays 1115 degrees for it: the line sweeps
+ * every hue on the wheel three times over, most of them belonging to no pack,
+ * gold to navy alone crossing orange, red, magenta and purple on the way. That
+ * is what "there seem to be too many colours in it" is, and it is not wrong —
+ * there are eleven packs and far more than eleven colours.
+ *
+ * So this is the minimum-travel tour subject to holding the bottleneck near
+ * where that one had it: 674 degrees against 1115, for a weakest join of 0.281
+ * against 0.317. Just under two laps rather than just over three, and every
+ * pair still clearly two colours rather than one. Both were built and both
+ * shipped side by side behind a control for a while, because which line looks
+ * better is not settleable by argument — it is a question about what the sweep
+ * LOOKS like, and only a phone answers that. This is the one that won, so the
+ * control is gone and the other tour with it.
+ *
+ * It is NOT the hue-sorted order, which is the obvious answer and a bad one.
+ * Sorting by hue gets a perfect single lap — 360 degrees — and drops the
+ * bottleneck to 0.069, because it puts the two pinks side by side and they
+ * stop reading as two packs at all. One lap is not worth a join nobody can
+ * see.
  *
  * IT NAMES GAMES BUT IT IS A SEQUENCE OF COLOURS, and those two came apart
  * when the deck was recoloured. The tour is solved over hexes — it is a route
@@ -120,36 +139,29 @@ const RING_STEPS = 32;
  * nothing obviously wrong on screen beyond the line looking worse than it did.
  * Check the COLOUR sequence, not the ids.
  *
- * Sorting by lightness was the version before this and it was the wrong
- * objective. It put the two brightest packs on the ends, which mattered while
- * the ends were permanently dim — and once the sweep started overshooting the
- * midpoint (see RING_SWEEP) they are not. What it also did was strand Same
- * Page next to Ride the Bus at the seam, and gold to pale blue is the worst
- * pair in the palette: near enough opposite on the hue wheel, 36.2 a step, sat
- * exactly on the start line. Solving for the wrong thing put the palette's
- * roughest join in its most-watched spot.
+ * Sorting by lightness was an early version and it was the wrong objective. It
+ * put the two brightest packs on the ends, which mattered while the ends were
+ * permanently dim — and once the sweep started overshooting the midpoint (see
+ * RING_SWEEP) they are not. What it also did was strand Same Page next to Ride
+ * the Bus at the seam, and gold to pale blue is the worst pair in the palette:
+ * near enough opposite on the hue wheel, 36.2 a step, sat exactly on the start
+ * line. Solving for the wrong thing put the palette's roughest join in its
+ * most-watched spot.
  */
 const RING_ORDER: ModeId[] = [
   "say-the-same-thing",
-  "ballpark",
-  "the-number-game",
-  "ride-the-bus",
-  "kings-cup",
-  "most-likely-to",
   "hot-seat",
   "last-word",
+  "kings-cup",
+  "most-likely-to",
+  "the-number-game",
+  "rank-it",
+  "ride-the-bus",
   "last-call",
   "imposter",
-  "rank-it",
+  "ballpark",
   // Closed: back onto the pack it started from, so the seam is a difference
   // in brightness and nothing else.
-  //
-  // SOLVED RATHER THAN ARRANGED. This is the maximum-bottleneck Hamiltonian
-  // cycle over the eleven packs: of every way of walking all of them and
-  // returning to the start, it is the one whose WEAKEST join is strongest.
-  // That join is green into orange at 0.317, against 0.151 for the order
-  // this replaced — the ring's roughest transition is now better than its
-  // average one used to be, and no pair on it is under 0.3.
   //
   // WHERE THE SEAM SITS IS A SEPARATE DECISION from the order, because a
   // cycle can be rotated without changing a single join. Two things decide
@@ -158,76 +170,26 @@ const RING_ORDER: ModeId[] = [
   // that is the fault the note on EDGE_ARC describes, dim beats reaching
   // back into a near-black pack and the birth not reading at all. And the
   // seam is the most-watched spot on the button, so it must not be the
-  // weakest join. Pink into green satisfies both: 0.348 rather than the
-  // 0.317 bottleneck, and L 0.62 against L 0.65, no dark pack near it.
+  // weakest join. Ballpark into Same Page satisfies both: L 0.63 against
+  // L 0.65, joining at 0.317 — stronger than this tour's own bottleneck of
+  // 0.281, so the roughest pair is nowhere near the point the eye waits on.
   //
   // THIS LIST IS IDS AND IS READ AS COLOURS. The deck has been re-dealt
-  // three times over Ballpark's arrival and this sequence held every time by
-  // permuting names; this is the first change since that is a change to the
-  // COLOUR order itself.
+  // several times over Ballpark's arrival and the sequence held every time by
+  // permuting names; it only ever moves when the COLOUR order itself is
+  // re-solved.
   "say-the-same-thing",
 ];
 
-/**
- * THE SAME ELEVEN PACKS, SOLVED FOR A DIFFERENT THING.
- *
- * RING_ORDER above maximises the BOTTLENECK: of every tour of the palette, it
- * is the one whose most-similar neighbouring pair is as distinct as possible,
- * so no two packs on the line ever look like each other. It does that well —
- * 0.317 at its weakest join, nothing under 0.3 — and it is blind to something
- * the objective never asked about.
- *
- * WHAT IT IS BLIND TO IS HOW FAR THE HUE WANDERS. The ramp mixes in oklch, so
- * every pair walks the short way ROUND the wheel at full chroma rather than
- * cutting across it — see RING_RAMP for why. Add those legs up on this tour
- * and they come to 1115 degrees: the line sweeps every hue on the wheel three
- * times over, most of them belonging to no pack. Gold to navy alone crosses
- * orange, red, magenta and purple on the way. That is what "there seem to be
- * too many colours in it" is, and it is not wrong — there are eleven packs and
- * far more than eleven colours.
- *
- * So this is the minimum-travel tour subject to keeping the bottleneck near
- * where it was: 674 degrees against 1115, for a weakest join of 0.281 against
- * 0.317. Just under two laps rather than just over three, and every pair still
- * clearly two colours rather than one.
- *
- * It is NOT the hue-sorted order, which is the obvious answer and a bad one.
- * Sorting by hue gets a perfect single lap — 360 degrees — and drops the
- * bottleneck to 0.069, because it puts the two pinks side by side and they
- * stop reading as two packs at all. One lap is not worth a join nobody can
- * see.
- *
- * The seam is chosen the same way RING_ORDER's is: cut where both neighbours
- * are light and the join is strong. Ballpark into Same Page is L 0.63 against
- * L 0.65 with a join of 0.317 — stronger than the tour's own bottleneck, so
- * the roughest pair is nowhere near the most-watched point.
- */
-const RING_ORDER_SPECTRUM: ModeId[] = [
-  "say-the-same-thing",
-  "hot-seat",
-  "last-word",
-  "kings-cup",
-  "most-likely-to",
-  "the-number-game",
-  "rank-it",
-  "ride-the-bus",
-  "last-call",
-  "imposter",
-  "ballpark",
-  // Closed, as above.
-  "say-the-same-thing",
-];
-
-const coloursOf = (order: ModeId[]) =>
-  order.map((id) => MODES.find((mode) => mode.id === id)!.color);
-
-const RING_COLOURS = coloursOf(RING_ORDER);
+const RING_COLOURS = RING_ORDER.map(
+  (id) => MODES.find((mode) => mode.id === id)!.color,
+);
 
 /**
  * The packs blended into each other along that order.
  */
-const rampFor = (colours: string[]) => [
-  ...colours.slice(0, -1).flatMap((colour, i) =>
+const RING_RAMP = [
+  ...RING_COLOURS.slice(0, -1).flatMap((colour, i) =>
     Array.from(
       { length: RING_STEPS },
       (_, step) =>
@@ -248,19 +210,12 @@ const rampFor = (colours: string[]) => [
         // red, orange rather than through mud.
         `color-mix(in oklch, var(${colour}) ${
           100 - (step * 100) / RING_STEPS
-        }%, var(${colours[i + 1]}))`,
+        }%, var(${RING_COLOURS[i + 1]}))`,
     ),
   ),
   // Lands on the last pack itself rather than stopping just short of it.
-  `var(${colours[colours.length - 1]})`,
+  `var(${RING_COLOURS[RING_COLOURS.length - 1]})`,
 ];
-
-const RING_RAMP = rampFor(RING_COLOURS);
-
-/* Same length by construction — same eleven packs, same RING_STEPS — so every
-   constant derived from RING_RAMP below is right for both, and switching
-   between them changes the colours and nothing else. */
-const RING_RAMP_SPECTRUM = rampFor(coloursOf(RING_ORDER_SPECTRUM));
 
 const RING_PATH = RING_RAMP.length * RING_SPAN;
 
@@ -346,11 +301,13 @@ const RING_SWEEP = RING_RAMP.length + EDGE_PIECES * 2;
  * point, only the fact that the line does not begin at a hard edge.
  *
  * 0.09 is the CEILING on this rather than a suggestion, and the palette sets
- * it. At 0.09 the run-up exactly fills Rank It's yellow, the pack before Ride
- * the Bus on the seam. Past that the first beats — the dimmest ones — reach
- * back into Hot Seat's brown, the darkest pack in the app, and the birth stops
- * reading at all: the same fault the old order had at the death end, arriving
- * from the other side.
+ * it. At 0.09 the run-up exactly fills the pack sitting before the seam — one
+ * pack's worth of ramp, whichever pack RING_ORDER currently puts there. Past
+ * that the first beats — the dimmest ones — reach back into the pack before
+ * THAT, which nothing guarantees is a light one, and dim beats landing on a
+ * near-black pack is the fault this guards: the birth of the line stops
+ * reading at all. Written as a rule rather than as two names, because
+ * re-solving RING_ORDER changes which packs sit either side of the seam.
  */
 function edgeOpacity(beat: number): number {
   const t = Math.min(1, Math.min(beat, RING_SWEEP - 1 - beat) / EDGE_PIECES);
@@ -543,11 +500,6 @@ let dealt = false;
  * Every mode is one tap away — no menus, no settings page.
  */
 export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
-  /* WHICH TOUR THE RING SWEEPS — a judging control, see state/ringOrder.
-     Both ramps are the same length, so this changes the colours and nothing
-     else: every constant derived from RING_RAMP still applies to either. */
-  const { ring } = useRingStyle();
-  const ramp = ring === "spectrum" ? RING_RAMP_SPECTRUM : RING_RAMP;
   /** True only on the first Home of the session. Claims it as it reads it. */
   const [dealing, setDealing] = useState(() => {
     const first = !dealt;
@@ -958,7 +910,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
                   key={beat}
                   pathLength={RING_PATH}
                   style={{
-                    stroke: ramp[seat],
+                    stroke: RING_RAMP[seat],
                     ["--seg" as string]: seat,
                     ["--beat" as string]: beat,
                     ["--edge" as string]: edge,
@@ -979,7 +931,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
                   key={beat}
                   pathLength={RING_PATH}
                   style={{
-                    stroke: ramp[seat],
+                    stroke: RING_RAMP[seat],
                     ["--seg" as string]: seat,
                     ["--beat" as string]: beat,
                     ["--edge" as string]: edge,

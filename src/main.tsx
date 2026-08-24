@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import { ContentModeProvider } from "./state/contentMode";
-import { RingStyleProvider } from "./state/ringOrder";
 import { RosterProvider } from "./state/roster";
 import { ThemeProvider } from "./state/theme";
 import "./styles/global.css";
@@ -19,9 +18,7 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <ContentModeProvider>
         <RosterProvider>
-          <RingStyleProvider>
-            <App />
-          </RingStyleProvider>
+          <App />
         </RosterProvider>
       </ContentModeProvider>
     </ThemeProvider>

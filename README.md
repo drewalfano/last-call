@@ -342,8 +342,11 @@ than an oversight.
 Home's pill ring is a **separate** sequence — see `RING_ORDER` in `Home.tsx`.
 It is written as ids and read as colours precisely so a re-deal moves names and
 not the palette: the deck has been re-dealt three times since Ballpark arrived
-and the ring's colour order has not moved once. Its weakest join is the teal
-into the brown at 0.151, whatever names happen to be on them.
+and the ring's colour order only moves when it is re-solved. It is the
+minimum-travel tour subject to holding the bottleneck: **674 degrees** of hue
+against 1115 for the pure maximum-bottleneck route, for a weakest join of
+**0.281** against 0.317 — under two laps of the wheel rather than over three,
+which is the whole of "there seem to be too many colours in the glow."
 
 ### Card treatment
 
