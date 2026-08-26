@@ -1088,10 +1088,33 @@ button { font: inherit; color: inherit; }
 
   align-self: stretch;
   padding-inline: 0;
-  /* Space over the rule, which the card's own gap alone did not give:
-     a hairline needs a band round it, not a gap. */
-  margin-top: var(--sp-2);
-  padding-top: var(--sp-3);
+  /* EQUAL BANDS EITHER SIDE OF THE RULE, and the card's own gap is the
+     number both of them are.
+
+     Above the rule is the card's gap plus whatever margin this row adds;
+     below it is this row's padding. Those were 20 and 13, because the
+     margin was buying air on one side of a hairline and nothing was
+     buying it on the other. So the margin goes, the gap above stands
+     alone, and the padding below is set to match it — which also means
+     the two move together wherever the card's gap is compacted, instead
+     of drifting apart the way a fixed pair of numbers would. */
+  margin-top: 0;
+  /* AND NO min-height, WHICH IS THE OTHER HALF OF MAKING THEM EQUAL.
+
+     --control-md is a floor for a control floating on a background; here
+     the row IS the card's width and its height is whatever the track plus
+     its band comes to. Left in, it inflated the content box past the
+     track and `align-items: center` split the difference — so the track
+     sat another 5px below the rule that the band above knew nothing
+     about, and no pair of padding values could have squared it. Out, the
+     track is flush under the padding and the two bands are the two
+     numbers written here.
+
+     It costs nothing in target size: the row still stands at 45px on the
+     tightest phone and 61 on a tablet, and it is the full width of the
+     card. */
+  min-height: 0;
+  padding-block: var(--sp-3);
   /* Zeroed, not made transparent. The row's own outline went to
      `border-color: transparent` first and came back on the moment the
      switch was turned on: `.switch[aria-checked]` sets border-COLOR, it

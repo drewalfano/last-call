@@ -3322,12 +3322,16 @@
   /* Still the biggest thing on the card, which is the point of it. */
   .card:has(.switch--card) .stepper__n { font-size: clamp(2.25rem, 11vw, 3rem); }
 
-  .switch--card {
-    /* The rule needs a band round it, and on a card this size the band is
-       all the card has left. It gets the gap and nothing more. */
-    margin-top: 0;
-    padding-top: var(--sp-2);
-    padding-bottom: 0;
+  /* `.switch.switch--card`, not `.switch--card`. The base rule for this
+     variant is a single class too, it lives in global.css, and global.css
+     imports THIS file — so an equally specific override here loses the tie
+     and silently does nothing. It did: this block has been dead since it
+     was written, and the compaction above was carrying the card alone.
+     Same trap as the tablet cap on --fs-prompt. */
+  .switch.switch--card {
+    /* Still the card's gap on both sides of the rule — that gap is --sp-2
+       up here, so this is too. */
+    padding-block: var(--sp-2);
   }
 
   /* TWO LINES, NOT THREE. "SHOW IMPOSTER HINT" cannot fit two words on a
@@ -3355,7 +3359,11 @@
     gap: 0;
     /* Nothing left to indent from — see the padding above. */
     margin-inline: 0;
-    margin-top: 0;
+    /* Equal either side of the hairline, as everywhere else: the card's gap
+       is --sp-1 in this block, so the margin makes the band up to --sp-2 and
+       the padding matches it. 4px of air round a rule is not a band, it is a
+       rounding error. */
+    margin-top: var(--sp-1);
     padding-top: var(--sp-2);
   }
 
@@ -3431,16 +3439,16 @@
   .slot:has(.card) .card:has(.switch--card) { gap: var(--sp-2); }
   .slot:has(.card) .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
 
-  /* The band round the divider comes in with them. */
-  .slot:has(.card) .switch--card {
-    margin-top: 0;
-    padding-top: var(--sp-2);
-    padding-bottom: 0;
+  /* The band round the divider comes in with them, and stays equal to the
+     gap set just above. */
+  .slot:has(.card) .switch.switch--card {
+    padding-block: var(--sp-2);
   }
-  /* The divider band and the rule's own gap come in with the type. A 20px
-     band either side of the hairline is right on a 350px phone card and a
-     twelfth of a 252px tablet one. */
-  .slot:has(.card) .imp-hint { padding-top: var(--sp-4); }
+  /* The rule's own gap comes in with the type. The BAND does not: it was
+     --sp-4 here against a --sp-3 card gap plus the panel's --sp-2 margin,
+     which is 20 above the hairline and 16 below it. Whatever the band is
+     worth on a short card, it is worth the same on both sides of the line,
+     and the four pixels it was saving are not the four this card needed. */
   .slot:has(.card) .imp-hint__rule { margin-top: var(--sp-2); }
 
   /* The same trade the short-phone block above makes, for the same
