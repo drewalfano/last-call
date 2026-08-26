@@ -4,6 +4,7 @@ import { randomItem, shuffle } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { Stepper } from "../components/Stepper";
+import { Switch } from "../components/Switch";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { audio } from "../lib/audio";
@@ -32,6 +33,14 @@ interface State {
   phase: Phase;
   count: number;
   word: string;
+  /**
+   * The nudge dealt alongside the word, shown to the Imposter alone and only
+   * when the table asked for one. Empty when a custom word was typed in —
+   * see startRound.
+   */
+  hint: string;
+  /** Whether this table plays with hints at all. Set before the deal. */
+  showHint: boolean;
   /** Index into the player list, not into the reveal order. */
   imposter: number;
   /** Shuffled player indices — the order the phone goes round. */
@@ -61,6 +70,13 @@ export function Imposter({ mode, onBack }: Props) {
     phase: "setup",
     count: defaultCount,
     word: "",
+    hint: "",
+    /* Off. The mode's whole shape is that one player is out in the cold, and
+       a table meeting it for the first time should meet that version. A hint
+       is the concession you reach for once a group has played enough rounds
+       to know how hard going first is — so it is a thing you turn ON, not a
+       thing you notice you have been playing with. */
+    showHint: false,
     imposter: 0,
     order: [],
     at: 0,
@@ -94,13 +110,20 @@ export function Imposter({ mode, onBack }: Props) {
       // A custom entry isn't a category — it IS the word. Otherwise draw from
       // the chosen category, or from everything when none is set.
       const isCustom = prev.category !== null && !categories.includes(prev.category);
-      const word = isCustom
-        ? prev.category!
+      /* A typed word has no hint and cannot be given one: nothing in this app
+         knows what "Steve's boat" is about, and a hint invented from the
+         string would be either the string again or wrong. So a custom word
+         plays the way the mode played before hints existed, switch or no
+         switch, and the role card says as much rather than showing an empty
+         slot where a nudge should be. */
+      const [word, hint] = isCustom
+        ? ([prev.category!, ""] as const)
         : randomItem(wordsFor(contentMode, prev.category));
       return {
         ...prev,
         phase: "cover",
         word,
+        hint,
         imposter: Math.floor(Math.random() * prev.count),
         order: shuffle(Array.from({ length: prev.count }, (_, i) => i)),
         at: 0,
@@ -171,6 +194,26 @@ export function Imposter({ mode, onBack }: Props) {
                   : `Using your ${players.length} names, then numbers.`
                 : "Add names on Home to use them here."}
               </p>
+
+            {/* THE ROUND'S ONE OPTION, ON THE CARD THAT SETS THE ROUND UP.
+
+                Under the count and behind a rule, because those are two
+                different questions — how many are playing is what this card
+                is for, and whether the Imposter gets a nudge is a house rule
+                bolted to the bottom of it. The rule is what says so; without
+                it the switch read as a third line of the caption above.
+
+                It sat in the footer band for a while, which kept the card at
+                the height it had always been and put the option in with the
+                buttons that start the round. Wrong shelf: everything in that
+                band DOES something, and this decides something. See
+                .switch--card for what the card costs it. */}
+            <Switch
+              className="switch--card"
+              checked={s.showHint}
+              onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
+              label="Show Imposter hint"
+            />
             </div>
           }
         >
@@ -266,9 +309,46 @@ export function Imposter({ mode, onBack }: Props) {
                 <>
                   <span className="card__eyebrow">No word for you</span>
                   <p className="card__prompt">You're the Imposter</p>
-                  <p className="card__meta imp-card__meta">
-                    Listen hard. Give a clue that fits. Don't get caught.
-                  </p>
+                  {/* SHOWN TO THIS PLAYER AND NOBODY ELSE, which is the same
+                      guarantee the word next door already has — the screen is
+                      face-down between two hands either way, and the cover
+                      before it says so.
+
+                      Deliberately not shown to the rest of the table. Knowing
+                      what the Imposter was handed tells you what to avoid
+                      saying, and a table clueing AROUND the hint puts the
+                      Imposter back where they started with an extra job. The
+                      nudge only works while it is theirs alone.
+
+                      The rule under it is not decoration. A hint like "Sticky"
+                      is a usable turn if you say it, and the round it produces
+                      is one player reading a word off a screen while everyone
+                      else describes something they know — which the table
+                      hears immediately. Barred out loud, in the place it would
+                      be broken, rather than left to the group to discover. */}
+                  {s.showHint && s.hint ? (
+                    <p className="imp-hint">
+                      <span className="imp-hint__label">Hint</span>
+                      <span className="imp-hint__text">{s.hint}</span>
+                      {/* THE RULE AND THE STANDING ADVICE ARE ONE LINE, not
+                          two. They are the same sentence to the same reader,
+                          and as two muted paragraphs a card's gap apart they
+                          read as one anyway — while costing a whole extra
+                          element on a card that has 202px to spend at
+                          320x568 and already overflows there without a hint
+                          in it. Said once, in the panel it belongs to. */}
+                      <span className="imp-hint__rule">
+                        It isn't the word, and you can't use it as your clue.
+                        Listen hard, blend in, don't get caught.
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="card__meta imp-card__meta">
+                      {s.showHint
+                        ? "No hint — someone typed this word in. Listen hard, give a clue that fits, don't get caught."
+                        : "Listen hard. Give a clue that fits. Don't get caught."}
+                    </p>
+                  )}
                 </>
               ) : (
                 <>
@@ -322,10 +402,26 @@ export function Imposter({ mode, onBack }: Props) {
               <p className="card__prompt card__prompt--sm">
                 Go round the group. One clue each about the word.
               </p>
+              {/* THE ONE PLACE THE HINT RULE IS ENFORCEABLE.
+
+                  It is printed on the Imposter's own card, where it is about
+                  to be broken — but a rule only its breaker has read is not a
+                  rule, it is a request. The table set the switch together on
+                  the setup screen, so saying a hint exists gives nothing away,
+                  and saying it is barred is what lets anyone else call it.
+
+                  On `s.hint`, not on `s.showHint`: a custom word is dealt
+                  without one whatever the switch says, and a table told to
+                  watch for a hint that was never handed out spends the round
+                  waiting for something that is not there. */}
               <p className="card__meta">
-                Don't make it too obvious. The Imposter is listening and has to
-                blend in. Argue it out, point at someone, and let the Imposter own
-                up. Everyone but them already knows the word.
+                {s.showHint && s.hint
+                  ? "Don't make it too obvious. The Imposter has a vague hint " +
+                    "they're not allowed to say, and has to blend in on that. " +
+                    "Argue it out, point at someone, and let them own up."
+                  : "Don't make it too obvious. The Imposter is listening and " +
+                    "has to blend in. Argue it out, point at someone, and let " +
+                    "the Imposter own up. Everyone but them already knows the word."}
               </p>
             </div>
           }

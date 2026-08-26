@@ -3181,6 +3181,283 @@
 
 .imp-card__meta { color: var(--card-ink-muted); }
 
+/* ---------------------------------------------------------------
+   THE IMPOSTER'S HINT.
+
+   On the same white stock as everything else on this card, and
+   deliberately so — the note above is a secrecy rule, not a style
+   one, and it holds here too. A tinted panel would change how much
+   light this screen throws, and the whole point is that the Imposter's
+   card and the word card look identical from three feet away.
+
+   So the hint is separated by a hairline and a label rather than by a
+   fill. It is quieter than the word next door, which is right: this is
+   a nudge you work from, not an answer you were handed, and the card
+   should not read as though the Imposter got the better deal.
+   --------------------------------------------------------------- */
+.imp-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* The label sits ON its value — they are one thing, and a card-sized gap
+     between them made "HINT" read as a heading for everything below it
+     rather than as the tag on the line underneath. The rule takes its own
+     margin instead; see below. */
+  gap: 2px;
+  align-self: stretch;
+  /* Inside the card's own padding, not against its edge. */
+  margin-inline: var(--sp-2);
+  /* ONE HAIRLINE, ABOVE, AND EVENLY SPACED EITHER SIDE OF IT.
+
+     It closed at both ends for a while. The second rule was there because
+     the standing advice used to be a separate paragraph under this panel and
+     the two ran together — but that advice is one line inside the panel now,
+     so the lower rule had nothing beneath it but 69px of empty stock. A rule
+     with nothing under it does not close a panel, it reads as a table that
+     stopped early.
+
+     The margin above and the padding below are the same number on purpose.
+     The card's own 12px gap plus this margin is what sits above the line,
+     and the padding is what sits below it, so the divider is centred in its
+     own band instead of hugging the prompt. */
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-5);
+  border-top: 1px solid color-mix(in srgb, var(--card-ink) 15%, transparent);
+}
+
+.imp-hint__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--card-ink-muted);
+}
+
+/* Display face and a size up on the muted text around it, because this
+   is the one thing on the card the Imposter is actually reading. Still
+   well under .card__prompt — "You're the Imposter" stays the headline,
+   and a hint set at prompt size would read as the word. */
+.imp-hint__text {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+  color: var(--card-ink);
+}
+
+/* The rule that makes the hint a hint. Small, and it stays on the
+   card rather than moving to the shared screen, because this is the
+   moment it would be broken — the player is looking at the words they
+   are being told not to say. */
+.imp-hint__rule {
+  /* Its own space, because it is a different kind of sentence from the two
+     lines above it: those are the hint, this is what you may do with it. At
+     the panel's 2px it sat on the hint like a subtitle. */
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+  text-wrap: pretty;
+  color: var(--card-ink-muted);
+}
+
+/* ---------------------------------------------------------------
+   AND ON A SHORT PHONE IT COSTS ALMOST NOTHING.
+
+   --card-size takes the smallest of the column width, 58lvh and
+   what the screen has left over — and on a 568pt phone the last of
+   those wins at 202px, which the Imposter card already overflows
+   by 11 with no hint in it at all. .card centres and clips, so it
+   loses the overflow off BOTH ends: another 75px of panel there
+   does not scroll, it takes the eyebrow off the top and the rule
+   off the bottom. The rule is the one line on this card that has
+   to be read.
+
+   So the panel gets thinner rather than the card getting a
+   scroller: the hairlines close in, the hint steps down a size and
+   the gaps go to nothing. Measured at 320x568 the card now wants
+   6px more than it has, against the 11 the hintless one already
+   overflowed by — so turning the switch on costs a short phone
+   less than nothing.
+
+   600, not 700, and that is the hints getting shorter rather than
+   this getting braver. While a hint could run to "Nobody wants to
+   be there" the panel took two lines and a 667pt phone needed
+   every pixel of this; at one or two words it never wraps, and
+   375x667 fits at full spacing. Compacting it there only crammed
+   a card with room to spare. Height, not width — a 320pt phone is
+   568 tall and it is the height that sets the card here.
+   --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   THE SETUP CARD ON A SHORT PHONE.
+
+   The switch moved onto this card and --card-size is a SQUARE: at
+   320x568 it comes to 202px in both axes, so the card gained a
+   48px row and 170px of column to wrap a three-word label in. It
+   went 64px over, against the 15 it already overflowed by with no
+   switch on it at all.
+
+   Everything below is the same trade the role card makes next
+   door — the card's own padding and gaps come in first, then the
+   type, in the order of what is least missed. The caption is the
+   longest text on the card and the one thing here nobody reads
+   twice.
+
+   700 rather than the role card's 600, and measured: this card
+   carries a stepper the width of three tap targets and now a
+   fourth row, so it is still 14px over at 360x640 where the role
+   card next door already fits with room to spare.
+   --------------------------------------------------------------- */
+@media (max-height: 700px) {
+  .card:has(.switch--card) {
+    gap: var(--sp-2);
+    /* Inline as well as block: the inline is what widens the column the
+       label has to wrap in, which is worth more here than the air. */
+    padding: var(--sp-3) var(--sp-3);
+  }
+
+  .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
+
+  /* Still the biggest thing on the card, which is the point of it. */
+  .card:has(.switch--card) .stepper__n { font-size: clamp(2.25rem, 11vw, 3rem); }
+
+  /* `.switch.switch--card`, not `.switch--card`. The base rule for this
+     variant is a single class too, it lives in global.css, and global.css
+     imports THIS file — so an equally specific override here loses the tie
+     and silently does nothing. It did: this block has been dead since it
+     was written, and the compaction above was carrying the card alone.
+     Same trap as the tablet cap on --fs-prompt. */
+  .switch.switch--card {
+    /* Still the card's gap on both sides of the rule — that gap is --sp-2
+       up here, so this is too. */
+    padding-block: var(--sp-2);
+  }
+
+  /* TWO LINES, NOT THREE. "SHOW IMPOSTER HINT" cannot fit two words on a
+     line in the 116px this column leaves beside the track, so it broke one
+     word per line and stood the row at 79px. The wider column above and a
+     size down here is what buys the second word its place. */
+  .switch--card .switch__name { font-size: min(var(--fs-sm), 3.2vw); }
+}
+
+@media (max-height: 600px) {
+  /* Scoped by :has to the one card that carries a panel — the word card
+     next door has room it does not need and keeps the stock it had.
+
+     The inline padding comes in as well as the block padding, and that is
+     the one that does the heavy lifting: --card-size is a SQUARE, so a
+     568pt phone gets a 202px card in both axes and the text column inside
+     it is 154px. Every line of the rule wraps at about six words there, and
+     a rule that has to be read is not the place to spend a wide margin. */
+  .card:has(.imp-hint) {
+    gap: var(--sp-1);
+    padding: var(--sp-3) var(--sp-2);
+  }
+
+  .imp-hint {
+    gap: 0;
+    /* Nothing left to indent from — see the padding above. */
+    margin-inline: 0;
+    /* Equal either side of the hairline, as everywhere else: the card's gap
+       is --sp-1 in this block, so the margin makes the band up to --sp-2 and
+       the padding matches it. 4px of air round a rule is not a band, it is a
+       rounding error. */
+    margin-top: var(--sp-1);
+    padding-top: var(--sp-2);
+  }
+
+  .imp-hint__rule { margin-top: var(--sp-1); }
+
+  /* The label keeps its size. It is one short word and the smallest thing
+     on the card already; taking it below --fs-xs would save four pixels and
+     cost the panel the only word that says what it is. */
+  .imp-hint__text { font-size: var(--fs-sm); }
+  .imp-hint__rule { line-height: 1.3; }
+
+  /* AND THE HEADLINE YIELDS TO THE PANEL, which is the right way round on a
+     card this size: "You're the Imposter" is already said by the eyebrow
+     above it, and the hint and its rule are the two things on here that are
+     not known before the card is turned over.
+
+     Through .slot on purpose. The tablet cap on --fs-prompt is written as
+     `.slot:has(.card) .card__prompt`, it lives in global.css, and global.css
+     imports this file rather than the other way round — so an equally
+     specific rule here loses the tie. One more element in the selector and
+     it does not. */
+  .slot > .card:has(.imp-hint) .card__prompt {
+    font-size: var(--fs-prompt-sm);
+  }
+}
+
+/* ---------------------------------------------------------------
+   AND ON A TABLET, WHERE THE CARD IS OFTEN SHORTER THAN A PHONE'S.
+
+   Counter-intuitive and measured: --slot-h at 1133x744 comes to
+   252px, against 350 on a 390pt phone, because the tablet's
+   reserves take their cut of a landscape screen's height while the
+   type ramp steps UP — --fs-xl goes 22 to 32. So the panel that
+   fits everywhere in portrait was the one thing on this card
+   overflowing an iPad, by 53px at 1133x744 and 31 at 1024x768,
+   with the hintless card clean at both.
+
+   The height query above cannot reach it: these screens are 744 and
+   768 tall. What can is the slot's own size, which is already a
+   container here — see `container-type: size` in global.css, put
+   there to stop exactly this on --fs-prompt. Same tool, same shape:
+   the viewport sets the ambition, the slot sets the ceiling, and the
+   smaller wins.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) and (min-height: 600px) {
+  .slot:has(.card) .imp-hint__text { font-size: min(var(--fs-xl), 6.2cqh); }
+  .slot:has(.card) .imp-hint__label { font-size: min(var(--fs-xs), 3.4cqh); }
+  .slot:has(.card) .imp-hint__rule { font-size: min(var(--fs-xs), 3.4cqh); }
+
+  /* AND THE SETUP CARD, WHICH IS NARROW HERE RATHER THAN SHORT.
+
+     A 1024x768 iPad draws this card 249px WIDE — the slot is sized off
+     --slot-h on both axes here — while the type ramp steps --fs-md 16 -> 18.
+     So the label had 142px of column beside a 70px track for a word that
+     wants 165, and broke one word per line: three lines, and the card 35px
+     over.
+
+     Against the slot, not the viewport. `min(--fs-md, 4vw)` on the base rule
+     is right on a phone, where the card IS very nearly the viewport, and
+     meaningless on a tablet where 4vw is 41px and the card is 249px. cqw is
+     the same number the phone rule was reaching for, measured off the thing
+     that actually constrains it. */
+  .slot:has(.card) .switch--card .switch__name { font-size: min(var(--fs-md), 5.4cqw); }
+
+  /* Two lines still cost a line, so the card gives some back — the same
+     order as the short-phone block: the card's own gaps, then the caption,
+     which is the longest run of text on it.
+
+     NOT the stepper. Its number is 57px here and shrinking it looks like
+     the obvious saving, and returns nothing: the row's height is the two
+     --control-md buttons either side of it, which are 64px on a tablet,
+     and the number sits well inside that. */
+  .slot:has(.card) .card:has(.switch--card) { gap: var(--sp-2); }
+  .slot:has(.card) .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
+
+  /* The band round the divider comes in with them, and stays equal to the
+     gap set just above. */
+  .slot:has(.card) .switch.switch--card {
+    padding-block: var(--sp-2);
+  }
+  /* The rule's own gap comes in with the type. The BAND does not: it was
+     --sp-4 here against a --sp-3 card gap plus the panel's --sp-2 margin,
+     which is 20 above the hairline and 16 below it. Whatever the band is
+     worth on a short card, it is worth the same on both sides of the line,
+     and the four pixels it was saving are not the four this card needed. */
+  .slot:has(.card) .imp-hint__rule { margin-top: var(--sp-2); }
+
+  /* The same trade the short-phone block above makes, for the same
+     reason: the eyebrow has already said this and the panel has not. */
+  .slot:has(.card) .card:has(.imp-hint) .card__prompt {
+    font-size: min(var(--fs-prompt-sm), 9cqh);
+  }
+}
+
 /* Player count stepper — Imposter's roster size and the Number Game's
    table size. See components/Stepper.tsx. */
 .stepper {
