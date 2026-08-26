@@ -1041,7 +1041,9 @@ button { font: inherit; color: inherit; }
      arm's length while the track still sits well under the row's own
      border. */
   background: color-mix(in srgb, var(--switch-ink) 32%, transparent);
-  transition: background var(--dur-base) var(--ease-out);
+  /* The same clock as the thumb, so the fill arrives with it rather than
+     chasing it — the same reasoning as the deck card's shadow. */
+  transition: background var(--dur-fast) var(--ease-glide);
 }
 
 .switch[aria-checked="true"] .switch__track {
@@ -1060,7 +1062,24 @@ button { font: inherit; color: inherit; }
      track — the thumb reads as a hole punched in it rather than as a third
      ink. */
   background: var(--switch-ground);
-  transition: transform var(--dur-base) var(--ease-spring);
+  /* A MOVE, NOT A SPRING.
+
+     This was --ease-spring, which overshoots by design — and the note on
+     .deck-card[data-settling] already has the argument: a thing being put
+     down should not bounce past where it belongs. It is worse here than
+     there, because the thumb is inside a track and physically cannot go
+     past the end, so the overshoot is not weight, it is the animation
+     drawing attention to itself.
+
+     --ease-glide is the token for this exact case, and says so where it is
+     defined: motion that reads as TRAVEL rather than as arrival. Not
+     --ease-out, which is ~95% done by halfway — right for a card landing,
+     and for 17px of slide it would be over before the eye followed it.
+
+     --dur-fast, not --dur-base. The travel is 17px on a phone; 260ms over
+     that distance is slower than the thumb of a hand that has already
+     lifted. */
+  transition: transform var(--dur-fast) var(--ease-glide);
 }
 
 /* The track's width less its height — which is the thumb plus both of its
