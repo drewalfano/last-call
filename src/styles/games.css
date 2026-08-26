@@ -3304,12 +3304,14 @@
    longest text on the card and the one thing here nobody reads
    twice.
 
-   700 rather than the role card's 600, and measured: this card
-   carries a stepper the width of three tap targets and now a
-   fourth row, so it is still 14px over at 360x640 where the role
-   card next door already fits with room to spare.
+   660, and every digit of it is measured. The role card next door
+   compacts at 600 and this one cannot: it carries a stepper the
+   width of three tap targets and a fourth row, and at full spacing
+   it is 20px over at 360x640 where the role card already fits with
+   room to spare. 667 is clean, so the line goes between the two —
+   an iPhone 8 keeps the full 20px band, a 640pt Android does not.
    --------------------------------------------------------------- */
-@media (max-height: 700px) {
+@media (max-height: 660px) {
   .card:has(.switch--card) {
     gap: var(--sp-2);
     /* Inline as well as block: the inline is what widens the column the
@@ -3330,7 +3332,9 @@
      Same trap as the tablet cap on --fs-prompt. */
   .switch.switch--card {
     /* Still the card's gap on both sides of the rule — that gap is --sp-2
-       up here, so this is too. */
+       up here, so the margin the base rule adds comes off and the padding
+       matches what is left. */
+    margin-top: 0;
     padding-block: var(--sp-2);
   }
 
@@ -3456,19 +3460,33 @@
 
   /* Two lines still cost a line, so the card gives some back — the same
      order as the short-phone block: the card's own gaps, then the caption,
-     which is the longest run of text on it.
+     which is the longest run of text on it, and then the band round the
+     divider, which comes in with them and stays equal to that gap.
 
      NOT the stepper. Its number is 57px here and shrinking it looks like
      the obvious saving, and returns nothing: the row's height is the two
      --control-md buttons either side of it, which are 64px on a tablet,
-     and the number sits well inside that. */
-  .slot:has(.card) .card:has(.switch--card) { gap: var(--sp-2); }
-  .slot:has(.card) .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
+     and the number sits well inside that.
 
-  /* The band round the divider comes in with them, and stays equal to the
-     gap set just above. */
-  .slot:has(.card) .switch.switch--card {
-    padding-block: var(--sp-2);
+     ONLY WHERE THE CARD IS ACTUALLY SHORT, which on a tablet is not the
+     same question as which tablet it is. --slot-h draws this card 262px on
+     a 1024x768 iPad and 252 on a 1133x744 one, and both are within four
+     pixels of full — but 428px on a 1366pt iPad Pro, with 142 to spare.
+     Compacting all three because two of them are tight took the divider's
+     band down to 8 on a card that had room for the 20 the role card gets
+     three inches away.
+
+     A container query rather than another viewport breakpoint, because the
+     slot is already a size container up here — put there for --fs-prompt,
+     and this is the same question asked of the same box. */
+  @container (max-height: 320px) {
+    .slot:has(.card) .card:has(.switch--card) { gap: var(--sp-2); }
+    .slot:has(.card) .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
+
+    .slot:has(.card) .switch.switch--card {
+      margin-top: 0;
+      padding-block: var(--sp-2);
+    }
   }
   /* The rule's own gap comes in with the type. The BAND does not: it was
      --sp-4 here against a --sp-3 card gap plus the panel's --sp-2 margin,

@@ -1115,7 +1115,20 @@ button { font: inherit; color: inherit; }
      alone, and the padding below is set to match it — which also means
      the two move together wherever the card's gap is compacted, instead
      of drifting apart the way a fixed pair of numbers would. */
-  margin-top: 0;
+  /* THE BAND, AND IT IS THE ROLE CARD'S BAND EXACTLY.
+
+     12 and 12 before this, against the role card's 20 and 20 — the same
+     rule drawn the same width on the same stock, sitting in two different
+     amounts of air depending on which card you were looking at. Same
+     construction as .imp-hint now, and the same two tokens: the card's own
+     gap plus this margin above, this padding below.
+
+     Only where there is room. Both compacted blocks in games.css take the
+     margin back off and drop the padding to the gap they set — the setup
+     card is the tighter of the two and already clips on a 320pt phone, so
+     16px more air there comes straight off the top and bottom of what it
+     is trying to show. */
+  margin-top: var(--sp-2);
   /* AND NO min-height, WHICH IS THE OTHER HALF OF MAKING THEM EQUAL.
 
      --control-md is a floor for a control floating on a background; here
@@ -1131,7 +1144,10 @@ button { font: inherit; color: inherit; }
      tightest phone and 61 on a tablet, and it is the full width of the
      card. */
   min-height: 0;
-  padding-block: var(--sp-3);
+  padding-top: var(--sp-5);
+  /* Not part of the band — this is the row's floor, and what sits under it
+     is the card's own padding rather than a line. It stays where it was. */
+  padding-bottom: var(--sp-3);
   /* Zeroed, not made transparent. The row's own outline went to
      `border-color: transparent` first and came back on the moment the
      switch was turned on: `.switch[aria-checked]` sets border-COLOR, it
@@ -1429,7 +1445,20 @@ button { font: inherit; color: inherit; }
 }
 
 .focal:has(.focal__center) .actions {
-  margin-top: 0;
+  /* THE BAND, AND IT IS THE ROLE CARD'S BAND EXACTLY.
+
+     12 and 12 before this, against the role card's 20 and 20 — the same
+     rule drawn the same width on the same stock, sitting in two different
+     amounts of air depending on which card you were looking at. Same
+     construction as .imp-hint now, and the same two tokens: the card's own
+     gap plus this margin above, this padding below.
+
+     Only where there is room. Both compacted blocks in games.css take the
+     margin back off and drop the padding to the gap they set — the setup
+     card is the tighter of the two and already clips on a 320pt phone, so
+     16px more air there comes straight off the top and bottom of what it
+     is trying to show. */
+  margin-top: var(--sp-2);
 }
 /* ---------------------------------------------------------------
    Two actions sharing a row, each taking half the width.
