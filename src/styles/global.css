@@ -991,10 +991,17 @@ button { font: inherit; color: inherit; }
   border-color: color-mix(in srgb, var(--switch-ink) 55%, transparent);
 }
 
-/* Scale only, no dim — the same argument as .segmented__opt. The
-   thumb travelling is the real feedback and dimming the row for
-   120ms fights it. */
-.switch:active { transform: scale(var(--press-scale)); }
+/* AND NO PRESS TRANSFORM AT ALL, which is the opposite of what every
+   other control here does.
+
+   A press effect exists to answer a tap that might otherwise look
+   ignored. This one is never in that position: the thumb travels the
+   width of the track and the track fills, on the same press, and that is
+   a bigger and clearer answer than any control in the app gets. Scaling
+   the row on top of it read as the whole row denting inward — one motion
+   too many, and the one nobody asked the question of.
+
+   The tap still sounds. See components/Switch.tsx. */
 
 .switch__name {
   /* Lets a long label wrap instead of shoving the track off the row. */
@@ -1087,7 +1094,17 @@ button { font: inherit; color: inherit; }
   --switch-ground: var(--card-surface);
 
   align-self: stretch;
-  padding-inline: 0;
+  /* ONE NUMBER FOR THE RULE AND THE ROW UNDER IT.
+
+     The rule is held in from the card's text column so it matches the one
+     the role card draws (see ::before below), and the row was not — so the
+     label started and the track ended 8px outside the line above them, and
+     the switch read as slightly too wide for its own divider. Nothing else
+     on this card is aligned left to argue with: the eyebrow, the stepper
+     and the caption are all centred. So the row takes the same inset, from
+     the same custom property, and the two cannot drift apart. */
+  --rule-inset: var(--sp-2);
+  padding-inline: var(--rule-inset);
   /* EQUAL BANDS EITHER SIDE OF THE RULE, and the card's own gap is the
      number both of them are.
 
@@ -1098,7 +1115,20 @@ button { font: inherit; color: inherit; }
      alone, and the padding below is set to match it — which also means
      the two move together wherever the card's gap is compacted, instead
      of drifting apart the way a fixed pair of numbers would. */
-  margin-top: 0;
+  /* THE BAND, AND IT IS THE ROLE CARD'S BAND EXACTLY.
+
+     12 and 12 before this, against the role card's 20 and 20 — the same
+     rule drawn the same width on the same stock, sitting in two different
+     amounts of air depending on which card you were looking at. Same
+     construction as .imp-hint now, and the same two tokens: the card's own
+     gap plus this margin above, this padding below.
+
+     Only where there is room. Both compacted blocks in games.css take the
+     margin back off and drop the padding to the gap they set — the setup
+     card is the tighter of the two and already clips on a 320pt phone, so
+     16px more air there comes straight off the top and bottom of what it
+     is trying to show. */
+  margin-top: var(--sp-2);
   /* AND NO min-height, WHICH IS THE OTHER HALF OF MAKING THEM EQUAL.
 
      --control-md is a floor for a control floating on a background; here
@@ -1114,7 +1144,10 @@ button { font: inherit; color: inherit; }
      tightest phone and 61 on a tablet, and it is the full width of the
      card. */
   min-height: 0;
-  padding-block: var(--sp-3);
+  padding-top: var(--sp-5);
+  /* Not part of the band — this is the row's floor, and what sits under it
+     is the card's own padding rather than a line. It stays where it was. */
+  padding-bottom: var(--sp-3);
   /* Zeroed, not made transparent. The row's own outline went to
      `border-color: transparent` first and came back on the moment the
      switch was turned on: `.switch[aria-checked]` sets border-COLOR, it
@@ -1124,16 +1157,36 @@ button { font: inherit; color: inherit; }
      --track-h reads --border-width as a number rather than measuring
      this element, so zeroing the border here does not resize the track. */
   border: 0;
-  border-top: 1px solid color-mix(in srgb, var(--card-ink) 15%, transparent);
   border-radius: 0;
+  /* For the rule below, which is drawn rather than bordered. */
+  position: relative;
 }
 
-/* Same specificity as the state rule above and later in the file, so the
-   divider keeps its own colour when the switch goes on: it belongs to the
-   card, not to the state of the control. */
-.switch--card[aria-checked="true"] {
-  border-top-color: color-mix(in srgb, var(--card-ink) 15%, transparent);
+/* THE RULE, THE SAME ONE THE ROLE CARD DRAWS.
+
+   Same hairline, same 15% ink — and now the same width, which is what it
+   was missing. .imp-hint holds its rule in from the card's text column by
+   --sp-2 on each side, and this one was the row's own border-top, so it
+   ran the full width of the column and read as the heavier of the two
+   lines on the same stock.
+
+   It cannot simply take the same margin: this element is the switch, so
+   an inline margin would carry the label and the track in with it and
+   break their alignment with the caption above. Drawn as a box instead,
+   inset by the --sp-2 the role card uses, over a row that still spans the
+   full column. */
+.switch--card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--rule-inset);
+  right: var(--rule-inset);
+  height: 1px;
+  background: color-mix(in srgb, var(--card-ink) 15%, transparent);
 }
+
+/* The rule is a box of its own now, so `.switch[aria-checked]` recolouring
+   borders cannot reach it and there is nothing here left to defend. */
 
 /* The card is a single clean sheet on the pack color. No stack, no tray,
    no border — the sense of a deck comes from the swap motion below, which
@@ -1392,7 +1445,20 @@ button { font: inherit; color: inherit; }
 }
 
 .focal:has(.focal__center) .actions {
-  margin-top: 0;
+  /* THE BAND, AND IT IS THE ROLE CARD'S BAND EXACTLY.
+
+     12 and 12 before this, against the role card's 20 and 20 — the same
+     rule drawn the same width on the same stock, sitting in two different
+     amounts of air depending on which card you were looking at. Same
+     construction as .imp-hint now, and the same two tokens: the card's own
+     gap plus this margin above, this padding below.
+
+     Only where there is room. Both compacted blocks in games.css take the
+     margin back off and drop the padding to the gap they set — the setup
+     card is the tighter of the two and already clips on a 320pt phone, so
+     16px more air there comes straight off the top and bottom of what it
+     is trying to show. */
+  margin-top: var(--sp-2);
 }
 /* ---------------------------------------------------------------
    Two actions sharing a row, each taking half the width.
