@@ -3435,6 +3435,25 @@
      that actually constrains it. */
   .slot:has(.card) .switch--card .switch__name { font-size: min(var(--fs-md), 5.4cqw); }
 
+  /* AND THE TRACK COMES OFF --control-md's TABLET SIZE.
+
+     Sized off the height a control stands at, it is 71px wide here — a
+     third of a 204px row, on the one card where width is the scarce axis.
+     That left the label 116px for a word needing 131, so it broke one word
+     per line whatever size the rule above tried to shrink it to, and the
+     card went 11px over.
+
+     Capped against the slot it comes back to about what a phone draws,
+     which frees 26px for the label and takes 16 off the row. Still the
+     derived size wherever the card is big enough not to care — a 1366pt
+     iPad keeps the full 44. */
+  .slot:has(.card) .switch.switch--card {
+    --track-h: min(
+      calc(var(--control-md) - var(--sp-2) * 2 - var(--border-width) * 2),
+      11cqh
+    );
+  }
+
   /* Two lines still cost a line, so the card gives some back — the same
      order as the short-phone block: the card's own gaps, then the caption,
      which is the longest run of text on it.

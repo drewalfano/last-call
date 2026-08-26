@@ -1094,7 +1094,17 @@ button { font: inherit; color: inherit; }
   --switch-ground: var(--card-surface);
 
   align-self: stretch;
-  padding-inline: 0;
+  /* ONE NUMBER FOR THE RULE AND THE ROW UNDER IT.
+
+     The rule is held in from the card's text column so it matches the one
+     the role card draws (see ::before below), and the row was not — so the
+     label started and the track ended 8px outside the line above them, and
+     the switch read as slightly too wide for its own divider. Nothing else
+     on this card is aligned left to argue with: the eyebrow, the stepper
+     and the caption are all centred. So the row takes the same inset, from
+     the same custom property, and the two cannot drift apart. */
+  --rule-inset: var(--sp-2);
+  padding-inline: var(--rule-inset);
   /* EQUAL BANDS EITHER SIDE OF THE RULE, and the card's own gap is the
      number both of them are.
 
@@ -1153,8 +1163,8 @@ button { font: inherit; color: inherit; }
   content: "";
   position: absolute;
   top: 0;
-  left: var(--sp-2);
-  right: var(--sp-2);
+  left: var(--rule-inset);
+  right: var(--rule-inset);
   height: 1px;
   background: color-mix(in srgb, var(--card-ink) 15%, transparent);
 }
