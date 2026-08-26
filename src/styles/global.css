@@ -910,6 +910,127 @@ button { font: inherit; color: inherit; }
 .gfoot:has(.gfoot__skip)::before { content: none; }
 .gfoot:has(.gfoot__skip) .actions { margin-top: auto; }
 
+/* ---------------------------------------------------------------
+   A SWITCH — one setting, on or off, on a screen inside a game.
+
+   Not the settings sheet's `.segmented`. That control spells its
+   states out as words because you read it in a list of preferences;
+   here the label has already asked the question and a row of ON |
+   OFF answering it would be a third row of type competing with the
+   two buttons under it. See components/Switch.tsx.
+
+   The WHOLE ROW is the button. A 52px track at the end of a line is
+   a target a thumb misses on a phone being passed round a table, and
+   the label is what people aim at anyway.
+
+   Drawn in the pack's own ink over the pack's colour, like
+   .gfoot__skip above it: this sits on the mode's background, not on
+   card stock, so every colour here comes from --category and it works
+   on all eleven packs without knowing which one it is in.
+   --------------------------------------------------------------- */
+.switch {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  width: 100%;
+  min-height: var(--control-md);
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--category-ink, var(--text)) 22%, transparent);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--category-ink, var(--text));
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out);
+}
+
+/* The outline firms up when the setting is on, so the row reads as
+   switched from across the table before anyone finds the thumb. */
+.switch[aria-checked="true"] {
+  border-color: color-mix(in srgb, var(--category-ink, var(--text)) 55%, transparent);
+}
+
+/* Scale only, no dim — the same argument as .segmented__opt. The
+   thumb travelling is the real feedback and dimming the row for
+   120ms fights it. */
+.switch:active { transform: scale(var(--press-scale)); }
+
+.switch__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Lets the hint wrap instead of shoving the track off the row. */
+  min-width: 0;
+}
+
+.switch__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.switch__hint {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+  opacity: 0.72;
+  text-wrap: pretty;
+}
+
+.switch__track {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  /* OFF is a filled track with a hole in it, not an outline.
+
+     The thumb is the pack colour, so the only thing separating it from the
+     track is how much ink the track carries — and at 20% on a yellow pack
+     the whole control faded into the background and read as a disabled
+     shape. 32% is the point where the thumb reads as a punched hole at
+     arm's length while the track still sits well under the row's own
+     border. */
+  background: color-mix(in srgb, var(--category-ink, var(--text)) 32%, transparent);
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.switch[aria-checked="true"] .switch__track {
+  background: var(--category-ink, var(--text));
+}
+
+.switch__thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  /* The pack colour, because that is what is behind the track — the
+     thumb reads as a hole punched in it rather than as a third ink. */
+  background: var(--category, var(--surface));
+  /* 52 wide less 4px of padding each side and the thumb's own 24. */
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.switch[aria-checked="true"] .switch__thumb { transform: translateX(20px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch__thumb { transition: none; }
+}
+
+/* Under the card, above the row of buttons: something you decide
+   ABOUT the round, with the ways of starting one below it. The band
+   grounds itself and scrolls (see .gfoot), so this cannot push the
+   primary action off a short screen the way a fourth row inside the
+   card would have been clipped by it. */
+.gfoot__switch { align-self: stretch; }
+
 /* The card is a single clean sheet on the pack color. No stack, no tray,
    no border — the sense of a deck comes from the swap motion below, which
    ages better than drawn-on layers. */
