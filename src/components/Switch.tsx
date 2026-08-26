@@ -3,10 +3,8 @@ import { audio } from "../lib/audio";
 interface SwitchProps {
   checked: boolean;
   onChange: (next: boolean) => void;
-  /** The setting's name, read as the control's label. */
+  /** The setting's name, and the whole of what the control says. */
   label: string;
-  /** One line under the label saying what it costs you. Optional. */
-  hint?: string;
   /** Extra class on the row, for a screen that has to place it. */
   className?: string;
 }
@@ -23,10 +21,17 @@ interface SwitchProps {
  *
  * So: the label is the question and the track is the answer. `role="switch"`
  * rather than a checkbox because that is what it is, and because it lets the
- * whole row — label, hint and track — be one press target instead of a
- * 51x31px one at the end of a line, which is the size a thumb misses.
+ * whole row — the label and the track — be one press target instead of a
+ * 52x32px one at the end of a line, which is the size a thumb misses.
+ *
+ * A LABEL AND NOTHING ELSE. This carried a second line under the name for a
+ * while, explaining what the setting did, and it was the settings sheet's
+ * `.setting__hint` turning up on a screen that is not a settings sheet: two
+ * lines of small type between the card and the buttons that start the round,
+ * saying what the label had already said. If a switch here needs a sentence
+ * to be understood, the label is wrong.
  */
-export function Switch({ checked, onChange, label, hint, className }: SwitchProps) {
+export function Switch({ checked, onChange, label, className }: SwitchProps) {
   return (
     <button
       type="button"
@@ -39,10 +44,7 @@ export function Switch({ checked, onChange, label, hint, className }: SwitchProp
       onPointerDown={() => audio.play("tap")}
       onClick={() => onChange(!checked)}
     >
-      <span className="switch__label">
-        <span className="switch__name">{label}</span>
-        {hint && <span className="switch__hint">{hint}</span>}
-      </span>
+      <span className="switch__name">{label}</span>
       {/* The track is decoration over an accessible name that is already
           complete — the button says what it is and aria-checked says which
           way it is set, so a reader that never sees this reads the same

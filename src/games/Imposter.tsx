@@ -214,7 +214,6 @@ export function Imposter({ mode, onBack }: Props) {
             checked={s.showHint}
             onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
             label="Show hint"
-            hint="Gives the Imposter something vague to work from."
           />
 
           <div className="actions--row">

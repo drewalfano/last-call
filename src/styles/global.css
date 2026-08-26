@@ -936,10 +936,14 @@ button { font: inherit; color: inherit; }
   gap: var(--sp-4);
   width: 100%;
   min-height: var(--control-md);
-  padding: var(--sp-3) var(--sp-4);
+  /* Enough to clear the track's 32px inside a --control-md row and no more.
+     With the sub-line gone the row is one line of type against a pill, and
+     the sheet-sized padding it had left it taller than the two buttons under
+     it — which made the option look like the primary thing on the screen. */
+  padding: var(--sp-2) var(--sp-4);
   border: var(--border-width) solid
     color-mix(in srgb, var(--category-ink, var(--text)) 22%, transparent);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--category-ink, var(--text));
   text-align: left;
@@ -959,27 +963,14 @@ button { font: inherit; color: inherit; }
    120ms fights it. */
 .switch:active { transform: scale(var(--press-scale)); }
 
-.switch__label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  /* Lets the hint wrap instead of shoving the track off the row. */
-  min-width: 0;
-}
-
 .switch__name {
+  /* Lets a long label wrap instead of shoving the track off the row. */
+  min-width: 0;
   font-family: var(--font-display);
   font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-}
-
-.switch__hint {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-snug);
-  opacity: 0.72;
-  text-wrap: pretty;
 }
 
 .switch__track {
