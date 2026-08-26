@@ -929,18 +929,45 @@ button { font: inherit; color: inherit; }
    on all eleven packs without knowing which one it is in.
    --------------------------------------------------------------- */
 .switch {
+  /* THE TRACK IS SIZED BY THE RING, NOT THE OTHER WAY ROUND.
+
+     It was a flat 52x32 and the row was `min-height: --control-md`, which
+     agreed on a phone by luck and came apart on a tablet: --control-md steps
+     48 -> 64 there, the track did not, and the row grew to 64 round a 32px
+     toggle — 14px of ring at the top and bottom against 8 at the end.
+
+     So the height a control stands at is the input, --sp-2 of ring is the
+     constant, and the track is whatever is left inside it. The row then
+     comes out at exactly --control-md on both, which is the height the
+     stepper and the buttons already stand at. 1.625 is 52/32, the
+     proportion the flat numbers had. */
+  --track-h: calc(var(--control-md) - var(--sp-2) * 2 - var(--border-width) * 2);
+  --track-w: calc(var(--track-h) * 1.625);
+
   display: flex;
   flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-4);
+  /* Small, because the label and the track are the two halves of one control
+     and `space-between` is what actually separates them. This is only the
+     floor under that — what the row collapses to when the label grows wide
+     enough to need every pixel. */
+  gap: var(--sp-2);
   width: 100%;
   min-height: var(--control-md);
-  /* Enough to clear the track's 32px inside a --control-md row and no more.
-     With the sub-line gone the row is one line of type against a pill, and
-     the sheet-sized padding it had left it taller than the two buttons under
-     it — which made the option look like the primary thing on the screen. */
-  padding: var(--sp-2) var(--sp-4);
+  /* AN EVEN RING ROUND THE TRACK, AND AN UNEVEN-LOOKING RULE TO GET IT.
+
+     The track is a 32px pill inside a 52px one, so the gap that reads as
+     correct is the same on all four sides: 8px, which the block padding was
+     already giving and the inline padding was not — 16px on the right left
+     the toggle sitting in a slot twice as wide as it was tall, and a pill
+     inside a pill shows that immediately.
+
+     The left is the odd one out on purpose. That side is not a ring round
+     anything, it is a label's inset from a curved edge, and 8px would run
+     the type into the corner the radius takes out. Same reason .btn keeps
+     inline padding a text-only control does not need. */
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
   border: var(--border-width) solid
     color-mix(in srgb, var(--category-ink, var(--text)) 22%, transparent);
   border-radius: var(--radius-pill);
@@ -967,7 +994,20 @@ button { font: inherit; color: inherit; }
   /* Lets a long label wrap instead of shoving the track off the row. */
   min-width: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-md);
+  /* ONE LINE, WHICH IS A PADDING RULE IN DISGUISE.
+
+     The ring round the track is even only while the row stands at its
+     natural height. Let the label wrap and the row grows to 68px with the
+     track still centred in it, so the gap goes 16 above and below against 8
+     at the end — the exact unevenness the padding above was written to fix,
+     back again on the narrowest phone.
+
+     So the type yields instead. "SHOW IMPOSTER HINT" wants 221px and a 320pt
+     row has 192 to give it; 4vw is the size that fits there and is under
+     --fs-md on nothing wider than a 400pt phone, so every screen with the
+     room keeps the full size. Same shape as --fs-prompt: the viewport sets
+     the ambition and the smaller wins. */
+  font-size: min(var(--fs-md), 4vw);
   font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
@@ -976,8 +1016,8 @@ button { font: inherit; color: inherit; }
 .switch__track {
   position: relative;
   flex: none;
-  width: 52px;
-  height: 32px;
+  width: var(--track-w);
+  height: var(--track-h);
   border-radius: var(--radius-pill);
   /* OFF is a filled track with a hole in it, not an outline.
 
@@ -997,19 +1037,24 @@ button { font: inherit; color: inherit; }
 
 .switch__thumb {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 24px;
-  height: 24px;
+  /* Its own ring inside the track's, on the same principle as the row's. */
+  top: var(--sp-1);
+  left: var(--sp-1);
+  width: calc(var(--track-h) - var(--sp-1) * 2);
+  height: calc(var(--track-h) - var(--sp-1) * 2);
   border-radius: var(--radius-pill);
   /* The pack colour, because that is what is behind the track — the
      thumb reads as a hole punched in it rather than as a third ink. */
   background: var(--category, var(--surface));
-  /* 52 wide less 4px of padding each side and the thumb's own 24. */
   transition: transform var(--dur-base) var(--ease-spring);
 }
 
-.switch[aria-checked="true"] .switch__thumb { transform: translateX(20px); }
+/* The track's width less its height — which is the thumb plus both of its
+   insets, so this travels exactly from one end to the other whatever the
+   control is sized to. */
+.switch[aria-checked="true"] .switch__thumb {
+  transform: translateX(calc(var(--track-w) - var(--track-h)));
+}
 
 @media (prefers-reduced-motion: reduce) {
   .switch__thumb { transition: none; }

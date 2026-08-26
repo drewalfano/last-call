@@ -213,7 +213,7 @@ export function Imposter({ mode, onBack }: Props) {
             className="gfoot__switch"
             checked={s.showHint}
             onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
-            label="Show hint"
+            label="Show Imposter hint"
           />
 
           <div className="actions--row">
