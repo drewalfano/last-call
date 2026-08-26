@@ -3355,10 +3355,17 @@
     padding: var(--sp-3) var(--sp-2);
   }
 
+  /* Keeps its --sp-2 inset from the column, like everywhere else, so the
+     rule is drawn the same way on both cards at every size. It briefly did
+     not, to buy text width back when a hint could run to a phrase; at one
+     or two words it does not need it.
+
+     The card's own inline padding stays --sp-2 here where the setup card's
+     is --sp-3, which leaves the two rules 4px apart on a 320pt phone.
+     Measured: matching them costs this card nine pixels of overflow, and
+     they are two cards you never see at once. */
   .imp-hint {
     gap: 0;
-    /* Nothing left to indent from — see the padding above. */
-    margin-inline: 0;
     /* Equal either side of the hairline, as everywhere else: the card's gap
        is --sp-1 in this block, so the margin makes the band up to --sp-2 and
        the padding matches it. 4px of air round a rule is not a band, it is a

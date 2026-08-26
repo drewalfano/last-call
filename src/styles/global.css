@@ -991,10 +991,17 @@ button { font: inherit; color: inherit; }
   border-color: color-mix(in srgb, var(--switch-ink) 55%, transparent);
 }
 
-/* Scale only, no dim — the same argument as .segmented__opt. The
-   thumb travelling is the real feedback and dimming the row for
-   120ms fights it. */
-.switch:active { transform: scale(var(--press-scale)); }
+/* AND NO PRESS TRANSFORM AT ALL, which is the opposite of what every
+   other control here does.
+
+   A press effect exists to answer a tap that might otherwise look
+   ignored. This one is never in that position: the thumb travels the
+   width of the track and the track fills, on the same press, and that is
+   a bigger and clearer answer than any control in the app gets. Scaling
+   the row on top of it read as the whole row denting inward — one motion
+   too many, and the one nobody asked the question of.
+
+   The tap still sounds. See components/Switch.tsx. */
 
 .switch__name {
   /* Lets a long label wrap instead of shoving the track off the row. */
@@ -1124,16 +1131,36 @@ button { font: inherit; color: inherit; }
      --track-h reads --border-width as a number rather than measuring
      this element, so zeroing the border here does not resize the track. */
   border: 0;
-  border-top: 1px solid color-mix(in srgb, var(--card-ink) 15%, transparent);
   border-radius: 0;
+  /* For the rule below, which is drawn rather than bordered. */
+  position: relative;
 }
 
-/* Same specificity as the state rule above and later in the file, so the
-   divider keeps its own colour when the switch goes on: it belongs to the
-   card, not to the state of the control. */
-.switch--card[aria-checked="true"] {
-  border-top-color: color-mix(in srgb, var(--card-ink) 15%, transparent);
+/* THE RULE, THE SAME ONE THE ROLE CARD DRAWS.
+
+   Same hairline, same 15% ink — and now the same width, which is what it
+   was missing. .imp-hint holds its rule in from the card's text column by
+   --sp-2 on each side, and this one was the row's own border-top, so it
+   ran the full width of the column and read as the heavier of the two
+   lines on the same stock.
+
+   It cannot simply take the same margin: this element is the switch, so
+   an inline margin would carry the label and the track in with it and
+   break their alignment with the caption above. Drawn as a box instead,
+   inset by the --sp-2 the role card uses, over a row that still spans the
+   full column. */
+.switch--card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--sp-2);
+  right: var(--sp-2);
+  height: 1px;
+  background: color-mix(in srgb, var(--card-ink) 15%, transparent);
 }
+
+/* The rule is a box of its own now, so `.switch[aria-checked]` recolouring
+   borders cannot reach it and there is nothing here left to defend. */
 
 /* The card is a single clean sheet on the pack color. No stack, no tray,
    no border — the sense of a deck comes from the swap motion below, which
