@@ -919,14 +919,16 @@ button { font: inherit; color: inherit; }
    OFF answering it would be a third row of type competing with the
    two buttons under it. See components/Switch.tsx.
 
-   The WHOLE ROW is the button. A 52px track at the end of a line is
-   a target a thumb misses on a phone being passed round a table, and
+   The WHOLE ROW is the button. A track at the end of a line is a
+   target a thumb misses on a phone being passed round a table, and
    the label is what people aim at anyway.
 
-   Drawn in the pack's own ink over the pack's colour, like
-   .gfoot__skip above it: this sits on the mode's background, not on
-   card stock, so every colour here comes from --category and it works
-   on all eleven packs without knowing which one it is in.
+   TWO GROUNDS, ONE CONTROL. --switch-ink and --switch-ground are
+   whatever the switch is drawn on: the pack's ink over the pack's
+   colour by default, so a row in the footer band works on all eleven
+   packs without knowing which one it is in, and the card's ink over
+   the card's stock under .switch--card. Nothing else in here names a
+   colour, so a third ground would be two lines.
    --------------------------------------------------------------- */
 .switch {
   /* THE TRACK IS SIZED BY THE RING, NOT THE OTHER WAY ROUND.
@@ -943,6 +945,10 @@ button { font: inherit; color: inherit; }
      proportion the flat numbers had. */
   --track-h: calc(var(--control-md) - var(--sp-2) * 2 - var(--border-width) * 2);
   --track-w: calc(var(--track-h) * 1.625);
+
+  /* The pack, unless a ground overrides them. See .switch--card. */
+  --switch-ink: var(--category-ink, var(--text));
+  --switch-ground: var(--category, var(--surface));
 
   display: flex;
   flex: none;
@@ -969,10 +975,10 @@ button { font: inherit; color: inherit; }
      inline padding a text-only control does not need. */
   padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
   border: var(--border-width) solid
-    color-mix(in srgb, var(--category-ink, var(--text)) 22%, transparent);
+    color-mix(in srgb, var(--switch-ink) 22%, transparent);
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--category-ink, var(--text));
+  color: var(--switch-ink);
   text-align: left;
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out),
@@ -982,7 +988,7 @@ button { font: inherit; color: inherit; }
 /* The outline firms up when the setting is on, so the row reads as
    switched from across the table before anyone finds the thumb. */
 .switch[aria-checked="true"] {
-  border-color: color-mix(in srgb, var(--category-ink, var(--text)) 55%, transparent);
+  border-color: color-mix(in srgb, var(--switch-ink) 55%, transparent);
 }
 
 /* Scale only, no dim — the same argument as .segmented__opt. The
@@ -1027,12 +1033,12 @@ button { font: inherit; color: inherit; }
      shape. 32% is the point where the thumb reads as a punched hole at
      arm's length while the track still sits well under the row's own
      border. */
-  background: color-mix(in srgb, var(--category-ink, var(--text)) 32%, transparent);
+  background: color-mix(in srgb, var(--switch-ink) 32%, transparent);
   transition: background var(--dur-base) var(--ease-out);
 }
 
 .switch[aria-checked="true"] .switch__track {
-  background: var(--category-ink, var(--text));
+  background: var(--switch-ink);
 }
 
 .switch__thumb {
@@ -1043,9 +1049,10 @@ button { font: inherit; color: inherit; }
   width: calc(var(--track-h) - var(--sp-1) * 2);
   height: calc(var(--track-h) - var(--sp-1) * 2);
   border-radius: var(--radius-pill);
-  /* The pack colour, because that is what is behind the track — the
-     thumb reads as a hole punched in it rather than as a third ink. */
-  background: var(--category, var(--surface));
+  /* Whatever the control is drawn on, because that is what is behind the
+     track — the thumb reads as a hole punched in it rather than as a third
+     ink. */
+  background: var(--switch-ground);
   transition: transform var(--dur-base) var(--ease-spring);
 }
 
@@ -1060,12 +1067,50 @@ button { font: inherit; color: inherit; }
   .switch__thumb { transition: none; }
 }
 
-/* Under the card, above the row of buttons: something you decide
-   ABOUT the round, with the ways of starting one below it. The band
-   grounds itself and scrolls (see .gfoot), so this cannot push the
-   primary action off a short screen the way a fourth row inside the
-   card would have been clipped by it. */
-.gfoot__switch { align-self: stretch; }
+/* ---------------------------------------------------------------
+   THE SAME SWITCH, ON CARD STOCK.
+
+   A card already has an edge, a radius and a shadow. Drawing a second
+   outlined pill inside one is a box in a box, so the variant drops the
+   border and the ring that went with it and becomes a row: label flush
+   left, track flush right, both against the card's own text column so
+   the switch lines up with the eyebrow and the caption above it rather
+   than sitting inset from them.
+
+   The rule above it is the point of the variant. It separates two
+   questions the card is asking — how many are playing, and whether
+   the Imposter gets a nudge — which without it read as one caption
+   running into a control.
+   --------------------------------------------------------------- */
+.switch--card {
+  --switch-ink: var(--card-ink);
+  --switch-ground: var(--card-surface);
+
+  align-self: stretch;
+  padding-inline: 0;
+  /* Space over the rule, which the card's own gap alone did not give:
+     a hairline needs a band round it, not a gap. */
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+  /* Zeroed, not made transparent. The row's own outline went to
+     `border-color: transparent` first and came back on the moment the
+     switch was turned on: `.switch[aria-checked]` sets border-COLOR, it
+     outranked the variant, and it repainted all four sides of a border
+     that still had width. No width, nothing to repaint.
+
+     --track-h reads --border-width as a number rather than measuring
+     this element, so zeroing the border here does not resize the track. */
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--card-ink) 15%, transparent);
+  border-radius: 0;
+}
+
+/* Same specificity as the state rule above and later in the file, so the
+   divider keeps its own colour when the switch goes on: it belongs to the
+   card, not to the state of the control. */
+.switch--card[aria-checked="true"] {
+  border-top-color: color-mix(in srgb, var(--card-ink) 15%, transparent);
+}
 
 /* The card is a single clean sheet on the pack color. No stack, no tray,
    no border — the sense of a deck comes from the swap motion below, which

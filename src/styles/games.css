@@ -3282,6 +3282,50 @@
    already losing. Height, not width — a 320pt phone is 568 tall
    and it is the height that sets the card here.
    --------------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   THE SETUP CARD ON A SHORT PHONE.
+
+   The switch moved onto this card and --card-size is a SQUARE: at
+   320x568 it comes to 202px in both axes, so the card gained a
+   48px row and 170px of column to wrap a three-word label in. It
+   went 64px over, against the 15 it already overflowed by with no
+   switch on it at all.
+
+   Everything below is the same trade the role card makes next
+   door — the card's own padding and gaps come in first, then the
+   type, in the order of what is least missed. The stepper's number
+   is 57.6px at this width for a value that never exceeds two
+   digits; the caption is the longest text on the card and the one
+   thing here nobody reads twice.
+   --------------------------------------------------------------- */
+@media (max-height: 700px) {
+  .card:has(.switch--card) {
+    gap: var(--sp-2);
+    /* Inline as well as block: the inline is what widens the column the
+       label has to wrap in, which is worth more here than the air. */
+    padding: var(--sp-3) var(--sp-3);
+  }
+
+  .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
+
+  /* Still the biggest thing on the card, which is the point of it. */
+  .card:has(.switch--card) .stepper__n { font-size: clamp(2.25rem, 11vw, 3rem); }
+
+  .switch--card {
+    /* The rule needs a band round it, and on a card this size the band is
+       all the card has left. It gets the gap and nothing more. */
+    margin-top: 0;
+    padding-top: var(--sp-2);
+    padding-bottom: 0;
+  }
+
+  /* TWO LINES, NOT THREE. "SHOW IMPOSTER HINT" cannot fit two words on a
+     line in the 116px this column leaves beside the track, so it broke one
+     word per line and stood the row at 79px. The wider column above and a
+     size down here is what buys the second word its place. */
+  .switch--card .switch__name { font-size: min(var(--fs-sm), 3.2vw); }
+}
+
 @media (max-height: 700px) {
   /* Scoped by :has to the one card that carries a panel — the word card
      next door has room it does not need and keeps the stock it had.
@@ -3350,6 +3394,38 @@
   .slot:has(.card) .imp-hint__label { font-size: min(var(--fs-xs), 3.4cqh); }
   .slot:has(.card) .imp-hint__rule { font-size: min(var(--fs-xs), 3.4cqh); }
 
+  /* AND THE SETUP CARD, WHICH IS NARROW HERE RATHER THAN SHORT.
+
+     A 1024x768 iPad draws this card 249px WIDE — the slot is sized off
+     --slot-h on both axes here — while the type ramp steps --fs-md 16 -> 18.
+     So the label had 142px of column beside a 70px track for a word that
+     wants 165, and broke one word per line: three lines, and the card 35px
+     over.
+
+     Against the slot, not the viewport. `min(--fs-md, 4vw)` on the base rule
+     is right on a phone, where the card IS very nearly the viewport, and
+     meaningless on a tablet where 4vw is 41px and the card is 249px. cqw is
+     the same number the phone rule was reaching for, measured off the thing
+     that actually constrains it. */
+  .slot:has(.card) .switch--card .switch__name { font-size: min(var(--fs-md), 5.4cqw); }
+
+  /* Two lines still cost a line, so the card gives some back — the same
+     order as the short-phone block: the card's own gaps, then the caption,
+     which is the longest run of text on it.
+
+     NOT the stepper. Its number is 57px here and shrinking it looks like
+     the obvious saving, and returns nothing: the row's height is the two
+     --control-md buttons either side of it, which are 64px on a tablet,
+     and the number sits well inside that. */
+  .slot:has(.card) .card:has(.switch--card) { gap: var(--sp-2); }
+  .slot:has(.card) .card:has(.switch--card) .card__meta { font-size: var(--fs-xs); }
+
+  /* The band round the divider comes in with them. */
+  .slot:has(.card) .switch--card {
+    margin-top: 0;
+    padding-top: var(--sp-2);
+    padding-bottom: 0;
+  }
   /* The divider band and the rule's own gap come in with the type. A 20px
      band either side of the hairline is right on a 350px phone card and a
      twelfth of a 252px tablet one. */

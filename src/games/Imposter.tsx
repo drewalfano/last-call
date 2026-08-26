@@ -194,28 +194,29 @@ export function Imposter({ mode, onBack }: Props) {
                   : `Using your ${players.length} names, then numbers.`
                 : "Add names on Home to use them here."}
               </p>
+
+            {/* THE ROUND'S ONE OPTION, ON THE CARD THAT SETS THE ROUND UP.
+
+                Under the count and behind a rule, because those are two
+                different questions — how many are playing is what this card
+                is for, and whether the Imposter gets a nudge is a house rule
+                bolted to the bottom of it. The rule is what says so; without
+                it the switch read as a third line of the caption above.
+
+                It sat in the footer band for a while, which kept the card at
+                the height it had always been and put the option in with the
+                buttons that start the round. Wrong shelf: everything in that
+                band DOES something, and this decides something. See
+                .switch--card for what the card costs it. */}
+            <Switch
+              className="switch--card"
+              checked={s.showHint}
+              onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
+              label="Show Imposter hint"
+            />
             </div>
           }
         >
-          {/* THE ROUND'S ONE OPTION, AND IT SITS UNDER THE CARD.
-
-              Not on the card, which is a fixed square already carrying an
-              eyebrow, a stepper the width of three tap targets and a
-              two-line caption — a fourth row inside it is what gets clipped
-              on a short landscape screen, because .card has overflow:hidden
-              and no scroll. The band below does scroll (see .gfoot), so an
-              optional row belongs in it.
-
-              Above the two buttons rather than between them and Deal roles:
-              this is something you decide about the round, and everything
-              below it is how you start one. */}
-          <Switch
-            className="gfoot__switch"
-            checked={s.showHint}
-            onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
-            label="Show Imposter hint"
-          />
-
           <div className="actions--row">
             <button
               className="btn btn--ghost"
