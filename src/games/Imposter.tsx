@@ -131,7 +131,15 @@ export function Imposter({ mode, onBack }: Props) {
     });
   }, [contentMode, categories]);
 
-  const playAgain = useCallback(() => {
+  /**
+   * Back to the screen the round is set up on, carrying everything the
+   * table chose there — the count, the category, whether the Imposter gets
+   * a hint. Nothing is dealt until they ask for it.
+   *
+   * Both ways out of a round land here: New game at the end of one, and
+   * Start over in the middle of a deal that went wrong.
+   */
+  const backToSetup = useCallback(() => {
     setS((prev) => ({ ...prev, phase: "setup" }));
   }, []);
 
@@ -264,29 +272,37 @@ export function Imposter({ mode, onBack }: Props) {
             </div>
           }
         >
-          {/* A DEAL CAN GO WRONG HALFWAY THROUGH, and until now the only way
-              out was the chevron, which leaves the mode altogether and loses
-              the category and the player count with it.
+          {/* A DEAL CAN GO WRONG HALFWAY THROUGH, and the only other way out
+              is the chevron, which leaves the mode altogether and loses the
+              category and the player count with it.
 
               Two people looking at one screen, someone tapping past their
               word without reading it, the phone going round the table the
-              wrong way — none of those can be repaired by carrying on, and
-              all of them need the same thing: a different word and a
-              different Imposter, dealt again from the top. It throws away the
-              reveals already done, which is the point.
+              wrong way — none of those can be repaired by carrying on. It
+              throws away the reveals already done, which is the point.
+
+              BACK TO THE SETUP SCREEN, NOT STRAIGHT INTO ANOTHER DEAL. It
+              used to re-deal on the spot, which meant one tap put a new
+              secret word on the phone before anyone had agreed to start
+              again — and the reason a deal is being abandoned is very often
+              that the count or the category was wrong, which the old
+              behaviour gave you no way to change on the way past. A round
+              nobody asked for is not a recovery. So it lands where the
+              round is chosen, with everything the table picked still set,
+              and Deal roles is one tap away when they are ready.
 
               ON THE COVER SCREEN AND NOWHERE ELSE. The role screen is the one
               thing in this app nobody but its owner may see, and a control
-              that rerolls who the Imposter is has no business living behind
-              that — a player who did not like their role could tap it while
-              the phone was face down and nobody would know a round had been
-              thrown. Here it is under the neutral screen, in the open,
-              between two hands. From a role, Hide it first: the cover is
-              where the phone is being passed anyway.
+              that throws the round has no business living behind that — a
+              player who did not like their role could tap it while the phone
+              was face down and nobody would know. Here it is under the
+              neutral screen, in the open, between two hands. From a role,
+              Hide it first: the cover is where the phone is being passed
+              anyway.
 
               Quiet, per .gfoot__skip: on almost every deal this is the last
               thing anyone wants. */}
-          <button className="gfoot__skip" onClick={startRound}>
+          <button className="gfoot__skip" onClick={backToSetup}>
             Start over
           </button>
           <div className="actions">
@@ -430,7 +446,7 @@ export function Imposter({ mode, onBack }: Props) {
             {/* The app deals the roles and gets out of the way. It has no
                 reveal and keeps no score: everyone except the Imposter knows
                 the word, so the table can settle all of it themselves. */}
-            <button className="btn btn--lg btn--block" onClick={playAgain}>
+            <button className="btn btn--lg btn--block" onClick={backToSetup}>
               New game
             </button>
           </div>
