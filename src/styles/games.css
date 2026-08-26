@@ -3275,12 +3275,19 @@
    to be read.
 
    So the panel gets thinner rather than the card getting a
-   scroller: the hairlines close in, the hint steps down two sizes
-   and the gaps go to nothing. Measured at 320x568 it brings a card
-   that wanted 288px back to about what the hintless one wants, so
-   turning the switch on costs a short phone nothing it was not
-   already losing. Height, not width — a 320pt phone is 568 tall
-   and it is the height that sets the card here.
+   scroller: the hairlines close in, the hint steps down a size and
+   the gaps go to nothing. Measured at 320x568 the card now wants
+   6px more than it has, against the 11 the hintless one already
+   overflowed by — so turning the switch on costs a short phone
+   less than nothing.
+
+   600, not 700, and that is the hints getting shorter rather than
+   this getting braver. While a hint could run to "Nobody wants to
+   be there" the panel took two lines and a 667pt phone needed
+   every pixel of this; at one or two words it never wraps, and
+   375x667 fits at full spacing. Compacting it there only crammed
+   a card with room to spare. Height, not width — a 320pt phone is
+   568 tall and it is the height that sets the card here.
    --------------------------------------------------------------- */
 /* ---------------------------------------------------------------
    THE SETUP CARD ON A SHORT PHONE.
@@ -3293,10 +3300,14 @@
 
    Everything below is the same trade the role card makes next
    door — the card's own padding and gaps come in first, then the
-   type, in the order of what is least missed. The stepper's number
-   is 57.6px at this width for a value that never exceeds two
-   digits; the caption is the longest text on the card and the one
-   thing here nobody reads twice.
+   type, in the order of what is least missed. The caption is the
+   longest text on the card and the one thing here nobody reads
+   twice.
+
+   700 rather than the role card's 600, and measured: this card
+   carries a stepper the width of three tap targets and now a
+   fourth row, so it is still 14px over at 360x640 where the role
+   card next door already fits with room to spare.
    --------------------------------------------------------------- */
 @media (max-height: 700px) {
   .card:has(.switch--card) {
@@ -3326,7 +3337,7 @@
   .switch--card .switch__name { font-size: min(var(--fs-sm), 3.2vw); }
 }
 
-@media (max-height: 700px) {
+@media (max-height: 600px) {
   /* Scoped by :has to the one card that carries a panel — the word card
      next door has room it does not need and keeps the stock it had.
 
