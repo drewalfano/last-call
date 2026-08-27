@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Stepper } from "../components/Stepper";
 import { shuffle, useDeck } from "../lib/deck";
+import { fadeOnScroll } from "../lib/scrollFade";
 import { useCountdown, buzz } from "../lib/useCountdown";
 import { audio } from "../lib/audio";
 import { usePool } from "../data/pools";
@@ -16,49 +17,59 @@ import type { ModeDef } from "../data/modes";
  * "I can name five." "Seven." "Prove it."
  *
  * Bidding escalates until someone calls it, then the bidder gets a clock and
- * has to actually produce the number they claimed. The app holds the bid, whose
- * turn it is, and the clock — everything a table loses track of once it's
+ * has to actually produce the number they claimed. The app holds the bid, who
+ * owns it, and the clock — everything a table loses track of once it's
  * arguing — and nothing else. Answers are never typed; the table judges whether
  * "uhh… Shake It Off?" counts.
  *
- * Who bids when is shuffled, and reshuffled every category — see `order`.
+ * A BID IS TAKEN, NOT DEALT OUT. The mode used to run a turn order: the app
+ * nominated a player, they raised by one or called it, and the phone moved on
+ * a seat. Played at a table it dragged. Six people spend five raises getting
+ * from 3 to 8 and nobody has said anything they can't back up, because a
+ * player with nothing to claim still has to be asked, and the only raise on
+ * offer is the smallest one.
+ *
+ * So the round poses a number and the table answers it. Whoever wants it taps
+ * their own name — the people with nothing to say are simply never in the
+ * way — and the number on offer can be dragged straight up to a milestone
+ * first. Both halves of the fix are the same idea: the game is somebody
+ * claiming a number they might not have, and everything else was queueing.
  */
 
 type Phase = "count" | "bidding" | "challenge" | "verdict";
 
 /** Seconds per item claimed. A bid of 7 buys 42 seconds, which is tight. */
 const SECONDS_PER_ITEM = 6;
-/** Where every round opens. Also what says whether anyone has bid yet. */
+/** The floor a round opens on. Nobody has claimed it — see `holder`. */
 const START_BID = 3;
 const MIN_SECONDS = 25;
 
 /**
- * THE JUMPS. Bidding one at a time is what makes this drag.
+ * THE JUMPS.
  *
- * A table of six spends five raises getting from 3 to 8, and nobody has said
- * anything they can't back up — the interesting part of the game only starts
- * where someone claims a number they might not have. So the round bids in
- * fives as well as ones: the next milestones above the bid are on the screen
- * beside the +1, and taking one is the whole boast in a single tap.
+ * The dare on offer defaults to one more than the standing bid, and beside it
+ * sit the next two milestones. Multiples of five because the point is a
+ * number the table hears as big, and nine is not one.
  *
- * Two of them, not the whole ladder. A phone row that offers 10, 15, 20 and
- * 25 turns a dare into a menu, and the far end of it is never the bid anyone
- * actually makes.
+ * Two of them, not the whole ladder. A row offering 10, 15, 20 and 25 turns a
+ * dare into a menu, and the far end of a menu is never the number anyone
+ * actually claims.
  */
 const MILESTONE = 5;
 const JUMPS_SHOWN = 2;
 
 /**
- * The next milestones a bid of `bid` could jump to.
+ * What the table can be dared with, against a standing bid of `bid`.
  *
- * `bid + 1` is skipped because the primary action is already offering it —
- * from a bid of 4 the row reads 10 and 15, not 5 and 10, so a jump is always
- * visibly bigger than the button under it. Only the multiples are offered:
- * the point is a number the table recognises as big, and "9" is not one.
+ * Always `bid + 1` first — the ordinary raise, and the one selected until
+ * somebody reaches past it — then the milestones above it. A milestone equal
+ * to `bid + 1` is skipped rather than listed twice, so from a bid of 4 the
+ * row reads 5, 10, 15: every option is a distinct number and each is visibly
+ * bigger than the last.
  */
-function jumpsAbove(bid: number): number[] {
-  const out: number[] = [];
-  for (let n = Math.floor(bid / MILESTONE + 1) * MILESTONE; out.length < JUMPS_SHOWN; n += MILESTONE) {
+function daresAbove(bid: number): number[] {
+  const out = [bid + 1];
+  for (let n = Math.floor(bid / MILESTONE + 1) * MILESTONE; out.length <= JUMPS_SHOWN; n += MILESTONE) {
     if (n > bid + 1) out.push(n);
   }
   return out;
@@ -78,11 +89,11 @@ const MAX_SEATS = 8;
 const DEFAULT_SEATS = 4;
 
 /**
- * Seat indices, shuffled — the order the bid goes round.
+ * Seat indices, shuffled — the order the names are dealt across the pad.
  *
  * `after` is the order being replaced, and all that is taken from it is who
- * opened: a fresh shuffle is free to hand the same player the opening bid
- * twice running, and two in a row is the one repeat a table reads as the
+ * came first: a fresh shuffle is free to put the same player in the opening
+ * slot twice running, and two in a row is the one repeat a table reads as the
  * shuffle not having happened. Same guard `useDeck` puts on its reshuffle
  * seam, for the same reason, and the swap keeps the pass uniform elsewhere.
  */
@@ -112,10 +123,16 @@ export function NumberGame({ mode, onBack }: Props) {
    * for why it is never asked again.
    */
   const [phase, setPhase] = useState<Phase>(() => (players.length ? "bidding" : "count"));
+  /** The number standing on the table. At START_BID nobody has claimed it. */
   const [bid, setBid] = useState(START_BID);
-  const [turn, setTurn] = useState(0);
-  /** Who owns the bid on the table right now — the one who gets challenged. */
-  const [holder, setHolder] = useState<number>(0);
+  /**
+   * The number on offer — what the pad below would claim if somebody tapped
+   * their name right now. Separate from `bid` because reaching for a bigger
+   * one is a move you make BEFORE you own it: tap 15, then tap yourself.
+   */
+  const [dare, setDare] = useState(START_BID + 1);
+  /** Who owns the bid — the one who can be made to prove it. Null until taken. */
+  const [holder, setHolder] = useState<string | null>(null);
 
   /**
    * THE TABLE. One entry per seat, named or not.
@@ -133,47 +150,40 @@ export function NumberGame({ mode, onBack }: Props) {
   );
 
   /**
-   * THE ORDER THE BID GOES ROUND. Seat indices, shuffled.
+   * WHERE THE NAMES SIT ON THE PAD. Seat indices, shuffled.
    *
-   * Turn order used to be the order the seats came in, which is the order the
-   * names were typed — so seat one opened the bidding on every category all
-   * night and the last name entered never started one. The phone is what says
-   * whose call it is here, not where anyone is sitting, so there is nothing
-   * for that order to be faithful to.
+   * The pad used to be dealt in seat order, which is the order the names were
+   * typed — so the same player held the first slot on every category all
+   * night, and the last name entered was always in the far corner. Nothing
+   * about this mode is faithful to where anyone is sitting, so there was
+   * nothing for that order to be true to.
    *
    * Reshuffled per category rather than once per session, in `newRound`: a
-   * single shuffle only moves who is stuck opening, it doesn't stop them
-   * being stuck with it.
+   * single shuffle only moves who is stuck with the corner, it doesn't stop
+   * them being stuck with it.
    */
   const [order, setOrder] = useState<number[]>(() => seatOrder(players.length || DEFAULT_SEATS));
 
   /* The table can resize under a live order — the stepper on the way in, or a
-     name added to the roster from another mode between rounds. Rebuilding on
-     the length rather than reindexing keeps `nameAt` reading one list, and
-     the round's opener is already whoever the shuffle says. */
+     name added to the roster from another mode between rounds. */
   useEffect(() => {
     setOrder((prev) => (prev.length === table.length ? prev : seatOrder(table.length)));
   }, [table.length]);
 
   /**
-   * Seat `i`, wrapped, by name if it has one.
+   * The pad, in the order it is dealt. Blank-tolerant per seat rather than
+   * wholesale, so a table that entered some names and not others reads
+   * "Drew, Sam, Player 3" instead of falling all the way back to numbers.
    *
-   * Blank-tolerant per seat rather than wholesale, so a table that entered
-   * some names and not others reads "Drew, Sam, Player 3" instead of falling
-   * all the way back to numbers.
+   * Falls back to plain seat order for the single render between a table
+   * resizing and the effect above resyncing. Reindexing a stale order instead
+   * would deal the same seat twice, and two identical names on the pad is a
+   * worse frame than one un-shuffled one.
    */
-  const nameAt = useCallback(
-    (i: number) => {
-      /* Two wraps, and both are load-bearing. The first walks the shuffled
-         order, so raise after raise keeps going round. The second is the
-         guard for the render between a table resizing and the effect above
-         resyncing, where a seat from the old order can point past the new
-         table. */
-      const seat = (order[i % order.length] ?? i) % table.length;
-      return table[seat] || `Player ${seat + 1}`;
-    },
-    [order, table],
-  );
+  const pad = useMemo(() => {
+    const seating = order.length === table.length ? order : table.map((_, i) => i);
+    return seating.map((seat) => table[seat] || `Player ${seat + 1}`);
+  }, [order, table]);
 
   const timer = useCountdown(MIN_SECONDS, () => {
     buzz([90, 60, 180]);
@@ -194,26 +204,33 @@ export function NumberGame({ mode, onBack }: Props) {
     }
   }, [timer.running, timer.seconds]);
 
+  const dares = useMemo(() => daresAbove(bid), [bid]);
+
   /**
-   * Claim a number. The bid becomes it, the seat that claimed it becomes the
-   * one who can be made to prove it, and the call passes on.
+   * The line the header asks. Two rows: the number being dared, then the
+   * category it is a number OF. Without a category — an empty pool, which
+   * only a broken build produces — it is still a sentence, just a vaguer one.
+   */
+  const question = deck.current
+    ? `Who can name ${dare}\n${deck.current}?`
+    : `Who can name ${dare}?`;
+
+  /**
+   * Somebody takes the number on offer. It becomes the bid, they become the
+   * one who has to produce it, and the next dare opens one above.
    *
-   * One function for the +1 and the jumps because they are one move — the
-   * only thing that differs is how far it goes, and nothing downstream cares.
    * A jump gets the longer haptic the app gives its heavier taps: the phone
    * should not report a leap to 15 the same way it reports a nudge to 5.
    */
-  const raiseTo = useCallback(
-    (next: number) => {
-      setBid(next);
-      setHolder(turn);
-      setTurn((t) => t + 1);
-      buzz(next > bid + 1 ? [30, 40, 60] : 25);
+  const claim = useCallback(
+    (name: string) => {
+      setBid(dare);
+      setHolder(name);
+      setDare(dare + 1);
+      buzz(dare > bid + 1 ? [30, 40, 60] : 25);
     },
-    [bid, turn],
+    [bid, dare],
   );
-
-  const raise = useCallback(() => raiseTo(bid + 1), [bid, raiseTo]);
 
   const challenge = useCallback(() => {
     buzz([60, 50, 120]);
@@ -234,28 +251,12 @@ export function NumberGame({ mode, onBack }: Props) {
   const newRound = useCallback(() => {
     deck.draw();
     setBid(START_BID);
-    setTurn(0);
-    setHolder(0);
-    /* A new category, a new order. `turn` going back to 0 is what would
-       otherwise hand the same player every opening bid of the night. */
+    setDare(START_BID + 1);
+    setHolder(null);
     setOrder((prev) => seatOrder(prev.length, prev));
     timer.stop();
     setPhase("bidding");
   }, [deck, timer]);
-
-  const bidder = nameAt(holder);
-  const challenger = nameAt(turn);
-  /**
-   * Has anyone actually claimed anything yet?
-   *
-   * START_BID is a floor the round opens on, not a bid somebody made — until
-   * the first raise, `holder` is pointing at a player who has said nothing.
-   * The card was crediting them with the number anyway and the footer was
-   * offering to challenge them for it, so a round could open with "Prove it,
-   * Lily" before Lily had opened her mouth.
-   */
-  const opened = bid > START_BID;
-  const jumps = useMemo(() => jumpsAbove(bid), [bid]);
 
   return (
     /* The category is what everyone is bidding against and has to hold in
@@ -270,8 +271,31 @@ export function NumberGame({ mode, onBack }: Props) {
          live line has nothing to carry yet, and putting the category up
          there would hand the table something to argue about before it has
          told the app how many of them there are. */
-      subtitle={phase === "count" ? undefined : deck.current}
-      note={phase === "bidding" ? "Bidding" : phase === "challenge" ? "Prove it" : "Result"}
+      /* THE HEADER ASKS THE QUESTION, and it is the whole question — the
+         number and the category in one sentence, which is the first time
+         either has said what the other is for. They used to be two things in
+         two places: the category up here, the number on a card below it, and
+         a line of small print on the card doing the joining ("Name this many,
+         or push it higher"). "Who can name 11 / Taylor Swift songs?" needs no
+         line of small print.
+
+         The break is explicit rather than left to the wrap, the way Imposter
+         sets its category on a row of its own — the question is one thing and
+         the category is the other, and a table scanning it should not have to
+         find where one ends. See .gheader__now's `white-space: pre-line`. */
+      subtitle={phase === "bidding" ? question : phase === "count" ? undefined : deck.current}
+      /* Under the question, the state it is being asked against. */
+      note={
+        phase === "bidding"
+          ? holder
+            ? `${holder} has ${bid}`
+            : "No bid yet"
+          : phase === "challenge"
+            ? "Prove it"
+            : phase === "verdict"
+              ? "Result"
+              : undefined
+      }
       onBack={onBack}
     >
       {/* ---------- How many of you ---------- */}
@@ -295,8 +319,8 @@ export function NumberGame({ mode, onBack }: Props) {
                   What a player needs here is what the game is. The stepper
                   above it already says the rest. */}
               <p className="card__meta">
-                Bid how many you can name from a category. Raise, or call it
-                and make them prove it.
+                Bid how many you can name from a category. Take it high, or
+                call someone out and make them prove it.
               </p>
             </div>
           }
@@ -315,77 +339,99 @@ export function NumberGame({ mode, onBack }: Props) {
       )}
 
       {/* ---------- Bidding ---------- */}
+      {/* NO CARD ON THIS SCREEN, and it is the one screen in the mode that
+          was worse for having one.
+
+          A card is for the thing a table looks AT — a prompt, a clock, a
+          result. This screen is a thing a table DOES: it asks who is taking a
+          number, and the answer is a tap. Everything that mattered was
+          already in the header or in the controls, so the card in between was
+          a big white restatement of both, and it pushed the names down into a
+          strip of pills at the bottom of the screen — the smallest, furthest
+          thing on it, when it is the only thing anyone is here to press.
+
+          So the round runs down the screen in the order you read it: the
+          question, how big, who is taking it, and the way out. A plain
+          `.focal` and not a slot, because there is no card left to hold
+          still — the same answer Last Word's board and Kings Cup's felt
+          arrive at. */}
       {phase === "bidding" && (
-        <CardBody
-          card={
-            /* Two people are on this card and they are doing different
-               things: one owns the number, the other has to answer it. The
-               eyebrow said "Can name" and the line under the number was the
-               only name on the card — so the number read as belonging to the
-               player it was sitting on top of, who is in fact the one being
-               bid AT. Both roles are named now, above and below. */
-            <div className="card">
-              <span className="card__eyebrow">
-                {opened ? `${bidder} can name` : "Bidding opens at"}
-              </span>
-              <span className="num__bid-n">{bid}</span>
-              <span className="num__bid-who">
-                {opened ? `${challenger}'s call` : `${challenger} starts`}
-              </span>
-              {/* The line that finishes the sentence. The header carries the
-                  category and the card carries a number, and nothing joined
-                  them: "Belly can name / 4 / Lily's call" never says name
-                  four WHAT, or what either player is meant to do about it.
-                  Both buttons are below this, so it reads as their caption. */}
-              <p className="card__meta num__rule">
-                Name this many, or push it higher.
-              </p>
+        <div className="focal num">
+          {/* HOW BIG. Three numbers, the standing choice filled — the same
+              pick-one-from-a-set the rank rows and the vote pad already draw
+              this way. Above the names because it is the half of the sentence
+              you settle first: reach for 15, THEN say it was you. Tapping
+              another is how you take it back, so a mis-tap costs nothing and
+              the row needs no undo of its own. */}
+          <div className="chips num__dares">
+            {dares.map((n) => (
+              <button
+                key={n}
+                type="button"
+                className="chip"
+                data-on={n === dare || undefined}
+                aria-pressed={n === dare}
+                onPointerDown={() => audio.play("tap")}
+                onClick={() => setDare(n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+
+          {/* THE TABLE, DEALT AS CARDS — the category picker's, the same
+              stock and the same deal, because it is the same act: a page of
+              options a table scans together and one of them gets tapped. They
+              were vote-pad pills before, which is the control for a poll
+              nobody is looking at from across the table.
+
+              The holder is left off: raising your own bid is bidding against
+              yourself, and the only thing anyone else can do is exactly what
+              these are for. */}
+          {/* The names take the slack, so the space the question is not using
+              lands between the numbers and the names rather than above them
+              both. `.focal__center`'s pair of auto margins — the second of
+              exactly two in this column, which is why .actions gives its own
+              up when one is present. */}
+          <div className="picker__scroll focal__center" onScroll={fadeOnScroll}>
+            <div className="num__seats">
+              {pad
+                .filter((name) => name !== holder)
+                .map((name, i) => (
+                  <button
+                    key={name}
+                    className="picker__card num__seat"
+                    /* Stops counting at 8, like the picker's own — past that
+                       the delay is spent on cards below the fold. */
+                    style={{ ["--i" as string]: Math.min(i, 8) }}
+                    onPointerDown={() => audio.play("tap")}
+                    onClick={() => claim(name)}
+                  >
+                    {name}
+                  </button>
+                ))}
             </div>
-          }
-        >
-          {/* Only while the category is untouched. Once someone has raised,
-              the category is in play and skipping it would be a way out of a
-              bid you cannot meet rather than a way past a bad prompt. */}
-          {bid === START_BID && (
-            <button className="gfoot__skip" onClick={newRound}>
-              New category
-            </button>
-          )}
+          </div>
+
           <div className="actions">
-            {/* THE JUMPS, grounded with the buttons rather than floating up by
-                the card. They are a way of bidding, not a note about the
-                round, so they belong in the stack the thumb is already in —
-                one tap away from the +1 they are an alternative to, and
-                reading as the same decision made bigger. */}
-            <div className="chips num__jumps">
-              {jumps.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className="chip"
-                  onPointerDown={() => audio.play("tap")}
-                  onClick={() => raiseTo(n)}
-                >
-                  I can name {n}
-                </button>
-              ))}
-            </div>
-            <button
-              className="btn btn--lg btn--block"
-              /* On the press, like every other confirmed tap in the app. */
-              onPointerDown={() => audio.play("tap")}
-              onClick={raise}
-            >
-              I can name {bid + 1}
-            </button>
-            {/* Nothing to call until somebody has claimed something. */}
-            {opened && (
-              <button className="btn btn--ghost btn--block" onClick={challenge}>
-                Prove it, {bidder}
+            {holder ? (
+              /* The one --lg on the screen, and only once there is something
+                 to call. Before that the names ARE the action and nothing
+                 here should outrank them. */
+              <button className="btn btn--lg btn--block" onClick={challenge}>
+                Prove it, {holder}
+              </button>
+            ) : (
+              /* Only while the category is untouched. Once someone has taken
+                 a number the category is in play, and skipping it would be a
+                 way out of a bid you cannot meet rather than a way past a bad
+                 prompt. */
+              <button className="gfoot__skip" onClick={newRound}>
+                New category
               </button>
             )}
           </div>
-        </CardBody>
+        </div>
       )}
 
       {/* ---------- The challenge ---------- */}
@@ -394,14 +440,17 @@ export function NumberGame({ mode, onBack }: Props) {
           card={
             <div className="card">
               <span className="card__eyebrow">
-                {bidder} names {bid}
+                {holder} names {bid}
               </span>
               <span className="num__bid-n" data-low={timer.seconds <= 5 || undefined}>
                 {timer.seconds}
               </span>
-              <span className="num__bid-who">
-                {timer.expired ? "Time" : `${challenger} called it`}
-              </span>
+              {/* Who called it is not the app's to know any more — anyone at
+                  the table could have, and it was said out loud a second ago.
+                  Asking the phone which of them it was, to print a name here
+                  nobody has forgotten, is the queueing this mode just got rid
+                  of. */}
+              <span className="num__bid-who">{timer.expired ? "Time" : "Called out"}</span>
             </div>
           }
         >
@@ -423,10 +472,10 @@ export function NumberGame({ mode, onBack }: Props) {
                   question names the bidder, so the sentence under it can lean
                   on it. */}
               <span className="card__eyebrow">
-                Did {bidder} get {bid}?
+                Did {holder} get {bid}?
               </span>
               <p className="card__prompt card__prompt--sm">
-                If they did, {challenger} drinks. If not, {bidder} does.
+                If they did, whoever called it drinks. If not, {holder} does.
               </p>
               <p className="card__meta">The table decides what counts.</p>
             </div>

@@ -4,9 +4,10 @@ interface GameHeaderProps {
   title: string;
   /**
    * THE LIVE LINE — the one piece of game state a player has to hold on to:
-   * the category in Last Word and the Number Game, whose turn it is in Ride
-   * the Bus, Kings Cup and Rank It, which reveal you are on in Imposter,
-   * which attempt in Say the Same Thing, which tier in Last Call.
+   * the category in Last Word, the number and the category being bid on in
+   * Overbid, whose turn it is in Ride the Bus, Kings Cup and Rank It, which
+   * reveal you are on in Imposter, which attempt in Say the Same Thing,
+   * which tier in Last Call.
    *
    * Optional, and most screens do without it. There used to be a second,
    * quieter kind of subtitle for a state LABEL — "New round", "Time", "Set up
@@ -18,9 +19,10 @@ interface GameHeaderProps {
    */
   subtitle?: string;
   /**
-   * A short standing rule that goes with the live line — the Number Game's
-   * phase. It qualifies what you are playing, so it hangs off that line
-   * rather than floating somewhere else on the screen.
+   * A short standing rule that goes with the live line — the bid Overbid is
+   * asking against, the phase its challenge and result are in. It qualifies
+   * what you are playing, so it hangs off that line rather than floating
+   * somewhere else on the screen.
    */
   note?: string;
   /**

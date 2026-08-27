@@ -2799,9 +2799,24 @@
 /* Sits on the flooded pack color, so chips invert like every other control. */
 /* Column count comes from balancedColumns() so rows divide evenly — a lone
    name on its own row reads as a layout bug. */
+/* minmax(0, 1fr) AND NOT 1fr, which is the whole reason a long name used to
+   walk off the side of the screen.
+
+   `1fr` is minmax(auto, 1fr), and that auto floor is the item's min-content —
+   so one "Marguerite" in the roster sized its own column to the word and the
+   row came out wider than the grid it was laid in, with the last name in it
+   hanging past the right edge. Overbid's pad is where it finally showed,
+   because that mode deals every seat at once, but the fault was never that
+   mode's: Kings Cup and Hot Seat draw the same grid and had the same
+   overflow waiting for the same name.
+
+   Zero is the floor now, so the columns stay even and the name inside is what
+   gives — .votepad__name has carried the ellipsis for it all along and was
+   never allowed to use it. Same fix, and the same reasoning, as the frame's
+   own minmax(0, 1fr) column in global.css. */
 .votepad__grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
   gap: var(--sp-2);
 }
 
@@ -2835,7 +2850,10 @@
   border-color: var(--category-ink);
 }
 
-.votepad__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `min-width: 0` is what lets the three properties beside it do anything: a
+   flex item's floor is its content, so without this the span sizes to the
+   whole name and the ellipsis never engages. */
+.votepad__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------------- Kings Cup ---------------- */
 .focal.kc { gap: var(--sp-3); }
@@ -4342,32 +4360,18 @@
 
 /* ---------------- The Number Game ---------------- */
 
-/* The bid is the whole card — it's the number everyone is arguing about, and
-   during a challenge the same slot becomes the clock, so the eye never has to
-   move to find what matters. It sits on the same white square every other
-   mode deals onto: near-black on white instead of ink on the pack colour,
-   which on the paler packs was the weakest contrast in the app. */
+/* The clock is the whole card. Bidding has no card at all now — the question
+   is the header's and the controls are the screen's — so what is left here is
+   the challenge and the result, where a table IS looking at one thing and
+   counting it down. It sits on the same white square every other mode deals
+   onto: near-black on white instead of ink on the pack colour, which on the
+   paler packs was the weakest contrast in the app. */
 .num__bid-who {
   font-size: var(--fs-sm);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--card-ink-muted);
   text-align: center;
-}
-
-/* The rule, under the two names and the number they are arguing about.
-   Sentence case on purpose: everything else on this card is a name or a
-   figure, set in caps, and one line of ordinary writing is what makes it read
-   as an instruction rather than another piece of state.
-
-   `margin-top: auto` was the first attempt and it was wrong. It pinned this to
-   the foot of a card whose height is set by the biggest thing it ever holds,
-   so the line sat alone with a hand's width of nothing above it. The bid is
-   one group of three lines; this belongs with them, not exiled from them. */
-.num__rule {
-  margin-top: var(--sp-3);
-  text-align: center;
-  text-wrap: balance;
 }
 
 .num__bid-n {
@@ -4384,21 +4388,70 @@
    against a particular pack. */
 .num__bid-n[data-low] { animation: pulse 600ms var(--ease-in-out) infinite; }
 
-/* THE JUMPS — Hot Seat's chip row exactly, standing in the action stack.
+/* The bidding screen is a column with no card in it: the numbers, the table,
+   and the way out, in the order the round happens. The tighter gap is because
+   the first two are one control between them — pick how big, then pick who —
+   and .focal's own --sp-4 read as two separate things. */
+.focal.num { gap: var(--sp-3); }
 
-   No style of its own beyond the two things that come of sitting there rather
-   than in a form: `flex: none` because .actions is a column and a wrapping row
-   would otherwise be handed the slack the buttons below it are grounded
-   against, and nowrap so a label can never break inside a pill — the same
-   guard .actions--row puts on its own, for the same reason.
+/* HOW BIG — Hot Seat's chip row exactly, standing above the table, AND IT
+   STARTS WHERE A CARD STARTS.
+
+   The header on this screen reserves --gheader-live-h, which is the row a
+   card screen works its own header out to be. So the first thing after it
+   lands on the line a card's top edge lands on in every other mode, and the
+   round opens where a player's eye already goes. That is what `flex: none`
+   and no auto margin buy — this row holds the card's line, and the slack the
+   question is not using goes to the names below instead of pushing these
+   down off it.
+
+   `nowrap` so a number can never break inside a pill — the same guard
+   .actions--row puts on its own, for the same reason.
 
    Reusing .chip and not a pill of its own is the point. It is the same act
-   this app already had a control for: a shortcut to a value the primary
-   underneath can also reach the long way round. Two recipes for that would be
-   one too many. */
-.num__jumps {
+   this app already had a control for. Two recipes for that would be one too
+   many, and the fill below is the third place that act is drawn. */
+.num__dares {
   flex: none;
   white-space: nowrap;
+}
+
+/* Only as tall as the names it holds, so the auto margins have something to
+   give. `flex: 1` — .picker__scroll's own, written for a picker that fills a
+   page — would eat the slack and leave nothing to centre in. It still shrinks
+   and scrolls once there are more names than room. */
+.focal.num > .picker__scroll { flex: 0 1 auto; }
+
+/* THE TABLE. The category picker's grid, at the picker's own two columns —
+   these are the same cards, so they are laid out the same way and a name is
+   never a lone card on a row of its own. */
+.num__seats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+/* Centred, where a category is set left. A category is a phrase that may run
+   to two lines and reads as text; a name is one word and reads as a target,
+   and left-aligning it puts the word off to one side of a card the size of a
+   thumb. The only thing this changes about the card. */
+.num__seat {
+  justify-content: center;
+  text-align: center;
+}
+
+/* The band's quiet tertiary control, on a screen that has no band. Its margin
+   is measured to clear a card's shadow — see .gfoot__skip — and there is no
+   card above it here, so the column's own gap is the spacing. */
+.focal.num .gfoot__skip { margin-top: 0; }
+
+/* THE CHOSEN ONE FILLS — .votepad__player and .rank__pos to the letter, on
+   the one control that had the state and not the paint for it. Readable from
+   across a table, which is where half of them are sitting. */
+.chip[data-on] {
+  background: var(--category-ink);
+  color: var(--category);
+  border-color: var(--category-ink);
 }
 
 /* ---------------------------------------------------------------

@@ -156,13 +156,19 @@ into `tokens.css` beside the pack that freed it.
   the word between their two answers until they match. Prompts are worded as
   territory, never as a single instance: "Sports", not "A sport". The singular
   form asks for one item and leaves nowhere to converge.
-- **Overbid** — bidding escalates until someone calls it, then the bidder gets
-  a clock and has to produce what they claimed. Without a roster it asks how
-  many are playing, so the bid has a table to go round; with names it uses
-  those instead. Turn order is shuffled, and reshuffled on every category —
-  seat order is the order names were typed, which would otherwise hand the
-  same player every opening bid of the night. Two categories running never
-  open on the same player.
+- **Overbid** — the screen asks who can name N of something, and bidding
+  escalates until someone calls it; then the bidder gets a clock and has to
+  produce what they claimed. **A bid is taken, not dealt out.** There is no
+  turn order: you pick how big from a row of the next milestones — fives, so
+  the number is one the table hears as big — and then tap your own name to
+  claim it, which means the people with nothing to say are never in the way.
+  The holder is left off the pad, because raising your own bid is bidding
+  against yourself. Who called it is never recorded: the table heard it, and
+  asking the phone would be the queueing this mode exists without. Without a
+  roster it asks how many are playing, so the pad has seats to deal; with
+  names it uses those instead, shuffled and reshuffled on every category so
+  no one owns a corner of the screen all night. The bidding screen is one of
+  the app's few with no card — see the note on `.focal.num`.
 - **Hot Seat** — four questions per seat, split evenly between the seat
   answering and the table voting.
 - **Ballpark** — a hidden point on a spectrum between two opposing ideas. The

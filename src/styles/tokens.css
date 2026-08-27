@@ -275,7 +275,8 @@
                   line and left it a plain row plus a button (136).
 
      Screens with no card — Last Word's letter grid, Kings Cup's
-     play screen, Rank It's lists — are allowed to exceed both.
+     play screen, Rank It's lists, Overbid's bidding pad — are
+     allowed to exceed both.
      They have nothing to hold still, and the rows are minmax()
      rather than fixed so they simply grow.
      ---------------------------------------------------------- */
