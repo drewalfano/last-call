@@ -4422,6 +4422,24 @@
    and scrolls once there are more names than room. */
 .focal.num > .picker__scroll { flex: 0 1 auto; }
 
+/* AND THE TWO GAPS ROUND THE NAMES ARE THE SAME GAP.
+
+   The pair of auto margins above splits the slack evenly, so the space over
+   the names and the space under them start out identical — and then
+   `.focal:has(.focal__center) .actions` added 8px below, which is the band
+   this screen does not have wanting a little air over its button. Measured
+   168 above and 176 below on a 390pt screen, which is exactly that rule and
+   nothing else.
+
+   Zero, not auto: the column is allowed exactly two auto margins and the
+   scroller has both of them. A third here would take a share of the slack
+   and push the names back off centre — the thing this is fixing.
+
+   Written against the same `:has` the rule it overrides uses, because a plain
+   `.focal.num > .actions` ties it on specificity and loses on source order —
+   global.css is loaded after this file. */
+.focal.num:has(.focal__center) > .actions { margin-top: 0; }
+
 /* THE TABLE. The category picker's grid, at the picker's own two columns —
    these are the same cards, so they are laid out the same way and a name is
    never a lone card on a row of its own. */
