@@ -4388,6 +4388,37 @@
    against a particular pack. */
 .num__bid-n[data-low] { animation: pulse 600ms var(--ease-in-out) infinite; }
 
+/* THE HEADER HUGS ITS QUESTION, so the gap under it is the same gap every
+   round.
+
+   Every other screen wants the opposite and gets it: --gheader-live-h
+   reserves a fixed 227px and .gheader__live centres itself in what the bar
+   leaves over, which pins the live line to one position whatever it says. On
+   a screen where the line is a category to hold in your head, that is exactly
+   right — it lands in the same place in every mode.
+
+   Here it is not a label, it is the question, and the row of numbers under it
+   is the answer. Centred in a fixed box, the distance between the two is
+   whatever the box has left: 48px under a two-line category, 32 under a
+   three-line one. So the one join on the screen that has to read as a join
+   was the only measurement on it that changed every time the category did.
+
+   Hugging makes the gap the constant and the POSITION the variable — the
+   question grows downward and the numbers, the names and the slack all move
+   with it, which is the trade this screen wants and Rank It's list refuses.
+   The two spacings are the same 40 the column below uses, so the line is not
+   jammed under the mode name — the failure an auto header is warned about in
+   tokens.css. It costs the live line about 8px of the position the reserve
+   would give it, and buys a join that does not move.
+
+   Same call Last Word makes on its board, for a different reason: there the
+   reserve came out of the letter grid, here out of the sentence. */
+.screen:has(.focal.num) .gheader {
+  min-height: 0;
+  gap: var(--sp-10);
+  padding-bottom: var(--sp-10);
+}
+
 /* THE QUESTION, THE NUMBERS AND THE NAMES ARE ONE BLOCK.
 
    The bidding screen is a column with no card in it: the numbers, the table,
@@ -4396,17 +4427,12 @@
    was you — so they sit together at the top of the screen and the slack falls
    under them, above the grounded way out.
 
-   40px is the gap, and it is measured rather than picked off the scale by
-   feel: the header reserves a fixed 227px and centres its live line in what
-   the bar leaves of that, which lands 32px of air under a three-line question
-   and 48 under a two-line one. Nothing down here can reach that air — it is
-   inside the header's own box — so the gap this column CAN set is the one
-   under the numbers, and 40 is the value that reads as the same gap whichever
-   way the category wraps.
+   40px is the gap, and it is the same 40 the rule above puts under the
+   question, so the three land on one rhythm: question, numbers, names.
 
    The distributed version of this was tried and was worse. Handing the slack
-   out evenly — a third auto margin here, the pad's two above — did produce
-   three gaps of exactly 112px, and 112px between a question and the row that
+   out evenly — an auto margin here, the pad's two above — did produce three
+   gaps of exactly 112px, and 112px between a question and the row that
    answers it is not spacing, it is a page break. */
 .focal.num { gap: var(--sp-10); }
 
