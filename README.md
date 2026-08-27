@@ -159,7 +159,10 @@ into `tokens.css` beside the pack that freed it.
 - **Overbid** — bidding escalates until someone calls it, then the bidder gets
   a clock and has to produce what they claimed. Without a roster it asks how
   many are playing, so the bid has a table to go round; with names it uses
-  those instead.
+  those instead. Turn order is shuffled, and reshuffled on every category —
+  seat order is the order names were typed, which would otherwise hand the
+  same player every opening bid of the night. Two categories running never
+  open on the same player.
 - **Hot Seat** — four questions per seat, split evenly between the seat
   answering and the table voting.
 - **Ballpark** — a hidden point on a spectrum between two opposing ideas. The

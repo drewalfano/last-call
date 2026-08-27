@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Stepper } from "../components/Stepper";
-import { useDeck } from "../lib/deck";
+import { shuffle, useDeck } from "../lib/deck";
 import { useCountdown, buzz } from "../lib/useCountdown";
 import { audio } from "../lib/audio";
 import { usePool } from "../data/pools";
@@ -20,6 +20,8 @@ import type { ModeDef } from "../data/modes";
  * turn it is, and the clock — everything a table loses track of once it's
  * arguing — and nothing else. Answers are never typed; the table judges whether
  * "uhh… Shake It Off?" counts.
+ *
+ * Who bids when is shuffled, and reshuffled every category — see `order`.
  */
 
 type Phase = "count" | "bidding" | "challenge" | "verdict";
@@ -42,6 +44,23 @@ const MIN_SECONDS = 25;
 const MIN_SEATS = 2;
 const MAX_SEATS = 8;
 const DEFAULT_SEATS = 4;
+
+/**
+ * Seat indices, shuffled — the order the bid goes round.
+ *
+ * `after` is the order being replaced, and all that is taken from it is who
+ * opened: a fresh shuffle is free to hand the same player the opening bid
+ * twice running, and two in a row is the one repeat a table reads as the
+ * shuffle not having happened. Same guard `useDeck` puts on its reshuffle
+ * seam, for the same reason, and the swap keeps the pass uniform elsewhere.
+ */
+function seatOrder(count: number, after?: readonly number[]): number[] {
+  const next = shuffle(Array.from({ length: count }, (_, i) => i));
+  if (next.length > 1 && after?.length && next[0] === after[0]) {
+    [next[0], next[next.length - 1]] = [next[next.length - 1], next[0]];
+  }
+  return next;
+}
 
 interface Props {
   mode: ModeDef;
@@ -82,6 +101,29 @@ export function NumberGame({ mode, onBack }: Props) {
   );
 
   /**
+   * THE ORDER THE BID GOES ROUND. Seat indices, shuffled.
+   *
+   * Turn order used to be the order the seats came in, which is the order the
+   * names were typed — so seat one opened the bidding on every category all
+   * night and the last name entered never started one. The phone is what says
+   * whose call it is here, not where anyone is sitting, so there is nothing
+   * for that order to be faithful to.
+   *
+   * Reshuffled per category rather than once per session, in `newRound`: a
+   * single shuffle only moves who is stuck opening, it doesn't stop them
+   * being stuck with it.
+   */
+  const [order, setOrder] = useState<number[]>(() => seatOrder(players.length || DEFAULT_SEATS));
+
+  /* The table can resize under a live order — the stepper on the way in, or a
+     name added to the roster from another mode between rounds. Rebuilding on
+     the length rather than reindexing keeps `nameAt` reading one list, and
+     the round's opener is already whoever the shuffle says. */
+  useEffect(() => {
+    setOrder((prev) => (prev.length === table.length ? prev : seatOrder(table.length)));
+  }, [table.length]);
+
+  /**
    * Seat `i`, wrapped, by name if it has one.
    *
    * Blank-tolerant per seat rather than wholesale, so a table that entered
@@ -90,10 +132,15 @@ export function NumberGame({ mode, onBack }: Props) {
    */
   const nameAt = useCallback(
     (i: number) => {
-      const seat = i % table.length;
+      /* Two wraps, and both are load-bearing. The first walks the shuffled
+         order, so raise after raise keeps going round. The second is the
+         guard for the render between a table resizing and the effect above
+         resyncing, where a seat from the old order can point past the new
+         table. */
+      const seat = (order[i % order.length] ?? i) % table.length;
       return table[seat] || `Player ${seat + 1}`;
     },
-    [table],
+    [order, table],
   );
 
   const timer = useCountdown(MIN_SECONDS, () => {
@@ -143,6 +190,9 @@ export function NumberGame({ mode, onBack }: Props) {
     setBid(START_BID);
     setTurn(0);
     setHolder(0);
+    /* A new category, a new order. `turn` going back to 0 is what would
+       otherwise hand the same player every opening bid of the night. */
+    setOrder((prev) => seatOrder(prev.length, prev));
     timer.stop();
     setPhase("bidding");
   }, [deck, timer]);
