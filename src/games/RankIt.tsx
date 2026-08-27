@@ -224,7 +224,11 @@ export function RankIt({ mode, onBack }: Props) {
            to learn a second way to order a list. */}
       {(phase === "ranking" || phase === "guessing") && (
         <CardBody
-          className="rank"
+          /* `rank--ordering` and not just `rank`: the reveal below is also a
+             `rank` screen and must keep the card slot exactly as it is, because
+             its rows slide in from outside it. Only the two screens you TAP
+             take the extra height. See the grid override in games.css. */
+          className="rank rank--ordering"
           card={
             /* KEYED ON THE PHASE, so the list deals again when the phone
                changes hands.

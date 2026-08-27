@@ -51,19 +51,16 @@ WHAT IS IN HERE
      file: src/data/numberGame.ts
 ==========================================================================
 
-- - -  MILD  (40)  - - -
+- - -  MILD  (38)  - - -
 
   Taylor Swift songs
   Countries in Europe
-  Pixar films
+  Disney/Pixar films
   Cocktails
-  Premier League teams
   US states
   Breakfast cereals
-  Harry Potter characters
   Car brands
   Types of pasta
-  Simpsons characters
   Capital cities
   Beatles songs
   Chocolate bars
@@ -93,6 +90,7 @@ WHAT IS IN HERE
   Airlines
   Shoe brands
   Cities in Italy
+  Cities in Canada
 
 - - -  SPICY  (24)  - - -
 
@@ -138,7 +136,7 @@ WHAT IS IN HERE
   Reasons the police get called
   Things you'd deny under oath
 
-     TOTAL ACROSS ALL TIERS: 78
+     TOTAL ACROSS ALL TIERS: 76
 
 ==========================================================================
  2.  LETTER RIP  —  Category, letter, pass. Don't freeze.
@@ -325,233 +323,257 @@ WHAT IS IN HERE
      word would tell them the secret. The hint is shown to the Imposter alone,
      and only if the table turned hints on.
 
-- - -  MILD  (14 categories, 140 words)  - - -
+- - -  MILD  (14 categories, 164 words)  - - -
 
-  [Foods]  10 words
-      Carrot                    Healthy
-      Pizza                     Shared
-      Sushi                     Cold
-      Kebab                     Late
+  [Foods]  11 words
+      Carrot                    Crunchy
+      Pizza                     Sliced
+      Sushi                     Raw
+      Kebab                     Wrapped
       Pancakes                  Stacked
-      Avocado                   Overpriced
-      Hot sauce                 Burns
-      Cereal                    Morning
+      Avocado                   Green
+      Hot sauce                 Spicy
+      Cereal                    Breakfast
       Garlic bread              A side
-      Oysters                   Acquired
+      Oysters                   Salty
+      Caesar salad              A bowl
 
-  [Celebrities]  10 words
-      Beyoncé                   Stadiums
-      Taylor Swift              Crowds
-      Dwayne Johnson            Huge
-      Rihanna                   Business
-      Gordon Ramsay             Shouting
-      Snoop Dogg                Relaxed
-      Adele                     Heartbreak
-      Keanu Reeves              Beloved
-      Zendaya                   Young
-      David Attenborough        The voice
+  [Celebrities]  12 words
+      Beyoncé                   Singer
+      Taylor Swift              Tours
+      Dwayne Johnson            Blockbusters
+      Rihanna                   Fashion
+      Gordon Ramsay             TV
+      Snoop Dogg                Music
+      Adele                     Ballads
+      Keanu Reeves              Films
+      Zendaya                   Red carpet
+      David Attenborough        British
+      Katy Perry                Pop
+      Princess Diana            Nineties
 
   [Night out]  10 words
-      Cover fee                 Upfront
-      Bouncer                   No
+      Cover fee                 Paid
+      Bouncer                   The door
       Last call                 The end
-      Dance floor               Sticky
+      Dance floor               Crowded
       Smoking area              Outside
-      Coat check                Left behind
+      Coat check                A ticket
       Bar tab                   Adds up
       Taxi queue                Waiting
       Dive bar                  Cheap
-      Rooftop bar               A view
+      Rooftop bar               Expensive
 
-  [Drinks]  10 words
-      Tequila                   Trouble
-      Espresso martini          Awake
-      Guinness                  Slow
-      Shots                     At once
-      Hangover                  Morning
-      Happy hour                Half price
+  [Drinks]  13 words
+      Tequila                   A spirit
+      Espresso martini          A cocktail
+      Guinness                  A pint
+      Shots                     Quick
+      Hangover                  The morning
+      Happy hour                Cheaper
       Open bar                  Free
       Beer pong                 A game
-      Bottomless brunch         Daytime
+      Bottomless brunch         Refills
       Ice bucket                Cold
+      Vodka                     Clear
+      Mimosa                    Juice
+      Caesar                    Savoury
 
-  [Places]  10 words
-      Airport                   Early
-      Casino                    You lose
-      Gym                       January
-      Hospital                  Dreaded
+  [Places]  11 words
+      Airport                   Queues
+      Casino                    Machines
+      Gym                       Early
+      Hospital                  Waiting
       Petrol station            A stop
       Library                   Quiet
       Beach                     Warm
-      IKEA                      A maze
-      Laundromat                Killing time
-      Waiting room              Your turn
+      IKEA                      Trolleys
+      Laundromat                Coins
+      Waiting room              Sitting
+      Grocery store             Aisles
 
   [Screen]  10 words
-      Titanic                   Doomed
-      The Office                Cringe
-      Love Island               Couples
-      Jaws                      Stay out
-      Breaking Bad              He changes
-      Star Wars                 Universal
-      Netflix                   Nothing on
-      Horror film               Peeking
-      Reality TV                Scripted
-      Cliffhanger               Unfinished
+      Titanic                   Romance
+      The Office                Episodes
+      Love Island               Contestants
+      Jaws                      A monster
+      Breaking Bad              A series
+      Star Wars                 Sequels
+      Netflix                   At home
+      Horror film               Scary
+      Reality TV                Voting
+      Cliffhanger               The ending
 
   [Jobs]  10 words
-      Dentist                   Dreaded
-      Lifeguard                 Watching
-      Pilot                     Uniform
-      Teacher                   Underpaid
-      Influencer                Hardly work
+      Dentist                   A chair
+      Lifeguard                 Water
+      Pilot                     Travel
+      Teacher                   Holidays
+      Influencer                Online
       Plumber                   Emergency
-      Chef                      Hot
-      Barber                    Monthly
-      Wedding planner           One day
-      Taxi driver               Opinions
+      Chef                      Long hours
+      Barber                    Appointments
+      Wedding planner           Booked
+      Taxi driver               Late nights
 
-  [Countries]  10 words
-      Japan                     Orderly
-      Brazil                    Loud
-      Ireland                   Rain
+  [Countries]  14 words
+      Japan                     Islands
+      Brazil                    Hot
+      Ireland                   Small
       Egypt                     Ancient
-      Australia                 It bites
-      Italy                     Eat well
+      Australia                 Far
+      Italy                     Food
       Iceland                   Cold
       Mexico                    Spicy
-      Thailand                  Backpackers
-      Canada                    Polite
+      Thailand                  Beaches
+      Canada                    Huge
+      America                   Loud
+      France                    Wine
+      India                     Crowded
+      China                     Tea
 
-  [Cities]  10 words
+  [Cities]  14 words
       Paris                     Romantic
       Tokyo                     Enormous
-      Vegas                     Excess
-      Dublin                    Pints
-      New York                  Never stops
-      Amsterdam                 Bikes
-      Berlin                    All weekend
-      Sydney                    Far
+      Vegas                     Neon
+      Dublin                    Rain
+      New York                  Skyscrapers
+      Amsterdam                 Water
+      Berlin                    Clubs
+      Sydney                    Beaches
       Rome                      Ruins
-      Ibiza                     One season
+      Ibiza                     Summer
+      Toronto                   Winters
+      Vancouver                 Mountains
+      Detroit                   Cars
+      LA                        Sunshine
 
-  [Animals]  10 words
-      Penguin                   Dressed up
-      Shark                     Keeps moving
+  [Animals]  14 words
+      Penguin                   Cold
+      Shark                     Teeth
       Sloth                     Slow
-      Raccoon                   Your bins
-      Horse                     Expensive
-      Octopus                   Clever
-      Goose                     Aggressive
-      Hamster                   Short-lived
-      Crocodile                 It waits
-      Pigeon                    Ignored
+      Raccoon                   Bins
+      Horse                     Big
+      Octopus                   Many legs
+      Goose                     Wings
+      Hamster                   Small
+      Crocodile                 Water
+      Pigeon                    In cities
+      Pig                       A farm
+      Cow                       Grazing
+      Giraffe                   Tall
+      Spider                    Feared
 
-  [Sports]  10 words
+  [Sports]  13 words
       Golf                      Slow
       Boxing                    One-on-one
-      Swimming                  Wet
+      Swimming                  Water
       Darts                     The pub
-      Marathon                  Training
-      Skiing                    Cold
-      Tennis                    Grunting
-      Rugby                     Bruises
+      Marathon                  Running
+      Skiing                    Snow
+      Tennis                    A net
+      Rugby                     Rough
       Bowling                   Rented shoes
-      Formula 1                 Loud
+      Formula 1                 Fast
+      Baseball                  A bat
+      Basketball                Indoors
+      Hockey                    Ice
 
   [Around the house]  10 words
-      Kettle                    First thing
-      Sofa                      Sinking
-      Shower                    Thinking
-      Fridge                    Keep looking
-      Doorbell                  Someone's here
-      Laundry                   Never done
-      Houseplant                Neglected
-      Smoke alarm               3am
-      Radiator                  Winter
-      Junk drawer               Everything
+      Kettle                    Hot
+      Sofa                      Sitting
+      Shower                    Water
+      Fridge                    Cold
+      Doorbell                  A sound
+      Laundry                   Washing
+      Houseplant                Green
+      Smoke alarm               Beeping
+      Radiator                  Warm
+      Junk drawer               Full
 
-  [Colours]  10 words
-      Red                       Stop
-      Navy                      Safe
-      Beige                     Boring
-      Neon green                Unmissable
-      Gold                      First
-      Lilac                     Gentle
-      Black                     Always works
-      Turquoise                 Holiday
-      Burgundy                  Deep
-      Silver                    Second
+  [Colours]  12 words
+      Red                       Bold
+      Navy                      Dark
+      Beige                     Plain
+      Neon pink                 Bright
+      Gold                      Metallic
+      Lilac                     Pale
+      Black                     Formal
+      Turquoise                 The sea
+      Burgundy                  Wine
+      Silver                    Shiny
+      Green                     Nature
+      White                     Clean
 
   [Things]  10 words
       Phone charger             Borrowed
-      Group chat                Muted
+      Group chat                Notifications
       Fake ID                   Risky
       Tattoo                    Permanent
-      Passport                  Precious
+      Passport                  Travel
       AirPods                   Easily lost
-      Wallet                    Pocket
-      Sunglasses                Indoors
-      Uber                      Minutes away
-      Umbrella                  Forgotten
+      Wallet                    Cards
+      Sunglasses                Outside
+      Uber                      An app
+      Umbrella                  Rain
 
 - - -  SPICY  (6 categories, 60 words)  - - -
 
   [Dating]  10 words
-      Situationship             Undefined
+      Situationship             No label
       Talking stage             Early
-      Soft launch               Barely shown
+      Soft launch               Online
       First date                Nerves
-      Dating app                Endless
+      Dating app                Strangers
       Exclusive                 Agreed
-      Third date                Expectations
-      Plus one                  Invited along
-      Blind date                No idea
+      Third date                Counting
+      Plus one                  An invite
+      Blind date                Set up
       The talk                  Overdue
 
   [Exes]  10 words
-      Ex's apartment            Familiar
+      Ex's apartment            A place
       Rebound                   Too soon
       Ghosting                  No reply
-      Blocked number            Deliberate
+      Blocked number            Your phone
       Drunk text                3am
-      Old photos                Still there
-      Closure                   Never quite
+      Old photos                Kept
+      Closure                   An ending
       Box of their stuff        Returned
-      Someone else's hoodie     Not yours
-      Unfollowed                Noticed
+      Someone else's hoodie     Borrowed
+      Unfollowed                Online
 
   [Texting]  10 words
-      Left on read              Seen
-      Double text               Couldn't wait
-      Slid into the DMs         Bold
-      Screenshot                Evidence
-      Shared location           Trust
-      Read receipts             Optional
-      Typing dots               Then nothing
-      Notifications off         Peace
+      Left on read              No reply
+      Double text               Twice
+      Slid into the DMs         First move
+      Screenshot                Saved
+      Shared location           A map
+      Read receipts             A setting
+      Typing dots               Waiting
+      Notifications off         Silence
       Breadcrumbing             Just enough
       Drafts folder             Unsent
 
   [Nightlife]  10 words
-      Afterparty                Elsewhere
+      Afterparty                Somewhere else
       Lock-in                   Doors shut
-      Closing time              Lights on
+      Closing time              The end
       VIP booth                 Roped off
       Bottle service            Expensive
       Last one standing         Alone
-      Night bus                 Grim
+      Night bus                 Getting home
       Queue jump                Cutting in
       Bad decision              Seemed fine
       Sunday morning taxi       Daylight
 
   [Red flags]  10 words
-      Red flag                  You knew
-      Hall pass                 Permitted
+      Red flag                  A warning
+      Hall pass                 Allowed
       Open relationship         Both know
       Long distance             Flights
-      Mutual friend             Awkward
-      Someone's coworker        Monday
+      Mutual friend             In common
+      Someone's coworker        At work
       Toothbrush at their place A step
       Meeting the parents       Serious
       Emergency contact         On forms
@@ -572,10 +594,10 @@ WHAT IS IN HERE
 - - -  FILTHY  (4 categories, 40 words)  - - -
 
   [Trouble]  10 words
-      Police                    They arrive
+      Police                    A uniform
       Bouncer                   Turned away
-      Fine                      It costs
-      Curfew                    By then
+      Fine                      Money
+      Curfew                    A time
       Lawyer                    Expensive
       Bail                      Paid out
       Warning                   Just once
@@ -584,22 +606,22 @@ WHAT IS IN HERE
       Witness                   Someone saw
 
   [The morning after]  10 words
-      Hangover                  Self-inflicted
+      Hangover                  Your head
       Receipt                   The total
-      Voicemail                 Rambling
-      Stranger                  Who?
+      Voicemail                 A message
+      Stranger                  Someone new
       Taxi                      Got home
       Sunglasses                Indoors
-      Water                     Too late
+      Water                     Thirsty
       Regret                    The feeling
-      Bruise                    No idea
-      Silence                   Unspoken
+      Bruise                    A mark
+      Silence                   Nobody talks
 
   [Things you'd hide]  10 words
       Diary                     Written down
       Receipt                   Proof
       Bruise                    Covered up
-      Message                   Delete it
+      Message                   Deleted
       Photo                     One copy
       Bottle                    Empty
       Tattoo                    Long sleeves
@@ -619,7 +641,7 @@ WHAT IS IN HERE
       Piercing                  It closes
       Confession                Out loud
 
-     TOTAL WORDS ACROSS ALL TIERS: 240
+     TOTAL WORDS ACROSS ALL TIERS: 264
 
 ==========================================================================
  4.  MOST LIKELY TO  —  Count to three, then point.
@@ -929,10 +951,10 @@ WHAT IS IN HERE
      file: src/data/rankIt.ts
 ==========================================================================
 
-- - -  MILD  (24)  - - -
+- - -  MILD  (25)  - - -
 
   Rank these fast food places, best to worst
-      McDonald's  |  Wendy's  |  Taco Bell  |  Subway  |  KFC
+      McDonald's  |  Wendy's  |  Taco Bell  |  Subway  |  KFC  |  Arby's
 
   Rank these nights out, best to worst
       House party  |  Club  |  Pub  |  Concert  |  Patio drinks
@@ -940,11 +962,14 @@ WHAT IS IN HERE
   Rank these from worst to least bad
       Being left on read  |  A bad haircut  |  Missing a flight  |  Losing your phone  |  Getting caught lying
 
+  Rank these coffees
+      Starbucks  |  Homemade  |  Tim Horton's  |  Gas station  |  Country Style
+
   Rank these hangover cures
       Greasy breakfast  |  Going back to sleep  |  Cold shower  |  Gatorade  |  Hair of the dog
 
   Rank these pizza toppings
-      Pepperoni  |  Pineapple  |  Mushroom  |  Olives  |  Extra cheese
+      Pepperoni  |  Pineapple  |  Mushroom  |  Olives  |  Extra cheese  |  Banana peppers
 
   Rank these ways to spend a Sunday
       Lie-in  |  Big walk  |  Roast dinner  |  Doing nothing  |  Seeing friends
@@ -1079,7 +1104,7 @@ WHAT IS IN HERE
       Someone's phone  |  Someone's key  |  Someone's letter  |  Someone's partner  |  Someone's money
 
 
-     TOTAL ACROSS ALL TIERS: 47
+     TOTAL ACROSS ALL TIERS: 48
 
 ==========================================================================
  7.  SAME PAGE  —  Two people, one word. Keep converging.

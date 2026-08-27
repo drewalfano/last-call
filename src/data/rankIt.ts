@@ -13,8 +13,13 @@ import type { Pools } from "./pools";
  * table can argue about for a minute without anyone being able to prove a
  * point, which is where the fun is.
  *
- * Four or five items. Three is over too fast; six turns a quick round into
- * admin.
+ * Four to six items. Three is over too fast, and six is the ceiling the
+ * screen sets rather than the game: .rank__list gives each row
+ * --control-height and lets it shrink to --control-md when space is tight, so
+ * six rows still fit a 667pt phone and a seventh would start squeezing the
+ * rows below a comfortable tap. Most sets here are five, which is the length
+ * a table argues about fastest; go to six only when the sixth is genuinely
+ * worth arguing over.
  */
 export interface RankPrompt {
   /** The instruction — carries the axis being ranked. */
@@ -24,11 +29,12 @@ export interface RankPrompt {
 
 export const RANK_IT: Pools<RankPrompt> = {
   safe: [
-    { title: "Rank these fast food places, best to worst", items: ["McDonald's", "Wendy's", "Taco Bell", "Subway", "KFC"] },
+    { title: "Rank these fast food places, best to worst", items: ["McDonald's", "Wendy's", "Taco Bell", "Subway", "KFC", "Arby's"] },
     { title: "Rank these nights out, best to worst", items: ["House party", "Club", "Pub", "Concert", "Patio drinks"] },
     { title: "Rank these from worst to least bad", items: ["Being left on read", "A bad haircut", "Missing a flight", "Losing your phone", "Getting caught lying"] },
+    { title: "Rank these coffees", items: ["Starbucks", "Homemade", "Tim Horton's", "Gas station", "Country Style"] },
     { title: "Rank these hangover cures", items: ["Greasy breakfast", "Going back to sleep", "Cold shower", "Gatorade", "Hair of the dog"] },
-    { title: "Rank these pizza toppings", items: ["Pepperoni", "Pineapple", "Mushroom", "Olives", "Extra cheese"] },
+    { title: "Rank these pizza toppings", items: ["Pepperoni", "Pineapple", "Mushroom", "Olives", "Extra cheese", "Banana peppers"] },
     { title: "Rank these ways to spend a Sunday", items: ["Lie-in", "Big walk", "Roast dinner", "Doing nothing", "Seeing friends"] },
     { title: "Rank these from most to least annoying", items: ["Slow walkers", "Loud chewing", "Being late", "Talking in films", "Leaving on read"] },
     { title: "Rank these holidays", items: ["Beach", "City break", "Skiing", "Road trip", "Camping"] },

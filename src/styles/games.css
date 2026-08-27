@@ -4221,6 +4221,96 @@
   width: 100%;
 }
 
+/* THE LIST YOU TAP KEEPS THE CARD'S TOP AND TAKES THE ROOM UNDER IT.
+
+   The list is dealt into the card slot, whose height is --slot-h, a constant
+   — and six rows at the tap-target floor came to 14px more than that at
+   667pt. With `justify-content: center` and visible overflow the extra went
+   out of BOTH ends, and the end that mattered was the top: the first row
+   climbed out of the slot and sat across the header's own line, printing a
+   pizza topping over the ranker's name.
+
+   The row cannot give — --control-md IS the tap target — and shrinking the
+   gaps only buys the row back at the cost of the rhythm every other list in
+   the app is set on. What there is instead is SPACE: the footer band on this
+   screen holds a counter and one button, and it was reserving --gfooter-h
+   regardless. So the slot row takes the slack and the footer row sizes to
+   what it actually contains.
+
+   The header row keeps the frame's own measurement from global.css, and that
+   is the point of doing it this way — it is what pins the top of the list to
+   the line a card's top edge holds on every other screen in the mode.
+
+   It is the row's FLOOR here where the frame makes it the ceiling, and that
+   difference fixes a bug this screen already had. `minmax(x, calc(...))` caps
+   the row, so a title that runs to three lines — "Rank these ways to spend a
+   Sunday" — overflowed it and was printed under the first row of the list:
+   20px of "Lily, privately" with a Sunday afternoon written across it, on the
+   line that says whose pass this is. Growing to `auto` instead lets a tall
+   title push the list down rather than wear it. One- and two-line titles are
+   the common case and do not reach the floor, so their top does not move.
+
+
+   Only the two screens you tap. The reveal is a `rank` screen too and is
+   deliberately not included: its rows start life translated out of the slot
+   by however many places the group got them wrong — see --rows-off — so it
+   needs the slot's geometry left exactly as it is. */
+.screen:has(.focal.rank--ordering) {
+  grid-template-rows:
+    minmax(
+      max(
+        var(--gheader-h),
+        calc(
+          var(--screen-h) / 2 - var(--safe-top) - var(--gutter)
+            - var(--card-size) / 2
+        )
+      ),
+      auto
+    )
+    1fr
+    auto;
+}
+
+/* The slot is square by --slot-h, and that token has not moved — only the row
+   it sits in. Without this the list would keep the old height inside a taller
+   row and the space would go to waste under it. */
+.focal.rank--ordering .slot { height: 100%; }
+
+/* AND ON THE ONE SCREEN WHERE IT STILL CANNOT FIT, IT SCROLLS.
+
+   The room above covers six rows from 667pt up. A 320x568 cannot take them at
+   any gap: the header and the footer there are the same height as anywhere
+   else while the screen is 100pt shorter, which leaves 237px, and six rows at
+   the tap-target floor are 288 before a single gap. That is arithmetic, not
+   tuning — the row cannot give, because --control-md IS the tap target.
+
+   So the choice on that one screen is scroll or overlap, and the thing that
+   was happening before was overlap: `justify-content: center` with visible
+   overflow sent the excess out of both ends, and the top end put the first
+   row across the header, printing a list item over the ranker's name. A
+   scroll keeps every row reachable and every row tappable.
+
+   Nothing else reaches this. At 375x667 the list measures 336 into 336, and
+   at 390x844 449 into 449 — exact fits, no scroll, which is what the room
+   above is for. */
+.rank__list:not(.rank__list--compare) {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* SIX ROWS BUY THEIR LAST ROW OUT OF THE GAPS.
+
+   The list is bounded by the card slot — --card-size, a constant — so it
+   cannot take the space below it, and six rows at the tap-target floor came
+   to 14px more than the slot has at 667pt. The row cannot shrink and the box
+   cannot grow, so the only give left is between them: five gaps at --sp-1
+   instead of --sp-2 hand back 20px, which is the 14 plus a little.
+
+   Only when there IS a sixth row, so every four- and five-item set keeps the
+   8px rhythm the rest of the app is set on. `:has` reads the row count off
+   the DOM, which is the one place it is actually known. */
+.rank__list:not(.rank__list--compare):has(> li:nth-child(6)) { gap: var(--sp-1); }
+
 /* The row's height lives here, so the button fills it exactly. It used to
    grow while the button inside kept its own min-height, which left a 5px
    dead band in every row — the gaps read as 13px against an 8px rule. Wants
