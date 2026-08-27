@@ -4419,6 +4419,21 @@
   padding-bottom: var(--sp-10);
 }
 
+/* AND THE LAST 5px OF IT ARE THE NOTE'S LINE BOX, NOT A GAP.
+
+   40px of padding under the note measured as a 45px gap on screen, against a
+   true 40 between the numbers and the names — because a pill's box IS its
+   ink and a line of text's is not. The note sets 12px caps in an 18px line
+   box: 4px of leading above the glyphs and 5 below, and the 5 is space the
+   eye adds to the gap under it while the box says the gap is right.
+
+   MEASURED, not derived — read off the ink rows of a screenshot at 390pt,
+   not worked out from the font's metrics, which is the only way to know
+   where the glyphs actually stop. Re-measure it if --fs-sm or this note's
+   line-height moves; nothing else here depends on it. Trimmed here rather
+   than taken off the padding above so it stays attached to its reason. */
+.screen:has(.focal.num) .gheader__note { margin-bottom: -5px; }
+
 /* THE QUESTION, THE NUMBERS AND THE NAMES ARE ONE BLOCK.
 
    The bidding screen is a column with no card in it: the numbers, the table,
