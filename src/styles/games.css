@@ -4440,6 +4440,24 @@
    global.css is loaded after this file. */
 .focal.num:has(.focal__center) > .actions { margin-top: 0; }
 
+/* The typed number stands where the row stood, at the row's own height, so
+   nothing under it moves while somebody is typing. `.text-input--quiet` is
+   built for the stack — full width, a control-md tall, with a gap under it
+   for the button that usually follows — and none of that is true here. */
+.num__count {
+  width: 4.5rem;
+  min-height: var(--control-sm);
+  margin-bottom: 0;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+/* Set in words among a row of figures, so it does not read as a number the
+   table could claim. The same hairline as the rest — it is one of the
+   options, not a control of a different kind. */
+.num__other { font-size: var(--fs-xs); letter-spacing: var(--tracking-wide); }
+
 /* THE TABLE. The category picker's grid, at the picker's own two columns —
    these are the same cards, so they are laid out the same way and a name is
    never a lone card on a row of its own. */

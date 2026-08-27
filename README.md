@@ -165,8 +165,13 @@ into `tokens.css` beside the pack that freed it.
   escalates until someone calls it; then the bidder gets a clock and has to
   produce what they claimed. **A bid is taken, not dealt out.** There is no
   turn order: you pick how big from a row of the next milestones — fives, so
-  the number is one the table hears as big — and then tap your own name to
-  claim it, which means the people with nothing to say are never in the way.
+  the number is one the table hears as big, plus **Other** for the number
+  somebody actually said out loud, which none of three preset options is
+  going to be — and then tap your own name to claim it, which means the
+  people with nothing to say are never in the way. A typed number joins the
+  row in its place among the milestones and leaves it once the bidding passes
+  it; anything at or below the standing bid is refused out loud rather than
+  by a dead button, and two digits is the ceiling.
   The holder is left off the pad, because raising your own bid is bidding
   against yourself. Who called it is never recorded: the table heard it, and
   asking the phone would be the queueing this mode exists without. Without a

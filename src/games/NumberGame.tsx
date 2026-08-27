@@ -59,6 +59,16 @@ const MILESTONE = 5;
 const JUMPS_SHOWN = 2;
 
 /**
+ * The most anyone may claim, and it is two digits because the field is.
+ *
+ * Not a rule about the game — a table that wants to bid 99 has already made
+ * its own joke and the clock will hand them ten minutes to regret it. It is
+ * the guard on a fat-fingered 111 in a numeric keyboard, which is a bid
+ * nobody meant and a round nobody can finish.
+ */
+const MAX_BID = 99;
+
+/**
  * What the table can be dared with, against a standing bid of `bid`.
  *
  * Always `bid + 1` first — the ordinary raise, and the one selected until
@@ -133,6 +143,19 @@ export function NumberGame({ mode, onBack }: Props) {
   const [dare, setDare] = useState(START_BID + 1);
   /** Who owns the bid — the one who can be made to prove it. Null until taken. */
   const [holder, setHolder] = useState<string | null>(null);
+  /**
+   * A number somebody said out loud that the row did not offer.
+   *
+   * Kept beside `dare` rather than folded into it so that reaching past 15 to
+   * 23 and then changing your mind back to 15 does not throw the 23 away —
+   * it stays in the row, already typed, for as long as it is still a bid
+   * anyone could make. Cleared by the guard in `dares` the moment the bid
+   * passes it, and by hand on a new category.
+   */
+  const [custom, setCustom] = useState<number | null>(null);
+  /** Whether the row has given itself over to the field. */
+  const [writing, setWriting] = useState(false);
+  const [draft, setDraft] = useState("");
 
   /**
    * THE TABLE. One entry per seat, named or not.
@@ -204,7 +227,43 @@ export function NumberGame({ mode, onBack }: Props) {
     }
   }, [timer.running, timer.seconds]);
 
-  const dares = useMemo(() => daresAbove(bid), [bid]);
+  /**
+   * What the row offers: the ordinary raise, the milestones, and — once
+   * somebody has typed one — their number in its place among them, so a bid
+   * of 23 reads as one of the choices rather than as a mode the screen is in.
+   *
+   * The `custom > bid` test is the whole of its housekeeping. A typed number
+   * stops being an option the moment the bidding passes it, which is exactly
+   * when it should leave the row, so nothing has to remember to clear it.
+   */
+  const dares = useMemo(() => {
+    const base = daresAbove(bid);
+    if (custom === null || custom <= bid || base.includes(custom)) return base;
+    return [...base, custom].sort((a, b) => a - b);
+  }, [bid, custom]);
+
+  /**
+   * Take the typed number, or refuse out loud.
+   *
+   * Below the standing bid it is not a raise, above MAX_BID it is a typo, and
+   * either way the field keeps what was typed so it can be corrected rather
+   * than retyped. Refusing out loud and not with a `disabled` button is the
+   * rule the stepper's ends and Letter Rip's used letters already follow: an
+   * inert control cannot say why it did nothing.
+   */
+  const takeTyped = useCallback(() => {
+    const n = Number(draft);
+    if (!Number.isInteger(n) || n <= bid || n > MAX_BID) {
+      audio.play("reject");
+      buzz(15);
+      return;
+    }
+    setCustom(n);
+    setDare(n);
+    setWriting(false);
+    setDraft("");
+    audio.play("tap");
+  }, [bid, draft]);
 
   /**
    * The line the header asks. Two rows: the number being dared, then the
@@ -253,6 +312,9 @@ export function NumberGame({ mode, onBack }: Props) {
     setBid(START_BID);
     setDare(START_BID + 1);
     setHolder(null);
+    setCustom(null);
+    setWriting(false);
+    setDraft("");
     setOrder((prev) => seatOrder(prev.length, prev));
     timer.stop();
     setPhase("bidding");
@@ -363,21 +425,82 @@ export function NumberGame({ mode, onBack }: Props) {
               you settle first: reach for 15, THEN say it was you. Tapping
               another is how you take it back, so a mis-tap costs nothing and
               the row needs no undo of its own. */}
-          <div className="chips num__dares">
-            {dares.map((n) => (
+          {writing ? (
+            /* THE ROW GIVES ITSELF OVER TO THE FIELD, rather than growing a
+               fourth row under itself. Everything below this — the names, the
+               button — is where it was a moment ago and where it will be a
+               moment later, because the two states are built to the same
+               height. A number is being said out loud at a table; the screen
+               should not lurch while somebody types it.
+
+               The category picker's Write-your-own does the same thing with
+               the same two ways out. */
+            <form
+              className="chips num__dares num__type"
+              onSubmit={(e) => {
+                e.preventDefault();
+                takeTyped();
+              }}
+            >
+              <input
+                className="text-input text-input--quiet num__count"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
+                /* The numeric pad, not the alphabet: there is nothing to type
+                   here that is not a digit, and `pattern` is what gets iOS to
+                   show it. The strip above does the rest — non-digits never
+                   reach the state, so a pasted "twelve" is simply nothing. */
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={2}
+                placeholder={String(dare)}
+                aria-label={`How many, more than ${bid}`}
+                autoFocus
+              />
+              <button type="submit" className="chip">
+                Set
+              </button>
               <button
-                key={n}
                 type="button"
                 className="chip"
-                data-on={n === dare || undefined}
-                aria-pressed={n === dare}
-                onPointerDown={() => audio.play("tap")}
-                onClick={() => setDare(n)}
+                onClick={() => {
+                  setWriting(false);
+                  setDraft("");
+                }}
               >
-                {n}
+                Back
               </button>
-            ))}
-          </div>
+            </form>
+          ) : (
+            <div className="chips num__dares">
+              {dares.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className="chip"
+                  data-on={n === dare || undefined}
+                  aria-pressed={n === dare}
+                  onPointerDown={() => audio.play("tap")}
+                  onClick={() => setDare(n)}
+                >
+                  {n}
+                </button>
+              ))}
+              {/* WHAT SOMEBODY ACTUALLY SAID. Three numbers cover the bidding
+                  a table does by reflex and none of them is 7, which is the
+                  number somebody will claim out loud on the night. Last in
+                  the row, and the only one set in words, because it is the
+                  option you take when none of the others is the bid. */}
+              <button
+                type="button"
+                className="chip num__other"
+                onPointerDown={() => audio.play("tap")}
+                onClick={() => setWriting(true)}
+              >
+                Other
+              </button>
+            </div>
+          )}
 
           {/* THE TABLE, DEALT AS CARDS — the category picker's, the same
               stock and the same deal, because it is the same act: a page of
