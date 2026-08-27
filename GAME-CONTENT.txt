@@ -1,0 +1,1757 @@
+LAST CALL — ALL GAME CONTENT
+For review. Plain text, no formatting — edit freely and hand it back.
+
+Generated 2026-08-27 from src/data/*.ts
+
+--------------------------------------------------------------------------
+HOW THE THREE TIERS WORK
+--------------------------------------------------------------------------
+
+  Player-facing name    Data key    What it means
+  Mild                  safe        Plays sober, with anyone.
+  Spicy                 night       Adds material for a night out. Drinking assumed.
+  Filthy                filthy      Adds what you would only admit to people who
+                                    will not repeat it.
+
+  TIERS ADD, THEY DO NOT REPLACE. Spicy = Mild + Spicy. Filthy = all three.
+  So an entry only needs to appear in the LOWEST tier it belongs to, and
+  moving an entry down a tier makes it show up for more tables, never fewer.
+
+  A tier marked "none written" is not a gap in the game — that mode simply
+  plays the tiers below it.
+
+  Two layout policies decide the ORDER a tier is dealt in (see data/pools.ts):
+    supplement — dealt blind, order never seen (most games)
+    lead       — browsed in a picker, so spicier tiers are dealt one-for-one
+                 from the top rather than stacked above everything else
+
+--------------------------------------------------------------------------
+WHAT IS IN HERE
+--------------------------------------------------------------------------
+
+   1.  Overbid                 bidding categories
+   2.  Letter Rip              categories
+   3.  Odd One Out             word categories + Imposter hints
+   4.  Most Likely To          prompts
+   5.  Hot Seat                questions (seat / group)
+   6.  Rank It                 ranking prompts + their items
+   7.  Same Page               openers + warm-ups
+   8.  Ballpark                spectrums
+   9.  Last Call               wildcards (kind + intensity)
+  10.  Kings Cup               card rules — NOT tiered
+  11.  Never Have I Ever       pool feeding Kings Cup
+  12.  Ride the Bus            no written content
+  13.  Drink If                written but NOT wired into any mode
+
+
+==========================================================================
+ 1.  OVERBID  —  Bid high. Get called out.
+     Bidding categories. The screen asks "Who can name 4 <category>?"
+     order policy: lead
+     file: src/data/numberGame.ts
+==========================================================================
+
+- - -  MILD  (40)  - - -
+
+  Taylor Swift songs
+  Countries in Europe
+  Pixar films
+  Cocktails
+  Premier League teams
+  US states
+  Breakfast cereals
+  Harry Potter characters
+  Car brands
+  Types of pasta
+  Simpsons characters
+  Capital cities
+  Beatles songs
+  Chocolate bars
+  Disney princesses
+  Sports played with a ball
+  Countries in Africa
+  Marvel characters
+  Crisp flavours
+  Board games
+  Things in a kitchen drawer
+  Dog breeds
+  Beers
+  Musicals
+  Horror films
+  Fast food chains
+  Islands
+  Christmas songs
+  Things at a festival
+  Card games
+  Cheeses
+  Olympic sports
+  Reality TV shows
+  Kinds of tea
+  Football players
+  Video games
+  Pizza toppings
+  Airlines
+  Shoe brands
+  Cities in Italy
+
+- - -  SPICY  (24)  - - -
+
+  Reasons a date ends early
+  Dating app red flags
+  Places you shouldn't hook up
+  Excuses for not texting back
+  Things you'd hide before someone comes over
+  Ways to end a relationship badly
+  Things people lie about on profiles
+  Reasons your friends hated your ex
+  Bad pickup lines
+  Things you'd never text your ex
+  Signs someone isn't interested
+  Reasons to leave a party with someone
+  Things you'd delete before handing over your phone
+  Worst places to get caught
+  Reasons to block someone
+  Things you'd never admit sober
+  Bad first date questions
+  Ways to ruin a night out
+  Morning-after regrets
+  Things that kill the mood
+  Reasons to unmatch
+  Nicknames you'd never call a partner
+  Reasons to change your number
+  Excuses for leaving in the morning
+
+- - -  FILTHY  (14)  - - -
+
+  Worst things to say afterwards
+  Things you'd fake
+  Drugs you could name
+  Reasons to end up in A&E
+  Things you'd never tell your boss
+  Places you've been sick
+  Things you'd fail a background check for
+  Excuses for a missing night
+  Things you've done for money
+  Reasons someone's parents hate you
+  Ways to get barred from somewhere
+  Things you've stolen
+  Reasons the police get called
+  Things you'd deny under oath
+
+     TOTAL ACROSS ALL TIERS: 78
+
+==========================================================================
+ 2.  LETTER RIP  —  Category, letter, pass. Don't freeze.
+     Categories. Players name something in the category starting with each letter.
+     order policy: lead
+     file: src/data/lastWord.ts
+==========================================================================
+
+- - -  MILD  (94)  - - -
+
+  Countries
+  Cities
+  Colours
+  Boys' names
+  Girls' names
+  Movies
+  TV shows
+  Bands and artists
+  Animals
+  Fruit and veg
+  Sports
+  Jobs
+  Things in a kitchen
+  Things in this room
+  Brands
+  Cartoon characters
+  Pizza toppings
+  Ice cream flavours
+  Ways to travel
+  Things you pack for a holiday
+  Body parts
+  School subjects
+  Breakfast foods
+  Things in a supermarket
+  Superheroes
+  Board games
+  Things that are round
+  Things in a bar
+  Things on a bar menu
+  Famous duos
+  Things you find in a wallet
+  Weather words
+  Musical instruments
+  Things at a festival
+  Things that ruin a night out
+  Cocktails
+  Reasons to ghost someone
+  Bar snacks
+  Excuses for being late
+  Things you'd never split the bill on
+  Hangover cures
+  Terrible first date ideas
+  Things in your bag right now
+  Beers
+  Reasons to leave a party early
+  Bad tattoo ideas
+  Things you shout at a TV
+  Cities you'd move to tomorrow
+  Red flags on a résumé
+  Songs everyone knows the words to
+  Things you've lost on a night out
+  Reasons to call in sick
+  Party foods
+  Things that are overrated
+  Ways to get out of a conversation
+  Movies you've watched more than three times
+  Things you'd buy if money didn't matter
+  Bad haircuts
+  Things you'd take to a desert island
+  Reasons to be late to work
+  Countries you couldn't find on a map
+  Things that are always cheaper abroad
+  Sports you'd be terrible at
+  Things in a hotel room you'd steal
+  Bands with one good album
+  Things you say when you're lying
+  Words that sound made up
+  Jobs that look easy and aren't
+  Reasons to leave a group chat
+  Foods you'd never eat again
+  Things that smell like childhood
+  Ways to lose a friend
+  Excuses for not answering the phone
+  Things people lie about on dating apps
+  Board games that ruin friendships
+  Things you'd never lend anyone
+  Terrible names for a pub
+  Reasons to move house
+  Things you only own one of
+  TV shows that went on too long
+  Things you'd rescue from a fire
+  Excuses for missing a wedding
+  Drinks nobody orders anymore
+  Ways to start an argument at dinner
+  Things that are worse than they look
+  Reasons to turn your phone off
+  Things you can't do sober
+  Snacks worth leaving the house for
+  Ways to spend a Sunday
+  Things you'd never post online
+  Animals you'd lose a fight to
+  Reasons a night out ends early
+  Things you've pretended to like
+  Songs that should be banned from karaoke
+
+- - -  SPICY  (46)  - - -
+
+  Red flags in a dating profile
+  Things you'd never text your ex
+  Shots
+  Reasons to unmatch someone
+  Drunk food
+  Reasons a first date ends early
+  Vices
+  Things you'd hide before someone comes over
+  Reasons to get thrown out of a bar
+  Lies people tell on first dates
+  Expensive mistakes
+  Things you'd never tell your parents
+  Instant turn-offs
+  Things in a smoking area
+  Reasons your friends hated your ex
+  Places you've woken up
+  Things that end a date instantly
+  Hangover symptoms
+  Guilty pleasures
+  Things you'd delete before handing over your phone
+  Reasons to block someone
+  Things you've bought drunk
+  Signs someone isn't interested
+  Things you can't say at work
+  Reasons a situationship dies
+  Things you'd find in a taxi at 3am
+  Ways to lose money fast
+  Things exes always say
+  Places you've had a bad date
+  Things people hide from their partner
+  Reasons to leave someone on read
+  Things banned from your flat
+  Worst reasons to get back together
+  Things people brag about and shouldn't
+  Reasons to change your number
+  Things you'd only do on holiday
+  Things people argue about at 3am
+  Bets you'd never take
+  Things you'd never put on a CV
+  Worst places to meet someone's parents
+  Things confiscated at a festival
+  Ways to end things badly
+  Places you shouldn't fall asleep
+  Things you'd never admit to a partner
+  Bad decisions that felt like good ones
+  Things that get worse after midnight
+
+- - -  FILTHY  (16)  - - -
+
+  Things you'd never tell the police
+  Reasons a night ended at the hospital
+  Things you've taken
+  Reasons you've been thrown out of somewhere
+  Things you'd never admit to a partner
+  Places you've been sick
+  Things you've stolen
+  Reasons someone stopped speaking to you
+  Lies you've told a boss
+  Things you've done for money
+  Reasons your friends had to carry you home
+  Things you'd never put in writing
+  Things that would end your career
+  Worst things to wake up next to
+  Things you'd delete before someone checked
+  Reasons to leave a city
+
+     TOTAL ACROSS ALL TIERS: 156
+
+==========================================================================
+ 3.  ODD ONE OUT  —  One of you doesn't know the word.
+     Word categories. Each entry is WORD + the one-word hint the Imposter may be given.
+     order policy: lead
+     file: src/data/imposter.ts
+==========================================================================
+
+     A player browsing this list picks a CATEGORY, never a word — picking a
+     word would tell them the secret. The hint is shown to the Imposter alone,
+     and only if the table turned hints on.
+
+- - -  MILD  (14 categories, 140 words)  - - -
+
+  [Foods]  10 words
+      Carrot                    Healthy
+      Pizza                     Shared
+      Sushi                     Cold
+      Kebab                     Late
+      Pancakes                  Stacked
+      Avocado                   Overpriced
+      Hot sauce                 Burns
+      Cereal                    Morning
+      Garlic bread              A side
+      Oysters                   Acquired
+
+  [Celebrities]  10 words
+      Beyoncé                   Stadiums
+      Taylor Swift              Crowds
+      Dwayne Johnson            Huge
+      Rihanna                   Business
+      Gordon Ramsay             Shouting
+      Snoop Dogg                Relaxed
+      Adele                     Heartbreak
+      Keanu Reeves              Beloved
+      Zendaya                   Young
+      David Attenborough        The voice
+
+  [Night out]  10 words
+      Cover fee                 Upfront
+      Bouncer                   No
+      Last call                 The end
+      Dance floor               Sticky
+      Smoking area              Outside
+      Coat check                Left behind
+      Bar tab                   Adds up
+      Taxi queue                Waiting
+      Dive bar                  Cheap
+      Rooftop bar               A view
+
+  [Drinks]  10 words
+      Tequila                   Trouble
+      Espresso martini          Awake
+      Guinness                  Slow
+      Shots                     At once
+      Hangover                  Morning
+      Happy hour                Half price
+      Open bar                  Free
+      Beer pong                 A game
+      Bottomless brunch         Daytime
+      Ice bucket                Cold
+
+  [Places]  10 words
+      Airport                   Early
+      Casino                    You lose
+      Gym                       January
+      Hospital                  Dreaded
+      Petrol station            A stop
+      Library                   Quiet
+      Beach                     Warm
+      IKEA                      A maze
+      Laundromat                Killing time
+      Waiting room              Your turn
+
+  [Screen]  10 words
+      Titanic                   Doomed
+      The Office                Cringe
+      Love Island               Couples
+      Jaws                      Stay out
+      Breaking Bad              He changes
+      Star Wars                 Universal
+      Netflix                   Nothing on
+      Horror film               Peeking
+      Reality TV                Scripted
+      Cliffhanger               Unfinished
+
+  [Jobs]  10 words
+      Dentist                   Dreaded
+      Lifeguard                 Watching
+      Pilot                     Uniform
+      Teacher                   Underpaid
+      Influencer                Hardly work
+      Plumber                   Emergency
+      Chef                      Hot
+      Barber                    Monthly
+      Wedding planner           One day
+      Taxi driver               Opinions
+
+  [Countries]  10 words
+      Japan                     Orderly
+      Brazil                    Loud
+      Ireland                   Rain
+      Egypt                     Ancient
+      Australia                 It bites
+      Italy                     Eat well
+      Iceland                   Cold
+      Mexico                    Spicy
+      Thailand                  Backpackers
+      Canada                    Polite
+
+  [Cities]  10 words
+      Paris                     Romantic
+      Tokyo                     Enormous
+      Vegas                     Excess
+      Dublin                    Pints
+      New York                  Never stops
+      Amsterdam                 Bikes
+      Berlin                    All weekend
+      Sydney                    Far
+      Rome                      Ruins
+      Ibiza                     One season
+
+  [Animals]  10 words
+      Penguin                   Dressed up
+      Shark                     Keeps moving
+      Sloth                     Slow
+      Raccoon                   Your bins
+      Horse                     Expensive
+      Octopus                   Clever
+      Goose                     Aggressive
+      Hamster                   Short-lived
+      Crocodile                 It waits
+      Pigeon                    Ignored
+
+  [Sports]  10 words
+      Golf                      Slow
+      Boxing                    One-on-one
+      Swimming                  Wet
+      Darts                     The pub
+      Marathon                  Training
+      Skiing                    Cold
+      Tennis                    Grunting
+      Rugby                     Bruises
+      Bowling                   Rented shoes
+      Formula 1                 Loud
+
+  [Around the house]  10 words
+      Kettle                    First thing
+      Sofa                      Sinking
+      Shower                    Thinking
+      Fridge                    Keep looking
+      Doorbell                  Someone's here
+      Laundry                   Never done
+      Houseplant                Neglected
+      Smoke alarm               3am
+      Radiator                  Winter
+      Junk drawer               Everything
+
+  [Colours]  10 words
+      Red                       Stop
+      Navy                      Safe
+      Beige                     Boring
+      Neon green                Unmissable
+      Gold                      First
+      Lilac                     Gentle
+      Black                     Always works
+      Turquoise                 Holiday
+      Burgundy                  Deep
+      Silver                    Second
+
+  [Things]  10 words
+      Phone charger             Borrowed
+      Group chat                Muted
+      Fake ID                   Risky
+      Tattoo                    Permanent
+      Passport                  Precious
+      AirPods                   Easily lost
+      Wallet                    Pocket
+      Sunglasses                Indoors
+      Uber                      Minutes away
+      Umbrella                  Forgotten
+
+- - -  SPICY  (6 categories, 60 words)  - - -
+
+  [Dating]  10 words
+      Situationship             Undefined
+      Talking stage             Early
+      Soft launch               Barely shown
+      First date                Nerves
+      Dating app                Endless
+      Exclusive                 Agreed
+      Third date                Expectations
+      Plus one                  Invited along
+      Blind date                No idea
+      The talk                  Overdue
+
+  [Exes]  10 words
+      Ex's apartment            Familiar
+      Rebound                   Too soon
+      Ghosting                  No reply
+      Blocked number            Deliberate
+      Drunk text                3am
+      Old photos                Still there
+      Closure                   Never quite
+      Box of their stuff        Returned
+      Someone else's hoodie     Not yours
+      Unfollowed                Noticed
+
+  [Texting]  10 words
+      Left on read              Seen
+      Double text               Couldn't wait
+      Slid into the DMs         Bold
+      Screenshot                Evidence
+      Shared location           Trust
+      Read receipts             Optional
+      Typing dots               Then nothing
+      Notifications off         Peace
+      Breadcrumbing             Just enough
+      Drafts folder             Unsent
+
+  [Nightlife]  10 words
+      Afterparty                Elsewhere
+      Lock-in                   Doors shut
+      Closing time              Lights on
+      VIP booth                 Roped off
+      Bottle service            Expensive
+      Last one standing         Alone
+      Night bus                 Grim
+      Queue jump                Cutting in
+      Bad decision              Seemed fine
+      Sunday morning taxi       Daylight
+
+  [Red flags]  10 words
+      Red flag                  You knew
+      Hall pass                 Permitted
+      Open relationship         Both know
+      Long distance             Flights
+      Mutual friend             Awkward
+      Someone's coworker        Monday
+      Toothbrush at their place A step
+      Meeting the parents       Serious
+      Emergency contact         On forms
+      Moving in together        Keys
+
+  [Secrets]  10 words
+      Second phone              Spare
+      Locked phone              Face down
+      Burner account            Fake name
+      Snooping                  You looked
+      White lie                 Harmless
+      Alibi                     Your story
+      Sworn to secrecy          Promised
+      Deleted history           Gone
+      Group chat about you      Without you
+      Anonymous account         No face
+
+- - -  FILTHY  (4 categories, 40 words)  - - -
+
+  [Trouble]  10 words
+      Police                    They arrive
+      Bouncer                   Turned away
+      Fine                      It costs
+      Curfew                    By then
+      Lawyer                    Expensive
+      Bail                      Paid out
+      Warning                   Just once
+      Fight                     Kicked off
+      Caution                   On record
+      Witness                   Someone saw
+
+  [The morning after]  10 words
+      Hangover                  Self-inflicted
+      Receipt                   The total
+      Voicemail                 Rambling
+      Stranger                  Who?
+      Taxi                      Got home
+      Sunglasses                Indoors
+      Water                     Too late
+      Regret                    The feeling
+      Bruise                    No idea
+      Silence                   Unspoken
+
+  [Things you'd hide]  10 words
+      Diary                     Written down
+      Receipt                   Proof
+      Bruise                    Covered up
+      Message                   Delete it
+      Photo                     One copy
+      Bottle                    Empty
+      Tattoo                    Long sleeves
+      Letter                    Kept
+      Key                       Not yours
+      Scar                      Old
+
+  [Regrets]  10 words
+      Tattoo                    Forever
+      Text                      Sent
+      Shot                      One more
+      Voicemail                 Played back
+      Haircut                   It grows
+      Email                     Reply all
+      Tequila                   Every time
+      Ex                        Back again
+      Piercing                  It closes
+      Confession                Out loud
+
+     TOTAL WORDS ACROSS ALL TIERS: 240
+
+==========================================================================
+ 4.  MOST LIKELY TO  —  Count to three, then point.
+     Prompts. The table counts to three and points.
+     order policy: supplement
+     file: src/data/mostLikelyTo.ts
+==========================================================================
+
+- - -  MILD  (60)  - - -
+
+  accidentally miss a flight.
+  get famous for something embarrassing.
+  start a fight with a stranger over sports.
+  get engaged first.
+  move to another country on two weeks' notice.
+  become the group's designated problem solver.
+  still be at the bar at closing.
+  lose their phone tonight.
+  get a tattoo they can't explain in the morning.
+  call their mom in the middle of a night out.
+  become a millionaire and tell nobody.
+  get scammed online.
+  start a podcast nobody asked for.
+  cry at a wedding that isn't theirs.
+  get out of a speeding ticket by talking.
+  adopt seven pets.
+  peak in five years and be completely fine with it.
+  be late to their own party.
+  read the terms and conditions.
+  survive the longest without their phone.
+  get banned from a group chat.
+  become everyone's therapist tonight.
+  accidentally join a cult.
+  get into an argument with a self checkout machine.
+  be the first to leave tonight.
+  be the last to admit they're leaving tonight.
+  run a marathon on a bet.
+  get fired for something funny.
+  become weirdly successful at something random.
+  keep a plant alive for ten years.
+  kill a plant in a week.
+  have a secret second phone for no sinister reason.
+  be recognised by a bouncer somewhere they've never been.
+  start a fight in a group chat and then go quiet.
+  own a boat they can't afford.
+  get lost in a city they grew up in.
+  become the friend everyone visits abroad.
+  spend a paycheque in one weekend.
+  still be using the same phone in five years.
+  get a nickname that sticks for life.
+  be the first to buy a house.
+  have a very public change of personality.
+  take a joke too far at a family dinner.
+  get a pilot's licence purely for the story.
+  become the reason a group holiday ends early.
+  leave a party to go to a different party.
+  make friends with the staff everywhere they go.
+  forget their own birthday.
+  sue somebody over something small.
+  get a round of applause in an airport.
+  become insufferable after one good year.
+  learn a language for one trip.
+  have a genuinely impressive hidden talent.
+  lose an argument and keep going anyway.
+  be the first to say they're hungry.
+  get a job through someone they met on a night out.
+  still be doing this in fifteen years.
+  become the responsible one and hate it.
+  give a wedding speech that goes badly wrong.
+  get away with absolutely anything.
+
+- - -  SPICY  (53)  - - -
+
+  go home with someone they met tonight.
+  text their ex before the night is over.
+  have a secret dating profile right now.
+  date someone twice their age.
+  get caught by a roommate.
+  be someone's toxic ex in a story told at a party.
+  date two people at once and manage it badly.
+  confess a crush at 3am.
+  have hooked up with a coworker.
+  fall in love in a weekend.
+  get back with an ex for the third time.
+  send a risky text right in front of us.
+  have a hookup story none of us have heard.
+  hook up in a place they absolutely shouldn't.
+  ghost someone they actually liked.
+  be caught lying about who they're seeing.
+  start something with someone's sibling.
+  have a whole second life we know nothing about.
+  date someone their friends openly hate.
+  stay in a bad relationship for the apartment.
+  hook up with someone and stay friends afterwards.
+  hook up with someone and never speak again.
+  get proposed to before anyone expects it.
+  have a type so specific it's a running joke.
+  leave a date to meet someone else.
+  get caught out by a screenshot.
+  be the reason two friends stopped talking.
+  date someone they met at a funeral or a hospital.
+  have a hookup they'd need three drinks to admit to.
+  be someone's midlife crisis.
+  have a midlife crisis first.
+  get back with their worst ex out of boredom.
+  have said 'I love you' first in every relationship.
+  have never said it first.
+  have a second phone for genuinely sinister reasons.
+  date someone famous, briefly.
+  have kissed the most people in one night.
+  be caught in a lie about where they stayed.
+  have a crush on a friend right now.
+  get a text tonight that changes their week.
+  hook up with someone they've complained about for a year.
+  still be in touch with everyone they've dated.
+  have blocked the most people.
+  reply to a message they left on read for a month.
+  fall for someone who is very obviously bad news.
+  be very obviously bad news.
+  have a story from tonight nobody else remembers.
+  have dated someone none of us ever met.
+  get married and divorced fastest.
+  hook up on a work trip.
+  have the most convincing poker face about all of this.
+  be single longest, by choice.
+  be single longest, not by choice.
+
+- - -  FILTHY  (23)  - - -
+
+  hook up with someone in this room.
+  have the wildest search history.
+  have the highest body count in this room.
+  have already hooked up with someone we all know.
+  hook up with someone in this room and tell nobody.
+  end up with someone they're arguing with right now.
+  leave tonight with someone at this table.
+  have hooked up with someone at this table and never mentioned it.
+  black out first tonight.
+  have done something this year they could still be charged for.
+  have the worst thing on their phone right now.
+  get arrested and be strangely calm about it.
+  have taken something at a party without asking what it was.
+  have cheated and never been caught.
+  be the reason someone here got into real trouble.
+  have a secret that would genuinely change how we see them.
+  lie to this group's face and get away with it.
+  have been sick somewhere they never owned up to.
+  go through someone's phone tonight.
+  have hooked up with two people in this room.
+  have done something for money they'd never put on a CV.
+  end tonight in the back of an ambulance.
+  have a story about this group we've never heard.
+
+     TOTAL ACROSS ALL TIERS: 136
+
+==========================================================================
+ 5.  HOT SEAT  —  One person. Everyone else with opinions.
+     Questions. [SEAT] = the person in the hot seat answers. [GROUP] = the table answers about them.
+     order policy: supplement
+     file: src/data/hotSeat.ts
+==========================================================================
+
+- - -  MILD  (60)  - - -
+       {name} is replaced with the hot seat player's name.
+
+  [GROUP]  What's {name}'s worst spending habit?
+  [SEAT ]  {name}, what do people consistently get wrong about you?
+  [GROUP]  Would {name} survive a week without their phone? Vote.
+  [SEAT ]  {name}, what's the last thing you did that you're quietly proud of?
+  [GROUP]  What job would {name} be catastrophically bad at?
+  [SEAT ]  {name}, who here would you want on your team in a crisis?
+  [GROUP]  What's the most {name} thing {name} has ever done?
+  [SEAT ]  {name}, what's a habit of yours you know is annoying?
+  [GROUP]  Vote: is {name} a good influence or a bad one?
+  [SEAT ]  {name}, what's the biggest lie you've told this group?
+  [GROUP]  How would {name} handle winning a large amount of money?
+  [SEAT ]  {name}, what would you change about how you were last year?
+  [GROUP]  Who does {name} take the most after, and would they admit it?
+  [SEAT ]  {name}, what's the worst advice you've given confidently?
+  [GROUP]  Rate {name}'s decision making out of ten. Lowest score explains.
+  [SEAT ]  {name}, what's something you'd do differently if nobody would know?
+  [GROUP]  What's {name}'s most predictable move on a night out?
+  [SEAT ]  {name}, who at this table do you most want to be more like?
+  [GROUP]  Would {name} tell you if they hated your partner? Vote honestly.
+  [SEAT ]  {name}, what's the story about you this group tells too often?
+  [GROUP]  What would {name} do with a completely free year?
+  [SEAT ]  {name}, what's the last thing that genuinely impressed you?
+  [GROUP]  Is {name} funnier than they think, or less? Vote.
+  [SEAT ]  {name}, which of your opinions has changed most in five years?
+  [GROUP]  What's {name} always late for, and what are they never late for?
+  [SEAT ]  {name}, what do you want people to say about you when you leave a room?
+  [GROUP]  Who in this group would {name} struggle most to live with?
+  [SEAT ]  {name}, what's a compliment you've never believed?
+  [GROUP]  What would {name}'s autobiography be called?
+  [SEAT ]  {name}, what's the last thing you did purely for yourself?
+  [GROUP]  Would {name} do well on a reality show? Which one?
+  [SEAT ]  {name}, what's something you're much worse at than people assume?
+  [GROUP]  What advice does {name} give that they don't follow?
+  [SEAT ]  {name}, who here have you known longest, and has it changed?
+  [GROUP]  How long would {name} last living alone in the middle of nowhere?
+  [SEAT ]  {name}, what's the last thing you changed your mind about?
+  [GROUP]  What's {name}'s most obvious tell when they're annoyed?
+  [SEAT ]  {name}, what's something small that ruins your entire day?
+  [GROUP]  Would you lend {name} a large amount of money? Vote.
+  [SEAT ]  {name}, what's a decision you're still not sure about?
+  [GROUP]  What is {name} unreasonably confident about?
+  [SEAT ]  {name}, what's the nicest thing someone here has done for you?
+  [GROUP]  Who would {name} call at 3am, and would they answer?
+  [SEAT ]  {name}, what's something you pretend to care about?
+  [GROUP]  What's the worst gift you could give {name}?
+  [SEAT ]  {name}, what would your ten year old self say about your life now?
+  [GROUP]  Is {name} the most or least organised person here? Vote.
+  [SEAT ]  {name}, what's a risk you're glad you didn't take?
+  [GROUP]  What would {name} be doing if they'd made one different choice?
+  [SEAT ]  {name}, what's the hardest thing about being you right now?
+  [GROUP]  Who does {name} text the most, and who should they text more?
+  [SEAT ]  {name}, what's something you'd like to be asked more often?
+  [GROUP]  What's {name}'s usual excuse, and does it ever work?
+  [SEAT ]  {name}, what's the best decision you made this year?
+  [GROUP]  Would {name} make a good boss? Vote, then explain.
+  [SEAT ]  {name}, what's a thing you own that means more than it should?
+  [GROUP]  What's {name} most likely to be doing in ten years?
+  [SEAT ]  {name}, who in your life do you owe an apology to?
+  [GROUP]  What does {name} do better than anyone else here?
+  [SEAT ]  {name}, what's the one thing you'd want this group to remember about tonight?
+
+- - -  SPICY  (42)  - - -
+       {name} is replaced with the hot seat player's name.
+
+  [SEAT ]  {name}, what's your actual type versus who you actually date?
+  [GROUP]  Which of {name}'s exes was the worst, and why?
+  [SEAT ]  {name}, what's the worst way you've ended something?
+  [GROUP]  Vote: is {name} the problem in their relationships, or not?
+  [GROUP]  Who would {name} get back together with tomorrow if asked?
+  [SEAT ]  {name}, what's the most reckless thing you've done to see someone?
+  [SEAT ]  {name}, what's the closest you've come to a genuinely bad decision this year?
+  [GROUP]  What's {name}'s move when they want someone's attention?
+  [GROUP]  Who at this table is most compatible with {name}? Vote.
+  [SEAT ]  {name}, what's the biggest lie you've told someone you were dating?
+  [GROUP]  Is {name} better single or taken? Everyone answers.
+  [SEAT ]  {name}, which of your exes would give you the worst review, and what would it say?
+  [GROUP]  How quickly does {name} fall for someone? Vote in weeks.
+  [SEAT ]  {name}, what's a dealbreaker you've ignored for someone?
+  [GROUP]  What kind of person is {name} always going to go back to?
+  [SEAT ]  {name}, who took you the longest to get over?
+  [GROUP]  Would {name} survive an open relationship? Vote.
+  [SEAT ]  {name}, what's the pettiest reason you've ended things?
+  [SEAT ]  {name}, what's the most jealous you've ever been?
+  [GROUP]  What's the worst dating decision {name} has made in front of us?
+  [SEAT ]  {name}, what would your last partner say your worst habit was?
+  [GROUP]  Does {name} chase or get chased? Vote.
+  [GROUP]  How would {name} react to being ghosted tomorrow?
+  [SEAT ]  {name}, what's the last thing you did that you'd call desperate?
+  [GROUP]  What would make {name} leave someone on the spot?
+  [SEAT ]  {name}, who's the one that got away, and what happened?
+  [GROUP]  Is {name} honest about their dating life with us? Vote.
+  [GROUP]  What's {name}'s most obvious tell that they like someone?
+  [SEAT ]  {name}, what's the best thing about being with you?
+  [GROUP]  What's the worst thing about being with {name}?
+  [GROUP]  Who here has {name} taken advice from that they shouldn't have?
+  [GROUP]  Would {name} tell us if they were seeing someone? Vote.
+  [SEAT ]  {name}, what's the last message you deleted before sending?
+  [GROUP]  What would {name}'s dating app bio say if we wrote it honestly?
+  [GROUP]  Has {name} ever been someone's biggest mistake, or their best?
+  [SEAT ]  {name}, what's the most honest thing you've said to an ex?
+  [GROUP]  What's {name} going to do the second they leave tonight?
+  [SEAT ]  {name}, what's the biggest thing you've forgiven someone for?
+  [GROUP]  Is {name} more likely to be the ex who's missed or the one who's warned about?
+  [GROUP]  What does {name} need to hear that nobody's said?
+  [GROUP]  Would {name} ever tell us the full story of anything? Vote.
+  [SEAT ]  {name}, what's the one question you were hoping wouldn't come up?
+
+- - -  FILTHY  (24)  - - -
+       {name} is replaced with the hot seat player's name.
+
+  [GROUP]  What's {name}'s biggest red flag in bed?
+  [SEAT ]  {name}, who here would you have gone home with if you'd met tonight?
+  [GROUP]  What's {name}'s number, and how far off is the group's guess?
+  [SEAT ]  {name}, what's a hookup you've never told this group about?
+  [GROUP]  Rate {name} as a partner out of ten. They can appeal one score.
+  [SEAT ]  {name}, what do you want that you've never asked for out loud?
+  [GROUP]  Would {name} tell you if they'd hooked up with your ex? Vote.
+  [SEAT ]  {name}, describe your last hookup in three words.
+  [GROUP]  Which of us has {name} definitely thought about?
+  [SEAT ]  {name}, what's something you've faked to keep the peace?
+  [SEAT ]  {name}, what have you never told a partner and never will?
+  [SEAT ]  {name}, what's a boundary you've crossed and regretted?
+  [SEAT ]  {name}, what's the most attractive thing about someone in this room?
+  [SEAT ]  {name}, what do you look for that you'd never say out loud?
+  [SEAT ]  {name}, what's a story about you that's true but you'd deny?
+  [GROUP]  Who would {name} pick from this table, if forced?
+  [SEAT ]  {name}, what's something you've wanted to say to someone here?
+  [SEAT ]  {name}, what's the last thing you regretted the morning after?
+  [SEAT ]  {name}, what's the most illegal thing you've done and got away with?
+  [GROUP]  What's the worst thing on {name}'s phone right now? They answer honestly.
+  [SEAT ]  {name}, what happened on the night you've never told this group about?
+  [GROUP]  Vote: has {name} hooked up with someone at this table?
+  [SEAT ]  {name}, what's the drunkest you've ever been, and who got you home?
+  [GROUP]  What is {name} still lying to someone in this room about?
+
+     TOTAL ACROSS ALL TIERS: 126
+
+==========================================================================
+ 6.  RANK IT  —  Guess how they'd rank it.
+     Ranking prompts. Must be OPINION, never trivia — a right answer kills the round.
+     order policy: lead
+     file: src/data/rankIt.ts
+==========================================================================
+
+- - -  MILD  (24)  - - -
+
+  Rank these fast food places, best to worst
+      McDonald's  |  Wendy's  |  Taco Bell  |  Subway  |  KFC
+
+  Rank these nights out, best to worst
+      House party  |  Club  |  Pub  |  Concert  |  Patio drinks
+
+  Rank these from worst to least bad
+      Being left on read  |  A bad haircut  |  Missing a flight  |  Losing your phone  |  Getting caught lying
+
+  Rank these hangover cures
+      Greasy breakfast  |  Going back to sleep  |  Cold shower  |  Gatorade  |  Hair of the dog
+
+  Rank these pizza toppings
+      Pepperoni  |  Pineapple  |  Mushroom  |  Olives  |  Extra cheese
+
+  Rank these ways to spend a Sunday
+      Lie-in  |  Big walk  |  Roast dinner  |  Doing nothing  |  Seeing friends
+
+  Rank these from most to least annoying
+      Slow walkers  |  Loud chewing  |  Being late  |  Talking in films  |  Leaving on read
+
+  Rank these holidays
+      Beach  |  City break  |  Skiing  |  Road trip  |  Camping
+
+  Rank these chores worst to best
+      Washing up  |  Laundry  |  Bins  |  Hoovering  |  Cleaning the bathroom
+
+  Rank these breakfast foods
+      Pancakes  |  Full fry-up  |  Cereal  |  Avocado toast  |  Nothing
+
+  Rank these seats on a plane
+      Window  |  Aisle  |  Middle  |  Exit row  |  Front row
+
+  Rank these from most to least stressful
+      Job interview  |  First date  |  Public speaking  |  Driving test  |  Family dinner
+
+  Rank these party guests
+      The one who brings drinks  |  The DJ  |  The early leaver  |  The one who cries  |  The one who cleans up
+
+  Rank these snacks
+      Crisps  |  Chocolate  |  Popcorn  |  Cheese  |  Ice cream
+
+  Rank these from most to least overrated
+      New Year's Eve  |  Brunch  |  Festivals  |  Weddings  |  Birthdays
+
+  Rank these apps by hours lost
+      Instagram  |  TikTok  |  YouTube  |  Netflix  |  Group chat
+
+  Rank these ways to travel
+      Train  |  Plane  |  Car  |  Bus  |  Walking
+
+  Rank these drinks
+      Beer  |  Wine  |  Cocktails  |  Shots  |  Water
+
+  Rank these superpowers
+      Flying  |  Invisibility  |  Reading minds  |  Time travel  |  Never being tired
+
+  Rank these from most to least embarrassing
+      Tripping in public  |  Wrong name  |  Reply-all  |  Waving at a stranger  |  Voice note by accident
+
+  Rank these pets
+      Dog  |  Cat  |  Fish  |  Bird  |  Something illegal
+
+  Rank these seasons
+      Summer  |  Autumn  |  Winter  |  Spring
+
+  Rank these dinner options
+      Cook properly  |  Takeaway  |  Leftovers  |  Cereal  |  Going out
+
+  Rank these from most to least worth the money
+      Good coffee  |  Concert tickets  |  Nice shoes  |  A big TV  |  A holiday
+
+
+- - -  SPICY  (15)  - - -
+
+  Rank these red flags, worst first
+      Still texts their ex  |  No friends  |  Rude to staff  |  Won't stop talking about work  |  Second phone
+
+  Rank these dating disasters, worst first
+      Getting ghosted  |  Being cheated on  |  A public breakup  |  Meeting their parents too early  |  Finding an old photo
+
+  Rank these dating app sins
+      No photos  |  Only group photos  |  Gym mirror selfie  |  Fish  |  One-word bio
+
+  Rank these places to hook up
+      Their place  |  Your place  |  A hotel  |  A car  |  A festival tent
+
+  Rank these first date spots
+      Bar  |  Dinner  |  Coffee  |  A walk  |  Their place
+
+  Rank these from most to least forgivable
+      Leaving on read  |  Cancelling last minute  |  Flirting with a friend  |  Lying about their age  |  Forgetting a birthday
+
+  Rank these ways to end things
+      In person  |  Phone call  |  Text  |  Ghosting  |  Getting a friend to do it
+
+  Rank these exes by how much of a mistake
+      The rebound  |  The long one  |  The one your friends hated  |  The one you cheated with  |  The one who cried
+
+  Rank these by how much they put you off
+      Bad texting  |  No ambition  |  Talks over you  |  Bad tipper  |  Won't split the bill
+
+  Rank these confessions worst first
+      Kissed a friend's ex  |  Faked it  |  Read their messages  |  Lied about your number  |  Still have their hoodie
+
+  Rank these situationship stages
+      Talking stage  |  Soft launch  |  Exclusive  |  The talk  |  Meeting the friends
+
+  Rank these by how badly it ends
+      Work romance  |  Friend's sibling  |  Ex's friend  |  Holiday fling  |  Housemate
+
+  Rank these texts by desperation
+      "you up"  |  "we should catch up"  |  A voice note at 3am  |  Liking an old photo  |  "wrong chat sorry"
+
+  Rank these from most to least of a green flag
+      Good with your friends  |  Texts back fast  |  Cooks  |  Owns a car  |  Pays attention
+
+  Rank these worst nights out
+      Losing everyone  |  Getting refused entry  |  Running into an ex  |  Spending rent money  |  Crying in the smoking area
+
+
+- - -  FILTHY  (8)  - - -
+
+  Rank these morning after moves
+      Breakfast together  |  Sneak out  |  Order a taxi  |  Stay all day  |  Ask for a lift
+
+  Rank these by how much trouble they'd get you in
+      Group chat screenshot  |  Your search history  |  A work email  |  Your last three texts  |  Your camera roll
+
+  Rank these confessions, worst to hear from a friend
+      They cheated  |  They lied to you for years  |  They took your money  |  They told your secret  |  They set you up
+
+  Rank these by how fast you'd lose your job
+      A photo  |  A group chat  |  A voicemail  |  A witness  |  A receipt
+
+  Rank these blackouts, worst first
+      Wrong city  |  Wrong bed  |  No phone  |  No wallet  |  No memory
+
+  Rank these betrayals, worst first
+      A friend's ex  |  A friend's partner  |  A friend's secret  |  A friend's money  |  A friend's job
+
+  Rank these by how hard they'd be to explain
+      A tattoo  |  A stranger  |  A hospital band  |  A police caution  |  A new number
+
+  Rank these things to be caught with
+      Someone's phone  |  Someone's key  |  Someone's letter  |  Someone's partner  |  Someone's money
+
+
+     TOTAL ACROSS ALL TIERS: 47
+
+==========================================================================
+ 7.  SAME PAGE  —  Two people, one word. Keep converging.
+     Openers. Two players say a word at the same time and keep converging.
+     order policy: lead
+     file: src/data/sayTheSameThing.ts
+==========================================================================
+
+     Worded as TERRITORY, never a single instance: "Sports", not "A sport".
+     The singular asks for one item and leaves nowhere to converge.
+
+  WARM-UPS (not tiered — the first pair the app ever shows):
+      Colours
+      Seasons
+      Things that are cold
+
+- - -  MILD  (35)  - - -
+
+  Fast food
+  Things in a kitchen
+  Countries
+  Things that are expensive
+  Animals
+  Things in a bar
+  Drinks
+  Things that smell good
+  Cities
+  Things in a garden
+  Board games
+  Things that are heavy
+  Snacks
+  Things in a hospital
+  Sports
+  Things that are loud
+  Jobs
+  Things in a hotel room
+  Pizza toppings
+  Things that are sticky
+  Cartoon characters
+  Bands
+  Superheroes
+  Cars
+  Holidays
+  Breakfast foods
+  Instruments
+  Villains
+  Shoes
+  Camping
+  Pets
+  Red flags
+  Things that are cold
+  Colours
+  Seasons
+
+- - -  SPICY  (25)  - - -
+
+  Dating apps
+  Nightclubs
+  Exes
+  Cocktails
+  First dates
+  Bars
+  Break-ups
+  Shots
+  Flirting
+  Pubs
+  Crushes
+  Drinking games
+  Kissing
+  Karaoke
+  Hookups
+  Bouncers
+  Cheating
+  Fake IDs
+  Pickup lines
+  Stag dos
+  Hangovers
+  Hen dos
+  Tattoos
+  Strip clubs
+  Lingerie
+
+- - -  FILTHY  (12)  - - -
+
+  Drugs
+  Sex positions
+  Nudes
+  Kinks
+  Sexting
+  Sex toys
+  Porn
+  One-night stands
+  Condoms
+  Body parts
+  Foreplay
+  Affairs
+
+     TOTAL ACROSS ALL TIERS: 72
+
+==========================================================================
+ 8.  BALLPARK  —  One clue, one dial. Get close.
+     Spectrums. A hidden point sits between the two ends; the table argues a dial to it.
+     order policy: supplement
+     file: src/data/ballpark.ts
+==========================================================================
+
+- - -  MILD  (60)  - - -
+       Left = 0 on the dial, right = 100. The order inside a pair is deliberately NOT
+       always negative-to-positive, so the table cannot learn which end is "good".
+
+  Underrated                                <-->  Overrated
+  Small                                     <-->  Tiny
+  Insignificant cultural event              <-->  Significant cultural event
+  Worst day of the year                     <-->  Best day of the year
+  Unsexy emoji                              <-->  Sexy emoji
+  Snack                                     <-->  Meal
+  Soup                                      <-->  Stew
+  Sandwich                                  <-->  Not a sandwich
+  Breakfast food                            <-->  Dinner food
+  Cheap drink                               <-->  Expensive drink
+  Sad lunch                                 <-->  Triumphant lunch
+  Beer                                      <-->  Not beer
+  Acceptable pizza topping                  <-->  War crime
+  Hangover cure                             <-->  Hangover cause
+  Rude                                      <-->  Polite
+  Acquaintance                              <-->  Best friend
+  Cancel plans guilt free                   <-->  Must attend
+  Fine to text at 2am                       <-->  Absolutely not
+  Small talk                                <-->  Real conversation
+  Introvert activity                        <-->  Extrovert activity
+  Green flag                                <-->  Red flag
+  Compliment                                <-->  Insult
+  Bad first date                            <-->  Great first date
+  Trashy                                    <-->  Classy
+  Cringe                                    <-->  Based
+  Guilty pleasure                           <-->  Genuinely good
+  Try hard                                  <-->  Effortless
+  Dated                                     <-->  Timeless
+  Cheap looking                             <-->  Expensive looking
+  Sellout                                   <-->  Artist
+  Ugly                                      <-->  Beautiful
+  Basic                                     <-->  Niche
+  Easy                                      <-->  Hard
+  Safe                                      <-->  Dangerous
+  Minor inconvenience                       <-->  Ruins your week
+  Chore                                     <-->  Hobby
+  Skill                                     <-->  Luck
+  Bad idea                                  <-->  Good idea
+  Forgivable mistake                        <-->  Unforgivable
+  Vehicle                                   <-->  Not a vehicle
+  Furniture                                 <-->  Decoration
+  Clean                                     <-->  Dirty
+  Bad place to live                         <-->  Good place to live
+  Tourist trap                              <-->  Hidden gem
+  Toy                                       <-->  Tool
+  Disposable                                <-->  Heirloom
+  Forgotten                                 <-->  Iconic
+  Bad movie                                 <-->  Good movie
+  One hit wonder                            <-->  Legend
+  Made for kids                             <-->  Made for adults
+  Fad                                       <-->  Institution
+  Villain                                   <-->  Hero
+  Sport                                     <-->  Not a sport
+  Boring                                    <-->  Exciting
+  Too early                                 <-->  Too late
+  Wastes time                               <-->  Time well spent
+  Stressful                                 <-->  Relaxing
+  Old                                       <-->  New
+  Temporary                                 <-->  Permanent
+  Nightmare                                 <-->  Dream
+
+- - -  SPICY  (none written — plays the tiers below)  - - -
+
+
+- - -  FILTHY  (none written — plays the tiers below)  - - -
+
+
+     TOTAL ACROSS ALL TIERS: 60
+
+==========================================================================
+ 9.  LAST CALL  —  The wildcard. Never know what's coming.
+     Wildcards. Intensity 1 warms up, 2 has teeth, 3 is the reason someone says "okay, last one".
+     order policy: supplement
+     file: src/data/lastCall.ts
+==========================================================================
+
+- - -  MILD  (76)  - - -
+       {other} is replaced with another player's name. Sorted below by intensity.
+
+  [Call-out 1     ] Name the person here most likely to still be talking in an hour.
+  [Drink 1        ] Everyone wearing something they've owned over five years drinks.
+  [Question 1     ] What's the best thing anyone at this table has done this year?
+  [Vote 1         ] Vote on who's the best person to sit next to at a wedding.
+  [Mini dare 1    ] Swap seats with {other} for the next three turns.
+  [Confession 1   ] Admit the last thing you googled that you'd rather not read out.
+  [Drink 1        ] Anyone who's eaten today drinks. Anyone who hasn't drinks twice.
+  [Question 1     ] What's something you've changed your mind about this year?
+  [Call-out 1     ] Someone here gives advice they never take. Say who.
+  [Vote 1         ] Vote on who'd handle a genuine emergency best.
+  [Mini dare 2    ] Give {other} a compliment specific enough that it can't be a guess.
+  [Question 2     ] What's the last thing you spent money on and regretted?
+  [Drink 2        ] Drink if you've cancelled on someone at this table.
+  [Call-out 2     ] Name the person here who's changed the least. Is that a compliment?
+  [Confession 2   ] What's a story you tell that's a bit better than the truth?
+  [Vote 2         ] Vote on who's the hardest to get a straight answer out of.
+  [Question 2     ] What do you think this group gets wrong about you?
+  [Mini dare 2    ] Let {other} ask you one question you have to answer straight.
+  [Drink 2        ] Everyone drinks who's checked their phone since the last card.
+  [Call-out 2     ] Point at whoever is having the best year. They don't get to argue.
+  [Confession 3   ] Tell the group something you've never said out loud at this table.
+  [Mini dare 3    ] Let {other} read the last message you sent, in full.
+  [Vote 3         ] Vote on who'd be missed most if they stopped coming out.
+  [Question 3     ] What's the thing you'd want said about you in a toast?
+  [Drink 3        ] Everyone drinks for every year they've known the person to their left.
+  [Call-out 3     ] Say the nicest true thing you've never told {other}.
+  [Confession 3   ] Admit the last time you were genuinely wrong about someone here.
+  [Mini dare 3    ] Everyone answers one question you choose. You answer it last.
+  [Question 1     ] What's the best money you've spent in the last year?
+  [Question 1     ] What's a strong opinion you hold about something trivial?
+  [Question 2     ] Who in your life would be hardest to replace?
+  [Question 2     ] What's something you were sure about at 18 and completely wrong about?
+  [Question 1     ] What's the last thing that genuinely impressed you?
+  [Question 1     ] What would you do with a completely free Saturday and no phone?
+  [Question 2     ] What's a compliment you got that you still think about?
+  [Question 2     ] What's the worst advice you've ever been given confidently?
+  [Question 2     ] What's something you're better at than you let on?
+  [Question 3     ] Where were you happiest, geographically?
+  [Question 2     ] What's a small thing that instantly ruins your day?
+  [Question 2     ] What did you want to be at ten, and what happened to that?
+  [Question 2     ] Who's someone you should text back and haven't?
+  [Question 1     ] What's the most useless skill you're proud of?
+  [Question 2     ] What's something everyone seems to love that you don't get?
+  [Question 1     ] What's the best meal you've had this year?
+  [Question 2     ] What's a risk you took that worked out?
+  [Question 3     ] What's a risk you didn't take that you still think about?
+  [Question 2     ] What would your friends say is your most annoying habit?
+  [Question 1     ] What's something you've changed your mind about recently?
+  [Question 1     ] Who's the funniest person you know in real life?
+  [Question 2     ] What's a rule you live by that you'd recommend to anyone?
+  [Question 3     ] What's the last thing you did for the first time?
+  [Question 3     ] If you had to give a 20 minute talk with no prep, what's the topic?
+  [Question 1     ] How did tonight actually start? Whoever's turn it is tells it.
+  [Vote 1         ] Point at who's most likely to still be out at closing.
+  [Drink 1        ] Everyone who's checked their phone in the last minute drinks.
+  [Call-out 1     ] Name the person here with the worst taste in music. Defend it.
+  [Question 1     ] What's the best thing that's happened to you this month?
+  [Mini dare 1    ] Say something nice about the person on your left. Mean it.
+  [Drink 1        ] Youngest person here drinks. Oldest person here decides how much.
+  [Vote 1         ] Vote on who's the most reliable person at this table.
+  [Confession 1   ] Admit one thing you're bad at that you pretend you're fine at.
+  [Call-out 2     ] Someone here is the reason plans run late. Say the name.
+  [Drink 2        ] Drink if you've complained about work today.
+  [Question 2     ] What's the worst decision you've made in the last year?
+  [Mini dare 2    ] Hand your phone to the person across from you for one text.
+  [Vote 2         ] Vote on who at this table has the messiest life right now.
+  [Confession 2   ] What have you lied to this group about?
+  [Call-out 2     ] Call out the person here who's changed the most in two years.
+  [Drink 2        ] Everyone drinks except whoever the group decides is behind.
+  [Question 2     ] Who at this table would you not want to work with, and why?
+  [Mini dare 3    ] Read your last sent message out loud, no context.
+  [Confession 3   ] Tell the story you'd normally save for people who weren't there.
+  [Vote 3         ] Vote on who's had the worst night out of anyone here. They drink.
+  [Call-out 3     ] Say the thing about this group everyone's thinking and nobody says.
+  [Drink 3        ] Pick someone to drink. They pick two people. Those two pick one each.
+  [Mini dare 3    ] Let the group choose one photo from your camera roll to show the table.
+
+- - -  SPICY  (37)  - - -
+       {other} is replaced with another player's name. Sorted below by intensity.
+
+  [Vote 1         ] Vote on who took the longest to get ready tonight.
+  [Question 1     ] What's the best date you've been on, and did it go anywhere?
+  [Drink 1        ] Drink if you're the only single person in your family group chat.
+  [Call-out 1     ] Name the person here who flirts without noticing they're doing it.
+  [Mini dare 1    ] Describe your last date to the table in one sentence.
+  [Confession 1   ] Admit how long it's been since you were properly interested in someone.
+  [Question 1     ] What's the last thing that made you reconsider someone?
+  [Drink 1        ] Drink if you've checked someone's profile in the last hour.
+  [Vote 1         ] Vote on who's the most confident and least justified in it.
+  [Call-out 1     ] Name the person here with the best taste in people.
+  [Mini dare 1    ] Tell {other} the first honest thought you had about them.
+  [Confession 1   ] Admit the last thing you lied about on a date.
+  [Question 2     ] What's the fastest you've ever changed your mind about someone?
+  [Drink 2        ] Drink if you've been out with someone nobody here has met.
+  [Vote 2         ] Vote on who here keeps the most from this group.
+  [Confession 2   ] What's something you've done that you'd struggle to explain sober?
+  [Drink 2        ] Everyone who's texted an ex this year drinks. Twice this month.
+  [Call-out 2     ] Point at whoever is least honest about their love life.
+  [Mini dare 3    ] Let {other} decide who you have to answer a question about.
+  [Vote 3         ] Vote on the person here most likely to break someone's heart.
+  [Vote 3         ] Vote on who's leaving with a story tonight. They drink either way.
+  [Question 3     ] What would change if everyone here knew the truth about tonight?
+  [Drink 3        ] Last card. Everyone drinks to whatever happens after this.
+  [Drink 1        ] Drink if you've been on a date in the last month.
+  [Vote 1         ] Vote on who's most likely to leave with someone tonight.
+  [Call-out 1     ] Name the person here with the worst dating history.
+  [Confession 1   ] Admit the last time you texted someone you shouldn't have.
+  [Mini dare 1    ] Show the group your most recent match, no commentary.
+  [Drink 1        ] Drink if you're currently talking to more than one person.
+  [Question 2     ] What's the fastest you've known something wasn't going to work?
+  [Vote 2         ] Vote on who here has the biggest red flag. They get to respond once.
+  [Call-out 2     ] Someone here has an ex nobody liked. Say who, then say why.
+  [Drink 2        ] Drink if you've hooked up with someone you met the same night.
+  [Question 2     ] Who's the one that got away, and what actually happened?
+  [Mini dare 3    ] Let the table pick someone here to spend the next round sitting with.
+  [Drink 3        ] Everyone drinks for every relationship they've ended badly.
+  [Vote 3         ] Vote on the two people here most likely to end up together. They both drink.
+
+- - -  FILTHY  (25)  - - -
+       {other} is replaced with another player's name. Sorted below by intensity.
+
+  [Call-out 2     ] Someone here has an ex they still defend. Say who and why.
+  [Mini dare 2    ] Let {other} pick one photo on your phone for you to explain.
+  [Question 2     ] Who's the last person you thought about that you shouldn't have?
+  [Confession 3   ] What's the thing you'd least want read out from your phone?
+  [Question 3     ] What have you wanted to say to someone here and never said?
+  [Drink 3        ] Drink for every person here you've thought about that way.
+  [Call-out 3     ] Say who at this table you'd have gone for if things were different.
+  [Confession 3   ] Tell the group the thing you swore you'd take to the grave.
+  [Mini dare 3    ] Answer any one question {other} asks, completely honestly.
+  [Question 1     ] What's your type, and who here fits it closest?
+  [Confession 2   ] What's a hookup you've never told anyone at this table about?
+  [Mini dare 2    ] Let the person on your right read one conversation on your phone.
+  [Drink 2        ] Everyone who's hooked up with someone in this room drinks.
+  [Confession 3   ] What's the worst thing you've done to someone you were seeing?
+  [Vote 3         ] Vote on who here would be the best hookup. They don't get to vote.
+  [Mini dare 3    ] Text your ex anything the group agrees on. They write it, you send it.
+  [Call-out 3     ] Say who at this table you've thought about, or drink four.
+  [Question 3     ] What's the most reckless thing you've done for someone in bed?
+  [Confession 3   ] Tell the group the story you swore you'd take to the grave.
+  [Confession 3   ] Say the thing that would genuinely change how this table sees you.
+  [Mini dare 3    ] Hand your phone to {other} for one minute. No conditions.
+  [Call-out 3     ] Name the person here you've thought about that way and never said.
+  [Confession 3   ] Tell the group what actually happened the night you never explain.
+  [Drink 3        ] Everyone who's blacked out this year drinks. Twice if someone had to get you home.
+  [Vote 3         ] Vote on who here has got away with the most.
+
+     TOTAL ACROSS ALL TIERS: 138
+
+==========================================================================
+10.  KINGS CUP  —  Draw a card, do what it says.
+     Card rules. NOT TIERED — the same thirteen rules at every content level.
+     file: src/data/kingsCup.ts
+==========================================================================
+
+  A   Waterfall         Everyone drinks. You start, and nobody can stop until the person before them stops.
+  2   You               Pick someone. They drink.
+  3   Me                That's you. Drink.
+  4   Floor             Everyone touch the floor. Last one down drinks.
+  5   Guys              All the guys drink.
+  6   Chicks            All the girls drink.
+  7   Heaven            Point at the sky. Last hand up drinks.
+  8   Mate              Pick a mate. They drink every time you drink, for the rest of the game.
+  9   Drive             Vroom passes it on. Skrrt sends it back. Skeet skips the next player. No skrrting a skrrt. Hesitate or slip up and drink.
+  10  Categories        Name one, then go round the table. First to blank or repeat drinks.
+  J   Never Have I Ever Say it. Anyone who has, drinks.
+  Q   Question Master   You're Question Master until the next queen. Anyone who answers a question you ask drinks.
+  K   King's Cup        Pour some of your drink into the cup and make a rule everyone follows. The fourth king drinks it.
+
+  DRIVE CALLS (the "Drive" rule's options):
+      Vroom         passes it on, same direction
+      Skrrt         sends it back the other way
+      Skeet         skips the next player
+
+  Two card rules pull their content from other games' pools:
+      Category            -> Letter Rip's categories (section 2)
+      Never have I ever   -> the pool in section 11
+
+==========================================================================
+11.  Never Have I Ever
+     Not a mode of its own — this pool feeds Kings Cup's "Never have I ever" card.
+     order policy: supplement
+     file: src/data/neverHaveIEver.ts
+==========================================================================
+
+- - -  MILD  (60)  - - -
+
+  been fired from a job.
+  broken a bone doing something stupid.
+  lied on a résumé.
+  snuck into a venue without paying.
+  pretended not to see someone I knew in public.
+  returned something I'd already used.
+  blacked out and had the night explained to me.
+  been in a physical fight.
+  stolen something worth less than five dollars.
+  sent a message to the wrong group chat.
+  cheated on a test.
+  been on live television or radio.
+  spent a night in an airport.
+  quit a job with no notice.
+  faked an illness to get out of plans.
+  been the last person to leave a party three times running.
+  driven somewhere and not remembered the drive.
+  let someone else take the blame for something I did.
+  been thrown out of a bar.
+  cried over something I'd deny caring about.
+  gone through someone's phone.
+  been caught going through someone's phone.
+  lied to get a discount.
+  pretended to be someone else on the phone.
+  slept through something genuinely important.
+  been paid in cash for something questionable.
+  hidden a purchase from someone I live with.
+  started a rumour.
+  been the subject of a rumour that was true.
+  eaten food that had definitely turned.
+  worn the same clothes three days running.
+  left a job without saying goodbye to anyone.
+  been asked to leave a group chat.
+  pretended to understand a conversation entirely.
+  made a scene in a restaurant.
+  lost something expensive and never told anyone.
+  broken something and put it back like nothing happened.
+  been genuinely lost in a foreign country.
+  sung karaoke completely sober.
+  had a brush with the police.
+  been banned from somewhere permanently.
+  written a review out of spite.
+  kept a library book for over a year.
+  faked enthusiasm for an entire evening.
+  taken a day off and done absolutely nothing.
+  been to a wedding I wasn't invited to.
+  eaten an entire cake alone.
+  pretended a gift was bought rather than regifted.
+  gotten a haircut and immediately worn a hat.
+  been in the background of a stranger's photo on purpose.
+  argued with a referee, umpire or official.
+  used someone else's streaming account for years.
+  been the reason a group was asked to keep it down.
+  left a party through a window or back door.
+  lied about knowing how to do something at work.
+  had to be picked up by a family member from a night out.
+  spent money I'd set aside for something responsible.
+  been so hungover I considered a hospital.
+  told a stranger my entire life story.
+  regretted absolutely nothing about a night out.
+
+- - -  SPICY  (44)  - - -
+
+  hooked up with someone the same day I met them.
+  hooked up with a coworker.
+  had a hookup I'd rate a genuine zero.
+  dated two people at once.
+  hooked up with an ex after swearing I wouldn't.
+  been in a friends with benefits arrangement that ended badly.
+  hooked up in a car.
+  hooked up somewhere half in public.
+  stayed friends with someone I've slept with.
+  left in the middle of the night without saying goodbye.
+  lied to someone about why I couldn't see them again.
+  hooked up with someone because I was bored.
+  told someone I loved them to get out of an argument.
+  had a hookup story I've told as if it happened to a friend.
+  gone home with someone whose name I'd already forgotten.
+  had a relationship nobody in my life knew about.
+  kissed someone to make someone else jealous.
+  and it worked.
+  gone back to someone after they were awful to me.
+  been awful to someone who came back anyway.
+  hooked up on a first date.
+  refused to hook up and regretted it.
+  had feelings for two people at once.
+  ended something over text because I couldn't face it.
+  been ended with over text.
+  stalked an ex's new partner online.
+  kept clothes belonging to someone I'm no longer speaking to.
+  had a hookup ruined by laughing.
+  pretended to be asleep to avoid a conversation.
+  let a friend believe a lie about my relationship.
+  had a situationship last over a year.
+  asked a friend to rate someone I was seeing.
+  ignored every single warning about someone.
+  been the warning everyone ignored.
+  hooked up with someone twice my age or half of it.
+  sent a message I regretted before it delivered.
+  been in love with someone who never knew.
+  made a decision about someone based on one photo.
+  hooked up in a place with a real chance of being caught.
+  had to sneak out of somewhere in the morning.
+  had a hookup ask if we could keep it quiet.
+  asked someone to keep it quiet.
+  been in an open relationship.
+  wanted to be, and didn't say so.
+
+- - -  FILTHY  (24)  - - -
+
+  been walked in on.
+  sent a nude.
+  faked an orgasm.
+  hooked up with a friend's ex.
+  kept a hookup secret from everyone in this room.
+  had a crush on a friend's partner.
+  been someone's first.
+  used a dating app while in a relationship.
+  hooked up with someone in this room.
+  been the other person in someone's relationship.
+  found out I was the other person after the fact.
+  stalked an ex's new partner in person.
+  gone through a partner's phone.
+  found something on a partner's phone.
+  lied about my number.
+  thought about someone at this table before tonight.
+  blacked out and had the night described back to me.
+  taken something without knowing exactly what it was.
+  been in the back of an ambulance after a night out.
+  hooked up with someone in this room and denied it since.
+  cheated and never been caught.
+  stolen something worth more than a round.
+  lied to the police.
+  had a night I have never told this group the truth about.
+
+     TOTAL ACROSS ALL TIERS: 128
+
+==========================================================================
+12.  RIDE THE BUS  —  Four rounds, then try to get off the bus.
+     No written content.
+     file: src/games/RideTheBus.tsx
+==========================================================================
+
+  The one fully mechanical mode: a real shuffled 52-card deck and four
+  guesses. Nothing here to review.
+
+==========================================================================
+13.  Drink If  —  NOT IN THE APP
+     This pool exists in the source but no mode imports it.
+     file: src/data/drinkIf.ts
+==========================================================================
+
+  Included so you can see it. It is dead content today: deleting it changes
+  nothing on screen, and wiring it into a mode would be a separate job.
+
+- - -  MILD  (60)  - - -
+
+  you've called in sick because you were hungover.
+  you've texted someone you shouldn't have after midnight.
+  you still have an ex's number saved under a fake name.
+  you've pretended to know a song you'd never heard.
+  you've left a party without telling anyone.
+  you've cried in a bar bathroom.
+  you've been the reason a group chat went silent.
+  you've lied about your age in the last five years.
+  you've eaten something off the floor at a party.
+  you've spent more on a night out than on groceries that week.
+  you've been kicked out of somewhere.
+  you've fallen asleep somewhere you shouldn't have.
+  you've reread your own message after sending it and cringed.
+  you've ghosted a group plan you'd already confirmed.
+  you've taken a shot you did not want to take tonight.
+  you've googled yourself in the last month.
+  you've faked being on the phone to avoid someone.
+  you've lost a phone, a card, or a jacket on a night out.
+  you've argued about something you knew you were wrong about.
+  you've been someone's ride home more than three times this year.
+  your camera roll from last weekend has something you can't explain.
+  you've said 'I'm not drinking tonight' and then drank tonight.
+  you've pretended to be busy to get out of one drink.
+  you've fallen over completely sober.
+  you've told a story tonight that wasn't entirely true.
+  you've had a drink named after you.
+  you've been the first one on a dance floor.
+  you've been the last one off a dance floor.
+  you've queued more than an hour for something not worth it.
+  you've left a voicemail you'd pay money to delete.
+  you've broken something at someone else's house.
+  you've had a nickname you actively hated.
+  you've paid for a round you couldn't afford.
+  you've pretended to like a gift to someone's face.
+  you've missed a flight, a train, or a bus you'd already paid for.
+  you've walked home barefoot.
+  you've been recognised somewhere you didn't want to be recognised.
+  you've cancelled plans by text and immediately felt fine about it.
+  you've been in a photo you asked to have taken down.
+  you've forgotten someone's name halfway through talking to them.
+  you've eaten a full meal standing over the sink.
+  you've had an argument entirely in your own head.
+  you've spent a whole day in bed on purpose.
+  you've bought something at 2am you regretted by 9am.
+  you've told someone you'd 'be there in five' from your bed.
+  you've lied about how much you'd had to drink.
+  you've quit something and gone back within a month.
+  you've watched an entire series in a weekend and told no one.
+  you've been the only sober person in a room.
+  you've had to explain yourself to a taxi driver.
+  you'd rather be at home right now.
+  you've been genuinely offended by a joke and pretended not to be.
+  you've kept a receipt for something you never returned.
+  you've had a haircut you cried about.
+  you've said 'we should do this more often' and never followed up.
+  you've been late to something that started because of you.
+  you've taken credit for something someone else did.
+  you'd fail a surprise test on your own job.
+  you've pretended to have read something you hadn't.
+  you've been out with {other} and can't remember how it ended.
+
+- - -  SPICY  (45)  - - -
+
+  you've hooked up with someone at their place because yours was a disaster.
+  you've stayed the night when you fully intended not to.
+  you've hooked up with someone whose last name you never learned.
+  you've had a situationship you'd struggle to define out loud.
+  you've gotten back with an ex you told everyone you were done with.
+  you've been someone's secret.
+  you've kept someone a secret.
+  you've had a hookup interrupted by a roommate.
+  you've left a date early on purpose and lied about why.
+  you've been on two dates in one day.
+  you've said 'I love you' and immediately regretted it.
+  you've been dumped by text.
+  you've dumped someone by text.
+  you've slid into someone's DMs tonight.
+  you've been rejected in front of other people.
+  you'd get back together with your ex if they asked right now.
+  you've hooked up with a coworker.
+  you've deleted a dating app and reinstalled it the same week.
+  you've made a decision tonight you'll have to explain tomorrow.
+  you've hooked up somewhere you could have been walked in on.
+  you've had a friend talk you out of texting someone.
+  you've had a friend fail to talk you out of texting someone.
+  you've lied about being taken.
+  you've kept a hookup from a friend who'd have opinions.
+  you've dated two people who knew each other.
+  you've had a type your friends openly mock.
+  you've hooked up to get over someone else.
+  you've broken a rule you set for yourself about someone.
+  you've screenshotted a conversation to send to a friend.
+  you've been screenshotted, as far as you know.
+  you've had an ex you'd take back and won't admit it.
+  you've had a hookup story get back to you from someone else.
+  you've cried over someone you weren't even dating.
+  you've been blocked.
+  you've blocked someone and unblocked them.
+  you've hooked up with someone you met that same hour.
+  you've had a one night thing turn into something.
+  you've had something turn into a one night thing.
+  you've forgiven someone for something you swore you wouldn't.
+  you've stayed in something months longer than you should have.
+  you've left something too early and known it.
+  you've had a hookup you'd rate below the effort it took.
+  you've told a friend their partner was fine when they weren't.
+  you've been the ex that someone warns people about.
+  you've done something tonight you'd deny in the morning.
+
+- - -  FILTHY  (25)  - - -
+
+  you've hooked up with someone in this room.
+  you've sent a photo you'd panic about if it leaked.
+  you've faked it.
+  you've hooked up with a friend's ex.
+  you've had a crush on someone in this room.
+  you've had a hookup you've never told your closest friend about.
+  you've been caught looking at someone in this room.
+  you've lied about being single.
+  you've been someone's first.
+  you've been someone's worst.
+  you've been the reason a couple argued.
+  you'd let {other} read your last three messages.
+  you would absolutely not let {other} read your last three messages.
+  you've been unfaithful, in whatever way you define it.
+  you've thought about someone in this room on the way here.
+  you've thrown up and gone back out the same night.
+  you've done something in the last year you could still be charged for.
+  you've woken up somewhere and had to work out how you got there.
+  you've taken something without asking exactly what it was.
+  you've lied to a partner about where you were that night.
+  you've hooked up with two people in the same week and neither knew.
+  you've been fired, or asked to leave before you were.
+  you've had a night this group has never been told the truth about.
+  you've hooked up with a friend's partner.
+  you've told a lie tonight that is still standing.
+
+     TOTAL ACROSS ALL TIERS: 130
+
+==========================================================================
+END
+==========================================================================

@@ -2799,9 +2799,24 @@
 /* Sits on the flooded pack color, so chips invert like every other control. */
 /* Column count comes from balancedColumns() so rows divide evenly — a lone
    name on its own row reads as a layout bug. */
+/* minmax(0, 1fr) AND NOT 1fr, which is the whole reason a long name used to
+   walk off the side of the screen.
+
+   `1fr` is minmax(auto, 1fr), and that auto floor is the item's min-content —
+   so one "Marguerite" in the roster sized its own column to the word and the
+   row came out wider than the grid it was laid in, with the last name in it
+   hanging past the right edge. Overbid's pad is where it finally showed,
+   because that mode deals every seat at once, but the fault was never that
+   mode's: Kings Cup and Hot Seat draw the same grid and had the same
+   overflow waiting for the same name.
+
+   Zero is the floor now, so the columns stay even and the name inside is what
+   gives — .votepad__name has carried the ellipsis for it all along and was
+   never allowed to use it. Same fix, and the same reasoning, as the frame's
+   own minmax(0, 1fr) column in global.css. */
 .votepad__grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
   gap: var(--sp-2);
 }
 
@@ -2835,7 +2850,10 @@
   border-color: var(--category-ink);
 }
 
-.votepad__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `min-width: 0` is what lets the three properties beside it do anything: a
+   flex item's floor is its content, so without this the span sizes to the
+   whole name and the ellipsis never engages. */
+.votepad__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------------- Kings Cup ---------------- */
 .focal.kc { gap: var(--sp-3); }
@@ -4342,32 +4360,18 @@
 
 /* ---------------- The Number Game ---------------- */
 
-/* The bid is the whole card — it's the number everyone is arguing about, and
-   during a challenge the same slot becomes the clock, so the eye never has to
-   move to find what matters. It sits on the same white square every other
-   mode deals onto: near-black on white instead of ink on the pack colour,
-   which on the paler packs was the weakest contrast in the app. */
+/* The clock is the whole card. Bidding has no card at all now — the question
+   is the header's and the controls are the screen's — so what is left here is
+   the challenge and the result, where a table IS looking at one thing and
+   counting it down. It sits on the same white square every other mode deals
+   onto: near-black on white instead of ink on the pack colour, which on the
+   paler packs was the weakest contrast in the app. */
 .num__bid-who {
   font-size: var(--fs-sm);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--card-ink-muted);
   text-align: center;
-}
-
-/* The rule, under the two names and the number they are arguing about.
-   Sentence case on purpose: everything else on this card is a name or a
-   figure, set in caps, and one line of ordinary writing is what makes it read
-   as an instruction rather than another piece of state.
-
-   `margin-top: auto` was the first attempt and it was wrong. It pinned this to
-   the foot of a card whose height is set by the biggest thing it ever holds,
-   so the line sat alone with a hand's width of nothing above it. The bid is
-   one group of three lines; this belongs with them, not exiled from them. */
-.num__rule {
-  margin-top: var(--sp-3);
-  text-align: center;
-  text-wrap: balance;
 }
 
 .num__bid-n {
@@ -4383,6 +4387,168 @@
 /* Last five seconds pulse rather than change colour, which could vanish
    against a particular pack. */
 .num__bid-n[data-low] { animation: pulse 600ms var(--ease-in-out) infinite; }
+
+/* THE HEADER HUGS ITS QUESTION, so the gap under it is the same gap every
+   round.
+
+   Every other screen wants the opposite and gets it: --gheader-live-h
+   reserves a fixed 227px and .gheader__live centres itself in what the bar
+   leaves over, which pins the live line to one position whatever it says. On
+   a screen where the line is a category to hold in your head, that is exactly
+   right — it lands in the same place in every mode.
+
+   Here it is not a label, it is the question, and the row of numbers under it
+   is the answer. Centred in a fixed box, the distance between the two is
+   whatever the box has left: 48px under a two-line category, 32 under a
+   three-line one. So the one join on the screen that has to read as a join
+   was the only measurement on it that changed every time the category did.
+
+   Hugging makes the gap the constant and the POSITION the variable — the
+   question grows downward and the numbers, the names and the slack all move
+   with it, which is the trade this screen wants and Rank It's list refuses.
+   The two spacings are the same 40 the column below uses, so the line is not
+   jammed under the mode name — the failure an auto header is warned about in
+   tokens.css. It costs the live line about 8px of the position the reserve
+   would give it, and buys a join that does not move.
+
+   Same call Last Word makes on its board, for a different reason: there the
+   reserve came out of the letter grid, here out of the sentence. */
+.screen:has(.focal.num) .gheader {
+  min-height: 0;
+  gap: var(--sp-10);
+  padding-bottom: var(--sp-10);
+}
+
+/* AND THE LAST 5px OF IT ARE THE NOTE'S LINE BOX, NOT A GAP.
+
+   40px of padding under the note measured as a 45px gap on screen, against a
+   true 40 between the numbers and the names — because a pill's box IS its
+   ink and a line of text's is not. The note sets 12px caps in an 18px line
+   box: 4px of leading above the glyphs and 5 below, and the 5 is space the
+   eye adds to the gap under it while the box says the gap is right.
+
+   MEASURED, not derived — read off the ink rows of a screenshot at 390pt,
+   not worked out from the font's metrics, which is the only way to know
+   where the glyphs actually stop. Re-measure it if --fs-sm or this note's
+   line-height moves; nothing else here depends on it. Trimmed here rather
+   than taken off the padding above so it stays attached to its reason. */
+.screen:has(.focal.num) .gheader__note { margin-bottom: -5px; }
+
+/* THE QUESTION, THE NUMBERS AND THE NAMES ARE ONE BLOCK.
+
+   The bidding screen is a column with no card in it: the numbers, the table,
+   and the way out, in the order the round happens. The first three of those
+   are one sentence being assembled — who can name this many of that, and it
+   was you — so they sit together at the top of the screen and the slack falls
+   under them, above the grounded way out.
+
+   40px is the gap, and it is the same 40 the rule above puts under the
+   question, so the three land on one rhythm: question, numbers, names.
+
+   The distributed version of this was tried and was worse. Handing the slack
+   out evenly — an auto margin here, the pad's two above — did produce three
+   gaps of exactly 112px, and 112px between a question and the row that
+   answers it is not spacing, it is a page break. */
+.focal.num { gap: var(--sp-10); }
+
+/* The way out grounds itself, whichever of the two it is: the --lg call once
+   a bid stands, or the pair of ways to a category before one does. .actions
+   carries `margin-top: auto` already and .actions--row never has, so naming
+   both is what keeps the foot of the screen still between those two states. */
+.focal.num > .actions,
+.focal.num > .actions--row { margin-top: auto; }
+
+/* HOW BIG — Hot Seat's chip row exactly, standing above the table.
+
+   `nowrap` so a number can never break inside a pill — the same guard
+   .actions--row puts on its own, for the same reason.
+
+   Reusing .chip and not a pill of its own is the point. It is the same act
+   this app already had a control for. Two recipes for that would be one too
+   many, and the fill below is the third place that act is drawn. */
+.num__dares {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Only as tall as the names it holds, so the slack under them is slack and
+   not a stretched box. `flex: 1` — .picker__scroll's own, written for a
+   picker that fills a page — would take the lot and leave the way out
+   floating in the middle of the screen. It still shrinks and scrolls once
+   there are more names than room. */
+.focal.num > .picker__scroll { flex: 0 1 auto; }
+
+/* The typed number stands where the row stood, at the row's own height, so
+   nothing under it moves while somebody is typing. `.text-input--quiet` is
+   built for the stack — full width, a control-md tall, with a gap under it
+   for the button that usually follows — and none of that is true here. */
+.num__count {
+  width: 4.5rem;
+  min-height: var(--control-sm);
+  margin-bottom: 0;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+/* Set in words among a row of figures, so it does not read as a number the
+   table could claim. The same hairline as the rest — it is one of the
+   options, not a control of a different kind. */
+.num__other { font-size: var(--fs-xs); letter-spacing: var(--tracking-wide); }
+
+/* THE TABLE. The category picker's grid, at the picker's own two columns —
+   these are the same cards, so they are laid out the same way and a name is
+   never a lone card on a row of its own. */
+.num__seats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+/* AN ODD TABLE CENTRES ITS LAST CARD.
+
+   Three names in two columns leaves one alone on the bottom row, and a grid
+   puts it in column one — hard against the left edge with a card's width of
+   nothing beside it, which reads as a card missing rather than as a table of
+   three. It happens constantly: every even table becomes an odd pad the
+   moment somebody takes the bid and their own name leaves it.
+
+   `:last-child:nth-child(odd)` is the count, not the position — an element
+   can only be both if there is an odd number of them.
+
+   It spans the row and then takes one column's width back, rather than being
+   left in column one and nudged: a centred card has to be measured against
+   the whole row, and half the row less half the gap IS the column the cards
+   above it are in. So the odd one out is the same size as every other card
+   and sits on the row's centre line. */
+.num__seats > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - var(--sp-2) / 2);
+}
+
+/* Centred, where a category is set left. A category is a phrase that may run
+   to two lines and reads as text; a name is one word and reads as a target,
+   and left-aligning it puts the word off to one side of a card the size of a
+   thumb. The only thing this changes about the card. */
+.num__seat {
+  justify-content: center;
+  text-align: center;
+}
+
+/* The band's quiet tertiary control, on a screen that has no band. Its margin
+   is measured to clear a card's shadow — see .gfoot__skip — and there is no
+   card above it here, so the column's own gap is the spacing. */
+.focal.num .gfoot__skip { margin-top: 0; }
+
+/* THE CHOSEN ONE FILLS — .votepad__player and .rank__pos to the letter, on
+   the one control that had the state and not the paint for it. Readable from
+   across a table, which is where half of them are sitting. */
+.chip[data-on] {
+  background: var(--category-ink);
+  color: var(--category);
+  border-color: var(--category-ink);
+}
 
 /* ---------------------------------------------------------------
    THE REVEAL: EVERY ITEM SLIDES OUT OF THE SPOT YOU PUT IT IN.
