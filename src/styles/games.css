@@ -4384,6 +4384,23 @@
    against a particular pack. */
 .num__bid-n[data-low] { animation: pulse 600ms var(--ease-in-out) infinite; }
 
+/* THE JUMPS — Hot Seat's chip row exactly, standing in the action stack.
+
+   No style of its own beyond the two things that come of sitting there rather
+   than in a form: `flex: none` because .actions is a column and a wrapping row
+   would otherwise be handed the slack the buttons below it are grounded
+   against, and nowrap so a label can never break inside a pill — the same
+   guard .actions--row puts on its own, for the same reason.
+
+   Reusing .chip and not a pill of its own is the point. It is the same act
+   this app already had a control for: a shortcut to a value the primary
+   underneath can also reach the long way round. Two recipes for that would be
+   one too many. */
+.num__jumps {
+  flex: none;
+  white-space: nowrap;
+}
+
 /* ---------------------------------------------------------------
    THE REVEAL: EVERY ITEM SLIDES OUT OF THE SPOT YOU PUT IT IN.
 

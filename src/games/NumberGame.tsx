@@ -33,6 +33,38 @@ const START_BID = 3;
 const MIN_SECONDS = 25;
 
 /**
+ * THE JUMPS. Bidding one at a time is what makes this drag.
+ *
+ * A table of six spends five raises getting from 3 to 8, and nobody has said
+ * anything they can't back up — the interesting part of the game only starts
+ * where someone claims a number they might not have. So the round bids in
+ * fives as well as ones: the next milestones above the bid are on the screen
+ * beside the +1, and taking one is the whole boast in a single tap.
+ *
+ * Two of them, not the whole ladder. A phone row that offers 10, 15, 20 and
+ * 25 turns a dare into a menu, and the far end of it is never the bid anyone
+ * actually makes.
+ */
+const MILESTONE = 5;
+const JUMPS_SHOWN = 2;
+
+/**
+ * The next milestones a bid of `bid` could jump to.
+ *
+ * `bid + 1` is skipped because the primary action is already offering it —
+ * from a bid of 4 the row reads 10 and 15, not 5 and 10, so a jump is always
+ * visibly bigger than the button under it. Only the multiples are offered:
+ * the point is a number the table recognises as big, and "9" is not one.
+ */
+function jumpsAbove(bid: number): number[] {
+  const out: number[] = [];
+  for (let n = Math.floor(bid / MILESTONE + 1) * MILESTONE; out.length < JUMPS_SHOWN; n += MILESTONE) {
+    if (n > bid + 1) out.push(n);
+  }
+  return out;
+}
+
+/**
  * How big the table can be when nobody entered names.
  *
  * Two is the real floor — the game is one person bidding and another calling
@@ -162,12 +194,26 @@ export function NumberGame({ mode, onBack }: Props) {
     }
   }, [timer.running, timer.seconds]);
 
-  const raise = useCallback(() => {
-    setBid((b) => b + 1);
-    setHolder(turn);
-    setTurn((t) => t + 1);
-    buzz(25);
-  }, [turn]);
+  /**
+   * Claim a number. The bid becomes it, the seat that claimed it becomes the
+   * one who can be made to prove it, and the call passes on.
+   *
+   * One function for the +1 and the jumps because they are one move — the
+   * only thing that differs is how far it goes, and nothing downstream cares.
+   * A jump gets the longer haptic the app gives its heavier taps: the phone
+   * should not report a leap to 15 the same way it reports a nudge to 5.
+   */
+  const raiseTo = useCallback(
+    (next: number) => {
+      setBid(next);
+      setHolder(turn);
+      setTurn((t) => t + 1);
+      buzz(next > bid + 1 ? [30, 40, 60] : 25);
+    },
+    [bid, turn],
+  );
+
+  const raise = useCallback(() => raiseTo(bid + 1), [bid, raiseTo]);
 
   const challenge = useCallback(() => {
     buzz([60, 50, 120]);
@@ -209,6 +255,7 @@ export function NumberGame({ mode, onBack }: Props) {
    * Lily" before Lily had opened her mouth.
    */
   const opened = bid > START_BID;
+  const jumps = useMemo(() => jumpsAbove(bid), [bid]);
 
   return (
     /* The category is what everyone is bidding against and has to hold in
@@ -305,6 +352,24 @@ export function NumberGame({ mode, onBack }: Props) {
             </button>
           )}
           <div className="actions">
+            {/* THE JUMPS, grounded with the buttons rather than floating up by
+                the card. They are a way of bidding, not a note about the
+                round, so they belong in the stack the thumb is already in —
+                one tap away from the +1 they are an alternative to, and
+                reading as the same decision made bigger. */}
+            <div className="chips num__jumps">
+              {jumps.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className="chip"
+                  onPointerDown={() => audio.play("tap")}
+                  onClick={() => raiseTo(n)}
+                >
+                  I can name {n}
+                </button>
+              ))}
+            </div>
             <button
               className="btn btn--lg btn--block"
               /* On the press, like every other confirmed tap in the app. */
