@@ -4388,22 +4388,36 @@
    against a particular pack. */
 .num__bid-n[data-low] { animation: pulse 600ms var(--ease-in-out) infinite; }
 
-/* The bidding screen is a column with no card in it: the numbers, the table,
-   and the way out, in the order the round happens. The tighter gap is because
-   the first two are one control between them — pick how big, then pick who —
-   and .focal's own --sp-4 read as two separate things. */
-.focal.num { gap: var(--sp-3); }
+/* THE QUESTION, THE NUMBERS AND THE NAMES ARE ONE BLOCK.
 
-/* HOW BIG — Hot Seat's chip row exactly, standing above the table, AND IT
-   STARTS WHERE A CARD STARTS.
+   The bidding screen is a column with no card in it: the numbers, the table,
+   and the way out, in the order the round happens. The first three of those
+   are one sentence being assembled — who can name this many of that, and it
+   was you — so they sit together at the top of the screen and the slack falls
+   under them, above the grounded way out.
 
-   The header on this screen reserves --gheader-live-h, which is the row a
-   card screen works its own header out to be. So the first thing after it
-   lands on the line a card's top edge lands on in every other mode, and the
-   round opens where a player's eye already goes. That is what `flex: none`
-   and no auto margin buy — this row holds the card's line, and the slack the
-   question is not using goes to the names below instead of pushing these
-   down off it.
+   40px is the gap, and it is measured rather than picked off the scale by
+   feel: the header reserves a fixed 227px and centres its live line in what
+   the bar leaves of that, which lands 32px of air under a three-line question
+   and 48 under a two-line one. Nothing down here can reach that air — it is
+   inside the header's own box — so the gap this column CAN set is the one
+   under the numbers, and 40 is the value that reads as the same gap whichever
+   way the category wraps.
+
+   The distributed version of this was tried and was worse. Handing the slack
+   out evenly — a third auto margin here, the pad's two above — did produce
+   three gaps of exactly 112px, and 112px between a question and the row that
+   answers it is not spacing, it is a page break. */
+.focal.num { gap: var(--sp-10); }
+
+/* The way out grounds itself, whichever of the two it is: the --lg call once
+   a bid stands, or the pair of ways to a category before one does. .actions
+   carries `margin-top: auto` already and .actions--row never has, so naming
+   both is what keeps the foot of the screen still between those two states. */
+.focal.num > .actions,
+.focal.num > .actions--row { margin-top: auto; }
+
+/* HOW BIG — Hot Seat's chip row exactly, standing above the table.
 
    `nowrap` so a number can never break inside a pill — the same guard
    .actions--row puts on its own, for the same reason.
@@ -4416,29 +4430,12 @@
   white-space: nowrap;
 }
 
-/* Only as tall as the names it holds, so the auto margins have something to
-   give. `flex: 1` — .picker__scroll's own, written for a picker that fills a
-   page — would eat the slack and leave nothing to centre in. It still shrinks
-   and scrolls once there are more names than room. */
+/* Only as tall as the names it holds, so the slack under them is slack and
+   not a stretched box. `flex: 1` — .picker__scroll's own, written for a
+   picker that fills a page — would take the lot and leave the way out
+   floating in the middle of the screen. It still shrinks and scrolls once
+   there are more names than room. */
 .focal.num > .picker__scroll { flex: 0 1 auto; }
-
-/* AND THE TWO GAPS ROUND THE NAMES ARE THE SAME GAP.
-
-   The pair of auto margins above splits the slack evenly, so the space over
-   the names and the space under them start out identical — and then
-   `.focal:has(.focal__center) .actions` added 8px below, which is the band
-   this screen does not have wanting a little air over its button. Measured
-   168 above and 176 below on a 390pt screen, which is exactly that rule and
-   nothing else.
-
-   Zero, not auto: the column is allowed exactly two auto margins and the
-   scroller has both of them. A third here would take a share of the slack
-   and push the names back off centre — the thing this is fixing.
-
-   Written against the same `:has` the rule it overrides uses, because a plain
-   `.focal.num > .actions` ties it on specificity and loses on source order —
-   global.css is loaded after this file. */
-.focal.num:has(.focal__center) > .actions { margin-top: 0; }
 
 /* The typed number stands where the row stood, at the row's own height, so
    nothing under it moves while somebody is typing. `.text-input--quiet` is

@@ -575,12 +575,7 @@ export function NumberGame({ mode, onBack }: Props) {
               The holder is left off: raising your own bid is bidding against
               yourself, and the only thing anyone else can do is exactly what
               these are for. */}
-          {/* The names take the slack, so the space the question is not using
-              lands between the numbers and the names rather than above them
-              both. `.focal__center`'s pair of auto margins — the second of
-              exactly two in this column, which is why .actions gives its own
-              up when one is present. */}
-          <div className="picker__scroll focal__center" onScroll={fadeOnScroll}>
+          <div className="picker__scroll" onScroll={fadeOnScroll}>
             <div className="num__seats">
               {pad
                 .filter((name) => name !== holder)
