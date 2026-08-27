@@ -4467,6 +4467,28 @@
   gap: var(--sp-2);
 }
 
+/* AN ODD TABLE CENTRES ITS LAST CARD.
+
+   Three names in two columns leaves one alone on the bottom row, and a grid
+   puts it in column one — hard against the left edge with a card's width of
+   nothing beside it, which reads as a card missing rather than as a table of
+   three. It happens constantly: every even table becomes an odd pad the
+   moment somebody takes the bid and their own name leaves it.
+
+   `:last-child:nth-child(odd)` is the count, not the position — an element
+   can only be both if there is an odd number of them.
+
+   It spans the row and then takes one column's width back, rather than being
+   left in column one and nudged: a centred card has to be measured against
+   the whole row, and half the row less half the gap IS the column the cards
+   above it are in. So the odd one out is the same size as every other card
+   and sits on the row's centre line. */
+.num__seats > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - var(--sp-2) / 2);
+}
+
 /* Centred, where a category is set left. A category is a phrase that may run
    to two lines and reads as text; a name is one word and reads as a target,
    and left-aligning it puts the word off to one side of a card the size of a
