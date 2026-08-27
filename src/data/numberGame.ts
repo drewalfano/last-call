@@ -13,16 +13,16 @@ import type { Pools } from "./pools";
  */
 export const NUMBER_GAME_CATEGORIES: Pools<string> = {
   safe: [
-    "Taylor Swift songs", "Countries in Europe", "Pixar films", "Cocktails",
-    "Premier League teams", "US states", "Breakfast cereals", "Harry Potter characters",
-    "Car brands", "Types of pasta", "Simpsons characters", "Capital cities",
-    "Beatles songs", "Chocolate bars", "Disney princesses", "Sports played with a ball",
-    "Countries in Africa", "Marvel characters", "Crisp flavours", "Board games",
-    "Things in a kitchen drawer", "Dog breeds", "Beers", "Musicals",
-    "Horror films", "Fast food chains", "Islands", "Christmas songs",
-    "Things at a festival", "Card games", "Cheeses", "Olympic sports",
-    "Reality TV shows", "Kinds of tea", "Football players", "Video games",
-    "Pizza toppings", "Airlines", "Shoe brands", "Cities in Italy",
+    "Taylor Swift songs", "Countries in Europe", "Disney/Pixar films", "Cocktails",
+    "US states", "Breakfast cereals", "Car brands", "Types of pasta",
+    "Capital cities", "Beatles songs", "Chocolate bars", "Disney princesses",
+    "Sports played with a ball", "Countries in Africa", "Marvel characters",
+    "Crisp flavours", "Board games", "Things in a kitchen drawer", "Dog breeds",
+    "Beers", "Musicals", "Horror films", "Fast food chains", "Islands",
+    "Christmas songs", "Things at a festival", "Card games", "Cheeses",
+    "Olympic sports", "Reality TV shows", "Kinds of tea", "Football players",
+    "Video games", "Pizza toppings", "Airlines", "Shoe brands",
+    "Cities in Italy", "Cities in Canada",
   ],
   night: [
     "Reasons a date ends early",
