@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
+import { CategoryPicker } from "../components/CategoryPicker";
 import { Stepper } from "../components/Stepper";
 import { shuffle, useDeck } from "../lib/deck";
 import { fadeOnScroll } from "../lib/scrollFade";
@@ -36,7 +37,7 @@ import type { ModeDef } from "../data/modes";
  * claiming a number they might not have, and everything else was queueing.
  */
 
-type Phase = "count" | "bidding" | "challenge" | "verdict";
+type Phase = "count" | "picking" | "bidding" | "challenge" | "verdict";
 
 /** Seconds per item claimed. A bid of 7 buys 42 seconds, which is tight. */
 const SECONDS_PER_ITEM = 6;
@@ -143,6 +144,21 @@ export function NumberGame({ mode, onBack }: Props) {
   const [dare, setDare] = useState(START_BID + 1);
   /** Who owns the bid — the one who can be made to prove it. Null until taken. */
   const [holder, setHolder] = useState<string | null>(null);
+  /**
+   * A category the table went and chose, which stands in front of the deck
+   * until the next Random puts the deck back in charge — the same
+   * `chosen ?? deck.current` Letter Rip and Ballpark run on.
+   */
+  const [chosen, setChosen] = useState<string | null>(null);
+  /**
+   * Which screen the picker was opened from, so Back means back.
+   *
+   * Both screens that offer the pair reach the same picker, and the two are
+   * not interchangeable to return to: cancelling out of it on the verdict
+   * screen has to land on the verdict, because dropping into a fresh round
+   * would be the change the player just declined to make.
+   */
+  const [pickedFrom, setPickedFrom] = useState<Phase>("bidding");
   /**
    * A number somebody said out loud that the row did not offer.
    *
@@ -270,8 +286,9 @@ export function NumberGame({ mode, onBack }: Props) {
    * category it is a number OF. Without a category — an empty pool, which
    * only a broken build produces — it is still a sentence, just a vaguer one.
    */
-  const question = deck.current
-    ? `Who can name ${dare}\n${deck.current}?`
+  const category = chosen ?? deck.current;
+  const question = category
+    ? `Who can name ${dare}\n${category}?`
     : `Who can name ${dare}?`;
 
   /**
@@ -298,7 +315,8 @@ export function NumberGame({ mode, onBack }: Props) {
   }, [bid, timer]);
 
   /**
-   * A fresh category, the same table.
+   * Everything a round holds, back to nothing. The category is the caller's
+   * business — the two ways in set it and then come here.
    *
    * `seats` is deliberately untouched: how many of you there are is a fact
    * about the night, not about the round, and being asked again between
@@ -307,8 +325,7 @@ export function NumberGame({ mode, onBack }: Props) {
    * takes the count with it, which is the same rule every other mode's state
    * follows. See the note on the state machine in App.tsx.
    */
-  const newRound = useCallback(() => {
-    deck.draw();
+  const resetRound = useCallback(() => {
     setBid(START_BID);
     setDare(START_BID + 1);
     setHolder(null);
@@ -318,7 +335,32 @@ export function NumberGame({ mode, onBack }: Props) {
     setOrder((prev) => seatOrder(prev.length, prev));
     timer.stop();
     setPhase("bidding");
-  }, [deck, timer]);
+  }, [timer]);
+
+  /**
+   * TWO WAYS TO A CATEGORY, which is what every other category mode offers
+   * and this one did not.
+   *
+   * It had a single New category, which is Random with no way to say what you
+   * wanted — so a table hunting for one they could actually bid on tapped it
+   * over and over, reading each one to find out it was not the one. Letter
+   * Rip, Odd One Out, Same Page and Ballpark all put the pair here: a tap for
+   * a different one, or the whole list to read together.
+   *
+   * Random drops `chosen` on the way past. Without that, the deck would deal
+   * underneath a hand-picked category that goes on standing in front of it,
+   * and the button would look broken.
+   */
+  const drawRandom = useCallback(() => {
+    setChosen(null);
+    deck.draw();
+    resetRound();
+  }, [deck, resetRound]);
+
+  const openPicker = useCallback((from: Phase) => {
+    setPickedFrom(from);
+    setPhase("picking");
+  }, []);
 
   return (
     /* The category is what everyone is bidding against and has to hold in
@@ -345,7 +387,13 @@ export function NumberGame({ mode, onBack }: Props) {
          sets its category on a row of its own — the question is one thing and
          the category is the other, and a table scanning it should not have to
          find where one ends. See .gheader__now's `white-space: pre-line`. */
-      subtitle={phase === "bidding" ? question : phase === "count" ? undefined : deck.current}
+      /* The picker is a full page of its own with a Back at the foot of it.
+         The header's X goes somewhere else entirely — all the way out of the
+         mode — and two backs on one screen, the more obvious-looking one
+         being the destructive one, is the thing `hideHeader` exists to stop.
+         Same call Letter Rip and Ballpark make on the same screen. */
+      hideHeader={phase === "picking"}
+      subtitle={phase === "bidding" ? question : phase === "count" ? undefined : category}
       /* Under the question, the state it is being asked against. */
       note={
         phase === "bidding"
@@ -398,6 +446,22 @@ export function NumberGame({ mode, onBack }: Props) {
             </button>
           </div>
         </CardBody>
+      )}
+
+      {/* ---------- The whole list ---------- */}
+      {phase === "picking" && (
+        /* The picker brings its own Back — and its own reason for having no
+           header, which is that the header's X leaves the mode entirely and
+           would sit directly above a Back that does not. See GameScreen's
+           `hideHeader`. */
+        <CategoryPicker
+          categories={pool}
+          onPick={(c) => {
+            setChosen(c);
+            resetRound();
+          }}
+          onCancel={() => setPhase(pickedFrom)}
+        />
       )}
 
       {/* ---------- Bidding ---------- */}
@@ -536,24 +600,31 @@ export function NumberGame({ mode, onBack }: Props) {
             </div>
           </div>
 
-          <div className="actions">
-            {holder ? (
-              /* The one --lg on the screen, and only once there is something
-                 to call. Before that the names ARE the action and nothing
-                 here should outrank them. */
+          {/* Only while the category is untouched. Once someone has taken a
+              number the category is in play, and changing it would be a way
+              out of a bid you cannot meet rather than a way past a bad
+              prompt — so the pair goes and the call takes its place. Both
+              blocks stand one control tall, which is why the names do not
+              move at the moment somebody bids. */}
+          {holder ? (
+            <div className="actions">
+              {/* The one --lg on the screen, and only once there is something
+                  to call. Before that the names ARE the action and nothing
+                  here should outrank them. */}
               <button className="btn btn--lg btn--block" onClick={challenge}>
                 Prove it, {holder}
               </button>
-            ) : (
-              /* Only while the category is untouched. Once someone has taken
-                 a number the category is in play, and skipping it would be a
-                 way out of a bid you cannot meet rather than a way past a bad
-                 prompt. */
-              <button className="gfoot__skip" onClick={newRound}>
-                New category
+            </div>
+          ) : (
+            <div className="actions--row">
+              <button className="btn btn--ghost" onClick={drawRandom}>
+                Random
               </button>
-            )}
-          </div>
+              <button className="btn btn--ghost" onClick={() => openPicker("bidding")}>
+                Categories
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -604,9 +675,19 @@ export function NumberGame({ mode, onBack }: Props) {
             </div>
           }
         >
-          <div className="actions">
-            <button className="btn btn--lg btn--block" onClick={newRound}>
-              New category
+          {/* THE PAIR, AND NOTHING ABOVE IT. Every other screen in the app
+              ranks one action --lg, and this is the one screen with nothing
+              to rank: the round is settled, the only question left is which
+              category next, and the two answers to it are equally good ones.
+              Drawing one of them larger would be the app having an opinion
+              about which — the same opinion the single New category button
+              used to enforce by being the only way through. */}
+          <div className="actions--row">
+            <button className="btn btn--ghost" onClick={drawRandom}>
+              Random
+            </button>
+            <button className="btn btn--ghost" onClick={() => openPicker("verdict")}>
+              Categories
             </button>
           </div>
         </CardBody>

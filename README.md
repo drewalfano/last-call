@@ -168,7 +168,11 @@ into `tokens.css` beside the pack that freed it.
   the number is one the table hears as big, plus **Other** for the number
   somebody actually said out loud, which none of three preset options is
   going to be — and then tap your own name to claim it, which means the
-  people with nothing to say are never in the way. A typed number joins the
+  people with nothing to say are never in the way. The category has the same
+  two ways in as every other category mode — **Random** to redraw, or
+  **Categories** for the list — offered while nobody has bid and again on the
+  result, and gone the moment a bid stands, because changing the category
+  then is a way out of a bid you cannot meet. A typed number joins the
   row in its place among the milestones and leaves it once the bidding passes
   it; anything at or below the standing bid is refused out loud rather than
   by a dead button, and two digits is the ceiling.
@@ -191,9 +195,10 @@ into `tokens.css` beside the pack that freed it.
 
 ### Choosing a category
 
-Letter Rip and Odd One Out share `CategoryPicker`. Three ways in, in order of
-speed: the category already on screen, **Random** to redraw, and **All
-categories** for a scrollable grid with **Write your own** pinned at the top.
+Letter Rip, Odd One Out, Ballpark and Overbid share `CategoryPicker`. Three
+ways in, in order of speed: the category already on screen, **Random** to
+redraw, and **Categories** for a scrollable grid with **Write your own**
+pinned at the top.
 
 **Odd One Out groups its words by category rather than listing them flat, and
 that grouping is load-bearing.** A player browsing a list of *words* and
