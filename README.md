@@ -144,7 +144,12 @@ into `tokens.css` beside the pack that freed it.
   1. **A role is only ever on screen for the player it belongs to.** Every
      reveal is bracketed by a neutral cover screen, and the phase machine
      cannot go from one player's role straight to the next. The reveal order
-     is shuffled, so position gives nothing away.
+     is the roster's own order cut at a random seat — names get typed in going
+     round the circle, so following it means each reveal passes the phone one
+     seat rather than back across the table, and randomising the cut is what
+     keeps the same player from opening every round. It was a full shuffle
+     once; the Imposter is drawn independently of the order, so their place in
+     it is uniform either way and the shuffle was only buying the hop.
   2. **Both role cards are visually identical** — same white stock, size and
      eyebrow. Only the text colour differs. An inverted dark card would change
      how much light the screen throws and let someone across the table spot

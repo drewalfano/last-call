@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
-import { randomItem, shuffle } from "../lib/deck";
+import { randomItem } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { Stepper } from "../components/Stepper";
@@ -19,13 +19,36 @@ import type { ModeDef } from "../data/modes";
  * screen, and the phase machine below can never move from one player's role
  * straight to the next — "role" always returns to "cover".
  *
- * The reveal order is shuffled too. If the phone always went 1, 2, 3… a table
- * could start reading something into who hesitated and when; shuffling makes
- * position tell you nothing.
+ * The reveal order is the ROSTER'S order, cut at a random seat. It used to be
+ * a full shuffle, on the reasoning that a phone which always went 1, 2, 3
+ * would let a table read something into who hesitated and when — but that was
+ * paying for a tell the deal does not have. The Imposter is drawn
+ * independently of the order, so their place in it is already uniform; all a
+ * shuffle added on top was making the phone hop about the table.
+ *
+ * And it hops about a real one. Names get typed in going round the circle,
+ * because that is the only order a table can keep track of, so the roster IS
+ * the seating — and a reveal order that ignores it asks the phone to cross the
+ * table five times instead of being passed one seat to the left. Randomising
+ * where the circle is CUT keeps the one thing worth keeping, which is that the
+ * same person does not open every round.
  */
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 10;
+
+/**
+ * The circle, cut at a random seat: 3, 4, 5, 1, 2 at a table of five.
+ *
+ * Every player still appears exactly once, and who opens is uniform over the
+ * table — the two things the shuffle this replaced was there for. What it
+ * gives back is the pass: each reveal hands the phone to the seat next door,
+ * which is where the roster's own order came from in the first place.
+ */
+function revealOrder(count: number): number[] {
+  const start = Math.floor(Math.random() * count);
+  return Array.from({ length: count }, (_, i) => (start + i) % count);
+}
 
 type Phase = "setup" | "picking" | "cover" | "role" | "ready";
 
@@ -43,7 +66,7 @@ interface State {
   showHint: boolean;
   /** Index into the player list, not into the reveal order. */
   imposter: number;
-  /** Shuffled player indices — the order the phone goes round. */
+  /** Player indices in seating order from a random start — see revealOrder. */
   order: number[];
   /** How far through the reveal order we are. */
   at: number;
@@ -125,7 +148,7 @@ export function Imposter({ mode, onBack }: Props) {
         word,
         hint,
         imposter: Math.floor(Math.random() * prev.count),
-        order: shuffle(Array.from({ length: prev.count }, (_, i) => i)),
+        order: revealOrder(prev.count),
         at: 0,
       };
     });
