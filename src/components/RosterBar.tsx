@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { useRoster } from "../state/roster";
+import { buzz } from "../lib/useCountdown";
 
 /**
  * Who's playing, on Home. Collapsed to a single line until someone taps it —
@@ -41,8 +42,40 @@ import { useRoster } from "../state/roster";
 /** One exit, on the app's one clock — --dur-base. Kept in step with games.css. */
 const LEAVE_MS = 260;
 
+/**
+ * How far a finger travels before a press on a chip becomes a drag rather
+ * than a tap.
+ *
+ * Small, because the chips carry `touch-action: none` and the browser is
+ * therefore not competing for the gesture — see .roster__chip in games.css for
+ * why that trade is made. Big enough that the wobble in a real tap on a 40px
+ * pill never crosses it, so tapping still removes a name and nothing else.
+ */
+const DRAG_SLOP = 6;
+
+/**
+ * Where a name lands if it is dropped at (px, py).
+ *
+ * An index among the OTHER chips, so the caller can splice without an
+ * off-by-one: it is the number of them that come before the pointer in
+ * reading order.
+ *
+ * The row wraps, so this is not a sort on x. A chip is "after" the pointer if
+ * the pointer is above its line at all, or on its line and left of its middle
+ * — which is the order a person reads the row in, and therefore the order they
+ * expect to drop into.
+ */
+function dropIndex(px: number, py: number, others: readonly HTMLElement[]): number {
+  for (let i = 0; i < others.length; i++) {
+    const r = others[i].getBoundingClientRect();
+    if (py < r.top) return i;
+    if (py <= r.bottom && px < r.left + r.width / 2) return i;
+  }
+  return others.length;
+}
+
 export function RosterBar() {
-  const { players, hasRoster, add, remove, clear } = useRoster();
+  const { players, hasRoster, add, remove, reorder, clear } = useRoster();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -66,6 +99,36 @@ export function RosterBar() {
   const chipsRef = useRef<HTMLDivElement>(null);
   /** Where every chip sat before the one leaving was lifted out of flow. */
   const firstRects = useRef(new Map<string, DOMRect>());
+
+  /**
+   * DRAGGING A NAME TO ANOTHER PLACE IN THE LINE.
+   *
+   * The order is the seating — see `reorder` in state/roster.tsx — so getting
+   * it wrong used to mean clearing the roster and typing it again.
+   *
+   * The order shown while a drag is in flight is LOCAL. Committing every
+   * crossing to the roster would write the whole list to localStorage on every
+   * frame the finger moves past a chip; the roster hears about it once, on
+   * drop. `list` is what renders either way, so nothing downstream knows the
+   * difference.
+   */
+  const [drag, setDrag] = useState<{ name: string; from: number } | null>(null);
+  const [order, setOrder] = useState<string[] | null>(null);
+  const list = order ?? players;
+
+  /** The press that might become a drag, from pointerdown until it does. */
+  const press = useRef<
+    { name: string; index: number; x: number; y: number; id: number; origin: DOMRect } | null
+  >(null);
+  /** True from the moment a press crosses DRAG_SLOP, so the click can be eaten. */
+  const dragged = useRef(false);
+  const dragEl = useRef<HTMLElement | null>(null);
+  /** The translate currently painted on the dragged chip, so the next one can be worked out. */
+  const applied = useRef({ x: 0, y: 0 });
+  /** Where the others sat before the order changed under them. */
+  const shuffleFrom = useRef(new Map<string, DOMRect>());
+  /** What an assistive technology is told after a keyboard move. */
+  const [moveSaid, setMoveSaid] = useState("");
 
   const isOpen = open || hasRoster || leaving !== null;
 
@@ -92,6 +155,167 @@ export function RosterBar() {
   );
 
   useEffect(() => () => window.clearTimeout(exit.current), []);
+
+  /** Every chip except the one in the hand, in the order they are laid out. */
+  const otherChips = useCallback(
+    (name: string) =>
+      Array.from(
+        chipsRef.current?.querySelectorAll<HTMLElement>(".roster__chip") ?? [],
+      ).filter((el) => el.dataset.name !== name),
+    [],
+  );
+
+  const onChipDown = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>, name: string, index: number) => {
+      // Nothing to reorder with one name, and a name on its way out has been
+      // lifted out of flow — there is no line for it to move along.
+      if (leaving || players.length < 2) return;
+      press.current = {
+        name,
+        index,
+        x: e.clientX,
+        y: e.clientY,
+        id: e.pointerId,
+        origin: e.currentTarget.getBoundingClientRect(),
+      };
+      dragged.current = false;
+    },
+    [leaving, players.length],
+  );
+
+  const onChipMove = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>) => {
+      const p = press.current;
+      if (!p || e.pointerId !== p.id) return;
+      const dx = e.clientX - p.x;
+      const dy = e.clientY - p.y;
+
+      if (!dragged.current) {
+        if (Math.hypot(dx, dy) < DRAG_SLOP) return;
+        /* Capture, so the rest of the gesture arrives here even when the finger
+           leaves the pill — which it does immediately, because the pill moves
+           out from under it as the row reflows. */
+        e.currentTarget.setPointerCapture(p.id);
+        dragEl.current = e.currentTarget;
+        applied.current = { x: 0, y: 0 };
+        dragged.current = true;
+        buzz(12);
+        setOrder(players.slice());
+        setDrag({ name: p.name, from: p.index });
+        return;
+      }
+
+      const el = dragEl.current;
+      if (!el) return;
+
+      /* UNDER THE FINGER, WHEREVER THE ROW HAS PUT THE CHIP.
+         The chip stays in flow and its slot moves as the order changes, so a
+         plain translate of (dx, dy) would drift by however far the slot
+         travelled. The layout position is read back each move — minus the
+         translate already painted on it, which getBoundingClientRect includes
+         — and the offset is whatever puts it back where the finger is. */
+      const now = el.getBoundingClientRect();
+      const tx = p.origin.left + dx - (now.left - applied.current.x);
+      const ty = p.origin.top + dy - (now.top - applied.current.y);
+      applied.current = { x: tx, y: ty };
+      el.style.translate = `${tx}px ${ty}px`;
+
+      const others = otherChips(p.name);
+      const at = dropIndex(e.clientX, e.clientY, others);
+      setOrder((prev) => {
+        const from = prev ?? players;
+        const rest = from.filter((n) => n !== p.name);
+        const next = [...rest.slice(0, at), p.name, ...rest.slice(at)];
+        if (next.every((n, i) => n === from[i])) return prev;
+        // The others are about to be dealt new slots; remember where they were
+        // so the effect below can slide them rather than let them jump.
+        const map = new Map<string, DOMRect>();
+        others.forEach((el2) => {
+          if (el2.dataset.name) map.set(el2.dataset.name, el2.getBoundingClientRect());
+        });
+        shuffleFrom.current = map;
+        return next;
+      });
+    },
+    [players, otherChips],
+  );
+
+  const endDrag = useCallback(() => {
+    const p = press.current;
+    press.current = null;
+    if (!p || !dragged.current) return;
+    const el = dragEl.current;
+    if (el) {
+      el.style.translate = "";
+      el.style.transition = "";
+    }
+    dragEl.current = null;
+    const to = (order ?? players).indexOf(p.name);
+    setDrag(null);
+    setOrder(null);
+    // Told once, at the end. See the note on `order` above.
+    if (to >= 0) reorder(p.index, to);
+  }, [order, players, reorder]);
+
+  /**
+   * The others slide into their new slots rather than jumping into them.
+   *
+   * The same FLIP the removal below runs, and deliberately a SECOND one rather
+   * than a generalisation of it: that one also has to pin the leaving chip
+   * where it was and is driven by a name, this one has to leave the chip in the
+   * hand alone and is driven by the order. Folding them together would produce
+   * one effect with two modes and a branch in every line of it.
+   */
+  useLayoutEffect(() => {
+    const box = chipsRef.current;
+    if (!box || shuffleFrom.current.size === 0) return;
+    const els = Array.from(box.querySelectorAll<HTMLElement>(".roster__chip"));
+    els.forEach((el) => {
+      const name = el.dataset.name;
+      if (!name || name === drag?.name) return;
+      const first = shuffleFrom.current.get(name);
+      if (!first) return;
+      const now = el.getBoundingClientRect();
+      const dx = first.left - now.left;
+      const dy = first.top - now.top;
+      if (dx === 0 && dy === 0) return;
+      el.style.transition = "none";
+      el.style.translate = `${dx}px ${dy}px`;
+    });
+    shuffleFrom.current.clear();
+    const play = requestAnimationFrame(() => {
+      els.forEach((el) => {
+        if (el.dataset.name === drag?.name) return;
+        el.style.transition = "";
+        el.style.translate = "";
+      });
+    });
+    return () => cancelAnimationFrame(play);
+  }, [list, drag]);
+
+  /**
+   * THE SAME MOVE WITHOUT A FINGER.
+   *
+   * A drag is the only way to do this with a mouse or a thumb, and no way at
+   * all with a keyboard or a switch — so the arrows do it too. Left and right
+   * rather than up and down because the row reads left to right, even where it
+   * wraps onto a second line.
+   *
+   * Announced, because the thing that changed is the ORDER, and a button whose
+   * label changed under a focus that never moved is not something a screen
+   * reader says on its own.
+   */
+  const onChipKey = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, name: string, index: number) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const to = index + (e.key === "ArrowLeft" ? -1 : 1);
+      if (to < 0 || to >= players.length) return;
+      e.preventDefault();
+      reorder(index, to);
+      setMoveSaid(`${name}, ${to + 1} of ${players.length}`);
+    },
+    [players.length, reorder],
+  );
 
   const [rowHeight, setRowHeight] = useState(0);
 
@@ -316,14 +540,36 @@ export function RosterBar() {
           style={{ height: rowOpen ? rowHeight : 0 }}
         >
           <div className="roster__chips" ref={chipsRef}>
-            {players.map((name) => (
+            {list.map((name, i) => (
               <button
                 key={name}
                 className="roster__chip"
                 data-name={name}
                 data-leaving={name === leaving || undefined}
-                onClick={() => startRemove(name)}
-                aria-label={`Remove ${name}`}
+                data-dragging={name === drag?.name || undefined}
+                onPointerDown={(e) => onChipDown(e, name, i)}
+                onPointerMove={onChipMove}
+                onPointerUp={endDrag}
+                /* A capture torn away — the sheet opening over it, the phone
+                   ringing — leaves the chip mid-flight with no pointerup
+                   coming. Same handler: the order it is in when the gesture
+                   dies is the order it meant. */
+                onPointerCancel={endDrag}
+                onLostPointerCapture={endDrag}
+                onKeyDown={(e) => onChipKey(e, name, i)}
+                onClick={() => {
+                  /* A drag ends in a click on the chip it started on, and this
+                     chip's click removes a name. Eaten once, here, rather than
+                     guarded for at the top of startRemove — a drag is the only
+                     thing that sets it, and this is the only place it matters. */
+                  if (dragged.current) {
+                    dragged.current = false;
+                    return;
+                  }
+                  startRemove(name);
+                }}
+                aria-label={`Remove ${name}, ${i + 1} of ${list.length}`}
+                aria-keyshortcuts="ArrowLeft ArrowRight"
               >
                 {name}
                 <span className="roster__chip-x" aria-hidden="true">
@@ -342,6 +588,13 @@ export function RosterBar() {
             ))}
           </div>
         </div>
+
+        {/* Says where a name landed, and only ever after a keyboard move — a
+            drag is its own feedback, and announcing every chip the finger
+            crossed would be a stream of noise. */}
+        <p className="visually-hidden" aria-live="polite">
+          {moveSaid}
+        </p>
 
         <div className="roster__slot roster__slot--add">
           <form

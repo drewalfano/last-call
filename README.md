@@ -249,6 +249,20 @@ card, not per render, so a name can't change mid-prompt.
 Odd One Out degrades per player, so a three-name roster in a five-player game
 reads "Drew, Sam, Alex, Player 4, Player 5".
 
+**The order is part of the game, so names can be dragged into it.** Names get
+typed in going round the circle, which makes the roster the seating: Odd One
+Out deals its reveals along it, and Kings Cup, Rank It and Ride the Bus take
+their turns down it. Press a name and drag it to another place in the line —
+the rest slide out of the way, and the roster is told once, on drop, rather
+than on every crossing. Arrow keys do the same move for anyone not using a
+finger, and say where the name landed.
+
+A tap still removes. The two are told apart by distance: under 6px it is a
+tap, over it the drag has started and the click that follows is eaten. The
+chips take `touch-action: none` so the browser cannot claim the gesture for a
+scroll first — the cost is that a swipe starting exactly on a name drags the
+name, which is recoverable and worth it for a drag that works on iOS at all.
+
 ---
 
 ## Content

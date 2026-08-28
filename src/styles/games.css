@@ -2652,6 +2652,41 @@
   transition: transform var(--dur-press) var(--ease-out),
               opacity var(--dur-press) ease-out,
               translate var(--dur-base) var(--ease-glide);
+  /* THE CHIP OWNS THE GESTURE, and this is the trade that makes dragging one
+     work at all on a phone.
+
+     Reordering is a drag, and a drag on a touch screen is a fight with the
+     scroller: the browser decides which of you gets the gesture on the first
+     move, and once it has started scrolling it cannot be talked out of it. A
+     long press to arm the drag is the other way round that fight, and it loses
+     on iOS, where changing touch-action mid-gesture is not reliably honoured.
+
+     So the pill takes the gesture outright. What it costs is that a swipe
+     starting exactly on a name will drag the name instead of scrolling Home —
+     recoverable in the moment, since dropping it back where it was is a change
+     of nothing, and the pills are 40px tall in a tile at the top of a page
+     with a screenful of deck under it to scroll from. */
+  touch-action: none;
+}
+
+/* IN THE HAND: off the surface, and off the clock.
+
+   `transition: none` because everything else here slides on --dur-base and
+   this one is being positioned every frame from the pointer — a 260ms ease on
+   `translate` would leave the pill trailing the finger by a quarter second,
+   which reads as lag rather than weight. The shadow and the lift are what say
+   it has been picked up; the row underneath keeps its own clock, so the names
+   making room still glide.
+
+   `position: relative` with a z-index, so it passes OVER the chips it is being
+   dragged past rather than under the next line of them. */
+.roster__chip[data-dragging] {
+  position: relative;
+  z-index: 2;
+  transition: none;
+  transform: scale(1.06);
+  box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.45);
+  cursor: grabbing;
 }
 /* Only the name being added plays this. The chips are keyed by name, so
    React leaves the existing ones mounted and only the new element gets a

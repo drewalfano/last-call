@@ -66,6 +66,17 @@ interface RosterValue {
   otherPlayer: () => string | undefined;
   add: (name: string) => void;
   remove: (name: string) => void;
+  /**
+   * Move one name to another position.
+   *
+   * THE ORDER IS PART OF THE GAME, which is why this exists at all. Names are
+   * typed in going round the circle, so the roster IS the seating: Odd One Out
+   * deals its reveals along it, and Kings Cup, Rank It and Ride the Bus take
+   * their turns down it. A roster typed in the wrong order sends the phone
+   * across the table all night, and until now the only repair was to clear the
+   * lot and type it again.
+   */
+  reorder: (from: number, to: number) => void;
   clear: () => void;
 }
 
@@ -78,6 +89,11 @@ export function RosterProvider({ children }: { children: ReactNode }) {
   // updater — which double-fires under StrictMode and skips a player.
   const playersRef = useRef(players);
   playersRef.current = players;
+  // Same reason as playersRef: reorder() reads the turn to keep it pointing at
+  // the same PERSON, and reading it through a second updater would nest one
+  // setState inside another — the thing the note above is about.
+  const turnRef = useRef(turn);
+  turnRef.current = turn;
 
   useEffect(() => {
     writePlayers(players);
@@ -101,6 +117,29 @@ export function RosterProvider({ children }: { children: ReactNode }) {
       setTurn((t) => (next.length === 0 ? 0 : t % next.length));
       return next;
     });
+  }, []);
+
+  /**
+   * WHOSE TURN IT IS SURVIVES THE MOVE.
+   *
+   * `turn` is an index, so dragging a name past the pointer would hand the
+   * turn to whoever slid into that slot — the roster would be repaired and the
+   * game would quietly change hands. So the person is read off the old order
+   * and the index is re-pointed at them in the new one.
+   *
+   * Both reads go through refs rather than a second updater, for the reason
+   * `advance` documents: a setState nested inside another updater double-fires
+   * under StrictMode.
+   */
+  const reorder = useCallback((from: number, to: number) => {
+    const prev = playersRef.current;
+    if (from === to || from < 0 || to < 0 || from >= prev.length || to >= prev.length) return;
+    const next = prev.slice();
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    const whoseTurn = prev[turnRef.current % prev.length];
+    const landed = next.indexOf(whoseTurn);
+    if (landed >= 0) setTurn(landed);
+    setPlayers(next);
   }, []);
 
   const clear = useCallback(() => {
@@ -131,9 +170,10 @@ export function RosterProvider({ children }: { children: ReactNode }) {
       otherPlayer,
       add,
       remove,
+      reorder,
       clear,
     }),
-    [players, currentPlayer, advance, otherPlayer, add, remove, clear],
+    [players, currentPlayer, advance, otherPlayer, add, remove, reorder, clear],
   );
 
   return <RosterContext.Provider value={value}>{children}</RosterContext.Provider>;
