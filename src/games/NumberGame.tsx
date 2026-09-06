@@ -11,6 +11,7 @@ import { NUMBER_GAME_CATEGORIES } from "../data/numberGame";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import type { ModeDef } from "../data/modes";
+import { useExitGuard } from "../state/exitGuard";
 
 /**
  * THE NUMBER GAME
@@ -134,6 +135,8 @@ export function NumberGame({ mode, onBack }: Props) {
    * for why it is never asked again.
    */
   const [phase, setPhase] = useState<Phase>(() => (players.length ? "bidding" : "count"));
+  /* A bidder is on the clock. Bidding itself is cheap to abandon. */
+  useExitGuard(phase === "challenge");
   /** The number standing on the table. At START_BID nobody has claimed it. */
   const [bid, setBid] = useState(START_BID);
   /**

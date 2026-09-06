@@ -5,6 +5,9 @@ import { categoryStyle } from "./lib/style";
 import { DeckFace } from "./components/DeckFace";
 import { useTheme } from "./state/theme";
 import { unlockOnFirstGesture } from "./lib/audio";
+import { setInRound } from "./lib/swUpdate";
+import { ExitGuardProvider } from "./state/exitGuard";
+import { EndRoundDialog } from "./components/EndRoundDialog";
 import { Home } from "./games/Home";
 import { LastCallGame } from "./games/LastCallGame";
 import { HotSeat } from "./games/HotSeat";
@@ -289,6 +292,17 @@ export default function App() {
   const { theme } = useTheme();
 
   /**
+   * LEAVING A ROUND IS ASKED ABOUT; LEAVING A SETUP SCREEN IS NOT.
+   *
+   * The game declares whether it is mid-round through the guard ref — see
+   * state/exitGuard.tsx — and the X, the browser's back button and a swipe
+   * back all arrive here. Guarded, the exit becomes a question; the round is
+   * untouched until it is answered.
+   */
+  const guardRef = useRef(false);
+  const [confirmExit, setConfirmExit] = useState(false);
+
+  /**
    * Audio starts suspended on every phone and only a real touch can start it.
    * Registered here rather than on any particular control, because the first
    * thing a player touches is not knowable — see unlockOnFirstGesture. It
@@ -340,6 +354,8 @@ export default function App() {
    */
   const goHome = useCallback(() => {
     if (screen === null) return;
+    setConfirmExit(false);
+    guardRef.current = false;
     /* Both directions get the colour, and under reduced motion both get
        it without travel. The contraction reads the flag for itself — see
        the effect on `closing` — so all that is decided here is that
@@ -347,6 +363,37 @@ export default function App() {
        Leaving a mode was a hard cut in exactly the way entering one was. */
     setClosing(screen);
     setScreen(null);
+  }, [screen]);
+
+  const requestExit = useCallback(() => {
+    if (screen === null) return;
+    if (guardRef.current) setConfirmExit(true);
+    else goHome();
+  }, [screen, goHome]);
+
+  /**
+   * THE BROWSER'S BACK BUTTON MEANS THE SAME AS THE X.
+   *
+   * There is no router, but there is a history stack, and on Android and in
+   * a desktop tab "back" is the reflex for leaving. Opening a mode pushes one
+   * entry; popping it asks to leave the mode, through the same guard. A
+   * cancelled exit pushes the entry again, so back still means leave.
+   */
+  useEffect(() => {
+    if (screen === null) return;
+    window.history.pushState({ mode: screen }, "");
+  }, [screen]);
+  const requestExitRef = useRef(requestExit);
+  requestExitRef.current = requestExit;
+  useEffect(() => {
+    const onPop = () => requestExitRef.current();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  /* A waiting build must not restart the page under a round. */
+  useEffect(() => {
+    setInRound(screen !== null);
   }, [screen]);
 
   /* Every timer this component owns outlives a render but must not outlive
@@ -878,7 +925,21 @@ export default function App() {
 
   return (
     <div className="app" style={flood}>
-      <div className="app__frame">{renderScreen(screen, open, goHome, closing, aborted)}</div>
+      <ExitGuardProvider guardRef={guardRef}>
+        <div className="app__frame">{renderScreen(screen, open, requestExit, closing, aborted)}</div>
+      </ExitGuardProvider>
+      {confirmExit && screen && (
+        <EndRoundDialog
+          title={MODE_BY_ID[screen].title}
+          onCancel={() => {
+            setConfirmExit(false);
+            /* The back button popped the entry on its way here; put it back
+               so the next back still asks. Harmless when it was the X. */
+            if (!window.history.state?.mode) window.history.pushState({ mode: screen }, "");
+          }}
+          onConfirm={goHome}
+        />
+      )}
       {/* ---------------------------------------------------------------
           TAP ANYWHERE TO TURN THE EXPANSION ROUND.
 

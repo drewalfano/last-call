@@ -10,6 +10,7 @@ import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { audio } from "../lib/audio";
 import type { ModeDef } from "../data/modes";
+import { useExitGuard } from "../state/exitGuard";
 
 /**
  * SAY THE SAME THING
@@ -42,6 +43,7 @@ export function SayTheSameThing({ mode, onBack }: Props) {
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("pair");
+  useExitGuard(phase === "counting" || phase === "answer");
   const [round, setRound] = useState(0);
   const [attempt, setAttempt] = useState(1);
   /**

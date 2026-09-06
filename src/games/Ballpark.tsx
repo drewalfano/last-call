@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Dial } from "../components/Dial";
 import { CategoryPicker } from "../components/CategoryPicker";
@@ -7,9 +7,19 @@ import { usePool } from "../data/pools";
 import { BALLPARK, degreesOff, randomTarget, zoneFor, type Spectrum } from "../data/ballpark";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
+import { useExitGuard } from "../state/exitGuard";
+import { useWhenHidden } from "../lib/useWhenHidden";
 import { audio } from "../lib/audio";
 import { buzz } from "../lib/useCountdown";
 import type { ModeDef } from "../data/modes";
+import {
+  initialFlow,
+  isLive,
+  positionText,
+  reduce,
+  type Action,
+  type Flow,
+} from "./ballparkFlow";
 
 /**
  * BALLPARK
@@ -23,16 +33,35 @@ import type { ModeDef } from "../data/modes";
  * round is a conversation between people who should be looking at each other,
  * and the phone is only holding the secret.
  *
- * NOTHING IS SCORED, and the mode is better for it. It was built with bands,
- * points per round and a running total, which turned an argument about
- * whether a hot dog is a sandwich into a thing the table could get wrong.
- * Same Page and Odd One Out both keep no score either — this app has arrived
- * at that answer more than once. The reveal shows the answer beside the guess
- * and says how far off it was, and how much that matters is the table's
- * business. The rounds simply keep coming.
+ * NOTHING IS SCORED, and the mode is better for it. The reveal shows the
+ * answer beside the guess and says how far off it was, and how much that
+ * matters is the table's business. The rounds simply keep coming.
+ *
+ * THE FIRST ROUND TEACHES ITSELF. The mechanic is three sentences and an
+ * example, and a table that has not heard them cannot play — the old flow
+ * handed the phone over with "Flip" and left the Reader to guess what a dial
+ * with a needle on it was asking of them. So the mode opens on a short card
+ * that says it once, per phone, and can be asked for again from the handoff
+ * screen. See ballparkFlow.ts for the sequence itself.
  */
 
-type Phase = "handoff" | "picking" | "reading" | "guessing" | "reveal";
+const INTRO_KEY = "lastcall.ballpark.intro";
+
+function readSeenIntro(): boolean {
+  try {
+    return window.localStorage.getItem(INTRO_KEY) === "seen";
+  } catch {
+    return false;
+  }
+}
+
+function writeSeenIntro(): void {
+  try {
+    window.localStorage.setItem(INTRO_KEY, "seen");
+  } catch {
+    /* storage unavailable; the intro shows again next time, which is fine */
+  }
+}
 
 /**
  * A pair, written as one line for the picker.
@@ -45,6 +74,10 @@ type Phase = "handoff" | "picking" | "reading" | "guessing" | "reveal";
 function labelFor(s: Spectrum): string {
   return `${s.left} / ${s.right}`;
 }
+
+/** The worked example on the intro card. A real pair from the pool, so the
+    dial the table meets next looks like the one they were just shown. */
+const EXAMPLE = { left: "Snack", right: "Meal", target: 78, clue: "A burrito" };
 
 interface Props {
   mode: ModeDef;
@@ -60,14 +93,28 @@ export function Ballpark({ mode, onBack }: Props) {
   const pool = usePool(BALLPARK, contentMode, "supplement");
   const deck = useDeck(pool);
 
-  const [phase, setPhase] = useState<Phase>("handoff");
-  const [roundIndex, setRoundIndex] = useState(0);
+  /**
+   * THE ROUND IS A REDUCER, AND THE REF IS WHAT MAKES DOUBLE TAPS SAFE.
+   *
+   * `act` runs the transition against the LATEST state — not the one this
+   * render closed over — and only performs the side effect its caller asked
+   * for when something actually changed. Two "Next round" presses in one
+   * frame therefore draw one card, not two, and two "Lock it in" presses
+   * sound one verdict.
+   */
+  const [flow, setFlow] = useState<Flow>(() => initialFlow(readSeenIntro()));
+  const flowRef = useRef(flow);
+  flowRef.current = flow;
+  const act = useCallback((action: Action, then?: () => void): boolean => {
+    const next = reduce(flowRef.current, action);
+    if (next === flowRef.current) return false;
+    flowRef.current = next;
+    setFlow(next);
+    then?.();
+    return true;
+  }, []);
+
   const [target, setTarget] = useState(randomTarget);
-  const [guess, setGuess] = useState(50);
-  const [hasMovedDial, setHasMovedDial] = useState(false);
-  const [locked, setLocked] = useState<number | null>(null);
-  /** Whether the Reader has turned the clue card over. */
-  const [flipped, setFlipped] = useState(false);
   /**
    * Set when the table chose a spectrum; otherwise the deck's draw stands.
    * The same two-source arrangement Same Page and Letter Rip use for their
@@ -87,53 +134,52 @@ export function Ballpark({ mode, onBack }: Props) {
    */
   const reader =
     hasRoster && players.length > 0
-      ? players[roundIndex % players.length]
-      : `Player ${(roundIndex % 6) + 1}`;
+      ? players[flow.round % players.length]
+      : `Player ${(flow.round % 6) + 1}`;
 
   const prompt = chosen ?? deck.current;
-  const distance = locked === null ? 0 : Math.round(Math.abs(locked - target));
+  const distance = flow.locked === null ? 0 : Math.round(Math.abs(flow.locked - target));
 
   /**
    * HOW FAR OFF, SAID IN A UNIT THAT IS ACTUALLY ON THE SCREEN.
    *
    * Degrees, because the arc is a real piece of a circle and the gap between
    * the two needles is an angle a player can see. The 0-100 scale is internal
-   * and never drawn, so "off by twelve" would be twelve of nothing — which is
-   * what a bare number off it read as when this line tried one.
+   * and never drawn, so "off by twelve" would be twelve of nothing.
    */
   const gapLine =
     distance === 0
       ? "Dead on."
-      : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${degreesOff(distance)}\u00B0.`;
+      : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${degreesOff(distance)}°.`;
+
+  /* Leaving mid-round costs the table its target; the setup screens cost nothing. */
+  useExitGuard(isLive(flow.phase));
 
   /**
-   * THE ONE REAL LEAK IN PASS-THE-PHONE.
-   *
-   * The card is face up, the screen sleeps, and the phone wakes on the table
-   * showing the answer. Nothing else can catch that — the Reader never let go
-   * of anything, the page just stopped being looked at — so visibility itself
-   * turns the card back over.
+   * THE ONE REAL LEAK IN PASS-THE-PHONE. The card is face up, the screen
+   * sleeps, and the phone wakes on the table showing the answer. Visibility
+   * itself turns the card back over, and the Reader has to reveal it again.
    */
-  useEffect(() => {
-    if (phase !== "reading") return;
-    const hide = () => {
-      if (document.hidden) setFlipped(false);
-    };
-    document.addEventListener("visibilitychange", hide);
-    window.addEventListener("pagehide", hide);
-    return () => {
-      document.removeEventListener("visibilitychange", hide);
-      window.removeEventListener("pagehide", hide);
-    };
-  }, [phase]);
+  useWhenHidden(flow.phase === "reading" && flow.revealed, () => act({ type: "hidden" }));
 
   /* The result sounds while the needle is still drawing itself in, so the
      table hears how it went before it finishes reading the gap. */
   useEffect(() => {
-    if (phase !== "reveal") return;
+    if (flow.phase !== "reveal") return;
     const t = window.setTimeout(() => audio.play("verdict", distance), 380);
     return () => window.clearTimeout(t);
-  }, [phase, distance]);
+  }, [flow.phase, distance]);
+
+  /**
+   * FOCUS FOLLOWS THE PHASE. Each screen's card is the thing to read next,
+   * so it takes focus when it arrives — a screen reader lands on the new
+   * card rather than staying on a button that has just unmounted, and a
+   * keyboard's next Tab reaches the primary action.
+   */
+  const focalRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    focalRef.current?.focus({ preventScroll: true });
+  }, [flow.phase, flow.revealed]);
 
   /**
    * Hands the choice back to the deck. Clears `chosen` on the way past, or
@@ -145,190 +191,193 @@ export function Ballpark({ mode, onBack }: Props) {
     deck.draw();
   }, [deck]);
 
-  const takePhone = useCallback(() => {
-    audio.play("advance");
-    setPhase("reading");
-  }, []);
+  const gotIt = useCallback(() => {
+    act({ type: "gotIt" }, () => {
+      writeSeenIntro();
+      audio.play("advance");
+    });
+  }, [act]);
+
+  const reveal = useCallback(() => {
+    act({ type: "reveal" }, () => audio.play("card"));
+  }, [act]);
+
+  const hideAndPass = useCallback(() => {
+    act({ type: "hideAndPass" }, () => audio.play("advance"));
+  }, [act]);
+
+  const onDial = useCallback((v: number) => act({ type: "dial", value: v }), [act]);
 
   const lockIn = useCallback(() => {
-    if (!hasMovedDial) return;
-    audio.play("lock");
-    buzz([30, 40, 60]);
-    setLocked(guess);
-    setPhase("reveal");
-  }, [hasMovedDial, guess]);
+    act({ type: "lock" }, () => {
+      audio.play("lock");
+      buzz([30, 40, 60]);
+    });
+  }, [act]);
 
   const nextRound = useCallback(() => {
-    deck.draw();
-    setChosen(null);
-    setTarget(randomTarget());
-    setGuess(50);
-    setHasMovedDial(false);
-    setLocked(null);
-    setFlipped(false);
-    setRoundIndex((n) => n + 1);
-    setPhase("handoff");
-  }, [deck]);
-
-  const onDial = useCallback((v: number) => {
-    setGuess(v);
-    setHasMovedDial(true);
-  }, []);
+    act({ type: "next" }, () => {
+      deck.draw();
+      setChosen(null);
+      setTarget(randomTarget());
+    });
+  }, [act, deck]);
 
   if (!prompt) return null;
 
   /* No header: its X leaves the round entirely, and the picker's own Back
      goes where you actually mean. Same treatment Same Page, Letter Rip and
      Odd One Out give this screen. */
-  if (phase === "picking") {
+  if (flow.phase === "picking") {
     return (
       <GameScreen mode={mode} hideHeader onBack={onBack}>
         <CategoryPicker
           categories={pool.map(labelFor)}
           heading="Pick a spectrum"
           /* OFF, for the reason Rank It has it off: an entry here is not a
-             word but a PAIR, and a single text field can only take one. A
-             half-written spectrum does not personalise a round, it breaks
-             one. */
+             word but a PAIR, and a single text field can only take one. */
           allowCustom={false}
           onPick={(label) => {
             const pick = pool.find((sp) => labelFor(sp) === label);
             if (pick) setChosen(pick);
-            setPhase("handoff");
+            act({ type: "spectrumPicked" });
           }}
-          onCancel={() => setPhase("handoff")}
+          onCancel={() => act({ type: "spectrumPicked" })}
         />
       </GameScreen>
     );
   }
 
-  /**
-   * THE INSTRUMENT, WHICHEVER ONE IS ON.
-   *
-   * One call site per phase rather than a branch inside each of them, so the
-   * three screens keep reading as three screens and the choice is made once.
-   */
+  const spectrumLine = `${prompt.left} / ${prompt.right}`;
+
   return (
     <GameScreen
       mode={mode}
-      /* THE SPECTRUM IS THE LIVE LINE.
-         It is the one thing a table has to hold on to across all four screens
-         — the clue means nothing without it, and on the reveal the dial's own
-         end labels are too small to re-read from across a table. Odd One Out
-         puts its category here for the same reason.
-
-         No "Spectrum:" label in front of it, which is where this departs from
-         that one. "Any" says nothing on its own and needs the question asked
-         above it; "Underrated / Overrated" is already the whole thought, and
-         these pairs run long enough — "Insignificant cultural event" is one
-         end of one — that a label would cost a third line in a header that
-         reserves its height. */
-      subtitle={`${prompt.left} / ${prompt.right}`}
+      /* THE SPECTRUM IS THE LIVE LINE. It is the one thing a table has to
+         hold on to across every screen — the clue means nothing without it.
+         The intro has its own example and does not carry it. */
+      subtitle={flow.phase === "intro" ? undefined : spectrumLine}
       /* The Reader's card is the one thing in here one person reads. */
-      isPrivate={phase === "reading"}
+      isPrivate={flow.phase === "reading"}
       onBack={onBack}
     >
-      {phase === "handoff" && (
+      {/* ---------- How to play: once per phone, and on request ---------- */}
+      {flow.phase === "intro" && (
+        <CardBody
+          className="bp bp-intro"
+          card={
+            <div className="cardstage">
+              <article className="card card--dealt bp-intro__card" key="intro" ref={focalRef} tabIndex={-1}>
+                <span className="card__eyebrow">How to play</span>
+                <ol className="bp-intro__steps">
+                  <li>One player sees a secret spot on a spectrum.</li>
+                  <li>They say one clue that sits right there.</li>
+                  <li>Everyone else turns a dial to where they think it was.</li>
+                </ol>
+                {/* THE EXAMPLE IS THE DIAL, NOT A SENTENCE ABOUT ONE. A
+                    picture of a target with the clue beside it shows the
+                    relationship the three lines above can only describe. */}
+                <Dial
+                  value={EXAMPLE.target}
+                  target={EXAMPLE.target}
+                  showZones
+                  left={EXAMPLE.left}
+                  right={EXAMPLE.right}
+                  description={`Example: the target sits ${positionText(EXAMPLE.target, EXAMPLE.left, EXAMPLE.right)}.`}
+                />
+                <p className="card__meta bp-intro__example">
+                  Target near <b>{EXAMPLE.right}</b>. Clue: <b>“{EXAMPLE.clue}.”</b>
+                </p>
+              </article>
+            </div>
+          }
+        >
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={gotIt}>
+              Got it
+            </button>
+          </div>
+        </CardBody>
+      )}
+
+      {/* ---------- Whose turn, and the one action that reveals ---------- */}
+      {flow.phase === "handoff" && (
         <CardBody
           className="bp bp-handoff"
           card={
             <div className="cardstage">
-              <article className="card card--dealt" key={roundIndex}>
-                <span className="card__eyebrow">Pass the phone</span>
+              <article className="card card--dealt" key={flow.round} ref={focalRef} tabIndex={-1}>
+                <span className="card__eyebrow">Pass the phone to</span>
                 <p className="bp-handoff__name">{reader}</p>
-                <p className="card__meta">Everyone else, look away.</p>
+                <p className="card__meta">
+                  {reader}: tap the button when nobody else can see the screen. Everyone else, look away
+                  until the phone comes back.
+                </p>
               </article>
             </div>
           }
         >
-          {/* BOTH WAYS TO CHANGE THE SPECTRUM, side by side, exactly where
-              Same Page and Letter Rip put them — a tap for a different one,
-              or the whole list to read together.
+          {/* Quiet, above the spectrum controls: the least-wanted thing on
+              the screen, and the only way back to the explanation. */}
+          <button className="gfoot__skip" onClick={() => act({ type: "howToPlay" })}>
+            How to play
+          </button>
 
-              On THIS screen and not the Reader's, because the pair is public.
-              The secret in this mode is the target, not the spectrum: the two
-              ends are printed at either side of the dial the moment the group
-              starts guessing. So the table can pick one together before the
-              phone goes anywhere, and nothing leaks by their doing it. */}
+          {/* BOTH WAYS TO CHANGE THE SPECTRUM, side by side, exactly where
+              Same Page and Letter Rip put them. On THIS screen and not the
+              Reader's, because the pair is public: the secret in this mode
+              is the target, not the spectrum. */}
           <div className="actions--row">
             <button className="btn btn--ghost" onClick={drawRandom}>
               Random
             </button>
-            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
-              Categories
+            <button className="btn btn--ghost" onClick={() => act({ type: "pickSpectrum" })}>
+              Spectrums
             </button>
           </div>
 
           <div className="actions">
-            {/* NAMED, not "Continue". The whole round leaks if the wrong
-                person is holding the phone when the target appears, and a
-                button that says a name is the only thing on the screen that
-                can stop that — you cannot tap "I'm Sam" by reflex while Sam
-                is still reaching for it. */}
-            <button className="btn btn--lg btn--block" onClick={takePhone}>
-              I'm {reader}
+            {/* ONE ACTION. It used to be two — "I'm Sam", then "Flip" — which
+                asked the same question twice: are you the right person, and
+                is nobody else looking. The card names the person, twice; the
+                button says what the tap does, so nobody presses it to find
+                out. The name stays off the pill because a sixteen-character
+                roster name wraps a --fs-xl label onto two lines. */}
+            <button className="btn btn--lg btn--block" onClick={reveal}>
+              Reveal my spot
             </button>
           </div>
         </CardBody>
       )}
 
-      {/* THE CLUE ARRIVES FACE DOWN.
-
-          It was a press-and-hold behind an interpolated blur, which worked
-          and was still the wrong object: every other secret in this app is a
-          card that turns over — Odd One Out's role, every prompt deck, both
-          card games — and a blur that lifts under a finger is a fourth
-          gesture for the one thing the app already had a vocabulary for.
-          Turning a card over also survives being watched: a table can see the
-          Reader flip it and still learn nothing, where a thumb held on a
-          smear invites everyone to lean in and see what it is hiding.
-
-          The flip is the same one the decks deal with — remounting on a key,
-          which replays .card--dealt. See PromptCard.
-
-          NO WAY BACK TO FACE DOWN. There was one, on the grounds that a
-          Reader who gets up mid-round otherwise hands over a live answer —
-          but the visibility handler above already turns the card back over
-          the moment the screen sleeps or the app is backgrounded, which is
-          how a phone actually changes hands, and the button was the only
-          second action on any screen in the mode. */}
-      {phase === "reading" && !flipped && (
+      {/* ---------- The Reader's screen ---------- */}
+      {flow.phase === "reading" && !flow.revealed && (
         <CardBody
           className="bp bp-reading"
           card={
             <div className="cardstage">
-              <article className="card card--dealt bp-clue" key="back">
-                <span className="card__eyebrow">Your clue</span>
-                {/* The spectrum is NOT repeated on the card. It is in the
-                    header directly above, and the one thing this app's header
-                    has already been stripped of once is lines that restate
-                    the card underneath them. */}
-                <p className="card__meta">Turn it over when nobody else can see.</p>
+              <article className="card card--dealt bp-clue" key="back" ref={focalRef} tabIndex={-1}>
+                <span className="card__eyebrow">{reader}'s spot</span>
+                <p className="card__meta">Hidden again. Turn it over when nobody else can see.</p>
               </article>
             </div>
           }
         >
           <div className="actions">
-            <button
-              className="btn btn--lg btn--block"
-              onClick={() => {
-                audio.play("card");
-                setFlipped(true);
-              }}
-            >
-              Flip
+            <button className="btn btn--lg btn--block" onClick={reveal}>
+              Reveal my spot
             </button>
           </div>
         </CardBody>
       )}
 
-      {phase === "reading" && flipped && (
+      {flow.phase === "reading" && flow.revealed && (
         <CardBody
           className="bp bp-reading"
           card={
             <div className="cardstage">
-              <article className="card card--dealt bp-clue" key="face">
-                <span className="card__eyebrow">Your clue</span>
+              <article className="card card--dealt bp-clue" key="face" ref={focalRef} tabIndex={-1}>
+                <span className="card__eyebrow">Your spot</span>
                 {/* THE ZONES, NOT JUST A NEEDLE. A needle alone tells the
                     Reader a POINT, and a point is not what they have to clue
                     — they have to clue a REGION, and how wide that region is
@@ -340,75 +389,79 @@ export function Ballpark({ mode, onBack }: Props) {
                   showZones
                   left={prompt.left}
                   right={prompt.right}
+                  description={`Your secret spot is ${positionText(target, prompt.left, prompt.right)}.`}
                 />
-                <p className="card__meta">Say one thing that sits right there.</p>
+                <p className="card__meta">Say one clue that sits right there. Then hide this and pass the phone.</p>
               </article>
             </div>
           }
         >
           <div className="actions">
-            <button
-              className="btn btn--lg btn--block"
-              onClick={() => {
-                audio.play("advance");
-                setPhase("guessing");
-              }}
-            >
-              Good, next
+            {/* SPECIFIC, NOT "GOOD, NEXT". The tap does two things a Reader
+                has to know about — the spot disappears, and the phone is
+                going to the table — so the label says both. */}
+            <button className="btn btn--lg btn--block" onClick={hideAndPass}>
+              Hide spot &amp; pass phone
             </button>
           </div>
         </CardBody>
       )}
 
-      {phase === "guessing" && (
+      {/* ---------- The table's dial ---------- */}
+      {flow.phase === "guessing" && (
         <CardBody
           className="bp bp-guessing"
           card={
             <div className="cardstage">
-              <article className="card card--dealt" key={`guess-${roundIndex}`}>
-                <span className="card__eyebrow">Where is it?</span>
-                <Dial value={guess} onChange={onDial} left={prompt.left} right={prompt.right} />
+              <article className="card card--dealt" key={`guess-${flow.round}`} ref={focalRef} tabIndex={-1}>
+                <span className="card__eyebrow">Everyone else: where was it?</span>
+                <Dial value={flow.guess} onChange={onDial} left={prompt.left} right={prompt.right} />
                 <p className="card__meta">
-                  {hasMovedDial ? "Everyone agree?" : "Drag anywhere on the dial."}
+                  {flow.touched
+                    ? "Everyone agree? Lock it in."
+                    : `Tap or drag the dial to where ${reader}'s clue sits. The middle counts, but tap it.`}
                 </p>
               </article>
             </div>
           }
         >
           <div className="actions">
-            {/* DISABLED UNTIL THE DIAL HAS ACTUALLY MOVED. A guess that
-                defaults to the middle and submits is a round the group can
-                sit out, and the middle is a defensible answer often enough
-                that they would. */}
-            <button className="btn btn--lg btn--block" onClick={lockIn} disabled={!hasMovedDial}>
+            {/* Disabled until the dial has been TOUCHED, not moved: a tap on
+                the middle is a deliberate answer and counts. What is refused
+                is the untouched default — a round the group can sit out. */}
+            <button className="btn btn--lg btn--block" onClick={lockIn} disabled={!flow.touched}>
               Lock it in
             </button>
           </div>
         </CardBody>
       )}
 
-      {phase === "reveal" && (
+      {/* ---------- Both needles ---------- */}
+      {flow.phase === "reveal" && (
         <CardBody
           className="bp bp-reveal"
           card={
             <div className="cardstage">
-              <article className="card card--dealt" key={`reveal-${roundIndex}`}>
+              <article className="card card--dealt" key={`reveal-${flow.round}`} ref={focalRef} tabIndex={-1}>
                 <span className="card__eyebrow">Results</span>
                 <Dial
-                  value={locked ?? guess}
+                  value={flow.locked ?? flow.guess}
                   left={prompt.left}
                   right={prompt.right}
                   target={target}
                   showZones
-                  lockedGuess={locked}
+                  lockedGuess={flow.locked}
                   revealing
+                  description={`${gapLine} The spot was ${positionText(target, prompt.left, prompt.right)}. The table said ${positionText(flow.locked ?? flow.guess, prompt.left, prompt.right)}.`}
                 />
-                {/* THE ZONE NAMES THE RESULT AND THE ANGLE QUALIFIES IT.
-                    "Close." alone throws away the one precise thing the round
-                    produced, and a bare number was worse — the 0-100 scale is
-                    internal and undrawn, so it read as a quantity of nothing.
-                    Degrees are the unit the arc actually has. */}
+                {/* THE ZONE NAMES THE RESULT AND THE ANGLE QUALIFIES IT, and
+                    the legend says which needle is which in words, so the
+                    two are not told apart by colour alone. */}
                 <p className="card__meta bp-reveal__gap">{gapLine}</p>
+                <p className="bp-legend" aria-hidden="true">
+                  <span className="bp-legend__item bp-legend__item--spot">Spot</span>
+                  <span className="bp-legend__item bp-legend__item--guess">Your guess</span>
+                </p>
               </article>
             </div>
           }

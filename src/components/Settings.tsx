@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
+import { applyUpdate, checkForUpdate, settle, useUpdateState } from "../lib/swUpdate";
 
 /** Order is the control's order, and the index of the current one drives the
     travelling fill — see .segmented. Declared once so the two cannot drift. */
@@ -30,20 +31,36 @@ const SOUND = ["on", "off"] as const;
  * visible text — and it leads the hint, so the word never actually
  * disappears, it just stops being a button.
  */
+/**
+ * THE HINTS SAY WHAT THE LEVEL ACTUALLY DOES, which is two things and not
+ * one. It changes the PROMPTS — each level adds a pool on top of the ones
+ * below it and never removes anything — and at Mild it changes what Pick a
+ * game for me will offer: the two drinking games stay on the deck but are not
+ * volunteered, because their rules are drink instructions and no level makes
+ * them anything else. "Plays sober, with anyone" used to be the whole hint,
+ * while Kings Cup sat on the deck under it; the sentence now says both halves.
+ */
 const TIERS: {
   mode: ContentMode;
   label: string;
   hint: string;
   icon: { size: number; flame: boolean };
 }[] = [
-  { mode: "safe", label: "Mild", hint: "Plays sober, with anyone.",
+  { mode: "safe", label: "Mild",
+    hint: "Prompts anyone can play sober. Kings Cup and Ride the Bus stay on the deck, but Pick a game skips them.",
     icon: { size: 20, flame: false } },
-  { mode: "night", label: "Spicy", hint: "Adds material for a night out. Drinking assumed.",
+  { mode: "night", label: "Spicy",
+    hint: "Adds prompts for a night out on top of Mild. Drinking games included in the pick.",
     icon: { size: 16, flame: true } },
   { mode: "filthy", label: "Filthy",
-    hint: "Adds what you would only admit to people who will not repeat it.",
+    hint: "Adds what you'd only admit to people who won't repeat it. Nothing below is removed.",
     icon: { size: 28, flame: true } },
 ];
+
+/** The level's name, for Home's row. Kept with the tiers so the two agree. */
+export const TIER_LABEL: Record<ContentMode, string> = Object.fromEntries(
+  TIERS.map((t) => [t.mode, t.label]),
+) as Record<ContentMode, string>;
 
 function TierIcon({ size, flame }: { size: number; flame: boolean }) {
   return (
@@ -181,6 +198,64 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [close]);
 
+  /**
+   * FOCUS GOES IN, STAYS IN, AND COMES BACK OUT.
+   *
+   * A dialog that leaves focus on the gear behind it is not modal to a
+   * keyboard or a screen reader. The close button takes focus on open, Tab
+   * cycles inside the sheet, and whatever opened it gets focus back when it
+   * goes — which is the gear, so the next Tab carries on from where it was.
+   */
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    const sheet = sheetRef.current;
+    sheet?.querySelector<HTMLElement>(".sheet__close")?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !sheet) return;
+      const items = Array.from(
+        sheet.querySelectorAll<HTMLElement>("button:not([disabled]), [tabindex]:not([tabindex='-1'])"),
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", trap);
+    return () => {
+      window.removeEventListener("keydown", trap);
+      opener?.focus?.();
+    };
+  }, []);
+
+  /**
+   * THE UPDATE CONTROL REPORTS ON ITSELF. Idle it offers a check; busy it
+   * says so; settled it says what it found and returns to idle after a
+   * beat. "Ready" is the exception — it stays, because the answer is an
+   * action: restart onto the build that is waiting. "Couldn't check" is
+   * never rounded up to "up to date"; offline is the usual reason.
+   */
+  const update = useUpdateState();
+  useEffect(() => {
+    if (update.status !== "current" && update.status !== "unavailable") return;
+    const t = window.setTimeout(settle, 3200);
+    return () => window.clearTimeout(t);
+  }, [update.status]);
+  const updateLabel: Record<typeof update.status, string> = {
+    idle: "Check for update",
+    checking: "Checking",
+    current: "Up to date",
+    ready: "Restart to update",
+    unavailable: update.registered === false ? "Not available here" : "Couldn't check. Offline?",
+    applying: "Restarting",
+  };
+
   return (
     <div
       className="modal-backdrop"
@@ -193,6 +268,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
+        ref={sheetRef}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="sheet__head">
@@ -209,9 +285,12 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               <b>{TIERS[tier].label}.</b> {TIERS[tier].hint}
             </span>
           </div>
+          {/* Mutually exclusive options are a RADIO GROUP, not three toggle
+              buttons: a reader then says "Mild, radio button, 1 of 3, checked"
+              rather than three unrelated pressed states. */}
           <div
             className="segmented segmented--three"
-            role="group"
+            role="radiogroup"
             aria-label="Content level"
             style={{ ["--n" as string]: CONTENT_TIERS.length, ["--i" as string]: tier }}
           >
@@ -220,8 +299,9 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 key={t.mode}
                 className="segmented__opt"
                 data-on={mode === t.mode || undefined}
+                role="radio"
                 aria-label={t.label}
-                aria-pressed={mode === t.mode}
+                aria-checked={mode === t.mode}
                 onClick={() => setMode(t.mode)}
               >
                 <TierIcon {...t.icon} />
@@ -239,7 +319,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </div>
           <div
             className="segmented segmented--three"
-            role="group"
+            role="radiogroup"
             aria-label="Appearance"
             style={{
               ["--n" as string]: APPEARANCE.length,
@@ -251,6 +331,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 key={opt}
                 className="segmented__opt"
                 data-on={preference === opt || undefined}
+                role="radio"
+                aria-checked={preference === opt}
                 onClick={() => setPreference(opt)}
               >
                 {opt}
@@ -268,7 +350,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </div>
           <div
             className="segmented"
-            role="group"
+            role="radiogroup"
             aria-label="Sound"
             style={{ ["--n" as string]: SOUND.length, ["--i" as string]: soundOn ? 0 : 1 }}
           >
@@ -277,13 +359,36 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 key={opt}
                 className="segmented__opt"
                 data-on={(opt === "on") === soundOn || undefined}
-                aria-pressed={(opt === "on") === soundOn}
+                role="radio"
+                aria-checked={(opt === "on") === soundOn}
                 onClick={() => setSound(opt === "on")}
               >
                 {opt}
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Updates</span>
+            <span className="setting__hint">
+              The whole app is stored on the phone, so it opens with no signal.
+              A new build waits until nobody is mid-round, then restarts from Home.
+            </span>
+          </div>
+          <button
+            className="setting__action"
+            data-state={update.status === "checking" || update.status === "applying" ? "busy" : update.status}
+            aria-live="polite"
+            onClick={() => {
+              if (update.status === "ready") void applyUpdate();
+              else if (update.status === "idle" || update.status === "current" || update.status === "unavailable")
+                void checkForUpdate();
+            }}
+          >
+            {updateLabel[update.status]}
+          </button>
         </section>
 
         {/* Not decoration, and not an about box. This exists because an

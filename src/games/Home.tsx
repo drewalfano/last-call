@@ -1,10 +1,34 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MODES, type ModeId } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
-import { SettingsButton, SettingsSheet } from "../components/Settings";
+import { useRoster } from "../state/roster";
+import { SettingsButton, SettingsSheet, TIER_LABEL } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
+import { UpdateOffer } from "../components/UpdateOffer";
 import { categoryStyle } from "../lib/style";
+import { fitSummary, noFitAdvice, pickForGroup, type Group } from "../lib/fit";
 import { DeckFace } from "../components/DeckFace";
+
+/**
+ * Whether anyone has opened a game on this phone yet. The one-line pointer at
+ * the recommended first game exists for a table that has not, and leaves once
+ * they have — it is not a tagline, it is directions for a first visit.
+ */
+const PLAYED_KEY = "lastcall.played";
+function readPlayed(): boolean {
+  try {
+    return window.localStorage.getItem(PLAYED_KEY) === "yes";
+  } catch {
+    return false;
+  }
+}
+function writePlayed(): void {
+  try {
+    window.localStorage.setItem(PLAYED_KEY, "yes");
+  } catch {
+    /* fine; the hint shows again next time */
+  }
+}
 
 interface HomeProps {
   /** The rect lets App expand the mode's color out from the card you tapped. */
@@ -538,6 +562,10 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   const [sweeping, setSweeping] = useState(dealing);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { mode: contentMode } = useContentMode();
+  const { players, hasRoster } = useRoster();
+  const [played] = useState(readPlayed);
+  /** What the pick could not find, said under the button rather than swallowed. */
+  const [noFit, setNoFit] = useState<string | null>(null);
   /**
    * THE CARD COMING BACK, AND WHETHER IT IS STILL HELD UP.
    *
@@ -575,6 +603,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
    */
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
+      writePlayed();
       const r = el.getBoundingClientRect();
       onPick(id, { top: r.top, left: r.left, right: r.right, bottom: r.bottom });
     },
@@ -587,27 +616,26 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
    * which card was chosen before its color takes the screen.
    */
   /**
-   * MILD DOES NOT GET HANDED A DRINKING GAME.
-   *
-   * The tier says it plays sober, and two of the eleven cannot: Kings Cup's
-   * rules ARE drink instructions and Ride the Bus is a forfeit ladder.
-   * Offering one to a table that has just said nobody is drinking is the app
-   * not listening. It was three of eleven until Drink If… was retired.
-   *
-   * It gates the PICKER and nothing else. All eleven stay on the deck at every
-   * level and a table that wants Kings Cup can tap it — the rule everywhere
-   * else in this app is that a tier adds and never takes away, and hiding
-   * cards would be the one place that broke it. What Mild changes is what the
-   * app volunteers, not what it allows.
+   * WHAT THE PICK DRAWS FROM. The roster's size when there is one, and the
+   * content level: Mild says the table plays sober, so it is not handed a
+   * drinking game; a roster of two is not handed Odd One Out. Nothing is
+   * hidden from the deck — a tier adds and never takes away, and a table that
+   * wants Kings Cup can tap it — this only changes what the app volunteers.
+   * See lib/fit.ts, which the cue lines on the cards read from too.
    */
-  const pickable = useMemo(
-    () => (contentMode === "safe" ? MODES.filter((m) => !m.drinking) : MODES),
-    [contentMode],
+  const group = useMemo<Group>(
+    () => ({ size: hasRoster ? players.length : undefined, content: contentMode }),
+    [hasRoster, players.length, contentMode],
   );
 
   const pickForMe = useCallback(() => {
     if (picked) return;
-    const mode = pickable[Math.floor(Math.random() * pickable.length)];
+    const { pick: mode } = pickForGroup(group);
+    if (!mode) {
+      setNoFit(noFitAdvice(group));
+      return;
+    }
+    setNoFit(null);
     const el = deckRef.current?.querySelector<HTMLElement>(`[data-mode="${mode.id}"]`);
     if (!el) {
       onPick(mode.id);
@@ -690,7 +718,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
       };
       raf.current = requestAnimationFrame(settled);
     }, RING_MS);
-  }, [picked, pickable, onPick, openCard]);
+  }, [picked, group, onPick, openCard]);
 
   /**
    * Whichever beat is pending when Home goes, goes with it. Both share the one
@@ -945,6 +973,32 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
           {picked ? "Picking…" : "Pick a game for me"}
         </span>
       </button>
+
+      {/* THE LEVEL, VISIBLE FROM HOME, and what the pick is drawing from.
+
+          The content setting used to live only behind the gear, so a table
+          could be dealt Spicy prompts with nothing on Home saying so. One
+          quiet row: the level, a summary of how many games fit this table at
+          it, and the way to change it. Deliberately smaller and dimmer than
+          the button above — it qualifies the pick, it does not compete. */}
+      <div className="home__fit" aria-live="polite">
+        <button className="home__level" onClick={() => setSettingsOpen(true)}>
+          <span className="home__level-name">{TIER_LABEL[contentMode]}</span>
+          <span className="home__level-change">Change</span>
+        </button>
+        <span className="home__fit-line">{noFit ?? fitSummary(group)}</span>
+      </div>
+
+      {/* One line, first visit only: where to start. It points at a card
+          rather than explaining anything, and it is gone once any game has
+          been opened on this phone. */}
+      {!played && (
+        <p className="home__start">
+          First time? Start with <b>Letter Rip</b>.
+        </p>
+      )}
+
+      <UpdateOffer />
 
       <nav
         className={dealing ? "home__deck home__deck--dealing" : "home__deck"}

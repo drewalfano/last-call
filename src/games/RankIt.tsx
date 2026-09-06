@@ -9,6 +9,7 @@ import { RANK_IT, type RankPrompt } from "../data/rankIt";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import type { ModeDef } from "../data/modes";
+import { useExitGuard } from "../state/exitGuard";
 
 /**
  * RANK IT
@@ -57,6 +58,7 @@ export function RankIt({ mode, onBack }: Props) {
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("handover");
+  useExitGuard(phase === "ranking" || phase === "guessing");
   /** A list the group chose by name, which wins over whatever the deck dealt. */
   const [chosen, setChosen] = useState<RankPrompt | null>(null);
   /** The Ranker's real order. */

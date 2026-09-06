@@ -29,6 +29,14 @@ interface CategoryPickerProps {
    * the top, and the cards carry only what changes.
    */
   heading?: string;
+  /**
+   * A pinned first choice meaning "no category": Odd One Out's Any, which
+   * deals from everything and changes with every round. Named here rather
+   * than smuggled into `categories` so picking it can mean null to the
+   * caller instead of a string it has to recognise.
+   */
+  anyLabel?: string;
+  onAny?: () => void;
 }
 
 /**
@@ -47,6 +55,8 @@ export function CategoryPicker({
   customNote,
   allowCustom = true,
   heading,
+  anyLabel,
+  onAny,
 }: CategoryPickerProps) {
   const [custom, setCustom] = useState("");
   const [writing, setWriting] = useState(false);
@@ -96,6 +106,16 @@ export function CategoryPicker({
               onClick={() => setWriting(true)}
             >
               Write your own
+            </button>
+          )}
+
+          {anyLabel && onAny && (
+            <button
+              className="picker__card picker__card--custom picker__card--any"
+              style={{ ["--i" as string]: allowCustom ? 1 : 0 }}
+              onClick={onAny}
+            >
+              {anyLabel}
             </button>
           )}
 

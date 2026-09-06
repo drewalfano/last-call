@@ -4,9 +4,43 @@
     {
       "name": "last-call",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--host"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--host"
+      ],
       "port": 5173,
       "autoPort": true
+    },
+    {
+      "name": "last-call-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
+    },
+    {
+      "name": "last-call-preview-base",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4174",
+        "--strictPort",
+        "--base",
+        "/last-call/"
+      ],
+      "port": 4174,
+      "url": "http://localhost:4174"
     }
   ]
 }

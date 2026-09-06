@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { randomItem } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
@@ -7,8 +7,21 @@ import { Stepper } from "../components/Stepper";
 import { Switch } from "../components/Switch";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
+import { useExitGuard } from "../state/exitGuard";
+import { useWhenHidden } from "../lib/useWhenHidden";
 import { audio } from "../lib/audio";
 import type { ModeDef } from "../data/modes";
+import {
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  afterHide,
+  clampCount,
+  deal,
+  isLive,
+  onHidden,
+  rosterNote,
+  type RolePhase,
+} from "./imposterLogic";
 
 /**
  * IMPOSTER
@@ -17,56 +30,27 @@ import type { ModeDef } from "../data/modes";
  * The whole game rests on a single guarantee: a role is only ever on screen
  * for the player it belongs to. Every reveal is bracketed by a neutral cover
  * screen, and the phase machine below can never move from one player's role
- * straight to the next — "role" always returns to "cover".
+ * straight to the next — "role" always returns to "cover". The phone being
+ * put down mid-role goes back to that cover too; see useWhenHidden.
  *
- * The reveal order is the ROSTER'S order, cut at a random seat. It used to be
- * a full shuffle, on the reasoning that a phone which always went 1, 2, 3
- * would let a table read something into who hesitated and when — but that was
- * paying for a tell the deal does not have. The Imposter is drawn
- * independently of the order, so their place in it is already uniform; all a
- * shuffle added on top was making the phone hop about the table.
- *
- * And it hops about a real one. Names get typed in going round the circle,
- * because that is the only order a table can keep track of, so the roster IS
- * the seating — and a reveal order that ignores it asks the phone to cross the
- * table five times instead of being passed one seat to the left. Randomising
- * where the circle is CUT keeps the one thing worth keeping, which is that the
- * same person does not open every round.
+ * The reveal order is the ROSTER'S order, cut at a random seat — see
+ * imposterLogic.ts for why that beat a shuffle.
  */
-
-const MIN_PLAYERS = 3;
-const MAX_PLAYERS = 10;
-
-/**
- * The circle, cut at a random seat: 3, 4, 5, 1, 2 at a table of five.
- *
- * Every player still appears exactly once, and who opens is uniform over the
- * table — the two things the shuffle this replaced was there for. What it
- * gives back is the pass: each reveal hands the phone to the seat next door,
- * which is where the roster's own order came from in the first place.
- */
-function revealOrder(count: number): number[] {
-  const start = Math.floor(Math.random() * count);
-  return Array.from({ length: count }, (_, i) => (start + i) % count);
-}
-
-type Phase = "setup" | "picking" | "cover" | "role" | "ready";
 
 interface State {
-  phase: Phase;
+  phase: RolePhase;
   count: number;
   word: string;
   /**
    * The nudge dealt alongside the word, shown to the Imposter alone and only
-   * when the table asked for one. Empty when a custom word was typed in —
-   * see startRound.
+   * when the table asked for one. Empty when a custom word was typed in.
    */
   hint: string;
   /** Whether this table plays with hints at all. Set before the deal. */
   showHint: boolean;
   /** Index into the player list, not into the reveal order. */
   imposter: number;
-  /** Player indices in seating order from a random start — see revealOrder. */
+  /** Player indices in seating order from a random start. */
   order: number[];
   /** How far through the reveal order we are. */
   at: number;
@@ -84,10 +68,7 @@ export function Imposter({ mode, onBack }: Props) {
   const { players, hasRoster } = useRoster();
   const categories = categoryNames(contentMode);
 
-  const defaultCount = Math.min(
-    MAX_PLAYERS,
-    Math.max(MIN_PLAYERS, hasRoster ? players.length : 4),
-  );
+  const defaultCount = clampCount(hasRoster ? players.length : 4);
 
   const [s, setS] = useState<State>({
     phase: "setup",
@@ -95,10 +76,7 @@ export function Imposter({ mode, onBack }: Props) {
     word: "",
     hint: "",
     /* Off. The mode's whole shape is that one player is out in the cold, and
-       a table meeting it for the first time should meet that version. A hint
-       is the concession you reach for once a group has played enough rounds
-       to know how hard going first is — so it is a thing you turn ON, not a
-       thing you notice you have been playing with. */
+       a table meeting it for the first time should meet that version. */
     showHint: false,
     imposter: 0,
     order: [],
@@ -116,51 +94,32 @@ export function Imposter({ mode, onBack }: Props) {
     [hasRoster, players],
   );
 
-
   const setCount = useCallback((next: number) => {
-    setS((prev) => ({ ...prev, count: next }));
+    setS((prev) => ({ ...prev, count: clampCount(next) }));
   }, []);
 
   /**
-   * Deals: a word, an Imposter, an order, back to the first reveal. Called
-   * from Deal roles and from Start over, which are the same act — the second
-   * one just happens to be abandoning a deal already in progress. Everything
-   * the table chose (the count, the category) is carried through, because
-   * neither of those is what went wrong.
+   * Deals: a word, an Imposter, an order, back to the first reveal. Guarded
+   * on the phase so a double tap on Deal roles deals once.
    */
   const startRound = useCallback(() => {
     setS((prev) => {
+      if (prev.phase !== "setup") return prev;
       // A custom entry isn't a category — it IS the word. Otherwise draw from
       // the chosen category, or from everything when none is set.
       const isCustom = prev.category !== null && !categories.includes(prev.category);
       /* A typed word has no hint and cannot be given one: nothing in this app
-         knows what "Steve's boat" is about, and a hint invented from the
-         string would be either the string again or wrong. So a custom word
-         plays the way the mode played before hints existed, switch or no
-         switch, and the role card says as much rather than showing an empty
-         slot where a nudge should be. */
+         knows what "Steve's boat" is about. */
       const [word, hint] = isCustom
         ? ([prev.category!, ""] as const)
         : randomItem(wordsFor(contentMode, prev.category));
-      return {
-        ...prev,
-        phase: "cover",
-        word,
-        hint,
-        imposter: Math.floor(Math.random() * prev.count),
-        order: revealOrder(prev.count),
-        at: 0,
-      };
+      return { ...prev, phase: "cover", word, hint, ...deal(prev.count), at: 0 };
     });
   }, [contentMode, categories]);
 
   /**
    * Back to the screen the round is set up on, carrying everything the
-   * table chose there — the count, the category, whether the Imposter gets
-   * a hint. Nothing is dealt until they ask for it.
-   *
-   * Both ways out of a round land here: New game at the end of one, and
-   * Start over in the middle of a deal that went wrong.
+   * table chose there. Nothing is dealt until they ask for it.
    */
   const backToSetup = useCallback(() => {
     setS((prev) => ({ ...prev, phase: "setup" }));
@@ -169,38 +128,39 @@ export function Imposter({ mode, onBack }: Props) {
   const currentPlayer = s.order[s.at];
   const isImposter = currentPlayer === s.imposter;
 
+  /* A deal in progress is the thing the X must not throw away by reflex. */
+  useExitGuard(isLive(s.phase));
+
+  /* A role on a screen nobody is looking at goes back to its cover, for the
+     same player. Nothing advances; the role has to be asked for again. */
+  useWhenHidden(s.phase === "role", () => setS(onHidden));
+
+  /* The new card is what to read next, so it takes focus as it arrives. */
+  const focalRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    focalRef.current?.focus({ preventScroll: true });
+  }, [s.phase, s.at]);
+
   /**
-   * Two things are live here and nothing else is. Which reveal you are on,
-   * because the whole game is passing the phone in the right order. And the
-   * category on the setup screen — the same thing Last Word and the Number
-   * Game put on this line, so it reads the same way in all three.
-   *
-   * "Set up the round", "Pick a category" and "Clues" each restated the card
-   * directly under them, so those screens carry no line at all.
+   * THE HEADER CARRIES THE ONE LIVE THING ON THE SCREEN. During the deal that
+   * is which reveal you are on — the whole game is passing the phone in the
+   * right order. The setup screen's one piece of state, the category, sits
+   * on the control that changes it, so the header says nothing there.
    */
   const label = useMemo(() => {
-    if (s.phase === "cover" || s.phase === "role") {
-      return `Reveal ${s.at + 1} of ${s.count}`;
-    }
-    // Named, not bare: on this screen the value is often just "Any", and a
-    // lone "ANY" across the header says nothing about what it is answering.
-    // Its own row, so the value reads as the answer to the label rather than
-    // as the tail of a sentence — see `white-space` on .gheader__now.
-    return s.phase === "setup" ? `Category:\n${s.category ?? "Any"}` : undefined;
-  }, [s.phase, s.at, s.count, s.category]);
+    if (s.phase === "cover" || s.phase === "role") return `Reveal ${s.at + 1} of ${s.count}`;
+    if (s.phase === "ready") return "Clues";
+    return undefined;
+  }, [s.phase, s.at, s.count]);
+
+  const excess = hasRoster && players.length > MAX_PLAYERS;
 
   return (
-    /* Which reveal you are on — the whole game is passing the phone in
-       the right order, so that one cannot be a caption. */
-    /* The picker takes the whole screen: its chevron would leave the round
-       entirely and its own Back goes where you actually mean. */
     <GameScreen
       mode={mode}
       subtitle={label}
       hideHeader={s.phase === "picking"}
-      /* The one screen in this game nobody else may read. The cover screen
-         before it is safe by construction — a name and a warning, nothing
-         more — so only the role itself opts out. */
+      /* The one screen in this game nobody else may read. */
       isPrivate={s.phase === "role"}
       onBack={onBack}
     >
@@ -208,62 +168,54 @@ export function Imposter({ mode, onBack }: Props) {
       {s.phase === "setup" && (
         <CardBody
           card={
-            <div className="card">
-            <span className="card__eyebrow">Players</span>
-            <Stepper
-              value={s.count}
-              min={MIN_PLAYERS}
-              max={MAX_PLAYERS}
-              onChange={setCount}
-              noun="player"
-            />
-            <p className="card__meta">
-              One of you won't get the word.{" "}
-              {hasRoster
-                ? players.length >= s.count
-                  ? "Using your player names."
-                  : `Using your ${players.length} names, then numbers.`
-                : "Add names on Home to use them here."}
+            <div className="card imp-setup" ref={focalRef} tabIndex={-1}>
+              <span className="card__eyebrow">Players</span>
+              <Stepper
+                value={s.count}
+                min={MIN_PLAYERS}
+                max={MAX_PLAYERS}
+                onChange={setCount}
+                noun="player"
+              />
+              {/* ONE SENTENCE ABOUT THE ROSTER, and it says the awkward
+                  thing out loud: a roster longer than the game does not get
+                  quietly trimmed — it says who plays and how to change it. */}
+              <p className="card__meta" data-warn={excess || undefined}>
+                One of you won't get the word. {rosterNote(hasRoster ? players.length : 0, s.count)}
               </p>
 
-            {/* THE ROUND'S ONE OPTION, ON THE CARD THAT SETS THE ROUND UP.
-
-                Under the count and behind a rule, because those are two
-                different questions — how many are playing is what this card
-                is for, and whether the Imposter gets a nudge is a house rule
-                bolted to the bottom of it. The rule is what says so; without
-                it the switch read as a third line of the caption above.
-
-                It sat in the footer band for a while, which kept the card at
-                the height it had always been and put the option in with the
-                buttons that start the round. Wrong shelf: everything in that
-                band DOES something, and this decides something. See
-                .switch--card for what the card costs it. */}
-            <Switch
-              className="switch--card"
-              checked={s.showHint}
-              onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
-              label="Show Imposter hint"
-            />
+              {/* THE ROUND'S ONE OPTION, under the count and behind a rule,
+                  with one line saying what turning it on changes. */}
+              <Switch
+                className="switch--card"
+                checked={s.showHint}
+                onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
+                label="Imposter hint"
+              />
+              <p className="card__meta imp-setup__hint">
+                {s.showHint
+                  ? "The Imposter gets a one-word nudge nobody else sees, and can't say it as their clue."
+                  : "Off: the Imposter plays on their ears alone. Turn on for a one-word nudge."}
+              </p>
             </div>
           }
         >
-          <div className="actions--row">
-            <button
-              className="btn btn--ghost"
-              onClick={() =>
-                setS((prev) => ({ ...prev, category: randomItem(categories) }))
-              }
-            >
-              Random
-            </button>
-            <button
-              className="btn btn--ghost"
-              onClick={() => setS((prev) => ({ ...prev, phase: "picking" }))}
-            >
-              Categories
-            </button>
-          </div>
+          {/* ONE CONTROL FOR THE CATEGORY. It used to be two pills, Random
+              and Categories, given the same weight as each other and nearly
+              the weight of Deal roles — for a setting most tables never
+              touch, because Any already deals a fresh category every round.
+              The value and the way to change it are one quiet row now. */}
+          <button
+            className="imp-cat"
+            onClick={() => setS((prev) => ({ ...prev, phase: "picking" }))}
+            aria-label={`Category: ${s.category ?? "any"}. Change`}
+          >
+            <span className="imp-cat__label">Category</span>
+            <span className="imp-cat__value">{s.category ?? "Any"}</span>
+            <span className="imp-cat__hint">
+              {s.category === null ? "A different one every deal" : "Change"}
+            </span>
+          </button>
 
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={startRound}>
@@ -279,6 +231,8 @@ export function Imposter({ mode, onBack }: Props) {
           categories={categories}
           customNoun="word"
           customNote="Whoever types this will see it, and can still be dealt the Imposter. Your table, your call."
+          anyLabel="Any category"
+          onAny={() => setS((prev) => ({ ...prev, category: null, phase: "setup" }))}
           onPick={(c) => setS((prev) => ({ ...prev, category: c, phase: "setup" }))}
           onCancel={() => setS((prev) => ({ ...prev, phase: "setup" }))}
         />
@@ -288,52 +242,30 @@ export function Imposter({ mode, onBack }: Props) {
       {s.phase === "cover" && (
         <CardBody
           card={
-            <div className="card">
+            <div className="card" key={`cover-${s.at}`} ref={focalRef} tabIndex={-1}>
               <span className="card__eyebrow">Pass the phone to</span>
               <p className="card__prompt">{nameOf(currentPlayer)}</p>
-              <p className="card__meta">Don't let anyone else see the screen.</p>
+              <p className="card__meta">
+                {s.at === 0
+                  ? `${nameOf(currentPlayer)} goes first. Don't let anyone else see the screen.`
+                  : `${s.at} of ${s.count} have seen theirs. Don't let anyone else see the screen.`}
+              </p>
             </div>
           }
         >
-          {/* A DEAL CAN GO WRONG HALFWAY THROUGH, and the only other way out
-              is the chevron, which leaves the mode altogether and loses the
-              category and the player count with it.
-
-              Two people looking at one screen, someone tapping past their
-              word without reading it, the phone going round the table the
-              wrong way — none of those can be repaired by carrying on. It
-              throws away the reveals already done, which is the point.
-
-              BACK TO THE SETUP SCREEN, NOT STRAIGHT INTO ANOTHER DEAL. It
-              used to re-deal on the spot, which meant one tap put a new
-              secret word on the phone before anyone had agreed to start
-              again — and the reason a deal is being abandoned is very often
-              that the count or the category was wrong, which the old
-              behaviour gave you no way to change on the way past. A round
-              nobody asked for is not a recovery. So it lands where the
-              round is chosen, with everything the table picked still set,
-              and Deal roles is one tap away when they are ready.
-
-              ON THE COVER SCREEN AND NOWHERE ELSE. The role screen is the one
-              thing in this app nobody but its owner may see, and a control
-              that throws the round has no business living behind that — a
-              player who did not like their role could tap it while the phone
-              was face down and nobody would know. Here it is under the
-              neutral screen, in the open, between two hands. From a role,
-              Hide it first: the cover is where the phone is being passed
-              anyway.
-
-              Quiet, per .gfoot__skip: on almost every deal this is the last
-              thing anyone wants. */}
+          {/* A deal can go wrong halfway through. Back to the setup screen,
+              not straight into another deal, and on the cover screen only —
+              the role screen is the one thing nobody but its owner may see,
+              and a control that throws the round has no business there. */}
           <button className="gfoot__skip" onClick={backToSetup}>
             Start over
           </button>
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
-              onClick={() => setS((prev) => ({ ...prev, phase: "role" }))}
+              onClick={() => setS((prev) => (prev.phase === "cover" ? { ...prev, phase: "role" } : prev))}
             >
-              View role
+              {nameOf(currentPlayer)}: show my role
             </button>
           </div>
         </CardBody>
@@ -343,39 +275,15 @@ export function Imposter({ mode, onBack }: Props) {
       {s.phase === "role" && (
         <CardBody
           card={
-            <div className={isImposter ? "card imp-card--imposter" : "card"}>
+            <div className={isImposter ? "card imp-card--imposter" : "card"} ref={focalRef} tabIndex={-1}>
               {isImposter ? (
                 <>
                   <span className="card__eyebrow">No word for you</span>
                   <p className="card__prompt">You're the Imposter</p>
-                  {/* SHOWN TO THIS PLAYER AND NOBODY ELSE, which is the same
-                      guarantee the word next door already has — the screen is
-                      face-down between two hands either way, and the cover
-                      before it says so.
-
-                      Deliberately not shown to the rest of the table. Knowing
-                      what the Imposter was handed tells you what to avoid
-                      saying, and a table clueing AROUND the hint puts the
-                      Imposter back where they started with an extra job. The
-                      nudge only works while it is theirs alone.
-
-                      The rule under it is not decoration. A hint like "Sticky"
-                      is a usable turn if you say it, and the round it produces
-                      is one player reading a word off a screen while everyone
-                      else describes something they know — which the table
-                      hears immediately. Barred out loud, in the place it would
-                      be broken, rather than left to the group to discover. */}
                   {s.showHint && s.hint ? (
                     <p className="imp-hint">
                       <span className="imp-hint__label">Hint</span>
                       <span className="imp-hint__text">{s.hint}</span>
-                      {/* THE RULE AND THE STANDING ADVICE ARE ONE LINE, not
-                          two. They are the same sentence to the same reader,
-                          and as two muted paragraphs a card's gap apart they
-                          read as one anyway — while costing a whole extra
-                          element on a card that has 202px to spend at
-                          320x568 and already overflows there without a hint
-                          in it. Said once, in the panel it belongs to. */}
                       <span className="imp-hint__rule">
                         It isn't the word, and you can't use it as your clue.
                         Listen hard, blend in, don't get caught.
@@ -403,30 +311,14 @@ export function Imposter({ mode, onBack }: Props) {
             <button
               className="btn btn--lg btn--block"
               onClick={() => {
-                /* Sounded from THIS player's press rather than from arriving
-                   at the next cover screen, because the handover is the thing
-                   being confirmed and it happens here — a sound that waited
-                   for the next screen would be telling the person who has
-                   already been handed the phone.
-
-                   The last press is a different event, which is why it gets a
-                   different sound rather than none. Nothing is being passed on
-                   — the deal is finished and the round starts — so it takes
-                   `go`, the same sound the 3 · 2 · 1 lands on elsewhere. This
-                   is the one moment in the mode where the phone stops being
-                   private and the table starts playing, and it was silent. */
+                /* Sounded from THIS player's press: the handover is the thing
+                   being confirmed and it happens here. The last press starts
+                   the round rather than passing the phone, so it takes `go`. */
                 audio.play(s.at + 1 < s.count ? "advance" : "go");
-                setS((prev) => {
-                  const next = prev.at + 1;
-                  // Always back to a cover screen — never straight to the next
-                  // player's role.
-                  return next >= prev.count
-                    ? { ...prev, phase: "ready" }
-                    : { ...prev, phase: "cover", at: next };
-                });
+                setS(afterHide);
               }}
             >
-              Hide role
+              {s.at + 1 < s.count ? `Hide & pass to ${nameOf(s.order[s.at + 1])}` : "Hide & start clues"}
             </button>
           </div>
         </CardBody>
@@ -436,23 +328,11 @@ export function Imposter({ mode, onBack }: Props) {
       {s.phase === "ready" && (
         <CardBody
           card={
-            <div className="card">
-              <span className="card__eyebrow">Everyone ready?</span>
+            <div className="card" ref={focalRef} tabIndex={-1}>
+              <span className="card__eyebrow">Everyone's seen theirs</span>
               <p className="card__prompt card__prompt--sm">
                 Go round the group. One clue each about the word.
               </p>
-              {/* THE ONE PLACE THE HINT RULE IS ENFORCEABLE.
-
-                  It is printed on the Imposter's own card, where it is about
-                  to be broken — but a rule only its breaker has read is not a
-                  rule, it is a request. The table set the switch together on
-                  the setup screen, so saying a hint exists gives nothing away,
-                  and saying it is barred is what lets anyone else call it.
-
-                  On `s.hint`, not on `s.showHint`: a custom word is dealt
-                  without one whatever the switch says, and a table told to
-                  watch for a hint that was never handed out spends the round
-                  waiting for something that is not there. */}
               <p className="card__meta">
                 {s.showHint && s.hint
                   ? "Don't make it too obvious. The Imposter has a vague hint " +
@@ -467,8 +347,7 @@ export function Imposter({ mode, onBack }: Props) {
         >
           <div className="actions">
             {/* The app deals the roles and gets out of the way. It has no
-                reveal and keeps no score: everyone except the Imposter knows
-                the word, so the table can settle all of it themselves. */}
+                reveal and keeps no score: the table settles it. */}
             <button className="btn btn--lg btn--block" onClick={backToSetup}>
               New game
             </button>

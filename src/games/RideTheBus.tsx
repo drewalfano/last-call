@@ -3,6 +3,8 @@ import { CardBody, GameScreen } from "../components/GameScreen";
 import { PlayingCard } from "../components/PlayingCard";
 import { deal, freshDeck, SUITS, type Card, type Suit } from "../lib/cards";
 import type { ModeDef } from "../data/modes";
+import { useExitGuard } from "../state/exitGuard";
+import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import { audio } from "../lib/audio";
 
@@ -158,6 +160,9 @@ export function RideTheBus({ mode, onBack }: Props) {
   const clearVerdict = useCallback(() => setS((prev) => ({ ...prev, verdict: null })), []);
   const restart = useCallback(() => setS(initialState()), []);
 
+  /* Cards on the table and a rider mid-ride. The results screen is free to leave. */
+  useExitGuard(s.table.length > 0 && s.phase !== "results");
+  const { mode: contentMode } = useContentMode();
   const subtitle = useMemo(
     () =>
       hasRoster && s.phase !== "results"
@@ -173,6 +178,13 @@ export function RideTheBus({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={subtitle}
+      /* Said once, before the first card, and only at Mild: the level changes
+         prompts elsewhere, and this mode has no prompts to change. */
+      note={
+        contentMode === "safe" && s.table.length === 0 && s.phase !== "results"
+          ? "A drinking game at every content level. Swap drinks for dares if nobody's drinking."
+          : undefined
+      }
       aside={
         s.phase !== "results" ? (
           <div className="rtb__tally">

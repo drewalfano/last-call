@@ -13,6 +13,7 @@ import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
 import type { ModeDef } from "../data/modes";
 import { audio } from "../lib/audio";
+import { useExitGuard } from "../state/exitGuard";
 
 /**
  * KINGS CUP
@@ -93,6 +94,8 @@ export function KingsCup({ mode, onBack }: Props) {
   const [rulesOpen, setRulesOpen] = useState(false);
 
   const drawer = currentPlayer ?? "Whoever drew it";
+  /* Kings drawn and mates made: a game in progress. */
+  useExitGuard(s.card !== null && !s.finished);
 
   const draw = useCallback(() => {
     /* A real card off a real deck — the most literal case of the card being
@@ -217,7 +220,15 @@ export function KingsCup({ mode, onBack }: Props) {
             <div className="card">
               <span className="card__eyebrow">Kings Cup</span>
               <p className="card__prompt">Spread the deck. Draw one each, in turn.</p>
-              <p className="card__meta">The fourth king drinks the cup.</p>
+              <p className="card__meta">
+                The fourth king drinks the cup.
+                {contentMode === "safe" && (
+                  <>
+                    {" "}
+                    <span className="card__note">A drinking game at every content level. Mild doesn't change the rules; swap drinks for dares if nobody's drinking.</span>
+                  </>
+                )}
+              </p>
             </div>
           }
         >

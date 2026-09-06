@@ -4,6 +4,7 @@ import { PromptCard } from "../components/PromptCard";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
+import { useExitGuard } from "../state/exitGuard";
 import { useContentMode } from "../state/contentMode";
 import { HOT_SEAT } from "../data/hotSeat";
 import { PlayerPicker } from "../components/VotePad";
@@ -26,6 +27,7 @@ export function HotSeat({ mode, onBack }: Props) {
   const deck = useDeck(pool);
 
   const [phase, setPhase] = useState<Phase>("pick");
+  useExitGuard(phase === "playing");
   const [name, setName] = useState("");
   const [draft, setDraft] = useState("");
   const [asked, setAsked] = useState(0);

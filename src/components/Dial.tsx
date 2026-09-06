@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { buzz } from "../lib/useCountdown";
 import { audio } from "../lib/audio";
 import { ZONES } from "../data/ballpark";
+import { positionText } from "../games/ballparkFlow";
 
 /**
  * THE DIAL
@@ -108,6 +109,14 @@ interface DialProps {
   lockedGuess?: number | null;
   /** Runs the reveal sequence's entrance on the bands and the answer needle. */
   revealing?: boolean;
+  /**
+   * WHAT A NON-INTERACTIVE DIAL SAYS. The picture of a target is the whole
+   * content of the Reader's card and of the result, and a label naming only
+   * the two ends left both out of the accessibility tree in all but name.
+   * The caller words it, because only the caller knows whether this is a
+   * secret spot, a worked example or a verdict.
+   */
+  description?: string;
 }
 
 /**
@@ -133,6 +142,7 @@ export function Dial({
   showZones = false,
   lockedGuess = null,
   revealing = false,
+  description,
 }: DialProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -295,14 +305,7 @@ export function Dial({
    * Reads as a POSITION, not a number. "62" tells a screen reader nothing
    * about a spectrum whose two ends are the entire content of the round.
    */
-  const valueText =
-    shown <= 2
-      ? `All the way at ${left}`
-      : shown >= 98
-        ? `All the way at ${right}`
-        : shown >= 45 && shown <= 55
-          ? `Halfway between ${left} and ${right}`
-          : `${shown}% of the way from ${left} to ${right}`;
+  const valueText = positionText(shown, left, right);
 
   return (
     <div className="dial">
@@ -311,7 +314,11 @@ export function Dial({
         className="dial__svg"
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         role={interactive ? "slider" : "img"}
-        aria-label={interactive ? `Dial between ${left} and ${right}` : `${left} to ${right}`}
+        aria-label={
+          interactive
+            ? `Dial between ${left} and ${right}`
+            : (description ?? `Dial from ${left} to ${right}`)
+        }
         aria-valuenow={interactive ? shown : undefined}
         aria-valuemin={interactive ? 0 : undefined}
         aria-valuemax={interactive ? 100 : undefined}

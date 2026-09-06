@@ -70,7 +70,13 @@ export default defineConfig({
     VitePWA({
       // Offline is a hard requirement: the app has to open and play in a
       // basement bar with no signal, so every build asset is precached.
-      registerType: "autoUpdate",
+      //
+      // `prompt`, NOT `autoUpdate`. Auto meant a new worker skipped waiting,
+      // claimed the page and reloaded it wherever it was — including under a
+      // live round, whose state is deliberately in memory only. With prompt
+      // the new worker installs and waits; src/lib/swUpdate.ts applies it on
+      // a cold launch or by an offer at Home, and holds it during a round.
+      registerType: "prompt",
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],

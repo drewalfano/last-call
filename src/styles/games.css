@@ -5250,3 +5250,305 @@
      one that gets to do it. */
   gap: 0;
 }
+
+/* =====================================================================
+   REVIEW PASS, SEPTEMBER 2026: the cue line on the deck, the level row on
+   Home, Ballpark's intro and legend, Odd One Out's category control, the
+   end-round dialog and the update offer. Structure only; every value is a
+   token. Cascade warning still applies — games.css loads before global.css,
+   so anything here that fights a bare class in global.css is qualified.
+   ===================================================================== */
+
+/* ---------------- Home: the cue line on every card ---------------- */
+/* The writing on a card grew a third line, so the peek grows with it — see
+   the derivation on .home__deck. The tagline is 21px; the cue is 17.6px of
+   --fs-xs plus a 2px gap, measured at the phone ramp. */
+.home__deck { --card-writing: 66.8px; }
+
+.deck-card__cue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--sp-2);
+  max-width: 100%;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium, 500);
+  letter-spacing: 0.01em;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+/* THE ONE TAG ON THE DECK. A small pill in the card's own ink, reversed, so
+   it reads as a label stuck on the card rather than as more writing. One
+   card carries it — see `starter` in data/modes.ts. */
+.deck-card__tag {
+  margin-left: var(--sp-1);
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--category-ink, var(--cat-ink));
+  color: var(--category);
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+/* ---------------- Home: the level under the pick ---------------- */
+/* Quieter than the button above by every measure — smaller, muted, no fill
+   — because it qualifies the pick rather than competing with it. Pulled up
+   into the button's own bottom margin so the two read as one control. */
+.home__fit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: calc(var(--gutter) * -1 + var(--sp-2));
+  margin-bottom: var(--gutter);
+  min-height: var(--control-sm);
+}
+
+.home__level {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  min-height: var(--control-sm);
+  padding: 0 var(--sp-3) 0 var(--sp-4);
+  border: var(--border-width) solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out;
+}
+.home__level:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+
+.home__level-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.home__level-change {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.home__fit-line {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: var(--lh-snug);
+  text-align: right;
+  text-wrap: balance;
+}
+
+/* One line, gone after the first game. Sits in the gap above the deck. */
+.home__start {
+  margin: calc(var(--gutter) * -1 + var(--sp-1)) 0 var(--gutter);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+.home__start b { color: var(--text); font-weight: var(--fw-bold); }
+
+/* ---------------- Home: a build waiting to restart ---------------- */
+.update-offer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: 0 0 var(--gutter);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border: var(--border-width) solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.update-offer__btn {
+  flex: none;
+  min-height: var(--control-sm);
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--control-bg);
+  color: var(--control-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) ease-out;
+}
+.update-offer__btn:active:not(:disabled) { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+.update-offer__btn:disabled { opacity: 0.55; cursor: default; }
+
+/* ---------------- The end-round dialog ---------------- */
+.end-round__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+/* Inside the shell rather than on a pack, so the buttons take the shell's
+   own ink: no --category to fall through to. */
+.end-round .btn { --category-ink: var(--control-bg); --category: var(--control-text); }
+.end-round .btn--ghost { --category-ink: var(--text); background: transparent; }
+
+/* ---------------- Ballpark: the intro card and the legend ---------------- */
+.bp-intro__steps {
+  margin: 0;
+  padding-left: 1.4em;
+  text-align: left;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--card-ink);
+}
+.bp-intro__steps li + li { margin-top: var(--sp-1); }
+
+/* The intro's dial is an illustration, not the instrument: three quarters
+   the size, so the steps above it and the example below both fit the card
+   on a 320pt phone. */
+.bp-intro__card .dial { width: 72%; margin-inline: auto; }
+.bp-intro__card .dial__end { font-size: var(--fs-xs); }
+.bp-intro__example { margin: 0; }
+.bp-intro__example b { color: var(--card-ink); font-weight: var(--fw-bold); }
+
+/* Which needle is which, in words as well as colour. Each swatch is a short
+   bar of the needle's own stroke; the word next to it is what carries the
+   meaning for anyone the colour does not reach. */
+.bp-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-4);
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--card-ink-muted);
+}
+.bp-legend__item { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.bp-legend__item::before {
+  content: "";
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--card-ink);
+}
+.bp-legend__item--spot::before {
+  background: var(--category);
+  box-shadow: 0 0 0 1px var(--card-surface);
+}
+
+/* ---------------- Odd One Out: the category control ---------------- */
+/* One row under the card: the label, the value, and what tapping does. It
+   takes the quiet outline .gfoot__skip uses, at the card's width, because it
+   is the same kind of thing — a setting, not the action. */
+.imp-cat {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-top: var(--sp-6);
+  min-height: var(--control-md);
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--category-ink, var(--text)) 30%, transparent);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--category-ink, var(--text));
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) ease-out;
+}
+.imp-cat:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+.imp-cat__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.imp-cat__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+}
+.imp-cat__hint {
+  font-size: var(--fs-xs);
+  opacity: 0.72;
+  white-space: nowrap;
+}
+/* With this row present the band grounds from the actions, like a skip. */
+.gfoot:has(.imp-cat)::before { content: none; }
+.gfoot:has(.imp-cat) .actions { margin-top: auto; }
+
+/* The line under the hint switch, explaining the state it is in. Tighter
+   than the card's gap so it reads as the switch's caption. */
+.imp-setup__hint { margin-top: calc(var(--sp-2) * -1); text-wrap: pretty; }
+
+/* A roster longer than the game gets said in the card's own ink, not muted:
+   it is the one line on this card a table has to act on. */
+.card__meta[data-warn] { color: var(--card-ink); }
+
+/* An aside inside a card's meta line, a shade quieter than the line. */
+.card__note { display: block; margin-top: var(--sp-2); font-size: var(--fs-xs); }
+
+/* The pinned Any option in the picker sits with Write your own. */
+.picker__card--any { font-weight: var(--fw-bold); }
+
+@media (prefers-reduced-motion: reduce) {
+  .home__level, .imp-cat, .update-offer__btn { transition: none; }
+}
+
+/* ---------------------------------------------------------------
+   SHORT PHONES. The intro card has three lines, an illustration and an
+   example, and at 320x568 the slot is 202px square: the dial goes first,
+   because the example line under it says the same thing in words, and the
+   steps step down a size. The setup card's switch caption goes for the same
+   reason the compacting block above drops its gaps — it is the one line on
+   that card nobody reads twice, and the role card repeats it.
+   --------------------------------------------------------------- */
+@media (max-height: 660px) {
+  .bp-intro__card .dial { display: none; }
+  .bp-intro__steps { font-size: var(--fs-xs); }
+  .imp-setup__hint { display: none; }
+}
+
+/* ---------------------------------------------------------------
+   A PHONE HELD SIDEWAYS. The card slot is a height budget — the screen
+   less the header's and footer's reserves — and at 390pt tall that budget
+   is 24px, so the card vanished and the mode was unplayable in landscape.
+   This was true before the review and is fixed here proportionately: the
+   reserves come in, the card gets a floor it can be read at, and the
+   screen scrolls for whatever no longer fits. Qualified by .app because
+   global.css declares the same grid later in the cascade.
+   --------------------------------------------------------------- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .app .screen:has(.focal--slot) {
+    --slot-h: max(var(--card-size), 240px);
+    /* `max-content`, not `auto` and not minmax: the rows add up to more
+       than the screen, and with negative free space an auto track is handed
+       its item's minimum contribution — which, with the reserve floor
+       removed below, was 61px for a 92px header, so the live line ran into
+       the card. A max-content track is sized to its content whatever the
+       free space is; the overflow scrolls. Measured: 92 / 240 / 60. */
+    grid-template-rows: max-content var(--slot-h) max-content;
+    overflow-y: auto;
+  }
+  .app .screen:has(.focal--slot) .gheader { min-height: 0; }
+  .app .screen .slot { width: min(100%, var(--slot-h)); }
+}

@@ -8,7 +8,11 @@ npm install
 npm run dev      # dev server (add -- --host to reach it from a phone)
 npm run build    # production build + service worker
 npm run preview  # serve the build (needed to exercise the PWA)
+npm test         # vitest: eligibility, the two private-screen flows, updates
 ```
+
+A design review pass with before/after screenshots, a decision log and a
+usability plan lives in `docs/review-2026-09/`.
 
 > The service worker only exists in a production build. `npm run dev` will not
 > register one — test offline against `npm run build && npm run preview`.
@@ -57,7 +61,14 @@ src/
 deep, and nobody deep-links a prompt mid-party.
 
 **Game state is not persisted.** Only settings and the roster survive a
-refresh. Leaving a mode ends the round.
+refresh. Leaving a mode ends the round — and once a round is live, the X and
+the browser's back button ask first ("End this round?"). Each game declares
+its live phases with `useExitGuard`; setup screens, intros and results close
+at once. See `src/state/exitGuard.tsx`.
+
+**Secrets go down when the page does.** `useWhenHidden` turns Ballpark's spot
+face-down and sends Odd One Out's role back to its cover when the app is
+backgrounded, without advancing either. Re-revealing is a deliberate tap.
 
 ---
 
@@ -97,6 +108,15 @@ sit at the top, because eleven cards scroll past a single screen.
 | 9 | Overbid | bidding + challenge |
 | 10 | Most Likely To | deck + pointing |
 | 11 | Hot Seat | turn structure + voting |
+
+**Every card carries a cue line** — "3–10 players · ~5 min a round", plus
+"drinking game" where that is the mechanic — read from `players`, `pace` and
+`drinking` in the same registry. Player ranges are the modes' own rules
+(Odd One Out's are its constants, and a test keeps them in step); durations
+are estimates and say so. One mode carries `starter`, which Home points a
+first visit at. `src/lib/fit.ts` turns the same fields plus the roster size
+and content level into what **Pick a game for me** will volunteer, and into
+the "6 of 11 games fit for 2." line under the button.
 
 **Ids are not titles.** Four modes were renamed and their ids deliberately were
 not, because nothing a player sees is attached to them: Odd One Out is
@@ -185,9 +205,12 @@ into `tokens.css` beside the pack that freed it.
   the app's few with no card — see the note on `.focal.num`.
 - **Hot Seat** — four questions per seat, split evenly between the seat
   answering and the table voting.
-- **Ballpark** — a hidden point on a spectrum between two opposing ideas. The
-  Reader turns a card over to see it, says one thing that sits there out loud,
-  and the table argues a dial to where they think it was. The clue is never
+- **Ballpark** — a hidden point on a spectrum between two opposing ideas. A
+  "How to play" card opens the mode once per phone (and again from the handoff
+  screen); the Reader reveals the spot with one tap, says one thing that sits
+  there out loud, hides it and passes the phone with one more, and the table
+  argues a dial to where they think it was. The round is a reducer in
+  `ballparkFlow.ts`, so a double tap cannot skip a step. The clue is never
   typed in; the app only holds the secret. **Nothing is scored** — the reveal
   draws three proximity zones behind the answer and names the result, and how
   much that matters is the table's business. Same answer Same Page and Odd One
@@ -216,10 +239,14 @@ Two independent settings behind the gear on Home. They used to be one control
 — turning on adult content also turned the app dark — which made it impossible
 to have either without the other.
 
-### Content: Safe / 19+
+### Content: Mild / Spicy / Filthy
 
 One rating for the whole app; there are no per-game toggles. Switching
-re-points every mode at the matching pool immediately.
+re-points every mode at the matching pool immediately. A level ADDS prompts
+and never removes any. Mild also stops Pick a game for me volunteering Kings
+Cup or Ride the Bus, whose rules are drink instructions at every level; both
+stay on the deck and say so on their opening screens. The current level and
+its fit line are shown on Home under the pick button.
 
 - Default: Safe. Not badged — it's just the app.
 - Persisted at `lastcall.contentMode`.
@@ -235,6 +262,14 @@ re-points every mode at the matching pool immediately.
 
 ---
 
+### Updates
+
+The service worker is registered as `prompt`, not `autoUpdate`: a new build
+installs and waits, and `src/lib/swUpdate.ts` decides when it takes over —
+at once on a cold launch before anyone has touched the app, by an offer on
+Home otherwise, and never under a live round. Settings has a Check for update
+control; a failed check reports as "Couldn't check", never as up to date.
+
 ## The roster
 
 Optional, on Home. Nothing requires it: with names, prompts name people and
@@ -247,7 +282,9 @@ fallback is why modes don't need two sets of copy. Resolution happens once per
 card, not per render, so a name can't change mid-prompt.
 
 Odd One Out degrades per player, so a three-name roster in a five-player game
-reads "Drew, Sam, Alex, Player 4, Player 5".
+reads "Drew, Sam, Alex, Player 4, Player 5". A roster longer than the game is
+never trimmed silently: the setup card says which names play and how to
+change it.
 
 **The order is part of the game, so names can be dragged into it.** Names get
 typed in going round the circle, which makes the roster the seating: Odd One

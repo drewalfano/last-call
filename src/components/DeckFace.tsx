@@ -1,4 +1,5 @@
 import type { ModeDef } from "../data/modes";
+import { paceLabel, playersLabel } from "../lib/fit";
 
 /**
  * THE WRITING ON A DECK CARD.
@@ -29,6 +30,23 @@ export function DeckFace({ mode }: { mode: ModeDef }) {
         )}
       </span>
       <span className="deck-card__tagline">{mode.tagline}</span>
+      {/* THE CUE LINE. Eleven titles and taglines have personality and no
+          practical information; this is the practical information, in one
+          quiet line: who it plays with, roughly how long, and whether it is a
+          drinking game. Derived from the registry, so it cannot drift from
+          what Pick a game for me uses to decide. */}
+      <span className="deck-card__cue">
+        <span>{playersLabel(mode.players)}</span>
+        <span aria-hidden="true">·</span>
+        <span>{paceLabel(mode.pace)}</span>
+        {mode.drinking && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>drinking game</span>
+          </>
+        )}
+        {mode.starter && <span className="deck-card__tag">Easy start</span>}
+      </span>
     </>
   );
 }

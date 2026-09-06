@@ -7,6 +7,7 @@ import { useContentMode } from "../state/contentMode";
 import { LAST_WORD_CATEGORIES } from "../data/lastWord";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { audio } from "../lib/audio";
+import { useExitGuard } from "../state/exitGuard";
 
 /**
  * LAST WORD
@@ -48,6 +49,8 @@ export function LastWord({ mode, onBack }: Props) {
   const deck = useDeck(categories);
 
   const [phase, setPhase] = useState<Phase>("intro");
+  /* A clock is running and letters are locked: leaving now ends the round. */
+  useExitGuard(phase === "playing");
   /** Set when the group picked or wrote one; otherwise the deck's draw is used. */
   const [chosen, setChosen] = useState<string | null>(null);
   const [used, setUsed] = useState<string[]>([]);
