@@ -9,6 +9,13 @@ own notes on why they are the way they are.
 `prefers-color-scheme` query, since a vector favicon is the one icon here a
 browser re-renders and can therefore follow the theme.
 
+`players.svg` is the editable master for the player-count icon in the corner
+of each Home card. The app draws it inline in `src/components/DeckFace.tsx`,
+in the card's own ink, so an edit here does not reach the app by itself: copy
+the shapes (and the `viewBox`, if it changed) back into that `<svg>`. Keep it
+as strokes rather than outlined fills: the CSS sets the colour, and each
+path's stroke width is copied across as its own `strokeWidth`.
+
 **Do not rebuild the cards from their visible bands.** Each card is 300 deep
 and the next covers all but 212 of it; that overlap is what fills the notch at
 each card's shoulder with the colour of the card above. Redraw them as their

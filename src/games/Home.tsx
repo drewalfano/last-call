@@ -2,33 +2,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { MODES, type ModeId } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
 import { useRoster } from "../state/roster";
-import { SettingsButton, SettingsSheet, TIER_LABEL } from "../components/Settings";
+import { SettingsButton, SettingsSheet } from "../components/Settings";
 import { RosterBar } from "../components/RosterBar";
 import { UpdateOffer } from "../components/UpdateOffer";
 import { categoryStyle } from "../lib/style";
-import { fitSummary, noFitAdvice, pickForGroup, type Group } from "../lib/fit";
+import { noFitAdvice, pickForGroup, type Group } from "../lib/fit";
 import { DeckFace } from "../components/DeckFace";
-
-/**
- * Whether anyone has opened a game on this phone yet. The one-line pointer at
- * the recommended first game exists for a table that has not, and leaves once
- * they have — it is not a tagline, it is directions for a first visit.
- */
-const PLAYED_KEY = "lastcall.played";
-function readPlayed(): boolean {
-  try {
-    return window.localStorage.getItem(PLAYED_KEY) === "yes";
-  } catch {
-    return false;
-  }
-}
-function writePlayed(): void {
-  try {
-    window.localStorage.setItem(PLAYED_KEY, "yes");
-  } catch {
-    /* fine; the hint shows again next time */
-  }
-}
 
 interface HomeProps {
   /** The rect lets App expand the mode's color out from the card you tapped. */
@@ -563,7 +542,6 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { mode: contentMode } = useContentMode();
   const { players, hasRoster } = useRoster();
-  const [played] = useState(readPlayed);
   /** What the pick could not find, said under the button rather than swallowed. */
   const [noFit, setNoFit] = useState<string | null>(null);
   /**
@@ -603,7 +581,6 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
    */
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
-      writePlayed();
       const r = el.getBoundingClientRect();
       onPick(id, { top: r.top, left: r.left, right: r.right, bottom: r.bottom });
     },
@@ -621,7 +598,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
    * drinking game; a roster of two is not handed Odd One Out. Nothing is
    * hidden from the deck — a tier adds and never takes away, and a table that
    * wants Kings Cup can tap it — this only changes what the app volunteers.
-   * See lib/fit.ts, which the cue lines on the cards read from too.
+   * See lib/fit.ts, which the player counts on the cards read from too.
    */
   const group = useMemo<Group>(
     () => ({ size: hasRoster ? players.length : undefined, content: contentMode }),
@@ -974,29 +951,10 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
         </span>
       </button>
 
-      {/* THE LEVEL, VISIBLE FROM HOME, and what the pick is drawing from.
-
-          The content setting used to live only behind the gear, so a table
-          could be dealt Spicy prompts with nothing on Home saying so. One
-          quiet row: the level, a summary of how many games fit this table at
-          it, and the way to change it. Deliberately smaller and dimmer than
-          the button above — it qualifies the pick, it does not compete. */}
-      <div className="home__fit" aria-live="polite">
-        <button className="home__level" onClick={() => setSettingsOpen(true)}>
-          <span className="home__level-name">{TIER_LABEL[contentMode]}</span>
-          <span className="home__level-change">Change</span>
-        </button>
-        <span className="home__fit-line">{noFit ?? fitSummary(group)}</span>
-      </div>
-
-      {/* One line, first visit only: where to start. It points at a card
-          rather than explaining anything, and it is gone once any game has
-          been opened on this phone. */}
-      {!played && (
-        <p className="home__start">
-          First time? Start with <b>Letter Rip</b>.
-        </p>
-      )}
+      {/* When a pick finds nothing, what to change so one would — said
+          under the button rather than swallowed. Nothing sits here
+          otherwise: the content level lives behind the gear. */}
+      <p className="home__fit-line" aria-live="polite">{noFit}</p>
 
       <UpdateOffer />
 

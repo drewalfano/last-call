@@ -7,7 +7,7 @@ import type { ContentMode } from "../state/contentMode";
  * Two facts about a group are knowable without asking anyone anything: how
  * many names are on the roster, if there is one, and which content level is
  * set. This is the one place they are turned into "can this table play that
- * game", so Home's cue lines, the summary under Pick a game for me, and the
+ * game", so Home's player counts, the advice under Pick a game for me, and the
  * pick itself all agree.
  *
  * A group with no roster has no size. Nothing here asks for one — the app
@@ -18,7 +18,7 @@ import type { ContentMode } from "../state/contentMode";
  * Drinking games are a content question, not a size one. Mild says the table
  * plays sober, and Kings Cup's rules ARE drink instructions, so at Mild the
  * picker will not hand one over. The cards stay on the deck at every level:
- * a table that wants one can still tap it, and the cue line says what it is.
+ * a table that wants one can still tap it.
  */
 export interface Group {
   /** Roster size, or undefined when nobody has entered names. */
@@ -88,6 +88,11 @@ export function playersLabel(range: PlayerRange): string {
   return range.max === undefined
     ? `${range.min}+ players`
     : `${range.min}–${range.max} players`;
+}
+
+/** "3–10", "2+" — the count alone, for the corner of a deck card. */
+export function playersCount(range: PlayerRange): string {
+  return range.max === undefined ? `${range.min}+` : `${range.min}–${range.max}`;
 }
 
 /** "~2 min a round", "~20 min a game". Always approximate, and it says so. */

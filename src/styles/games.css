@@ -5259,106 +5259,45 @@
    so anything here that fights a bare class in global.css is qualified.
    ===================================================================== */
 
-/* ---------------- Home: the cue line on every card ---------------- */
-/* The writing on a card grew a third line, so the peek grows with it — see
-   the derivation on .home__deck. The tagline is 21px; the cue is 17.6px of
-   --fs-xs plus a 2px gap, measured at the phone ramp. */
-.home__deck { --card-writing: 66.8px; }
+/* ---------------- Home: who a card plays with ---------------- */
+/* The title row runs the card's full width so the count can sit in its far
+   corner, level with the name. It is the card's ink at the tagline's
+   strength: practical information, quieter than the name it sits beside. */
+.deck-card__title { align-self: stretch; }
 
-.deck-card__cue {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 var(--sp-2);
-  max-width: 100%;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium, 500);
-  letter-spacing: 0.01em;
-  opacity: 0.85;
-  white-space: nowrap;
-}
-
-/* THE ONE TAG ON THE DECK. A small pill in the card's own ink, reversed, so
-   it reads as a label stuck on the card rather than as more writing. One
-   card carries it — see `starter` in data/modes.ts. */
-.deck-card__tag {
-  margin-left: var(--sp-1);
-  padding: 1px var(--sp-2);
-  border-radius: var(--radius-pill);
-  background: var(--category-ink, var(--cat-ink));
-  color: var(--category);
-  font-family: var(--font-display);
-  font-size: 0.6875rem;
-  font-weight: var(--fw-bold);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  line-height: 1.5;
-}
-
-/* ---------------- Home: the level under the pick ---------------- */
-/* Quieter than the button above by every measure — smaller, muted, no fill
-   — because it qualifies the pick rather than competing with it. Pulled up
-   into the button's own bottom margin so the two read as one control. */
-.home__fit {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-top: calc(var(--gutter) * -1 + var(--sp-2));
-  margin-bottom: var(--gutter);
-  min-height: var(--control-sm);
-}
-
-.home__level {
+.deck-card__players {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
   flex: none;
-  min-height: var(--control-sm);
-  padding: 0 var(--sp-3) 0 var(--sp-4);
-  border: var(--border-width) solid var(--border-soft);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-  transition: transform var(--dur-press) var(--ease-out),
-              opacity var(--dur-press) ease-out;
-}
-.home__level:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
-
-.home__level-name {
-  font-family: var(--font-display);
+  margin-left: auto;
   font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+.deck-card__players svg {
+  width: 1.6em;
+  height: 1.12em;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.home__level-change {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-}
-
+/* ---------------- Home: when a pick finds nothing ---------------- */
+/* Empty, and taking no room, until a pick comes back with nothing. Then one
+   line in the gap under the button, pulled up into its bottom margin. */
 .home__fit-line {
-  flex: 1;
-  min-width: 0;
+  margin: calc(var(--gutter) * -1 + var(--sp-2)) 0 var(--gutter);
   font-size: var(--fs-sm);
   color: var(--text-muted);
   line-height: var(--lh-snug);
-  text-align: right;
+  text-align: center;
   text-wrap: balance;
 }
-
-/* One line, gone after the first game. Sits in the gap above the deck. */
-.home__start {
-  margin: calc(var(--gutter) * -1 + var(--sp-1)) 0 var(--gutter);
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-  text-align: center;
-}
-.home__start b { color: var(--text); font-weight: var(--fw-bold); }
+.home__fit-line:empty { margin: 0; }
 
 /* ---------------- Home: a build waiting to restart ---------------- */
 .update-offer {
@@ -5511,7 +5450,7 @@
 .picker__card--any { font-weight: var(--fw-bold); }
 
 @media (prefers-reduced-motion: reduce) {
-  .home__level, .imp-cat, .update-offer__btn { transition: none; }
+  .imp-cat, .update-offer__btn { transition: none; }
 }
 
 /* ---------------------------------------------------------------

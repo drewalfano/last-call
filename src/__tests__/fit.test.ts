@@ -8,10 +8,6 @@ describe("game eligibility", () => {
     expect(MODE_BY_ID.imposter.players).toEqual({ min: MIN_PLAYERS, max: MAX_PLAYERS });
   });
 
-  it("exactly one mode is the recommended first game", () => {
-    expect(MODES.filter((m) => m.starter)).toHaveLength(1);
-  });
-
   it("excludes games the roster is too small for", () => {
     expect(misfit(MODE_BY_ID.imposter, { size: 2, content: "night" })).toBe("too-few");
     expect(misfit(MODE_BY_ID["most-likely-to"], { size: 2, content: "night" })).toBe("too-few");

@@ -74,7 +74,7 @@ const ContentModeContext = createContext<ContentModeValue | null>(null);
 
 export function ContentModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ContentMode>(() =>
-    readStored<ContentMode>(MODE_KEY, CONTENT_TIERS, "safe"),
+    readStored<ContentMode>(MODE_KEY, CONTENT_TIERS, "night"),
   );
   useEffect(() => {
     writeStored(MODE_KEY, mode);

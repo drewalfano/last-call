@@ -52,7 +52,7 @@ export interface ModeDef {
    * own code where it enforces one (Odd One Out deals to 3-10) and off the
    * rule where it does not (Most Likely To needs a third person to point at;
    * a pair pointing at each other is not a vote). `max` is only set where the
-   * mode enforces one. These feed two things: the cue line on the Home card,
+   * mode enforces one. These feed two things: the player count on the Home card,
    * and what Pick a game for me will volunteer to a roster of a given size.
    */
   players: PlayerRange;
@@ -64,12 +64,6 @@ export interface ModeDef {
    * Kings Cup runs to the fourth king. The label rounds and prefixes "~".
    */
   pace: Pace;
-  /**
-   * The one card Home quietly points a first-timer at. Exactly one mode
-   * carries it, and it is the one with no private screen, no setup and a
-   * card that explains itself in a sentence.
-   */
-  starter?: boolean;
 }
 
 export interface PlayerRange {
@@ -128,7 +122,6 @@ export const MODES: ModeDef[] = [
     id: "last-word",
     players: { min: 2 },
     pace: { minutes: 1, per: "round" },
-    starter: true,
     title: "Letter Rip",
     tagline: "Category, letter, pass. Don't freeze.",
     color: "--cat-last-word",
