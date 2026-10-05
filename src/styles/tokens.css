@@ -630,6 +630,27 @@
   --cat-hot-seat-key: #F4F2ED;
   --cat-hot-seat-key-ink: #141414;
 
+  /* READ_THE_ROOM start
+     VIVID BERRY: a saturated wine, chosen on the real deck over a bright
+     violet (#9147E6) and then a duller berry (#7B1E5A). The dull one sat
+     0.175 from Kings Cup's navy and read as one more dark pack; adding
+     chroma at the same hue pulled it clear of all four nearest packs at
+     once — Kings Cup 0.206, Rank It 0.207, Last Call 0.212, Overbid 0.215.
+
+     It sits fourth, between Ballpark (0.260) and Letter Rip (0.418). The
+     Ballpark join is the thin one, the deck's second-weakest touching pair,
+     but it clears the bar, and the weakest is still Ride the Bus against
+     Same Page at 0.257. Going lighter instead of brighter fails exactly
+     there: #96205F measures 0.222 against Ballpark.
+
+     Fenced because the mode is an experiment: see
+     docs/read-the-room-removal.md. Not in Home's RING_ORDER, deliberately. */
+  --cat-read-the-room: #8D0364;
+  --cat-read-the-room-ink: #FFFFFF;      /* 9.01 */
+  --cat-read-the-room-edge: color-mix(in srgb, var(--cat-read-the-room) 80%, #000 20%);
+  --cat-read-the-room-key: #F4F2ED;
+  --cat-read-the-room-key-ink: #141414;
+  /* READ_THE_ROOM end */
 
   /* Fallback foreground for any subtree that hasn't set --category-ink. */
   --cat-ink: #FFFFFF;

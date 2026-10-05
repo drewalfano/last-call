@@ -1777,6 +1777,70 @@ WHAT IS IN HERE
 
      TOTAL ACROSS ALL TIERS: 130
 
+READ_THE_ROOM start
+==========================================================================
+14.  READ THE ROOM  —  Two lines. One winner.
+     Prompts. Two players each write one line for it in private; everyone
+     else picks the better one. {other} names a judge, never a writer.
+     order policy: supplement
+     file: src/data/readTheRoom.ts
+     EXPERIMENTAL — delete from the start marker to the end marker to remove.
+==========================================================================
+
+- - -  MILD  (24)  - - -
+
+  Worst thing to hear from your Uber driver
+  What {other} would get kicked out of Costco for
+  A new threat from the Duolingo owl
+  The real reason the Titanic sank
+  Worst thing to say at a gender reveal
+  A Florida Man headline about {other}
+  What the self-checkout machine is really thinking
+  A terrible name for a boat
+  What {other}'s Spotify Wrapped is hiding
+  The worst possible fortune cookie
+  A text you should never send to the family group chat
+  What the GPS voice says when she finally snaps
+  A new Olympic sport nobody asked for
+  A Tim Hortons menu item that got pulled after one day
+  Worst thing to find in a rental car
+  A one-star review of {other}'s cooking
+  The Netflix true crime doc about this table
+  What your dog says about you behind your back
+  An IKEA product name and what it actually does
+  Worst way to open a best man speech
+  A new warning label for {other}
+  What the pilot says when they think the mic is off
+  A LinkedIn post that should have stayed a draft
+  The worst thing to yell at a kids' soccer game
+
+- - -  SPICY  (12)  - - -
+
+  The worst thing to whisper during a first kiss
+  A Hinge prompt answer that guarantees an unmatch
+  What {other} is really doing on their phone at 2am
+  The worst pickup line for this exact bar
+  A cocktail named after {other}, and what's in it
+  What the bouncer says about {other} after they leave
+  A text {other} sent last night and regrets
+  Worst thing to say when meeting your partner's parents
+  A dating app bio that's way too honest
+  A 3am Amazon order that needs explaining
+  What you should never yell at a wedding
+  The real reason {other} got left on read
+
+- - -  FILTHY  (6)  - - -
+
+  A safe word that would ruin the mood
+  An OnlyFans name for {other}
+  What {other}'s browser history is hiding
+  A terrible name for a sex position
+  Worst thing to find in a hotel bed
+  The worst thing to say right after
+
+     TOTAL ACROSS ALL TIERS: 42
+
+READ_THE_ROOM end
 ==========================================================================
 END
 ==========================================================================

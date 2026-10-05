@@ -43,7 +43,14 @@ describe("pick a game for me", () => {
     expect(pick).not.toBeNull();
     expect(pool.every((m) => !m.drinking && m.players.min <= 2)).toBe(true);
     expect(excluded.map((e) => e.mode.id).sort()).toEqual(
-      ["hot-seat", "imposter", "kings-cup", "most-likely-to", "ride-the-bus"].sort(),
+      [
+        "hot-seat",
+        "imposter",
+        "kings-cup",
+        "most-likely-to",
+        "read-the-room", // READ_THE_ROOM
+        "ride-the-bus",
+      ].sort(),
     );
   });
 

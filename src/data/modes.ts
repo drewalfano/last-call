@@ -10,6 +10,7 @@
  */
 
 export type ModeId =
+  | "read-the-room" // READ_THE_ROOM
   | "last-call"
   | "imposter"
   | "last-word"
@@ -118,6 +119,17 @@ export const MODES: ModeDef[] = [
     tagline: "One clue, one dial. Get close.",
     color: "--cat-ballpark",
   },
+  // READ_THE_ROOM start — an experimental mode; see docs/read-the-room-removal.md
+  {
+    id: "read-the-room", // READ_THE_ROOM
+    // Two writers and at least one judge.
+    players: { min: 3 },
+    pace: { minutes: 2, per: "round" },
+    title: "Read the Room",
+    tagline: "Two lines. One winner.",
+    color: "--cat-read-the-room",
+  },
+  // READ_THE_ROOM end
   {
     id: "last-word",
     players: { min: 2 },

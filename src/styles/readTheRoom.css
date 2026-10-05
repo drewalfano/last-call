@@ -1,0 +1,267 @@
+/* ================================================================
+   READ THE ROOM
+   ----------------------------------------------------------------
+   Every style the mode has, and imported by ReadTheRoom.tsx alone, so
+   deleting the mode deletes its CSS with it. Nothing here is in
+   games.css on purpose — see docs/read-the-room-removal.md.
+
+   EVERY SELECTOR IS AT LEAST TWO CLASSES DEEP. This file is imported
+   from a component, which puts it AHEAD of global.css in the built
+   bundle — the same cascade trap games.css documents for itself — so a
+   bare single-class rule here would lose to global.css at equal
+   specificity. Qualified, it wins either way round.
+
+   Tokens only: no hex, no px radius, no easing curve of its own.
+   ================================================================ */
+
+/* ---------------- How to play ---------------- */
+.card.rr-intro { gap: var(--sp-2); }
+
+.rr-intro .rr-intro__steps {
+  margin: 0;
+  padding-left: 1.4em;
+  text-align: left;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--card-ink);
+}
+.rr-intro .rr-intro__steps li + li { margin-top: var(--sp-1); }
+
+.rr-intro .rr-intro__example { margin: var(--sp-1) 0 0; }
+
+/* The example is the real thing drawn small: two unlabeled lines, side by
+   side, in the same outlined tile the reveal uses. */
+.rr-intro .rr-intro__pair {
+  display: flex;
+  gap: var(--sp-2);
+  width: 100%;
+}
+.rr-intro .rr-intro__line {
+  flex: 1;
+  padding: var(--sp-2);
+  border: var(--border-width) solid color-mix(in srgb, var(--card-ink) 18%, transparent);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--card-ink);
+}
+
+/* ---------------- A writer's screen ---------------- */
+.rr-write .rr-write__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  width: 100%;
+}
+
+/* On card stock, not on the flood, so it is the card's ink drawn as a
+   hairline rather than Hot Seat's quiet field. 1.125rem and never less:
+   iOS zooms the whole page into any field set under 16px. */
+.rr-write .rr-input {
+  width: 100%;
+  min-height: var(--control-md);
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--border-width) solid color-mix(in srgb, var(--card-ink) 30%, transparent);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--card-ink);
+  caret-color: var(--card-ink);
+  font-family: var(--font-display);
+  font-size: max(16px, var(--fs-lg));
+  font-weight: var(--fw-bold);
+  text-align: center;
+  -webkit-user-select: text;
+  user-select: text;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.rr-write .rr-input::placeholder {
+  color: var(--card-ink-muted);
+  font-weight: normal;
+}
+.rr-write .rr-input:focus {
+  outline: none;
+  border-color: var(--card-ink);
+}
+
+.rr-write .rr-count {
+  align-self: flex-end;
+  padding-inline: var(--sp-4);
+  font-size: var(--fs-xs);
+  color: var(--card-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gfoot .rr-note {
+  margin: var(--sp-8) 0 0;
+  text-align: center;
+  text-wrap: balance;
+  font-size: var(--fs-sm);
+  color: var(--category-ink);
+  opacity: 0.8;
+}
+
+/* ---------------- The hand-over ---------------- */
+.card .rr-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-prompt);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------- Face up: the two lines ---------------- */
+.card.rr-lines { gap: var(--sp-3); }
+
+/* The lines are the content and the prompt is what they answer, so the
+   prompt steps down a size from every other card's. */
+.rr-lines .card__prompt { margin-bottom: var(--sp-1); }
+
+.rr-lines .rr-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--border-width) solid color-mix(in srgb, var(--card-ink) 18%, transparent);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--card-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  cursor: default;
+  /* HELD, NOT ABSENT, until it pops. Both tiles take their space from the
+     first frame, so the second arriving cannot push the first up the card. */
+  visibility: hidden;
+  transition: transform var(--dur-press) var(--ease-out),
+              opacity var(--dur-press) ease-out,
+              background var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
+}
+
+/* The shared `pop`, the one global.css keeps for small things that still
+   have to arrive with weight. Reduced motion is handled twice over: the
+   mode skips straight to both lines, and global.css flattens the animation. */
+.rr-lines .rr-tile[data-shown] {
+  visibility: visible;
+  animation: pop var(--dur-slow) var(--ease-spring) both;
+}
+
+/* Pressable only while the table is judging, and it looks it. */
+.rr-lines .rr-tile:not(:disabled) {
+  cursor: pointer;
+  border-color: color-mix(in srgb, var(--card-ink) 45%, transparent);
+}
+.rr-lines .rr-tile:not(:disabled):active {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-dim);
+}
+
+/* The result. The winner takes the pack's own colour and ink — a pairing
+   every pack ships measured for contrast — and says so in words as well, so
+   the colour is never the only thing carrying it. */
+.rr-lines .rr-tile[data-outcome="won"] {
+  background: var(--category);
+  border-color: var(--category);
+  color: var(--category-ink);
+}
+.rr-lines .rr-tile[data-outcome="lost"] { color: var(--card-ink-muted); }
+
+.rr-lines .rr-tile__by {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  animation: pop var(--dur-base) var(--ease-out) both;
+}
+
+/* ---------------- Judging ---------------- */
+/* Where the primary action would be. There is no button to press here —
+   the lines ARE the buttons — so the grounded slot carries the instruction. */
+.gfoot .rr-judge {
+  min-height: var(--action-height);
+  justify-content: center;
+  gap: var(--sp-1);
+  text-align: center;
+  text-wrap: balance;
+  color: var(--category-ink);
+}
+.rr-judge .rr-judge__call {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+.rr-judge .rr-judge__aside {
+  margin: 0;
+  font-size: var(--fs-sm);
+  opacity: 0.8;
+}
+
+/* ---------------- The score ---------------- */
+/* Compact on purpose: one wrapped line of names, not a table. It is a test
+   of whether a tally helps, and it should not look like the point. */
+.gfoot .rr-score {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-1) var(--sp-4);
+  margin: var(--sp-6) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--category-ink);
+}
+.rr-score b {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-bold);
+}
+
+/* ---------------- Short phones ----------------
+   Two sixty-character lines and a prompt have to share a card that is
+   285px tall on an iPhone SE. One step down on the tiles and the prompt
+   is what fits them without the card clipping a line. */
+@media (max-height: 700px) {
+  .rr-lines .rr-tile {
+    padding: var(--sp-2) var(--sp-3);
+    font-size: var(--fs-md);
+  }
+  .card.rr-lines { gap: var(--sp-2); }
+  .rr-lines .card__prompt--sm { font-size: var(--fs-lg); }
+  .rr-intro .rr-intro__steps { font-size: var(--fs-xs); }
+}
+
+/* ---------------- The smallest phones ----------------
+   At 320x568 the card is about 200px square, which is less than two long
+   lines and a prompt need however small they are set. So past the size
+   steps above, the cards that carry the most text may SCROLL
+   rather than clip — `safe center` keeps them centred until they overflow
+   and then starts them at the top, where a centred overflow would have
+   pushed the prompt out through an edge nobody can scroll to. Every other
+   card keeps global.css's overflow: hidden. */
+@media (max-height: 600px) {
+  .card.rr-intro,
+  .card.rr-lines,
+  .card.rr-matchup {
+    justify-content: safe center;
+    overflow-y: auto;
+    padding: var(--sp-3);
+  }
+  .rr-matchup .card__prompt { font-size: var(--fs-lg); }
+  .rr-lines .card__prompt--sm { font-size: var(--fs-md); }
+  .rr-lines .rr-tile { font-size: var(--fs-sm); }
+  /* The three steps are the rules; the boat is an illustration of them,
+     and the one thing on that card a table can play without. */
+  .rr-intro .rr-intro__example,
+  .rr-intro .rr-intro__pair { display: none; }
+}

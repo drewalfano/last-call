@@ -108,6 +108,7 @@ sit at the top, because eleven cards scroll past a single screen.
 | 9 | Overbid | bidding + challenge |
 | 10 | Most Likely To | deck + pointing |
 | 11 | Hot Seat | turn structure + voting |
+| 12 | Read the Room | write-off + table judges <!-- READ_THE_ROOM: experimental, see docs/read-the-room-removal.md --> |
 
 **Every card carries a cue line** — "3–10 players · ~5 min a round", plus
 "drinking game" where that is the mechanic — read from `players`, `pace` and
@@ -215,6 +216,19 @@ into `tokens.css` beside the pack that freed it.
   draws three proximity zones behind the answer and names the result, and how
   much that matters is the table's business. Same answer Same Page and Odd One
   Out arrived at. Rounds keep coming; the Reader rotates.
+- **Read the Room** <!-- READ_THE_ROOM: delete this whole bullet --> — an
+  experiment, built to be deleted in minutes: five files of its own, every
+  line it needed elsewhere tagged `READ_THE_ROOM`, and the checklist in
+  `docs/read-the-room-removal.md`. Two players each write one line for the
+  same prompt in private, the phone goes face up, the lines pop in unlabeled
+  and in a random order, and everyone else taps the winner before the names
+  come out. The round is a reducer in `readTheRoomFlow.ts`, with the matchup
+  rotation beside it (fewest writes first, never the same pair twice running).
+  `{other}` names a judge, never a writer. **It keeps score**, which is the
+  deliberate exception to the principle above: a session-only point per win,
+  roster only, shown on the result alone, and switched off with one constant
+  (`SHOW_SCORE`). It wears a vivid berry, `#8D0364`, and is deliberately left
+  out of `RING_ORDER`.
 
 ### Choosing a category
 
