@@ -29,15 +29,16 @@
 
 .rr-intro .rr-intro__example { margin: var(--sp-1) 0 0; }
 
-/* The example is the real thing drawn small: two unlabeled lines, side by
-   side, in the same outlined tile the reveal uses. */
+/* The example is the real thing drawn small: two unlabeled lines, one
+   above the other, in the same outlined tile the reveal uses. Stacked like
+   the reveal stacks them, so the table meets the shape it is about to see. */
 .rr-intro .rr-intro__pair {
   display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
   width: 100%;
 }
 .rr-intro .rr-intro__line {
-  flex: 1;
   padding: var(--sp-2);
   border: var(--border-width) solid color-mix(in srgb, var(--card-ink) 18%, transparent);
   border-radius: var(--radius-md);
@@ -239,6 +240,7 @@
   .card.rr-lines { gap: var(--sp-2); }
   .rr-lines .card__prompt--sm { font-size: var(--fs-lg); }
   .rr-intro .rr-intro__steps { font-size: var(--fs-xs); }
+  .rr-intro .rr-intro__line { padding: var(--sp-1) var(--sp-2); }
 }
 
 /* ---------------- The smallest phones ----------------
