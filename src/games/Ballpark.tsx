@@ -260,6 +260,9 @@ export function Ballpark({ mode, onBack }: Props) {
       subtitle={flow.phase === "intro" ? undefined : spectrumLine}
       /* The Reader's card is the one thing in here one person reads. */
       isPrivate={flow.phase === "reading"}
+      /* The way back to the explanation, beside the X and only on the
+         handoff: once the spot has been seen there is nothing to explain. */
+      onHelp={flow.phase === "handoff" ? () => act({ type: "howToPlay" }) : undefined}
       onBack={onBack}
     >
       {/* ---------- How to play: once per phone, and on request ---------- */}
@@ -318,12 +321,6 @@ export function Ballpark({ mode, onBack }: Props) {
             </div>
           }
         >
-          {/* Quiet, above the spectrum controls: the least-wanted thing on
-              the screen, and the only way back to the explanation. */}
-          <button className="gfoot__skip" onClick={() => act({ type: "howToPlay" })}>
-            How to play
-          </button>
-
           {/* THE SPECTRUM'S ONE CONTROL, with a shuffle beside it. It used to
               be two equal ghost buttons, Random and Spectrums, and tables did
               not know which one chose a spectrum. The pill says Change

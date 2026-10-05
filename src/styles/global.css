@@ -448,6 +448,12 @@ button { font: inherit; color: inherit; }
   opacity: var(--press-dim);
 }
 
+/* THE ? TAKES THE X'S PUSH. It wears .gheader__back for the well, the size
+   and the press, and is placed before the X, so it is the one that carries
+   the auto margin to the right edge; the X then sits a bar-gap beside it
+   rather than claiming the space for itself. */
+.gheader__help + .gheader__back { margin-left: 0; }
+
 /* ---------------------------------------------------------------
    The mode name is WAYFINDING, not content. You read it once on the
    way in and never again — you know which game you are playing.

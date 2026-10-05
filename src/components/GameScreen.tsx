@@ -34,6 +34,8 @@ interface GameScreenProps {
    * strict mode and every module here is one.
    */
   isPrivate?: boolean;
+  /** A ? beside the X that reopens the mode's intro. See GameHeader. */
+  onHelp?: () => void;
   onBack: () => void;
   children: ReactNode;
 }
@@ -63,6 +65,7 @@ export function GameScreen({
   aside,
   hideHeader,
   isPrivate,
+  onHelp,
   onBack,
   children,
 }: GameScreenProps) {
@@ -77,6 +80,7 @@ export function GameScreen({
           subtitle={subtitle}
           note={note}
           aside={aside}
+          onHelp={onHelp}
           onBack={onBack}
         />
       )}

@@ -42,6 +42,18 @@ interface GameHeaderProps {
    * shares. See .gheader__aside.
    */
   aside?: ReactNode;
+  /**
+   * HOW TO PLAY, AS A ? BESIDE THE X. Only for the modes that teach
+   * themselves with an intro card — Ballpark and Read the Room — and only
+   * on the screens before a round starts, which each mode decides by
+   * passing this or not. Once someone is holding a secret there is nothing
+   * to explain, and the corner stays as quiet as every other mode's.
+   *
+   * It used to be a quiet pill under the card, where it sat on top of the
+   * mode's own controls and pushed the footer past its height on an
+   * SE-sized phone. Up here it costs the footer nothing.
+   */
+  onHelp?: () => void;
   onBack: () => void;
 }
 
@@ -134,7 +146,7 @@ function isLongPair(left: string, right: string): boolean {
 const LEAVE_MS = 160;
 
 /** Back-to-Home affordance, the mode's name, and the live line under both. */
-export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderProps) {
+export function GameHeader({ title, subtitle, note, aside, onHelp, onBack }: GameHeaderProps) {
   /**
    * THE LINE LEAVES AS WELL AS ARRIVES.
    *
@@ -169,6 +181,23 @@ export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderP
     <header className="gheader">
       <div className="gheader__bar">
         <h1 className="gheader__title">{title}</h1>
+
+        {/* The same well as the X, so the two read as a pair of corner
+            controls; see .gheader__help for the one rule that differs. */}
+        {onHelp && (
+          <button className="gheader__back gheader__help" onClick={onHelp} aria-label="How to play">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M9.1 9.1a2.95 2.95 0 0 1 5.75.95c0 1.95-2.85 2.75-2.85 2.75"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path d="M12 17.25h.01" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
 
         {/* An X, not a chevron. Opening a mode is a presentation, not a push:
             App expands the tapped card's colour over the whole screen, and

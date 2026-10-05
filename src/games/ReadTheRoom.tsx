@@ -266,6 +266,9 @@ export function ReadTheRoom({ mode, onBack }: Props) {
          this mode is which line is whose, not who is writing. */
       subtitle={named && nameA && nameB && flow.phase !== "intro" ? `${nameA} vs ${nameB}` : undefined}
       isPrivate={writingNow}
+      /* How to play, beside the X, on the matchup only: from the first
+         keystroke on there is nothing left to explain. */
+      onHelp={flow.phase === "matchup" ? () => act({ type: "howToPlay" }) : undefined}
       onBack={onBack}
     >
       {/* ---------- How to play: once per phone, and on request ---------- */}
@@ -324,13 +327,6 @@ export function ReadTheRoom({ mode, onBack }: Props) {
             </div>
           }
         >
-          {/* Quiet, above the prompt control: the least-wanted thing on the
-              screen, and the only way back to the explanation. Ballpark's
-              handoff screen, in the same order. */}
-          <button className="gfoot__skip" onClick={() => act({ type: "howToPlay" })}>
-            How to play
-          </button>
-
           {/* THE PROMPT'S ONE CONTROL, drawn as the pill every category game
               uses but with the shuffle where the chevron would be, because
               there is no list behind it: the prompt can be dealt again, not
