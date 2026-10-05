@@ -44,7 +44,7 @@ interface CategoryPickerProps {
  * a single Random tap on the screen before this one; this is the deliberate
  * choice, laid out as cards so a table can scan it together.
  *
- * Custom sits at the top because a group that wants their own inside joke
+ * Any and Write your own lead the grid because a group that wants either
  * wants it immediately, not after scrolling sixty options.
  */
 export function CategoryPicker({
@@ -60,6 +60,8 @@ export function CategoryPicker({
 }: CategoryPickerProps) {
   const [custom, setCustom] = useState("");
   const [writing, setWriting] = useState(false);
+  /** How many of the grid's first cards are Any / Write your own. */
+  const pinned = (anyLabel && onAny ? 1 : 0) + (allowCustom ? 1 : 0);
 
   return (
     <div className="picker">
@@ -93,43 +95,54 @@ export function CategoryPicker({
         </form>
       ) : (
         <>
-          {/* Fixed furniture, ABOVE the scroller rather than the first cell in
-              it. It is an action, not one of the options — and inside the
-              scroller its top edge was the first thing the scroll mask faded,
-              so the button arrived on screen already clipped. */}
-          {/* First card dealt, so the deal starts at the top of the screen and
-              runs down into the grid rather than skipping this one. */}
-          {allowCustom && (
-            <button
-              className="picker__card picker__card--custom"
-              style={{ ["--i" as string]: 0 }}
-              onClick={() => setWriting(true)}
-            >
-              Write your own
-            </button>
-          )}
-
-          {anyLabel && onAny && (
-            <button
-              className="picker__card picker__card--custom picker__card--any"
-              style={{ ["--i" as string]: allowCustom ? 1 : 0 }}
-              onClick={onAny}
-            >
-              {anyLabel}
-            </button>
-          )}
-
           {heading && <p className="picker__heading">{heading}</p>}
 
           <div className="picker__scroll" onScroll={fadeOnScroll}>
             <div className="picker__grid">
+              {/* THE TWO WAYS NOT TO PICK FROM THE LIST, as the first cards
+                  in it. Same size and shape as a category, set apart by
+                  being drawn in outline on the pack's colour rather than
+                  printed on white, with an icon for what they do. They used
+                  to be two full-width white slabs above the grid: the same
+                  stock as the options in a different shape, which read as
+                  two oddly stretched categories rather than as a different
+                  kind of thing. */}
+              {anyLabel && onAny && (
+                <button
+                  className="picker__card picker__card--pinned"
+                  style={{ ["--i" as string]: 0 }}
+                  onClick={onAny}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+                    <path d="m18 2 4 4-4 4" />
+                    <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />
+                    <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />
+                    <path d="m18 14 4 4-4 4" />
+                  </svg>
+                  {anyLabel}
+                </button>
+              )}
+              {allowCustom && (
+                <button
+                  className="picker__card picker__card--pinned"
+                  style={{ ["--i" as string]: pinned - 1 }}
+                  onClick={() => setWriting(true)}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z" />
+                    <path d="m15 5 4 4" />
+                  </svg>
+                  Write your own
+                </button>
+              )}
               {categories.map((c, i) => (
                 <button
                   key={c}
                   className="picker__card"
                   /* Stops counting at 8 — past that the delay is being spent
                      on cards below the fold. See .picker__card in games.css. */
-                  style={{ ["--i" as string]: Math.min(i + 1, 8) }}
+                  style={{ ["--i" as string]: Math.min(i + pinned, 8) }}
                   onPointerDown={() => audio.play("tap")}
                   onClick={() => onPick(c)}
                 >

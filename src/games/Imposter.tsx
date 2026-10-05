@@ -204,17 +204,21 @@ export function Imposter({ mode, onBack }: Props) {
               and Categories, given the same weight as each other and nearly
               the weight of Deal roles — for a setting most tables never
               touch, because Any already deals a fresh category every round.
-              The value and the way to change it are one quiet row now. */}
+              Now one quiet pill: the label over the value, a chevron for
+              "tap to change", and a steady width so it does not jump when
+              Any becomes a long category name. */}
           <button
             className="imp-cat"
             onClick={() => setS((prev) => ({ ...prev, phase: "picking" }))}
             aria-label={`Category: ${s.category ?? "any"}. Change`}
           >
-            <span className="imp-cat__label">Category</span>
-            <span className="imp-cat__value">{s.category ?? "Any"}</span>
-            <span className="imp-cat__hint">
-              {s.category === null ? "A different one every deal" : "Change"}
+            <span className="imp-cat__text">
+              <span className="imp-cat__label">Category</span>
+              <span className="imp-cat__value">{s.category ?? "Any"}</span>
             </span>
+            <svg className="imp-cat__chev" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
           </button>
 
           <div className="actions">
@@ -231,7 +235,7 @@ export function Imposter({ mode, onBack }: Props) {
           categories={categories}
           customNoun="word"
           customNote="Whoever types this will see it, and can still be dealt the Imposter. Your table, your call."
-          anyLabel="Any category"
+          anyLabel="Any"
           onAny={() => setS((prev) => ({ ...prev, category: null, phase: "setup" }))}
           onPick={(c) => setS((prev) => ({ ...prev, category: c, phase: "setup" }))}
           onCancel={() => setS((prev) => ({ ...prev, phase: "setup" }))}
