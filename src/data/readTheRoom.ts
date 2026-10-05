@@ -2,8 +2,9 @@ import type { Pools } from "./pools";
 
 /**
  * READ THE ROOM
- * Night policy: SUPPLEMENT — dealt blind, so the 19+ prompts simply join
- * the safe ones. Nobody browses this list.
+ * Night policy: LEAD — the matchup's Change prompt opens this list in the
+ * picker, so a player READS it, and a read list leads with the tier the
+ * table just unlocked, interleaved rather than stacked. See pools.ts.
  *
  * PROMPTS ARE SETUPS, NOT PUNCHLINES. Two players each write one line for
  * the same prompt and the table picks the better one, so the joke is

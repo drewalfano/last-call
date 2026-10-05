@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
+import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import { READ_THE_ROOM } from "../data/readTheRoom";
@@ -130,7 +132,9 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   /* One name is not a matchup. Below two, the mode plays exactly as it does
      with no roster at all. */
   const named = hasRoster && players.length >= 2;
-  const pool = usePool(READ_THE_ROOM, contentMode, "supplement");
+  /* LEAD, because Change prompt opens this list in the picker and a player
+     reads it — the tier the table just unlocked on top, interleaved. */
+  const pool = usePool(READ_THE_ROOM, contentMode, "lead");
   const deck = useDeck(pool);
 
   /* The reducer behind a ref, so a second tap in the same frame finds the
@@ -155,7 +159,14 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   const nameA = nameOf("A");
   const nameB = nameOf("B");
 
-  const prompt = deck.current ? fillPrompt(deck.current, { other: round.other }) : "";
+  /**
+   * Set when the table chose a prompt, or wrote one; otherwise the deck's
+   * draw stands. Held as the TEMPLATE, so a chosen prompt fills {other} the
+   * same way a drawn one does. Ballpark's arrangement for its spectrum.
+   */
+  const [chosen, setChosen] = useState<string | null>(null);
+  const template = chosen ?? deck.current;
+  const prompt = template ? fillPrompt(template, { other: round.other }) : "";
   const writingNow = flow.phase === "writeA" || flow.phase === "writeB";
   /** Whoever holds the pen, on a writing screen. */
   const writer: Writer = flow.phase === "writeB" ? "B" : "A";
@@ -207,13 +218,19 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   /**
    * A different prompt for the same two writers — the prompt being rejected,
    * not the matchup. Only from the matchup screen: once someone is writing,
-   * the prompt is what they are writing to.
+   * the prompt is what they are writing to. Clears a chosen one on the way
+   * past, or the shuffle would do nothing once the table had picked.
    */
-  const newPrompt = useCallback(() => {
+  const drawRandom = useCallback(() => {
     if (flowRef.current.phase !== "matchup") return;
+    setChosen(null);
     deck.draw();
     setRound((r) => ({ ...r, other: named ? pickJudge(players, r.pair) : undefined }));
   }, [deck, named, players]);
+
+  /* The list shows each prompt as the table would read it, {other} filled
+     with this round's judge, and maps the pick back to its template. */
+  const labels = pool.map((p) => fillPrompt(p, { other: round.other }));
 
   const start = useCallback(() => {
     act({ type: "start", bFirst: Math.random() < 0.5 });
@@ -248,13 +265,35 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   const nextMatchup = useCallback(() => {
     act({ type: "next" }, () => {
       deck.draw();
+      setChosen(null);
       setRound(deal(players, named, tally));
     });
   }, [act, deck, players, named, tally]);
 
-  if (!deck.current) return null;
+  if (!template) return null;
 
   const showScore = SHOW_SCORE && named;
+
+  /* No header: its X leaves the round entirely, and the picker's own Back
+     goes where you actually mean. Same treatment Ballpark and Same Page
+     give this screen. */
+  if (flow.phase === "picking") {
+    return (
+      <GameScreen mode={mode} hideHeader onBack={onBack}>
+        <CategoryPicker
+          categories={labels}
+          heading="Pick a prompt"
+          customNoun="prompt"
+          onPick={(label) => {
+            const i = labels.indexOf(label);
+            setChosen(i >= 0 ? pool[i] : label);
+            act({ type: "promptPicked" });
+          }}
+          onCancel={() => act({ type: "promptPicked" })}
+        />
+      </GameScreen>
+    );
+  }
 
   return (
     <GameScreen
@@ -265,7 +304,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
       isPrivate={writingNow}
       onBack={onBack}
     >
-      {/* ---------- How to play: once per phone ---------- */}
+      {/* ---------- How to play: once per phone, and on request ---------- */}
       {flow.phase === "intro" && (
         <CardBody
           card={
@@ -306,7 +345,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
             <div className="cardstage">
               <article
                 className="card card--dealt rr-matchup"
-                key={`matchup-${deck.drawCount}`}
+                key={`matchup-${deck.drawCount}-${chosen ?? ""}`}
                 ref={focalRef}
                 tabIndex={-1}
               >
@@ -321,12 +360,24 @@ export function ReadTheRoom({ mode, onBack }: Props) {
             </div>
           }
         >
-          {/* Rejecting the prompt, not the matchup — the same quiet control,
-              in the same place, as Hot Seat's New question and Most Likely
-              To's New card. */}
-          <button className="gfoot__skip" onClick={newPrompt}>
-            New prompt
+          {/* Quiet, above the prompt control: the least-wanted thing on the
+              screen, and the only way back to the explanation. Ballpark's
+              handoff screen, in the same order. */}
+          <button className="gfoot__skip" onClick={() => act({ type: "howToPlay" })}>
+            How to play
           </button>
+
+          {/* THE PROMPT'S ONE CONTROL, the one every category game now uses:
+              a pill that opens the list, and a shuffle beside it. Rejecting
+              the prompt, never the matchup — the writers stay who they are. */}
+          <ChoicePill
+            value="Change prompt"
+            ariaLabel="Change prompt"
+            onOpen={() => act({ type: "pickPrompt" })}
+            onShuffle={drawRandom}
+            shuffleLabel="Random prompt"
+          />
+
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={start}>
               Start writing

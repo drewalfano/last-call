@@ -1782,7 +1782,7 @@ READ_THE_ROOM start
 14.  READ THE ROOM  —  Two lines. One winner.
      Prompts. Two players each write one line for it in private; everyone
      else picks the better one. {other} names a judge, never a writer.
-     order policy: supplement
+     order policy: lead
      file: src/data/readTheRoom.ts
      EXPERIMENTAL — delete from the start marker to the end marker to remove.
 ==========================================================================

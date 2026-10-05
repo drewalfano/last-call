@@ -7,8 +7,9 @@
  * first tap already left and returns it unchanged. The component only runs a
  * side effect when the state actually changed.
  *
- *   intro    how to play, once per phone
+ *   intro    how to play, once per phone and again on request
  *   matchup  who is writing and the prompt, face up for the whole table
+ *   picking  the prompt list, reached from the matchup
  *   writeA   the first writer's screen: prompt, one line, Done
  *   pass     a cover: the phone is on its way to the second writer
  *   writeB   the second writer's screen, the same as the first
@@ -23,6 +24,7 @@
 export type Phase =
   | "intro"
   | "matchup"
+  | "picking"
   | "writeA"
   | "pass"
   | "writeB"
@@ -40,6 +42,8 @@ export const MAX_LINE = 60;
 
 export interface Flow {
   phase: Phase;
+  /** Where the intro goes back to: matchup, or nowhere on a first visit. */
+  from: Phase | null;
   /** Each writer's line. A draft while they are writing, trimmed once they are done. */
   lineA: string;
   lineB: string;
@@ -66,6 +70,10 @@ export interface Flow {
 
 export type Action =
   | { type: "gotIt" }
+  | { type: "howToPlay" }
+  | { type: "pickPrompt" }
+  /** Chosen or cancelled: either way the list closes and the matchup is back. */
+  | { type: "promptPicked" }
   /** The coin for the reveal order rides in on the action, so this stays pure. */
   | { type: "start"; bFirst: boolean }
   | { type: "draft"; text: string }
@@ -84,6 +92,7 @@ export type Action =
 export function initialFlow(seenIntro: boolean): Flow {
   return {
     phase: seenIntro ? "matchup" : "intro",
+    from: null,
     lineA: "",
     lineB: "",
     covered: false,
@@ -106,7 +115,13 @@ export function currentDraft(s: Flow): string {
 export function reduce(s: Flow, a: Action): Flow {
   switch (a.type) {
     case "gotIt":
-      return s.phase === "intro" ? { ...s, phase: "matchup" } : s;
+      return s.phase === "intro" ? { ...s, phase: s.from ?? "matchup", from: null } : s;
+    case "howToPlay":
+      return s.phase === "matchup" ? { ...s, phase: "intro", from: "matchup" } : s;
+    case "pickPrompt":
+      return s.phase === "matchup" ? { ...s, phase: "picking" } : s;
+    case "promptPicked":
+      return s.phase === "picking" ? { ...s, phase: "matchup" } : s;
     case "start":
       return s.phase === "matchup" ? { ...s, phase: "writeA", bFirst: a.bFirst } : s;
     /* Typing behind a cover would be typing into a field nobody can see. */
