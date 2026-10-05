@@ -4577,11 +4577,11 @@
 .focal.num { gap: var(--sp-10); }
 
 /* The way out grounds itself, whichever of the two it is: the --lg call once
-   a bid stands, or the pair of ways to a category before one does. .actions
-   carries `margin-top: auto` already and .actions--row never has, so naming
-   both is what keeps the foot of the screen still between those two states. */
+   a bid stands, or the category control before one does. .actions carries
+   `margin-top: auto` already and .choice-row never has, so naming both is
+   what keeps the foot of the screen still between those two states. */
 .focal.num > .actions,
-.focal.num > .actions--row { margin-top: auto; }
+.focal.num > .choice-row { margin-top: auto; }
 
 /* HOW BIG — Hot Seat's chip row exactly, standing above the table.
 
@@ -5386,13 +5386,13 @@
   box-shadow: 0 0 0 1px var(--card-surface);
 }
 
-/* ---------------- Odd One Out: the category control ---------------- */
-/* A pill centred under the card: the label stacked over the value, and a
-   chevron. It takes the quiet outline .gfoot__skip uses because it is the
-   same kind of thing — a setting, not the action — and it is narrower than
-   Deal roles so the two never read as a pair of choices. The min-width
-   holds it steady between "Any" and a long category name. */
-.imp-cat {
+/* ---------------- The round's one setting: ChoicePill ---------------- */
+/* A pill: the setting's name stacked over its value, and a chevron. It takes
+   the quiet outline .gfoot__skip uses because it is the same kind of thing —
+   a setting, not the action. Alone it centres at a steady width, narrower
+   than the action so the two never read as a pair of choices, and the
+   min-width holds it still between "Mixed" and a long category name. */
+.choice {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -5400,7 +5400,6 @@
   align-self: center;
   min-width: calc(var(--control-md) * 4.2);
   max-width: 100%;
-  margin-top: var(--sp-6);
   min-height: calc(var(--control-md) + var(--sp-1));
   padding: var(--sp-1) var(--sp-4) var(--sp-1) var(--sp-6);
   border: var(--border-width) solid
@@ -5412,13 +5411,13 @@
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) ease-out;
 }
-.imp-cat:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
-.imp-cat__text {
+.choice:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+.choice__text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
-.imp-cat__label {
+.choice__label {
   font-family: var(--font-display);
   font-size: calc(var(--fs-xs) * 0.875);
   font-weight: var(--fw-bold);
@@ -5426,7 +5425,7 @@
   text-transform: uppercase;
   opacity: 0.72;
 }
-.imp-cat__value {
+.choice__value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5435,7 +5434,7 @@
   font-weight: var(--fw-bold);
   line-height: var(--lh-tight);
 }
-.imp-cat__chev {
+.choice__chev {
   flex: none;
   width: 0.9em;
   height: 0.9em;
@@ -5445,13 +5444,59 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* With this row present the band grounds from the actions, like a skip. */
-.gfoot:has(.imp-cat)::before { content: none; }
-.gfoot:has(.imp-cat) .actions { margin-top: auto; }
 
-/* The line under the hint switch, explaining the state it is in. Tighter
-   than the card's gap so it reads as the switch's caption. */
-.imp-setup__hint { margin-top: calc(var(--sp-2) * -1); text-wrap: pretty; }
+/* With a shuffle beside it, the pair runs the full width: the pill takes
+   what the round button leaves. */
+.choice-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+.choice-row > .choice {
+  flex: 1;
+  min-width: 0;
+}
+.choice-shuffle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--control-md) + var(--sp-1));
+  height: calc(var(--control-md) + var(--sp-1));
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--category-ink, var(--text)) 30%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--category-ink, var(--text));
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) ease-out;
+}
+.choice-shuffle:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+.choice-shuffle svg {
+  width: 1.4em;
+  height: 1.4em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* THE HINT ROW SITS ON THE CARD'S FLOOR, and the players block centres in
+   what is left above it. Centring the whole card left the spare height split
+   above the eyebrow and below the caption, so the caption floated with more
+   air under it than the 20px band above it, and the stepper got squeezed
+   towards the rule. Now the row's own bottom padding goes, the card's padding
+   is the gap under the caption — the same --sp-5 as the card's top and the
+   band over the row — and the two auto margins split the spare height
+   between the top of the card and the rule, around the stepper.
+   Three classes deep on purpose: it has to outrank `.switch.switch--card`
+   in the compact blocks, where there is no spare height and auto is 0. */
+.imp-setup > :first-child { margin-top: auto; }
+.imp-setup > .switch.switch--card {
+  margin-top: auto;
+  padding-bottom: 0;
+}
 
 /* A roster longer than the game gets said in the card's own ink, not muted:
    it is the one line on this card a table has to act on. */
@@ -5461,7 +5506,7 @@
 .card__note { display: block; margin-top: var(--sp-2); font-size: var(--fs-xs); }
 
 @media (prefers-reduced-motion: reduce) {
-  .imp-cat, .update-offer__btn { transition: none; }
+  .choice, .choice-shuffle, .update-offer__btn { transition: none; }
 }
 
 /* ---------------------------------------------------------------
@@ -5475,7 +5520,7 @@
 @media (max-height: 660px) {
   .bp-intro__card .dial { display: none; }
   .bp-intro__steps { font-size: var(--fs-xs); }
-  .imp-setup__hint { display: none; }
+  .switch--card .switch__caption { display: none; }
 }
 
 /* ---------------------------------------------------------------

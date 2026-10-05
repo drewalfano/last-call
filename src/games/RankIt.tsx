@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { useDeck, randomItem } from "../lib/deck";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { buzz } from "../lib/useCountdown";
 import { audio } from "../lib/audio";
 import { usePool } from "../data/pools";
@@ -183,14 +184,13 @@ export function RankIt({ mode, onBack }: Props) {
           {/* Choose what you are ranking BEFORE anyone commits to ranking it.
               The title is already up there as the live line, so this is the
               screen where rejecting it costs nothing. */}
-          <div className="actions--row">
-            <button className="btn btn--ghost" onClick={reroll}>
-              Random
-            </button>
-            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
-              Lists
-            </button>
-          </div>
+          <ChoicePill
+            value="Change list"
+            ariaLabel="Change list"
+            onOpen={() => setPhase("picking")}
+            onShuffle={reroll}
+            shuffleLabel="Random list"
+          />
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={() => setPhase("ranking")}>
               I've got it

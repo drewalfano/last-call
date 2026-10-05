@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import type { ModeDef } from "../data/modes";
 import { categoryStyle } from "../lib/style";
-import { GameHeader } from "./GameHeader";
+import { GameHeader, type LiveLine } from "./GameHeader";
 
 interface GameScreenProps {
   mode: ModeDef;
   /** The live line, its standing rule, and the status strip under them. */
-  subtitle?: string;
+  subtitle?: LiveLine;
   note?: string;
   aside?: ReactNode;
   /**

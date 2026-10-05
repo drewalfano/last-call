@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+/**
+ * A live line is a string, or — Ballpark's — a spectrum's two ends, which are
+ * drawn as the scale they are rather than as one line with a slash in it.
+ */
+export type LiveLine = string | { left: string; right: string };
+
 interface GameHeaderProps {
   title: string;
   /**
@@ -17,7 +23,7 @@ interface GameHeaderProps {
    * and the genuinely live lines were being styled as though they were the
    * same kind of thing. They are gone; the bar is the mode name now.
    */
-  subtitle?: string;
+  subtitle?: LiveLine;
   /**
    * A short standing rule that goes with the live line — the bid Overbid is
    * asking against, the phase its challenge and result are in. It qualifies
@@ -87,6 +93,41 @@ interface GameHeaderProps {
    --------------------------------------------------------------- */
 
 /**
+ * A spectrum end on two lines, ALWAYS, broken at the word boundary that
+ * leaves the two halves closest in length — "Sad / lunch", "Insignificant /
+ * cultural event". Even when it would fit on one: ends that wrap only when
+ * they run out of room come out one line on the left and two on the right,
+ * and the pair stops looking like a matched set. A single word stays one.
+ */
+function twoLines(end: string): string[] {
+  const words = end.split(" ");
+  if (words.length < 2) return [end];
+  let best = 1;
+  let bestGap = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const gap = Math.abs(words.slice(0, i).join(" ").length - words.slice(i).join(" ").length);
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = i;
+    }
+  }
+  return [words.slice(0, best).join(" "), words.slice(best).join(" ")];
+}
+
+/**
+ * Whether a pair's widest lines, side by side, outrun the phone's width at the
+ * live line's size. Counted in characters, because the face is the app's own
+ * and its average width is steady enough for a threshold: 24 is where a 375pt
+ * phone runs out, and of the sixty pairs only "Insignificant cultural event /
+ * Significant cultural event" is over it. That one steps down a size rather
+ * than breaking onto a third line.
+ */
+function isLongPair(left: string, right: string): boolean {
+  const widest = (end: string) => Math.max(...twoLines(end).map((part) => part.length));
+  return widest(left) + widest(right) > 24;
+}
+
+/**
  * How long a departing live line is kept on screen. Short: the screen under it
  * has already changed, so this is a line leaving, not a beat being held.
  */
@@ -110,7 +151,7 @@ export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderP
    * note is about — and worse here, because a line that lies is worse than a
    * line that jumps.
    */
-  const [leaving, setLeaving] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState<LiveLine | null>(null);
   const last = useRef(subtitle);
 
   useEffect(() => {
@@ -150,7 +191,35 @@ export function GameHeader({ title, subtitle, note, aside, onBack }: GameHeaderP
 
       {line && (
         <div className="gheader__live" data-leaving={subtitle === undefined || undefined}>
-          <p className="gheader__now">{line}</p>
+          {typeof line === "string" ? (
+            <p className="gheader__now">{line}</p>
+          ) : (
+            /* THE SPECTRUM AS A SCALE: a line with a dot at each end and each
+               end's name under its own dot, left-aligned and right-aligned.
+               "Old / New" in one centred line read as a title, and a long
+               pair wrapped into a block where you had to hunt for the slash
+               to see where one end stopped. Two columns keep each end on its
+               own side however long it is, and the line is the dial the
+               table is about to turn. */
+            <p className="gheader__spectrum" aria-label={`${line.left} to ${line.right}`}>
+              <span className="gheader__spectrum-line" aria-hidden="true" />
+              <span
+                className="gheader__spectrum-ends"
+                data-long={isLongPair(line.left, line.right) || undefined}
+                aria-hidden="true"
+              >
+                {[line.left, line.right].map((end, i) => (
+                  <span key={i}>
+                    {twoLines(end).map((part, j) => (
+                      <span key={j} className="gheader__spectrum-part">
+                        {part}
+                      </span>
+                    ))}
+                  </span>
+                ))}
+              </span>
+            </p>
+          )}
           {note && <p className="gheader__note">{note}</p>}
           {aside && <div className="gheader__aside">{aside}</div>}
         </div>

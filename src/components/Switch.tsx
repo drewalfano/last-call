@@ -3,8 +3,14 @@ import { audio } from "../lib/audio";
 interface SwitchProps {
   checked: boolean;
   onChange: (next: boolean) => void;
-  /** The setting's name, and the whole of what the control says. */
+  /** The setting's name. */
   label: string;
+  /**
+   * One short line under the name saying what the CURRENT state means —
+   * "They get a one-word nudge." Keep both states' lines to one line each,
+   * or the row changes height under the thumb that just flipped it.
+   */
+  caption?: string;
   /** Extra class on the row, for a screen that has to place it. */
   className?: string;
 }
@@ -24,14 +30,14 @@ interface SwitchProps {
  * whole row — the label and the track — be one press target instead of a
  * 52x32px one at the end of a line, which is the size a thumb misses.
  *
- * A LABEL AND NOTHING ELSE. This carried a second line under the name for a
- * while, explaining what the setting did, and it was the settings sheet's
- * `.setting__hint` turning up on a screen that is not a settings sheet: two
- * lines of small type between the card and the buttons that start the round,
- * saying what the label had already said. If a switch here needs a sentence
- * to be understood, the label is wrong.
+ * A CAPTION, IF ANY, LIVES IN THE ROW. Odd One Out's hint switch had its
+ * explanation as a centred paragraph under a left-and-right row, two lines
+ * off and three on, so it neither lined up with the switch nor held still
+ * when you flipped it. Now it is one short line under the name, left-aligned
+ * with it, the track centred against both, and it says what this state means
+ * rather than restating the label.
  */
-export function Switch({ checked, onChange, label, className }: SwitchProps) {
+export function Switch({ checked, onChange, label, caption, className }: SwitchProps) {
   return (
     <button
       type="button"
@@ -44,7 +50,10 @@ export function Switch({ checked, onChange, label, className }: SwitchProps) {
       onPointerDown={() => audio.play("tap")}
       onClick={() => onChange(!checked)}
     >
-      <span className="switch__name">{label}</span>
+      <span className="switch__text">
+        <span className="switch__name">{label}</span>
+        {caption && <span className="switch__caption">{caption}</span>}
+      </span>
       {/* The track is decoration over an accessible name that is already
           complete — the button says what it is and aria-checked says which
           way it is set, so a reader that never sees this reads the same

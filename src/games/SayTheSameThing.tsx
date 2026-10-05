@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Countdown } from "../components/Countdown";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { useDeck, shuffle } from "../lib/deck";
 import { buzz } from "../lib/useCountdown";
 import { usePool } from "../data/pools";
@@ -195,14 +196,13 @@ export function SayTheSameThing({ mode, onBack }: Props) {
               are meant to see the prompt and everyone else is watching them
               try to meet on it. */}
           {phase === "pair" && (
-            <div className="actions--row">
-              <button className="btn btn--ghost" onClick={drawRandom}>
-                Random
-              </button>
-              <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
-                Categories
-              </button>
-            </div>
+            <ChoicePill
+              value="Change word"
+              ariaLabel="Change word"
+              onOpen={() => setPhase("picking")}
+              onShuffle={drawRandom}
+              shuffleLabel="Random word"
+            />
           )}
 
           {phase === "pair" && (

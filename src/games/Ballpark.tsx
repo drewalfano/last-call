@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { Dial } from "../components/Dial";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import { BALLPARK, degreesOff, randomTarget, zoneFor, type Spectrum } from "../data/ballpark";
@@ -248,7 +249,7 @@ export function Ballpark({ mode, onBack }: Props) {
     );
   }
 
-  const spectrumLine = `${prompt.left} / ${prompt.right}`;
+  const spectrumLine = { left: prompt.left, right: prompt.right };
 
   return (
     <GameScreen
@@ -323,18 +324,19 @@ export function Ballpark({ mode, onBack }: Props) {
             How to play
           </button>
 
-          {/* BOTH WAYS TO CHANGE THE SPECTRUM, side by side, exactly where
-              Same Page and Letter Rip put them. On THIS screen and not the
-              Reader's, because the pair is public: the secret in this mode
-              is the target, not the spectrum. */}
-          <div className="actions--row">
-            <button className="btn btn--ghost" onClick={drawRandom}>
-              Random
-            </button>
-            <button className="btn btn--ghost" onClick={() => act({ type: "pickSpectrum" })}>
-              Spectrums
-            </button>
-          </div>
+          {/* THE SPECTRUM'S ONE CONTROL, with a shuffle beside it. It used to
+              be two equal ghost buttons, Random and Spectrums, and tables did
+              not know which one chose a spectrum. The pill says Change
+              spectrum rather than repeating the pair, because the header is
+              already showing it as a scale. On THIS screen and not the Reader's, because the
+              spectrum is public: the secret in this mode is the target. */}
+          <ChoicePill
+            value="Change spectrum"
+            ariaLabel="Change spectrum"
+            onOpen={() => act({ type: "pickSpectrum" })}
+            onShuffle={drawRandom}
+            shuffleLabel="Random spectrum"
+          />
 
           <div className="actions">
             {/* ONE ACTION. It used to be two — "I'm Sam", then "Flip" — which

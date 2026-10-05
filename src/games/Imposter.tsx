@@ -3,6 +3,7 @@ import { CardBody, GameScreen } from "../components/GameScreen";
 import { randomItem } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { Stepper } from "../components/Stepper";
 import { Switch } from "../components/Switch";
 import { useContentMode } from "../state/contentMode";
@@ -54,7 +55,7 @@ interface State {
   order: number[];
   /** How far through the reveal order we are. */
   at: number;
-  /** Chosen word category, or null for "any". */
+  /** Chosen word category, or null for Mixed — a new one every deal. */
   category: string | null;
 }
 
@@ -185,41 +186,43 @@ export function Imposter({ mode, onBack }: Props) {
               </p>
 
               {/* THE ROUND'S ONE OPTION, under the count and behind a rule,
-                  with one line saying what turning it on changes. */}
+                  with one line saying what the state it is in means. The
+                  rule about not using the hint as a clue is on the
+                  Imposter's own card, where the hint is. */}
               <Switch
                 className="switch--card"
                 checked={s.showHint}
                 onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
                 label="Imposter hint"
+                caption={s.showHint ? "They get a one-word nudge." : "They play on their ears alone."}
               />
-              <p className="card__meta imp-setup__hint">
-                {s.showHint
-                  ? "The Imposter gets a one-word nudge nobody else sees, and can't say it as their clue."
-                  : "Off: the Imposter plays on their ears alone. Turn on for a one-word nudge."}
-              </p>
             </div>
           }
         >
           {/* ONE CONTROL FOR THE CATEGORY. It used to be two pills, Random
               and Categories, given the same weight as each other and nearly
               the weight of Deal roles — for a setting most tables never
-              touch, because Any already deals a fresh category every round.
-              Now one quiet pill: the label over the value, a chevron for
-              "tap to change", and a steady width so it does not jump when
-              Any becomes a long category name. */}
-          <button
-            className="imp-cat"
-            onClick={() => setS((prev) => ({ ...prev, phase: "picking" }))}
-            aria-label={`Category: ${s.category ?? "any"}. Change`}
-          >
-            <span className="imp-cat__text">
-              <span className="imp-cat__label">Category</span>
-              <span className="imp-cat__value">{s.category ?? "Any"}</span>
-            </span>
-            <svg className="imp-cat__chev" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" />
-            </svg>
-          </button>
+              touch, because Mixed already deals a fresh category every round.
+              Now the control every category game uses: a pill with the
+              label over the value and a chevron for "tap to change", and the
+              shuffle beside it. The label stays because, unlike the others,
+              nothing else on this screen says what the category is. */}
+          <ChoicePill
+            label="Category"
+            value={s.category ?? "Mixed"}
+            ariaLabel={`Category: ${s.category ?? "mixed, a new one every round"}. Change`}
+            onOpen={() => setS((prev) => ({ ...prev, phase: "picking" }))}
+            /* The same shuffle every category game has: a named category,
+               picked for you, never the one already set. Mixed is still one
+               tap away in the list, at the top. */
+            onShuffle={() =>
+              setS((prev) => ({
+                ...prev,
+                category: randomItem(categories.filter((c) => c !== prev.category)),
+              }))
+            }
+            shuffleLabel="Random category"
+          />
 
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={startRound}>
@@ -235,7 +238,7 @@ export function Imposter({ mode, onBack }: Props) {
           categories={categories}
           customNoun="word"
           customNote="Whoever types this will see it, and can still be dealt the Imposter. Your table, your call."
-          anyLabel="Any"
+          anyLabel="Mixed"
           onAny={() => setS((prev) => ({ ...prev, category: null, phase: "setup" }))}
           onPick={(c) => setS((prev) => ({ ...prev, category: c, phase: "setup" }))}
           onCancel={() => setS((prev) => ({ ...prev, phase: "setup" }))}

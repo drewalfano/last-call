@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { Stepper } from "../components/Stepper";
 import { shuffle, useDeck } from "../lib/deck";
 import { fadeOnScroll } from "../lib/scrollFade";
@@ -614,14 +615,13 @@ export function NumberGame({ mode, onBack }: Props) {
               </button>
             </div>
           ) : (
-            <div className="actions--row">
-              <button className="btn btn--ghost" onClick={drawRandom}>
-                Random
-              </button>
-              <button className="btn btn--ghost" onClick={() => openPicker("bidding")}>
-                Categories
-              </button>
-            </div>
+            <ChoicePill
+              value="Change category"
+              ariaLabel="Change category"
+              onOpen={() => openPicker("bidding")}
+              onShuffle={drawRandom}
+              shuffleLabel="Random category"
+            />
           )}
         </div>
       )}
@@ -673,21 +673,19 @@ export function NumberGame({ mode, onBack }: Props) {
             </div>
           }
         >
-          {/* THE PAIR, AND NOTHING ABOVE IT. Every other screen in the app
-              ranks one action --lg, and this is the one screen with nothing
-              to rank: the round is settled, the only question left is which
-              category next, and the two answers to it are equally good ones.
-              Drawing one of them larger would be the app having an opinion
-              about which — the same opinion the single New category button
-              used to enforce by being the only way through. */}
-          <div className="actions--row">
-            <button className="btn btn--ghost" onClick={drawRandom}>
-              Random
-            </button>
-            <button className="btn btn--ghost" onClick={() => openPicker("verdict")}>
-              Categories
-            </button>
-          </div>
+          {/* THE CATEGORY CONTROL, AND NOTHING ABOVE IT. Every other screen
+              in the app ranks one action --lg, and this is the one screen
+              with nothing to rank: the round is settled and the only
+              question left is which category next. So no --lg here — the
+              shuffle and Change category are the whole screen, the same
+              control every category game uses. */}
+          <ChoicePill
+            value="Change category"
+            ariaLabel="Change category"
+            onOpen={() => openPicker("verdict")}
+            onShuffle={drawRandom}
+            shuffleLabel="Random category"
+          />
         </CardBody>
       )}
     </GameScreen>

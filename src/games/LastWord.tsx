@@ -6,6 +6,7 @@ import type { ModeDef } from "../data/modes";
 import { useContentMode } from "../state/contentMode";
 import { LAST_WORD_CATEGORIES } from "../data/lastWord";
 import { CategoryPicker } from "../components/CategoryPicker";
+import { ChoicePill } from "../components/ChoicePill";
 import { audio } from "../lib/audio";
 import { useExitGuard } from "../state/exitGuard";
 
@@ -60,9 +61,9 @@ export function LastWord({ mode, onBack }: Props) {
    * The round-over screen used to offer Next round as its one-tap exit, which
    * replayed the category the table had just spent a round on. Nobody wants
    * that: the letters they reached for are the ones already gone, and if they
-   * genuinely do want it again it is two taps through Categories. So the
-   * button is locked until the category changes, and Random or Categories is
-   * what changes it.
+   * genuinely do want it again it is two taps through Change category. So
+   * the button is locked until the category changes, and the shuffle or
+   * Change category is what changes it.
    */
   const [played, setPlayed] = useState(false);
   /**
@@ -258,14 +259,13 @@ export function LastWord({ mode, onBack }: Props) {
             </div>
           }
         >
-          <div className="actions--row">
-            <button className="btn btn--ghost" onClick={drawRandom}>
-              Random
-            </button>
-            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
-              Categories
-            </button>
-          </div>
+          <ChoicePill
+            value="Change category"
+            ariaLabel="Change category"
+            onOpen={() => setPhase("picking")}
+            onShuffle={drawRandom}
+            shuffleLabel="Random category"
+          />
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={beginRound}>
               Start round
@@ -331,14 +331,13 @@ export function LastWord({ mode, onBack }: Props) {
               to it, and a category gets mined dry at exactly the moment a
               round ends. Until now this screen's only exit was to play it
               again, or to leave the mode entirely by the chevron. */}
-          <div className="actions--row">
-            <button className="btn btn--ghost" onClick={drawRandom}>
-              Random
-            </button>
-            <button className="btn btn--ghost" onClick={() => setPhase("picking")}>
-              Categories
-            </button>
-          </div>
+          <ChoicePill
+            value="Change category"
+            ariaLabel="Change category"
+            onOpen={() => setPhase("picking")}
+            onShuffle={drawRandom}
+            shuffleLabel="Random category"
+          />
           <div className="actions">
             {/* Locked once the category has been played — see `played`.
 
@@ -346,7 +345,7 @@ export function LastWord({ mode, onBack }: Props) {
                 both ways of unlocking it leave for the intro, where the button
                 is Start round instead. It is kept, and disabled rather than
                 removed, because it is the thing the table reaches for: seeing
-                it greyed with Random and Categories live above it says "not
+                it greyed with the category controls live above it says "not
                 that one again, pick another" in a way an absent button
                 cannot. */}
             <button

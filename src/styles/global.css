@@ -636,6 +636,68 @@ button { font: inherit; color: inherit; }
   color: var(--category-ink, var(--text));
 }
 
+/* Ballpark's live line: the spectrum as a scale. A rule with a dot at each
+   end, and each end's name under its own dot — left-aligned and
+   right-aligned, so a long pair wraps into two columns instead of one
+   centred block. A step down from --fs-2xl because
+   it is two names sharing the width that one line had to itself. */
+.gheader__spectrum {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--category-ink, var(--text));
+}
+.gheader__spectrum-line {
+  position: relative;
+  height: 4px;
+  margin-inline: 7px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.gheader__spectrum-line::before,
+.gheader__spectrum-line::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.gheader__spectrum-line::before { left: -7px; }
+.gheader__spectrum-line::after { right: -7px; }
+.gheader__spectrum-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+}
+/* Each end is set on two lines by GameHeader (see twoLines), and the row
+   keeps two lines of height even when both ends are single words, so the
+   card does not move between "Old / New" and a longer pair. Each end is as
+   wide as its words and shrinks only if a half still will not fit. */
+.gheader__spectrum-ends {
+  min-height: calc(2em * var(--lh-tight));
+}
+.gheader__spectrum-ends > span {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.gheader__spectrum-ends > span:last-child { align-items: flex-end; }
+/* The one pair whose halves will not sit side by side at --fs-lg. */
+.gheader__spectrum-ends[data-long] { font-size: var(--fs-md); }
+.gheader__spectrum-ends > span:last-child { text-align: right; }
+
 /* ---------------------------------------------------------------
    THE STATUS STRIP, 20px under the live line.
 
@@ -1002,6 +1064,22 @@ button { font: inherit; color: inherit; }
    too many, and the one nobody asked the question of.
 
    The tap still sounds. See components/Switch.tsx. */
+
+/* The name, and the caption under it when there is one. */
+.switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Sentence case and the card's muted ink: it explains the name, it is not a
+   second heading. Sized like the name, by the viewport on a narrow phone. */
+.switch__caption {
+  font-size: min(var(--fs-sm), 3.6vw);
+  line-height: var(--lh-snug);
+  color: color-mix(in srgb, var(--switch-ink) 62%, transparent);
+}
 
 .switch__name {
   /* Lets a long label wrap instead of shoving the track off the row. */

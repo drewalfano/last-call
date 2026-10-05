@@ -30,7 +30,7 @@ interface CategoryPickerProps {
    */
   heading?: string;
   /**
-   * A pinned first choice meaning "no category": Odd One Out's Any, which
+   * A pinned first choice meaning "no category": Odd One Out's Mixed, which
    * deals from everything and changes with every round. Named here rather
    * than smuggled into `categories` so picking it can mean null to the
    * caller instead of a string it has to recognise.
@@ -114,11 +114,14 @@ export function CategoryPicker({
                   onClick={onAny}
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
-                    <path d="m18 2 4 4-4 4" />
-                    <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />
-                    <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />
-                    <path d="m18 14 4 4-4 4" />
+                    {/* A cycle, not a shuffle: the shuffle beside the
+                        category pill picks ONE category now, and this is a
+                        new one every round. Two arrows chasing each other
+                        say "keeps changing" where crossed ones say "pick". */}
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                    <path d="M8 16H3v5" />
                   </svg>
                   {anyLabel}
                 </button>
