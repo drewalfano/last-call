@@ -148,6 +148,14 @@ export const MODES: ModeDef[] = [
     color: "--cat-rank-it",
   },
   {
+    id: "say-the-same-thing",
+    players: { min: 2 },
+    pace: { minutes: 1, per: "round" },
+    title: "Same Page",
+    tagline: "Two people, one word. Keep converging.",
+    color: "--cat-say-the-same-thing",
+  },
+  {
     id: "kings-cup",
     // 52 cards and four kings; the game has an end, so the pace is a game.
     players: { min: 2 },
@@ -166,14 +174,6 @@ export const MODES: ModeDef[] = [
     title: "Ride the Bus",
     tagline: "Four rounds, then try to get off the bus.",
     color: "--cat-ride-the-bus",
-  },
-  {
-    id: "say-the-same-thing",
-    players: { min: 2 },
-    pace: { minutes: 1, per: "round" },
-    title: "Same Page",
-    tagline: "Two people, one word. Keep converging.",
-    color: "--cat-say-the-same-thing",
   },
   {
     id: "the-number-game",

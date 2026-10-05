@@ -102,9 +102,9 @@ sit at the top, because eleven cards scroll past a single screen.
 | 3 | Ballpark | hidden position + dial |
 | 4 | Letter Rip | timer game |
 | 5 | Rank It | ranking + guessing |
-| 6 | Kings Cup | card game |
-| 7 | Ride the Bus | card game |
-| 8 | Same Page | timed convergence |
+| 6 | Same Page | timed convergence |
+| 7 | Kings Cup | card game |
+| 8 | Ride the Bus | card game |
 | 9 | Overbid | bidding + challenge |
 | 10 | Most Likely To | deck + pointing |
 | 11 | Hot Seat | turn structure + voting |
@@ -396,9 +396,9 @@ two foregrounds. Ratios are the ones recorded beside each token in
 | Ballpark | `--cat-ballpark` | `#EE4620` | `#141414` | 4.85 |
 | Letter Rip | `--cat-last-word` | `#A5C0EA` | `#141414` | 9.94 |
 | Rank It | `--cat-rank-it` | `#E43E70` | `#141414` | 4.58 |
+| Same Page | `--cat-say-the-same-thing` | `#2FA84F` | `#141414` | 6.00 |
 | Kings Cup | `--cat-kings-cup` | `#273287` | white | 11.10 |
 | Ride the Bus | `--cat-ride-the-bus` | `#FFAE00` | `#141414` | 9.92 |
-| Same Page | `--cat-say-the-same-thing` | `#2FA84F` | `#141414` | 6.00 |
 | Overbid | `--cat-the-number-game` | `#441B07` | white | 14.94 |
 | Most Likely To | `--cat-most-likely-to` | `#E990A2` | `#141414` | 7.87 |
 | Hot Seat | `--cat-hot-seat` | `#0F4A42` | white | 10.10 |
@@ -427,6 +427,13 @@ was for. No two touching cards are now closer than **0.257** — the first time
 the deck has had no weak join at all. One-apart still shows red against orange
 at 0.069, at slots one and three, which is a known and accepted cost rather
 than an oversight.
+
+**Same Page later moved up, above Kings Cup**, which took out that 0.257 join —
+Ride the Bus's yellow on Same Page's green — and put the green between Rank
+It's pink (0.348) and the navy (0.390), with the yellow landing on Overbid's
+brown (0.542). The eleven packs' weakest touching pair is now Odd One Out
+against Ballpark at **0.282**. The move costs one one-apart pair, Ride the Bus
+against Most Likely To at 0.175, which is not the deck's closest of those.
 
 Home's pill ring is a **separate** sequence — see `RING_ORDER` in `Home.tsx`.
 It is written as ids and read as colours precisely so a re-deal moves names and
