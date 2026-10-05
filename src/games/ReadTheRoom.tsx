@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CardBody, GameScreen } from "../components/GameScreen";
-import { CategoryPicker } from "../components/CategoryPicker";
-import { ChoicePill } from "../components/ChoicePill";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import { READ_THE_ROOM } from "../data/readTheRoom";
@@ -132,9 +130,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   /* One name is not a matchup. Below two, the mode plays exactly as it does
      with no roster at all. */
   const named = hasRoster && players.length >= 2;
-  /* LEAD, because Change prompt opens this list in the picker and a player
-     reads it — the tier the table just unlocked on top, interleaved. */
-  const pool = usePool(READ_THE_ROOM, contentMode, "lead");
+  const pool = usePool(READ_THE_ROOM, contentMode, "supplement");
   const deck = useDeck(pool);
 
   /* The reducer behind a ref, so a second tap in the same frame finds the
@@ -159,14 +155,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   const nameA = nameOf("A");
   const nameB = nameOf("B");
 
-  /**
-   * Set when the table chose a prompt, or wrote one; otherwise the deck's
-   * draw stands. Held as the TEMPLATE, so a chosen prompt fills {other} the
-   * same way a drawn one does. Ballpark's arrangement for its spectrum.
-   */
-  const [chosen, setChosen] = useState<string | null>(null);
-  const template = chosen ?? deck.current;
-  const prompt = template ? fillPrompt(template, { other: round.other }) : "";
+  const prompt = deck.current ? fillPrompt(deck.current, { other: round.other }) : "";
   const writingNow = flow.phase === "writeA" || flow.phase === "writeB";
   /** Whoever holds the pen, on a writing screen. */
   const writer: Writer = flow.phase === "writeB" ? "B" : "A";
@@ -218,20 +207,17 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   /**
    * A different prompt for the same two writers — the prompt being rejected,
    * not the matchup. Only from the matchup screen: once someone is writing,
-   * the prompt is what they are writing to. Clears a chosen one on the way
-   * past, or the shuffle would do nothing once the table had picked.
+   * the prompt is what they are writing to.
+   *
+   * A shuffle and never a list. Choosing the prompt would let the writers
+   * steer it toward a line they already have; dealt blind, nobody at the
+   * table picked it.
    */
-  const drawRandom = useCallback(() => {
+  const newPrompt = useCallback(() => {
     if (flowRef.current.phase !== "matchup") return;
-    setChosen(null);
     deck.draw();
     setRound((r) => ({ ...r, other: named ? pickJudge(players, r.pair) : undefined }));
   }, [deck, named, players]);
-
-  /* The list shows each prompt as the table would read it, {other} filled
-     with this round's judge, and maps the pick back to its template. */
-  const labels = pool.map((p) => fillPrompt(p, { other: round.other }));
-
   const start = useCallback(() => {
     act({ type: "start", bFirst: Math.random() < 0.5 });
   }, [act]);
@@ -265,35 +251,13 @@ export function ReadTheRoom({ mode, onBack }: Props) {
   const nextMatchup = useCallback(() => {
     act({ type: "next" }, () => {
       deck.draw();
-      setChosen(null);
       setRound(deal(players, named, tally));
     });
   }, [act, deck, players, named, tally]);
 
-  if (!template) return null;
+  if (!deck.current) return null;
 
   const showScore = SHOW_SCORE && named;
-
-  /* No header: its X leaves the round entirely, and the picker's own Back
-     goes where you actually mean. Same treatment Ballpark and Same Page
-     give this screen. */
-  if (flow.phase === "picking") {
-    return (
-      <GameScreen mode={mode} hideHeader onBack={onBack}>
-        <CategoryPicker
-          categories={labels}
-          heading="Pick a prompt"
-          customNoun="prompt"
-          onPick={(label) => {
-            const i = labels.indexOf(label);
-            setChosen(i >= 0 ? pool[i] : label);
-            act({ type: "promptPicked" });
-          }}
-          onCancel={() => act({ type: "promptPicked" })}
-        />
-      </GameScreen>
-    );
-  }
 
   return (
     <GameScreen
@@ -345,7 +309,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
             <div className="cardstage">
               <article
                 className="card card--dealt rr-matchup"
-                key={`matchup-${deck.drawCount}-${chosen ?? ""}`}
+                key={`matchup-${deck.drawCount}`}
                 ref={focalRef}
                 tabIndex={-1}
               >
@@ -367,16 +331,23 @@ export function ReadTheRoom({ mode, onBack }: Props) {
             How to play
           </button>
 
-          {/* THE PROMPT'S ONE CONTROL, the one every category game now uses:
-              a pill that opens the list, and a shuffle beside it. Rejecting
-              the prompt, never the matchup — the writers stay who they are. */}
-          <ChoicePill
-            value="Change prompt"
-            ariaLabel="Change prompt"
-            onOpen={() => act({ type: "pickPrompt" })}
-            onShuffle={drawRandom}
-            shuffleLabel="Random prompt"
-          />
+          {/* THE PROMPT'S ONE CONTROL, drawn as the pill every category game
+              uses but with the shuffle where the chevron would be, because
+              there is no list behind it: the prompt can be dealt again, not
+              chosen. Built from ChoicePill's own classes rather than the
+              component, which always opens a list. */}
+          <button className="choice" onClick={newPrompt}>
+            <span className="choice__text">
+              <span className="choice__value">New prompt</span>
+            </span>
+            <svg className="choice__chev rr-shuffle" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+              <path d="m18 2 4 4-4 4" />
+              <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />
+              <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />
+              <path d="m18 14 4 4-4 4" />
+            </svg>
+          </button>
 
           <div className="actions">
             <button className="btn btn--lg btn--block" onClick={start}>

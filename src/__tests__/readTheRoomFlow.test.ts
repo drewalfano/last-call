@@ -47,7 +47,6 @@ function atPhase(phase: Phase): Flow {
   const states: Record<Phase, Flow> = {
     intro: initialFlow(false),
     matchup,
-    picking: reduce(matchup, { type: "pickPrompt" }),
     writeA,
     pass,
     writeB,
@@ -58,14 +57,12 @@ function atPhase(phase: Phase): Flow {
   return states[phase];
 }
 
-const PHASES: Phase[] = ["intro", "matchup", "picking", "writeA", "pass", "writeB", "reveal", "judge", "result"];
+const PHASES: Phase[] = ["intro", "matchup", "writeA", "pass", "writeB", "reveal", "judge", "result"];
 
 /** Every action, and the only phases it may change anything in. */
 const ALLOWED: { action: Action; in: Phase[] }[] = [
   { action: { type: "gotIt" }, in: ["intro"] },
   { action: { type: "howToPlay" }, in: ["matchup"] },
-  { action: { type: "pickPrompt" }, in: ["matchup"] },
-  { action: { type: "promptPicked" }, in: ["picking"] },
   { action: { type: "start", bFirst: true }, in: ["matchup"] },
   { action: { type: "draft", text: "x" }, in: ["writeA", "writeB"] },
   { action: { type: "done" }, in: ["writeA", "writeB"] },
@@ -221,12 +218,6 @@ describe("Read the Room round", () => {
   it("can show the intro again from the matchup and return to it", () => {
     const back = run(atPhase("matchup"), { type: "howToPlay" }, { type: "gotIt" });
     expect(back.phase).toBe("matchup");
-  });
-
-  it("opens the prompt list from the matchup and comes back to it", () => {
-    const back = run(atPhase("matchup"), { type: "pickPrompt" }, { type: "promptPicked" });
-    expect(back.phase).toBe("matchup");
-    expect(back.round).toBe(0);
   });
 
   it("guards exits from the first keystroke to the tap, and nowhere else", () => {

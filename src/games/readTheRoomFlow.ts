@@ -9,7 +9,6 @@
  *
  *   intro    how to play, once per phone and again on request
  *   matchup  who is writing and the prompt, face up for the whole table
- *   picking  the prompt list, reached from the matchup
  *   writeA   the first writer's screen: prompt, one line, Done
  *   pass     a cover: the phone is on its way to the second writer
  *   writeB   the second writer's screen, the same as the first
@@ -24,7 +23,6 @@
 export type Phase =
   | "intro"
   | "matchup"
-  | "picking"
   | "writeA"
   | "pass"
   | "writeB"
@@ -71,9 +69,6 @@ export interface Flow {
 export type Action =
   | { type: "gotIt" }
   | { type: "howToPlay" }
-  | { type: "pickPrompt" }
-  /** Chosen or cancelled: either way the list closes and the matchup is back. */
-  | { type: "promptPicked" }
   /** The coin for the reveal order rides in on the action, so this stays pure. */
   | { type: "start"; bFirst: boolean }
   | { type: "draft"; text: string }
@@ -118,10 +113,6 @@ export function reduce(s: Flow, a: Action): Flow {
       return s.phase === "intro" ? { ...s, phase: s.from ?? "matchup", from: null } : s;
     case "howToPlay":
       return s.phase === "matchup" ? { ...s, phase: "intro", from: "matchup" } : s;
-    case "pickPrompt":
-      return s.phase === "matchup" ? { ...s, phase: "picking" } : s;
-    case "promptPicked":
-      return s.phase === "picking" ? { ...s, phase: "matchup" } : s;
     case "start":
       return s.phase === "matchup" ? { ...s, phase: "writeA", bFirst: a.bFirst } : s;
     /* Typing behind a cover would be typing into a field nobody can see. */

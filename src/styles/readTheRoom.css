@@ -48,6 +48,16 @@
   color: var(--card-ink);
 }
 
+/* ---------------- The matchup's New prompt ----------------
+   ChoicePill's pill, with the shuffle in the chevron's place. The chevron
+   is a small mark at a heavy stroke; the shuffle is a full icon, so it takes
+   the round shuffle button's size and weight instead. */
+.choice .rr-shuffle {
+  width: 1.3em;
+  height: 1.3em;
+  stroke-width: 2.2;
+}
+
 /* ---------------- A writer's screen ---------------- */
 .rr-write .rr-write__form {
   display: flex;
