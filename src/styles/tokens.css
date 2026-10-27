@@ -16,6 +16,54 @@
      themes: they are a wayfinding cue, not decoration.
    ============================================================ */
 
+/* ----------------------------------------------------------------
+   THE BREAKPOINTS, named once.
+
+   Lightning CSS compiles these away (vite.config.ts turns the draft
+   on), so every `@media (--tablet)` in the app ships as the literal
+   query below. global.css @imports this file and games.css into one
+   bundle, which is what lets the names reach both. A stylesheet
+   imported on its own from a component would not see them.
+
+   --tablet. BOTH axes, and the height is the one doing the real
+   work. A landscape iPhone is 932pt wide (16 Pro Max) — wider than
+   an iPad mini in portrait — and giving it 76pt buttons and 72px
+   type in 430pt of height would bury the game under its own
+   furniture. Width alone cannot tell the two apart; height can,
+   because no phone in any orientation reaches 600.
+
+   What it catches, and what it deliberately does not:
+     744x1133  iPad mini portrait          tablet
+     834x1194  iPad 11" portrait           tablet
+    1024x1366  iPad 13" portrait           tablet
+    1133x744   iPad mini landscape         tablet, board
+    1180x820   iPad 11" landscape          tablet, board
+    1366x1024  iPad 13" landscape          tablet, board
+     678x1024  iPad landscape, half split  tablet
+     507x1366  iPad portrait, half split   phone  (a narrow
+               column should read as a phone, whatever it is on)
+     932x430   iPhone 16 Pro Max landscape phone
+     430x932   iPhone 16 Pro Max portrait  phone
+
+   --board. A tablet held landscape and wide enough to lay a game
+   out side by side rather than stacked: the prompt, board and
+   secret layouts in docs/tablet-landscape. A half split is a
+   tablet and never a board.
+
+   --fine. A mouse or trackpad, which is a Mac in a browser. Same
+   layouts as the device they are drawn for, desktop control sizes —
+   the 120px action is sized for an arm across a table, not a cursor.
+
+   They are media queries and nothing else on purpose. Split View
+   and Stage Manager resize the window mid-session with no reload,
+   so anything that reads a width in JS and keeps it goes stale; CSS
+   re-evaluates for free. Nothing in this app reads
+   window.innerWidth into state, and nothing should start.
+   ---------------------------------------------------------------- */
+@custom-media --tablet (min-width: 640px) and (min-height: 600px);
+@custom-media --board (min-width: 900px) and (min-height: 600px) and (orientation: landscape);
+@custom-media --fine (pointer: fine) and (hover: hover);
+
 :root {
   /* --- Typography ------------------------------------------ */
   --font-display: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -98,41 +146,6 @@
   --card-inset: 18px;
 
   /* --- Layout ---------------------------------------------- */
-  /* ----------------------------------------------------------
-     THE TABLET BREAKPOINT, written down once:
-
-       @media (min-width: 640px) and (min-height: 600px)
-
-     There is no way to name a media query in plain CSS, so the
-     literal is repeated wherever it is needed. This is the note it
-     is repeating FROM — change the reasoning here, then grep for
-     `640px` and change every copy together.
-
-     BOTH axes, and the height is the one doing the real work. A
-     landscape iPhone is 932pt wide (16 Pro Max) — wider than an
-     iPad mini in portrait — and giving it 76pt buttons and 72px
-     type in 430pt of height would bury the game under its own
-     furniture. Width alone cannot tell the two apart; height can,
-     because no phone in any orientation reaches 600.
-
-     What it catches, and what it deliberately does not:
-       744x1133  iPad mini portrait          tablet
-       834x1194  iPad 11" portrait           tablet
-      1024x1366  iPad 13" portrait           tablet
-      1133x744   iPad mini landscape         tablet
-      1366x1024  iPad 13" landscape          tablet
-       678x1024  iPad landscape, half split  tablet
-       507x1366  iPad portrait, half split   phone  (a narrow
-                 column should read as a phone, whatever it is on)
-       932x430   iPhone 16 Pro Max landscape phone
-       430x932   iPhone 16 Pro Max portrait  phone
-
-     It is a media query and nothing else on purpose. Split View
-     and Stage Manager resize the window mid-session with no
-     reload, so anything that reads a width in JS and keeps it goes
-     stale; CSS re-evaluates for free. Nothing in this app reads
-     window.innerWidth into state, and nothing should start.
-     ---------------------------------------------------------- */
   /* ----------------------------------------------------------
      THE GUTTER. How far content sits from the edge of the
      display, stated once for every screen in the app: `.screen`
@@ -674,7 +687,7 @@
 }
 
 /* ================================================================
-   TABLET — the breakpoint is documented at the top of this file.
+   TABLET — --tablet is documented at the top of this file.
 
    ONE FACT DRIVES THE WHOLE BLOCK: the device is not held, it is
    propped. Three to six people are around it reading the same
@@ -687,7 +700,7 @@
    Every mode inherits from here. That is the point of it being
    here: eleven modes were not touched to make this happen.
    ================================================================ */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   :root {
     /* --- Layout ------------------------------------------- */
     /* The frame opens up; the reading column does not follow it
@@ -859,6 +872,33 @@
           - var(--slot-h) / 2
       )
     );
+  }
+}
+
+/* ================================================================
+   TABLET WITH A POINTER — a Mac in a browser.
+
+   The layouts are the tablet's; the controls are not. Everything the
+   tablet block doubled for an arm reaching across a table comes back
+   to a size a cursor is aimed with, and the two reserves are
+   re-measured against those controls the same way the tablet's were,
+   so the height they stop holding goes back to the card.
+
+   --gheader-h: the 64px well, the 12px gap, two lines of the 40px
+   live line and the padding under it: 64 + 12 + 88 + 12 = 176.
+   --gfooter-h: the Number Game's bidding screen again, the tallest
+   footer — 32 of skip margin + 40 of skip + 16 + 72 + 8 + 60 = 228.
+   ================================================================ */
+@media (--tablet) and (--fine) {
+  :root {
+    --action-height: 72px;
+    --control-height: 60px;
+    --control-md: 48px;
+    --control-sm: 40px;
+    --tap-target: 64px;
+
+    --gheader-h: min(180px, 24vh);
+    --gfooter-h: min(228px, 33vh);
   }
 }
 

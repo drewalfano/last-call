@@ -718,7 +718,7 @@
    bottom edge. That is deliberate and unchanged — see --peek — and
    it is why this is a size change rather than a column cap.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .home__head { padding-block: var(--sp-4) var(--sp-6); }
 
   .home__deck {
@@ -853,7 +853,7 @@
 }
 
 /* The card's inset changes at the tablet breakpoint; so does this. */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .launch__face {
     gap: var(--sp-1);
     padding: var(--sp-6) var(--sp-8);
@@ -1390,7 +1390,7 @@
    652px column. The gap goes up with the cards — at --sp-2 four
    150px cards read as one block rather than as four cards.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .pcard { width: min(34vw, 320px); }
 
   .pcard--sm {
@@ -1912,7 +1912,7 @@
    grid it replaced. So: ring at 950 and above, which is every
    portrait tablet and a 13" in landscape; a bank below it.
    ================================================================ */
-@media (min-width: 640px) and (min-height: 950px) {
+@media (--tablet) and (min-height: 950px) {
   /* ---------------------------------------------------------------
      The board becomes a 1fr TRACK, not a stretched flex item.
 
@@ -2041,7 +2041,7 @@
    letters, laid along the axis this screen actually has, at about
    82pt a tile against the 64 the 4x5 manages here.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) and (max-height: 949px) {
+@media (--tablet) and (max-height: 949px) {
   .lw__grid {
     grid-template-columns: repeat(10, 1fr);
     grid-template-rows: repeat(2, 1fr);
@@ -2983,7 +2983,7 @@
    tablet card sizing because both base rules are declared below it, and a
    media query adds no specificity — an override written earlier in the file
    simply loses the tie. */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   /* ---------------------------------------------------------------
      CAPPED AGAINST THE VIEWPORT'S HEIGHT, not just derived from its
      width.
@@ -3006,8 +3006,18 @@
      screen would be a change to what the thing IS rather than to
      how big it is.
      --------------------------------------------------------------- */
+  /* AND CAPPED AGAINST ITS OWN ROW, because 40vh is not the room it
+     has. The card and the rule's reserved 182px share --slot-h, which
+     at 1440x900 came to 319px: a 360px card over a 182px rule in a
+     319px row, centred, so the card's top half and the rule's last
+     line both went off the ends of the box. What the row holds less
+     the reserve and the gap between them is what the card may have. */
   .kc__card .pcard {
-    height: min(calc(min(26vw, 300px) * 7 / 5 + var(--pcard-solo-bump)), 40vh);
+    height: min(
+      calc(min(26vw, 300px) * 7 / 5 + var(--pcard-solo-bump)),
+      40vh,
+      var(--slot-h) - 182px - var(--sp-3)
+    );
   }
   .rtb__felt > .pcard {
     height: min(calc(min(28vw, 320px) * 7 / 5 + var(--pcard-solo-bump)), 40vh);
@@ -3150,7 +3160,7 @@
    above its actions is a portrait composition, and landscape is
    getting a proposal of its own.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .kc__body {
     /* `flex: none` is flex-shrink: 0, so the item keeps its content
        height no matter what and `overflow` never gets a chance to
@@ -3472,7 +3482,7 @@
    the viewport sets the ambition, the slot sets the ceiling, and the
    smaller wins.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .slot:has(.card) .imp-hint__text { font-size: min(var(--fs-xl), 6.2cqh); }
   .slot:has(.card) .imp-hint__label { font-size: min(var(--fs-xs), 3.4cqh); }
   .slot:has(.card) .imp-hint__rule { font-size: min(var(--fs-xs), 3.4cqh); }
@@ -3751,7 +3761,7 @@
    contains it. On a 13" nothing changes; on a mini in landscape it
    is the difference between a stepper and two half-circles.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .stepper { gap: min(var(--sp-5), 6cqh); }
 
   .stepper__step {
@@ -4046,7 +4056,7 @@
    FOR did not. So at this size it is stated as what it always
    meant: two lines of the card's own type, plus its padding.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .picker__grid {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--sp-3);
@@ -4143,7 +4153,7 @@
    box; there is no reason to change its containment to size a
    numeral two modes over.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .slot:has(.countdown) { container-type: size; }
 
   .countdown {

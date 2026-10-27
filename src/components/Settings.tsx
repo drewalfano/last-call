@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/contentMode";
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
+import { keepAwake, useKeepAwake } from "../lib/wakeLock";
 import { applyUpdate, checkForUpdate, settle, useUpdateState } from "../lib/swUpdate";
 
 /** Order is the control's order, and the index of the current one drives the
@@ -144,6 +145,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
    * into it, so the stored preference is still the one source.
    */
   const [soundOn, setSoundOn] = useState(!audio.isMuted());
+  const awake = useKeepAwake();
 
   /**
    * Turning it on plays a tap, which is the only way to find out it worked.
@@ -362,6 +364,37 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                 role="radio"
                 aria-checked={(opt === "on") === soundOn}
                 onClick={() => setSound(opt === "on")}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* The sheet's own on/off control rather than Switch, for the reason
+            Switch gives: here the options are read as a list. Same words as
+            Sound, so it reuses Sound's pair. */}
+        <section className="setting">
+          <div className="setting__label">
+            <span className="setting__name">Keep screen awake</span>
+            <span className="setting__hint">
+              During a round, so a propped-up screen doesn't dim between turns.
+            </span>
+          </div>
+          <div
+            className="segmented"
+            role="radiogroup"
+            aria-label="Keep screen awake"
+            style={{ ["--n" as string]: SOUND.length, ["--i" as string]: awake ? 0 : 1 }}
+          >
+            {SOUND.map((opt) => (
+              <button
+                key={opt}
+                className="segmented__opt"
+                data-on={(opt === "on") === awake || undefined}
+                role="radio"
+                aria-checked={(opt === "on") === awake}
+                onClick={() => keepAwake.setOn(opt === "on")}
               >
                 {opt}
               </button>

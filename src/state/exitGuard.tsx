@@ -23,16 +23,26 @@ interface ExitGuardValue {
 
 const ExitGuardContext = createContext<ExitGuardValue>({ set: () => {} });
 
+/**
+ * `onChange` is for the one reader that does render on it: the wake lock,
+ * which keeps the screen on for exactly the phases this flag marks live.
+ * Read through a ref, so the stable `set` below never goes stale.
+ */
 export function ExitGuardProvider({
   guardRef,
+  onChange,
   children,
 }: {
   guardRef: React.RefObject<boolean>;
+  onChange?: (active: boolean) => void;
   children: ReactNode;
 }) {
+  const change = useRef(onChange);
+  change.current = onChange;
   const value = useRef<ExitGuardValue>({
     set: (active) => {
       guardRef.current = active;
+      change.current?.(active);
     },
   });
   return <ExitGuardContext.Provider value={value.current}>{children}</ExitGuardContext.Provider>;

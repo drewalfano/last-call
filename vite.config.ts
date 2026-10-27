@@ -65,6 +65,10 @@ export default defineConfig({
   define: {
     __BUILT_AT__: JSON.stringify(builtAt),
   },
+  // Lightning CSS for the custom media in tokens.css: --tablet, --board and
+  // --fine are named there once and compiled to plain media queries here.
+  css: { transformer: "lightningcss", lightningcss: { drafts: { customMedia: true } } },
+  build: { cssMinify: "lightningcss" },
   plugins: [
     react(),
     VitePWA({

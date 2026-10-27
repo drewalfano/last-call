@@ -774,7 +774,7 @@ button { font: inherit; color: inherit; }
    The X itself is a fixed 24px in the markup, and a 24px glyph in
    a 96px well reads as a mis-drawn button rather than a big one.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .gheader__title { font-size: var(--fs-xl); }
 
   .gheader__back svg {
@@ -1414,21 +1414,38 @@ button { font: inherit; color: inherit; }
    clips, so the last line simply went. A prompt losing words is
    the one failure this whole exercise cannot ship.
 
-   So the viewport sets the ambition, the slot sets the ceiling,
-   and the smaller wins. The cap only bites where the slot is
-   short: it costs a few points at 13" and takes 44.6px down to 30
-   at mini landscape, which is the difference between a card you
-   can read and one with a line missing.
+   So the viewport sets the ambition, the card sets the ceiling,
+   and the smaller wins.
+
+   THE CEILING IS THE CARD'S WIDTH, NOT THE SLOT'S HEIGHT. It was
+   12cqh of the slot, and that held the type to the card's height
+   while the card's side padding — capped at 8cqh, where the top is
+   capped at 5 — shrank the line out from under it. At 1440x900 the
+   prompt came to 14cqi of the line it was set in, against 11 on a
+   13" in portrait, so the same sentence broke into more lines on
+   the smaller card and the last one went. Measured against the
+   width the text actually runs in, a prompt breaks into the same
+   lines on every card, and the square takes care of the height.
+
+   11.5cqi is just above the 11.2 a 13" portrait card produces at
+   the clamp's ceiling, so it never binds in portrait; 9 likewise
+   for the small prompt. The card is the inline-size container,
+   which makes cqi its own content box. The slot stays a size
+   container for everything inside the card that is still measured
+   in cqh — the padding below, Odd One Out's hint, the stepper —
+   and an inline-size container does not answer cqh, so those still
+   reach past the card to it.
 
    Scoped to slots holding a CARD. `contain: size` would otherwise
    land on every card screen in the app, and Rank It renders a
    scrolling list into this same box.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .slot:has(.card) { container-type: size; }
+  .slot .card { container-type: inline-size; }
 
-  .slot:has(.card) .card__prompt { font-size: min(var(--fs-prompt), 12cqh); }
-  .slot:has(.card) .card__prompt--sm { font-size: min(var(--fs-prompt-sm), 10cqh); }
+  .slot:has(.card) .card__prompt { font-size: min(var(--fs-prompt), 11.5cqi); }
+  .slot:has(.card) .card__prompt--sm { font-size: min(var(--fs-prompt-sm), 9cqi); }
 }
 
 /* ---------------------------------------------------------------
@@ -1446,7 +1463,7 @@ button { font: inherit; color: inherit; }
    spend two thirds of its card on margins. The card is a size
    container already, for the prompt.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .cardstage > .card,
   .slot > .card {
     padding: min(var(--sp-6), 5cqh) min(var(--sp-10), 8cqh);
@@ -1476,7 +1493,7 @@ button { font: inherit; color: inherit; }
    and the live line is positioned against it. The slot stays; the
    card inside it narrows.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .screen--private {
     --fs-prompt: clamp(1.35rem, 5.6vw, 2.1rem);
     --fs-prompt-sm: clamp(1.15rem, 4.7vw, 1.75rem);
@@ -1624,7 +1641,7 @@ button { font: inherit; color: inherit; }
    744pt-wide mini the gutters bite before the cap does, so the
    card comes out 652 while the column is still nominally 700.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .screen:has(.focal--slot) {
     grid-template-rows:
       minmax(
@@ -1668,7 +1685,7 @@ button { font: inherit; color: inherit; }
    wants every pixel of both axes and its header is deliberately
    unreserved — see .lw__board.
    --------------------------------------------------------------- */
-@media (min-width: 640px) and (min-height: 600px) {
+@media (--tablet) {
   .screen:has(.focal.kc),
   .screen:has(.focal.rtb) {
     display: grid;
@@ -1695,6 +1712,11 @@ button { font: inherit; color: inherit; }
     margin-block: 0;
     justify-content: center;
   }
+
+  /* `safe`, so a body taller than its row — Drive's three calls under
+     the rule — overflows downward into the scroller rather than off
+     both ends, where the top half could not be scrolled back to. */
+  .kc__body { justify-content: safe center; }
 
   /* Kings Cup zeroed its actions' auto top margin so a second one
      could not fight the felt's for the slack. In a grid row there

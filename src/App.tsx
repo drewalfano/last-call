@@ -7,6 +7,7 @@ import { useTheme } from "./state/theme";
 import { unlockOnFirstGesture } from "./lib/audio";
 import { setInRound } from "./lib/swUpdate";
 import { ExitGuardProvider } from "./state/exitGuard";
+import { useWakeLock } from "./lib/wakeLock";
 import { EndRoundDialog } from "./components/EndRoundDialog";
 import { Home } from "./games/Home";
 import { LastCallGame } from "./games/LastCallGame";
@@ -302,6 +303,11 @@ export default function App() {
    */
   const guardRef = useRef(false);
   const [confirmExit, setConfirmExit] = useState(false);
+
+  /** The same signal, as state, for the one thing that renders on it: the
+   *  screen stays on while a round is live. See lib/wakeLock.ts. */
+  const [live, setLive] = useState(false);
+  useWakeLock(live);
 
   /**
    * Audio starts suspended on every phone and only a real touch can start it.
@@ -926,7 +932,7 @@ export default function App() {
 
   return (
     <div className="app" style={flood}>
-      <ExitGuardProvider guardRef={guardRef}>
+      <ExitGuardProvider guardRef={guardRef} onChange={setLive}>
         <div className="app__frame">{renderScreen(screen, open, requestExit, closing, aborted)}</div>
       </ExitGuardProvider>
       {confirmExit && screen && (
