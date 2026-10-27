@@ -36,6 +36,12 @@ interface GameScreenProps {
   isPrivate?: boolean;
   /** A ? beside the X that reopens the mode's intro. See GameHeader. */
   onHelp?: () => void;
+  /**
+   * Which landscape composition the screen takes on a board: the card beside
+   * a rail, a full-width board over a row of choices, or a private handoff.
+   * Pair it with the matching body below. Nothing changes off a board.
+   */
+  layout?: "prompt" | "board" | "secret";
   onBack: () => void;
   children: ReactNode;
 }
@@ -66,12 +72,14 @@ export function GameScreen({
   hideHeader,
   isPrivate,
   onHelp,
+  layout,
   onBack,
   children,
 }: GameScreenProps) {
   return (
     <div
       className={isPrivate ? "screen screen--private" : "screen"}
+      data-layout={layout}
       style={categoryStyle(mode.color)}
     >
       {!hideHeader && (
@@ -110,6 +118,85 @@ export function CardBody({ card, children, className }: CardBodyProps) {
     <div className={className ? `focal focal--slot ${className}` : "focal focal--slot"}>
       <div className="slot">{card}</div>
       <div className="gfoot">{children}</div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------
+   THE THREE LANDSCAPE BODIES.
+
+   Each one is laid out by `.screen[data-layout]` in board.css under
+   --board, and is a plain column everywhere else. They hold no game
+   state and know nothing about the modes; Round 3 fills them.
+   --------------------------------------------------------------- */
+
+interface PromptBodyProps {
+  /** The card, as for CardBody. Square on a board, to the full height. */
+  card: ReactNode;
+  /** The rail's top: the live line, its meta, an Up next chip. */
+  rail?: ReactNode;
+  /** The rail's foot: secondary controls, then the primary action last. */
+  children?: ReactNode;
+}
+
+/** The card on the left, a 360px rail on the right. */
+export function PromptBody({ card, rail, children }: PromptBodyProps) {
+  return (
+    <div className="focal focal--slot focal--prompt">
+      <div className="slot">{card}</div>
+      <div className="gfoot">
+        {rail && <div className="rail">{rail}</div>}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+interface BoardBodyProps {
+  /** What the table is looking at: the cards, the dial, the letter board. */
+  stage: ReactNode;
+  /** One line under the stage, e.g. what a wrong guess costs. */
+  rule?: ReactNode;
+  /** The choices, in a Choices row. Always the bottom of the screen. */
+  choices?: ReactNode;
+}
+
+/** Content across the width, choices in one row along the bottom. */
+export function BoardBody({ stage, rule, choices }: BoardBodyProps) {
+  return (
+    <div className="focal focal--board">
+      <div className="board__stage">{stage}</div>
+      {rule && <p className="board__rule">{rule}</p>}
+      {choices}
+    </div>
+  );
+}
+
+interface SecretBodyProps {
+  /** Across the top: the seat strip on a handoff, the grey caps while held. */
+  top?: ReactNode;
+  /** The name on a handoff; the role card while held. */
+  children: ReactNode;
+  /** The hold button, beside the main content and centred on it. */
+  side?: ReactNode;
+  /** Along the bottom: Start over, the pass-it hint, who is next. */
+  foot?: ReactNode;
+  /**
+   * The role is face up. The screen goes dark whatever the pack, and the
+   * card and the held button sit side by side in the middle, so the hand on
+   * the button never covers the card.
+   */
+  holding?: boolean;
+}
+
+/** The handoff and the private hold. */
+export function SecretBody({ top, children, side, foot, holding }: SecretBodyProps) {
+  return (
+    <div className="focal secret" data-holding={holding || undefined}>
+      {top && <div className="secret__top">{top}</div>}
+      <div className="secret__main">{children}</div>
+      {side && <div className="secret__side">{side}</div>}
+      {foot && <div className="secret__foot">{foot}</div>}
     </div>
   );
 }

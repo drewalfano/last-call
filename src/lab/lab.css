@@ -1,0 +1,101 @@
+/* The lab's own chrome. Dev only, never in a production build. Placement
+   and labels only: every piece shown is styled by the app's stylesheets. */
+
+.lab-bar {
+  position: fixed;
+  top: var(--sp-2);
+  left: 50%;
+  z-index: 60;
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  border-radius: var(--radius-pill);
+  background: rgba(15, 15, 15, 0.82);
+  transform: translateX(-50%);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.lab-bar__tab,
+.lab-bar__pick {
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: #ddd;
+  font: inherit;
+  cursor: pointer;
+}
+.lab-bar__tab[data-on] { background: #fff; color: #111; }
+.lab-bar__pick { background: #2a2a2a; }
+
+.lab-pieces { overflow-y: auto; gap: var(--sp-10); padding-top: 64px; }
+.lab-title { margin: 0; font-family: var(--font-display); font-size: var(--fs-3xl); text-transform: uppercase; }
+
+.lab-section { display: flex; flex-direction: column; gap: var(--sp-4); }
+.lab-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+.lab-section__note { margin: 0; opacity: 0.75; font-size: var(--fs-sm); }
+
+.lab-row { display: flex; flex-wrap: wrap; gap: var(--sp-8); align-items: flex-start; }
+.lab-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-6); }
+
+.lab-state { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); margin: 0; }
+.lab-state > .hold { margin: var(--hold-ring); }
+.lab-state figcaption { font-size: var(--fs-xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; opacity: 0.7; }
+.lab-row > .lab-state { flex: 0 1 auto; }
+.lab-section > .lab-state { width: 100%; }
+
+.lab-check { display: flex; gap: var(--sp-2); align-items: center; font-size: var(--fs-sm); }
+
+/* The white list card Rank It's rows sit in on a board. */
+.lab-listcard {
+  display: flex;
+  width: 100%;
+  height: 420px;
+  padding: var(--sp-4);
+  border-radius: var(--radius-2xl);
+  background: var(--card-surface);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.lab-live {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+.lab-meta { font-size: var(--fs-sm); letter-spacing: var(--tracking-wide); text-transform: uppercase; opacity: 0.8; }
+
+.lab-felt { display: flex; gap: var(--sp-6); justify-content: center; }
+.lab-felt .pcard { width: 180px; height: 260px; }
+
+.lab-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 9vw, 7.5rem);
+  font-weight: var(--fw-black);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+.lab-hint { margin: 0; max-width: 34em; font-size: var(--fs-lg); }
+
+.lab-rolecard { position: relative; width: min(600px, 52vw); aspect-ratio: 600 / 380; }
+.lab-rolecard > .card { position: absolute; inset: 0; }
+
+.lab-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lab-dark { padding: calc(var(--hold-ring) + var(--sp-4)); border-radius: var(--radius-xl); background: var(--secret-bg); }

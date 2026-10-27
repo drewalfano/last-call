@@ -3,6 +3,7 @@ import { CONTENT_TIERS, type ContentMode, useContentMode } from "../state/conten
 import { useTheme } from "../state/theme";
 import { audio } from "../lib/audio";
 import { keepAwake, useKeepAwake } from "../lib/wakeLock";
+import { useSheetExit } from "../lib/useSheetExit";
 import { applyUpdate, checkForUpdate, settle, useUpdateState } from "../lib/swUpdate";
 
 /** Order is the control's order, and the index of the current one drives the
@@ -182,23 +183,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
    * Guarded against a second dismiss: the backdrop is still under the finger
    * for the whole exit, and a second tap would stack another timeout and
    * another `onClose`.
+   *
+   * The mechanics live in useSheetExit, which the side panel shares.
    */
-  const [leaving, setLeaving] = useState(false);
-  const exit = useRef<number>(undefined);
-
-  const close = useCallback(() => {
-    if (exit.current !== undefined) return;
-    setLeaving(true);
-    exit.current = window.setTimeout(onClose, LEAVE_MS);
-  }, [onClose]);
-
-  useEffect(() => () => window.clearTimeout(exit.current), []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [close]);
+  const { leaving, close } = useSheetExit(onClose, LEAVE_MS);
 
   /**
    * FOCUS GOES IN, STAYS IN, AND COMES BACK OUT.

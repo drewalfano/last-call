@@ -26,14 +26,29 @@ if (import.meta.env.VITE_SINGLE_FILE) {
   captureApply(() => updateSW(true));
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider>
-      <ContentModeProvider>
-        <RosterProvider>
-          <App />
-        </RosterProvider>
-      </ContentModeProvider>
-    </ThemeProvider>
-  </StrictMode>,
+/**
+ * THE LAB, under `npm run dev` with `?lab` in the address — every new
+ * landscape piece alone, in every state. See src/lab/Lab.tsx.
+ *
+ * `import.meta.env.DEV` is a constant the build replaces with `false`, so in
+ * production this branch and the dynamic import inside it are removed
+ * entirely: the lab is not hidden from a production build, it is not in one.
+ */
+const screen: Promise<() => React.JSX.Element> =
+  import.meta.env.DEV && new URLSearchParams(location.search).has("lab")
+    ? import("./lab/Lab").then((m) => m.Lab)
+    : Promise.resolve(App);
+
+void screen.then((Screen) =>
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <ThemeProvider>
+        <ContentModeProvider>
+          <RosterProvider>
+            <Screen />
+          </RosterProvider>
+        </ContentModeProvider>
+      </ThemeProvider>
+    </StrictMode>,
+  ),
 );

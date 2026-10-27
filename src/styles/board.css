@@ -1,0 +1,441 @@
+/* ================================================================
+   THE LANDSCAPE BOARD — the pieces it adds, and where they go.
+
+   Everything here is new with the landscape layout and is built from
+   the tokens and component styles the phone already has. Nothing in
+   this file restyles an existing component; where one of them is
+   reused, it is reused as it is and only sized or placed.
+
+   The layout rules are all under --board. The pieces themselves —
+   the hold button, the drag rows, the choice row, the seat strip, the
+   chip, the tile — have a resting style at every size, because
+   portrait and phones use some of them too (see the README's
+   "iPad portrait").
+   ================================================================ */
+
+:root {
+  /* The private screen. Darker than any shell, so a held role reads as
+     a different place from the game rather than a dimmed version of
+     it. The same in both themes: it is not part of the shell. */
+  --secret-bg: #0F0F0F;
+  --secret-text: #8A8A8A;
+
+  /* The hold button. Its own size rather than a control tier: it is
+     the one control that is pressed and kept pressed, and it reads as
+     a button rather than a disc only past about 160. */
+  --hold-size: 168px;
+  --hold-ring: 12px;
+
+  --rail-w: clamp(300px, 30vw, 400px);
+  --board-gutter: clamp(40px, 5vw, 72px);
+}
+
+@media (--tablet) {
+  :root {
+    --hold-size: 210px;
+    --hold-ring: 16px;
+  }
+}
+
+/* ---------------- Hold to reveal ---------------- */
+.hold {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--hold-size);
+  height: var(--hold-size);
+  padding: var(--sp-6);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--category-ink, var(--control-bg));
+  color: var(--category, var(--control-text));
+  /* The ring is the target reaching past the button: a darker cut of
+     the field it sits on, the deck card's edge recipe. */
+  box-shadow: 0 0 0 var(--hold-ring) color-mix(in srgb, var(--category, var(--shell-bg)) 80%, #000 20%);
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+  text-wrap: balance;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform var(--dur-press) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* Held, it turns to the pack's colour on the dark screen — the one lit
+   thing in the room — and sinks a little, the press held rather than
+   released. */
+.hold[data-held] {
+  background: var(--category, var(--control-text));
+  color: var(--category-ink, var(--control-bg));
+  box-shadow: 0 0 0 var(--hold-ring) color-mix(in srgb, var(--category, var(--control-text)) 22%, transparent);
+  transform: scale(var(--press-scale));
+}
+
+.hold__label { max-width: 7ch; }
+
+/* ---------------- Rank It's drag rows ---------------- */
+/* Every row one height, filling the list, so the list never moves between
+   phases. The row is .rank__item's pill and well. */
+.rank-rows {
+  display: grid;
+  grid-auto-rows: minmax(var(--control-md), 1fr);
+  gap: var(--sp-2);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank-rows__slot { display: flex; min-height: 0; }
+
+.rank-rows__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--control-md);
+  padding: var(--sp-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--card-ink) 6%, var(--card-surface));
+  color: var(--card-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  text-align: left;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  /* The rows the dragged one passes slide on `translate`, which leaves
+     `transform` to the lifted row's tilt — the two compose rather than
+     overwrite each other, as on the roster chip. */
+  transition: translate var(--dur-base) var(--ease-glide),
+              transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+
+button.rank-rows__row { cursor: grab; }
+
+.rank-rows__row .rank__pos {
+  height: auto;
+  align-self: stretch;
+  background: var(--category);
+  color: var(--category-ink);
+}
+
+.rank-rows__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rank-rows__grip { display: grid; place-items: center; width: var(--control-sm); flex: none; }
+.rank-rows__grip svg { width: 12px; height: 20px; fill: color-mix(in srgb, var(--card-ink) 40%, transparent); }
+
+/* Lifted: white, an ink edge, a shadow and a slight tilt, and it follows
+   the finger with no easing — anything else lags behind the hand. */
+.rank-rows__row[data-lifted] {
+  z-index: 2;
+  background: var(--card-surface);
+  border-color: var(--card-ink);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.45);
+  transform: rotate(-1.2deg) scale(1.02);
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+  cursor: grabbing;
+}
+
+.rank-rows__row:focus-visible,
+.rank-rows__row[data-focus] {
+  outline: 3px solid var(--card-ink);
+  outline-offset: 3px;
+}
+
+/* The reveal: same rows, same places. A match is the pack colour end to
+   end, as .rank__row[data-hit] has it. */
+.rank-rows[data-reveal] .rank-rows__row { cursor: default; }
+.rank-rows__row[data-hit] { background: var(--category); color: var(--category-ink); }
+.rank-rows__row[data-hit] .rank__pos { background: color-mix(in srgb, var(--category-ink) 22%, transparent); }
+
+.rank-rows__tick { display: grid; place-items: center; width: var(--control-sm); flex: none; }
+.rank-rows__tick svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--cat-say-the-same-thing);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.rank-rows__row[data-hit] .rank-rows__tick svg { stroke: currentColor; }
+
+.rank-rows__had {
+  flex: none;
+  padding-right: var(--sp-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  color: color-mix(in srgb, var(--card-ink) 65%, transparent);
+}
+
+/* ---------------- The bottom row of choices ---------------- */
+.choices {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  flex: none;
+  width: 100%;
+}
+.choices > .btn { width: 100%; }
+
+@media (--tablet) {
+  .choices { gap: 20px; }
+}
+
+/* ---------------- Home grid tile ---------------- */
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (--tablet) {
+  .deck-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+}
+@media (--board) {
+  .deck-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* The deck card, unstacked: all four corners, its own edge, no peek. */
+.deck-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  min-height: 9rem;
+  padding: calc(var(--card-inset) - 2px);
+  border: 2px solid color-mix(in srgb, var(--category) 80%, #000 20%);
+  border-radius: var(--radius-xl);
+  background: var(--category);
+  color: var(--category-ink, var(--cat-ink));
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.deck-tile:active { transform: scale(var(--press-scale)); }
+.deck-tile .deck-card__title { width: 100%; }
+/* The deck's tagline is one line because a peek only has room for one. A
+   tile has the room, so it wraps rather than losing its end. */
+.deck-tile .deck-card__tagline { margin-top: auto; white-space: normal; text-wrap: pretty; }
+
+/* A quarter of the board is narrower than the deck's full-width card, so the
+   name steps down one notch to keep "Read the Room" on two lines. */
+@media (--tablet) {
+  .deck-tile .deck-card__title { font-size: var(--fs-xl); }
+}
+
+/* ---------------- Seat strip ---------------- */
+.seats { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
+
+.seats__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.seats__list { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+
+.seats__seat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: var(--control-sm);
+  padding: 0 var(--sp-4);
+  border: var(--border-width) solid color-mix(in srgb, var(--category-ink) 45%, transparent);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+.seats__seat[data-state="current"] {
+  border-color: var(--category-ink);
+  background: var(--category-ink);
+  color: var(--category);
+}
+.seats__seat[data-state="done"] {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--category) 80%, #000 20%);
+  color: color-mix(in srgb, var(--category-ink) 70%, transparent);
+}
+.seats__seat svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------------- Up next ---------------- */
+.upnext {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  align-self: flex-start;
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--category) 80%, #000 20%);
+  color: var(--category-ink);
+  font-size: var(--fs-md);
+}
+.upnext__name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* ---------------- Side panel ---------------- */
+/* Off a board it is the centred sheet, untouched. */
+@media (--board) {
+  /* Doubled, to beat .modal-backdrop in global.css, which comes after this file. */
+  .modal-backdrop.modal-backdrop--side { justify-content: flex-end; padding: var(--sp-6); }
+
+  .sheet--side {
+    width: min(480px, 42vw);
+    max-width: none;
+    height: 100%;
+    animation-name: panel-in;
+  }
+  .modal-backdrop--side[data-leaving] .sheet--side { animation-name: panel-out; }
+}
+
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(32px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes panel-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(24px); }
+}
+
+/* ---------------- Board body ---------------- */
+.focal.focal--board { gap: var(--sp-5); }
+.board__stage {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+.board__rule { margin: 0; flex: none; text-align: center; font-size: var(--fs-md); }
+
+/* ---------------- Secret body ---------------- */
+.focal.secret { gap: var(--sp-5); }
+.secret__main { display: flex; flex-direction: column; justify-content: center; gap: var(--sp-4); flex: 1 1 auto; min-height: 0; }
+.secret__side { display: grid; place-items: center; flex: none; padding: var(--hold-ring); }
+.secret__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-4); flex: none; }
+
+/* Held: the whole display goes dark, whatever the pack. */
+.app:has(.secret[data-holding]) {
+  background: var(--secret-bg);
+  transition: none;
+}
+.secret[data-holding] { color: var(--secret-text); }
+.secret[data-holding] .secret__top,
+.secret[data-holding] .secret__foot {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+
+/* ================================================================
+   THE THREE LAYOUTS, ON A BOARD.
+
+   The frame lets go of its 980px cap — the board is the whole display
+   — and the screen takes the board's wider gutter. Nothing else in
+   the app is touched: these only apply to a screen that asks for one.
+   ================================================================ */
+@media (--board) {
+  .app__frame:has(> .screen[data-layout]) { max-width: none; }
+
+  .screen[data-layout] {
+    --gutter: var(--board-gutter);
+    padding-top: 28px;
+    padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* --- Prompt: the card square to the height, the rail beside it --- */
+  .screen[data-layout="prompt"]:has(.focal--prompt) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--rail-w);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: var(--sp-10);
+    row-gap: var(--sp-5);
+  }
+  /* The header is the bar and nothing else here: the live line moves to the
+     rail, so the reserve a stacked card screen keeps for it would only push
+     the card down. */
+  .screen[data-layout="prompt"]:has(.focal--prompt) > .gheader {
+    grid-column: 1 / -1;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+
+  .screen[data-layout="prompt"] .focal--prompt > .slot {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    height: 100%;
+    container-type: size;
+  }
+  /* Square to whichever of the row's two sides is shorter, from the left. */
+  .screen[data-layout="prompt"] .focal--prompt > .slot > .card,
+  .screen[data-layout="prompt"] .focal--prompt > .slot .cardstage > .card {
+    inset: 0 auto auto 0;
+    width: min(100cqw, 100cqh);
+    height: min(100cqw, 100cqh);
+  }
+
+  .screen[data-layout="prompt"] .focal--prompt > .gfoot {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    margin: 0;
+  }
+  /* The rail reads top down — the live line level with the card's top edge —
+     and the actions take the slack, so the primary lands on the card's
+     bottom edge. The footer's grounding spacer would put it all at the foot. */
+  .screen[data-layout="prompt"] .focal--prompt > .gfoot::before { content: none; }
+  .screen[data-layout="prompt"] .focal--prompt > .gfoot .actions { margin-top: auto; }
+  .rail { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-4); }
+
+  /* --- Board: across the width, choices along the bottom --- */
+  .screen[data-layout="board"] .focal--board { gap: var(--sp-6); }
+
+  /* --- Secret: the name left, the hold button right --- */
+  .screen[data-layout="secret"] .secret {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "top top" "main side" "foot foot";
+    column-gap: var(--sp-10);
+  }
+  .secret__top { grid-area: top; }
+  .secret__main { grid-area: main; }
+  .secret__side { grid-area: side; }
+  .secret__foot { grid-area: foot; }
+
+  /* Held: the card and the button side by side, centred together. */
+  .screen[data-layout="secret"] .secret[data-holding] {
+    grid-template-columns: auto auto;
+    justify-content: center;
+  }
+  .secret[data-holding] .secret__top { display: flex; justify-content: space-between; }
+  .secret[data-holding] .secret__foot { justify-content: center; }
+}
