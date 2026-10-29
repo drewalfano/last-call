@@ -517,8 +517,8 @@ button.rank-rows__row { cursor: grab; }
      the top of the tile to itself; the player count leaves its corner for
      its own line, left, sitting on the tagline. The title row still holds
      it (DeckFace is the phone's peek too), so the row fills the tile and
-     pushes its last line, the count, to the bottom. The tagline keeps two
-     lines' room either way, so every count in a row is on one level. */
+     pushes its last line, the count, to the bottom — so the count sits on
+     the tagline and both rest on the tile's foot, one line or two. */
   .home__deck .deck-card__title,
   .launch__face .deck-card__title {
     flex: 1 0 auto;
@@ -529,8 +529,6 @@ button.rank-rows__row { cursor: grab; }
   }
   .home__deck .deck-card__players,
   .launch__face .deck-card__players { flex-basis: 100%; margin-left: 0; }
-  .home__deck .deck-card__line,
-  .launch__face .deck-card__line { display: block; }
   /* THE COPY THE COLOUR CARRIES OUT, AND BACK IN, LAID OUT AS THE TILE IS.
      It sits on the tile's own box (App sets the height from the rect), so
      with the tile's inset — plus the 2px stroke it does not draw — and the
@@ -545,7 +543,7 @@ button.rank-rows__row { cursor: grab; }
   /* The close's writing, outside the scaled colour: fixed, above it. */
   .launch__face--free { position: fixed; z-index: 101; pointer-events: none; }
   .home__deck .deck-card__tagline,
-  .launch__face .deck-card__tagline { min-height: 2lh; margin-top: var(--sp-1); white-space: normal; text-wrap: pretty; font-size: var(--fs-md); }
+  .launch__face .deck-card__tagline { margin-top: var(--sp-1); white-space: normal; text-wrap: pretty; font-size: var(--fs-md); }
 }
 
 @media (--board) {
@@ -571,10 +569,12 @@ button.rank-rows__row { cursor: grab; }
   .screen.home > .pick-me { align-self: stretch; margin: 0 0 var(--sp-6); }
   .screen.home > .roster { margin-bottom: var(--sp-6); }
   .home__deck { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* The foot matches the sides, so the writing sits in the tile rather than
+     on its bottom edge; the tile grows to suit. */
   .home__deck .deck-card,
-  .home__deck .deck-card:last-child { min-height: 7.5rem; padding-block: var(--sp-4); }
+  .home__deck .deck-card:last-child { min-height: 7.5rem; padding-block: var(--sp-4) var(--sp-6); }
   .launch__face,
-  .launch__face[data-open] { padding-block: calc(var(--sp-4) + 2px); }
+  .launch__face[data-open] { padding-block: calc(var(--sp-4) + 2px) calc(var(--sp-6) + 2px); }
 }
 
 /* ----------------------------------------------------------------

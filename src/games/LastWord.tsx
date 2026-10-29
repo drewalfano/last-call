@@ -17,7 +17,7 @@ import { useExitGuard } from "../state/exitGuard";
  * The bank drops Q, U, V, X, Y and Z. That's the convention the physical
  * game it's inspired by uses, and it's the right call here for two reasons:
  * those letters are near-unplayable on most categories, and 20 buttons fit
- * a thumb-sized ring on a phone where 26 do not.
+ * thumb-sized rows on a phone where 26 do not.
  */
 const LETTERS = "ABCDEFGHIJKLMNOPRSTW".split("");
 
@@ -393,9 +393,8 @@ export function LastWord({ mode, onBack }: Props) {
                 <button
                   key={letter}
                   className="lw__letter"
-                  /* Its place on the ring, at the sizes that get one — 20
-                     letters, 18° apart, A at the top going clockwise. The
-                     grid ignores it. See .lw__ring in games.css. */
+                  /* Its place in the deal: the letters arrive one after
+                     another, 10ms apart. See .lw__letter in games.css. */
                   style={{ ["--i" as string]: i }}
                   data-locked={used.includes(letter) || undefined}
                   /* aria-disabled, NOT disabled. A disabled control is inert
