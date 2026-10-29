@@ -1417,3 +1417,27 @@ button.rank-rows__row { cursor: grab; }
   .screen[data-layout="prompt"] .focal--prompt:has(> .slot > .countdown) > .gfoot { display: none; }
   .screen[data-layout="prompt"] .focal--prompt > .slot > .countdown { min-height: 0; height: 100%; margin: 0; }
 }
+
+/* ----------------------------------------------------------------
+   THE CARD IS CENTRED, NOT DROPPED. Where the screen is tall for its
+   width the square card is narrower than its row, and it sat on the
+   row's floor with the spare height opening under the header. It sits
+   in the middle of the row instead.
+
+   The rail beside it follows what it holds. With content of its own at
+   the top — Odd One Out's clue order, a category, the list being
+   ranked — it keeps the whole row: the content from the top, the
+   primary at the foot. With nothing but controls — Most Likely To's
+   New card and Ready, Odd One Out's category and Deal roles — the
+   controls centre beside the card, so the pair reads as one block in
+   the middle of the screen.
+   ---------------------------------------------------------------- */
+@media (--board) {
+  .screen[data-layout="prompt"] .focal--prompt > .slot > .card,
+  .screen[data-layout="prompt"] .focal--prompt > .slot .cardstage > .card {
+    inset: 0 auto 0 0;
+    margin-block: auto;
+  }
+  .screen[data-layout="prompt"] .focal--prompt:not(.rank) > .gfoot:not(:has(> .rail)) > :first-child { margin-top: auto; }
+  .screen[data-layout="prompt"] .focal--prompt:not(.rank) > .gfoot:not(:has(> .rail)) > :last-child { margin-bottom: auto; }
+}
