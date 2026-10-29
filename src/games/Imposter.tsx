@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { CardBody, GameScreen, PromptBody, SecretBody } from "../components/GameScreen";
+import { HoldButton, useHoldReveal } from "../components/HoldButton";
+import { SeatStrip } from "../components/SeatStrip";
+import { useTablet } from "../lib/useTablet";
 import { randomItem } from "../lib/deck";
 import { categoryNames, wordsFor } from "../data/imposter";
 import { CategoryPicker } from "../components/CategoryPicker";
@@ -20,6 +23,8 @@ import {
   deal,
   isLive,
   onHidden,
+  onHold,
+  onLetGo,
   rosterNote,
   type RolePhase,
 } from "./imposterLogic";
@@ -137,6 +142,23 @@ export function Imposter({ mode, onBack }: Props) {
   useWhenHidden(s.phase === "role", () => setS(onHidden));
 
   /* The new card is what to read next, so it takes focus as it arrives. */
+  /**
+   * HOLD TO REVEAL, ON A TABLET. The role is up only while this seat's finger
+   * is on the button, and letting go passes straight to the next seat's
+   * cover — see onHold and onLetGo. A phone keeps its two buttons.
+   */
+  const tablet = useTablet();
+  const hold = useHoldReveal(tablet && (s.phase === "cover" || s.phase === "role"), (reason) => {
+    if (reason === "let-go") audio.play(s.at + 1 < s.count ? "advance" : "go");
+    setS((prev) => onLetGo(prev, reason));
+    hold.reset();
+  });
+  const holding = hold.showing;
+  useEffect(() => {
+    if (holding) setS(onHold);
+  }, [holding]);
+  const seats = s.order.map(nameOf);
+
   const focalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     focalRef.current?.focus({ preventScroll: true });
@@ -154,20 +176,53 @@ export function Imposter({ mode, onBack }: Props) {
     return undefined;
   }, [s.phase, s.at, s.count]);
 
+  /* What the role card says, the same on a phone and a tablet. */
+  const roleFace = isImposter ? (
+    <>
+      <span className="card__eyebrow">No word for you</span>
+      <p className="card__prompt">You're the Imposter</p>
+      {s.showHint && s.hint ? (
+        <p className="imp-hint">
+          <span className="imp-hint__label">Hint</span>
+          <span className="imp-hint__text">{s.hint}</span>
+          <span className="imp-hint__rule">
+            It isn't the word, and you can't use it as your clue.
+            Listen hard, blend in, don't get caught.
+          </span>
+        </p>
+      ) : (
+        <p className="card__meta imp-card__meta">
+          {s.showHint
+            ? "No hint — someone typed this word in. Listen hard, give a clue that fits, don't get caught."
+            : "Listen hard. Give a clue that fits. Don't get caught."}
+        </p>
+      )}
+    </>
+  ) : (
+    <>
+      <span className="card__eyebrow">The word is</span>
+      <p className="card__prompt">{s.word}</p>
+      <p className="card__meta">One clue each. Don't make it obvious.</p>
+    </>
+  );
+
   const excess = hasRoster && players.length > MAX_PLAYERS;
 
   return (
     <GameScreen
       mode={mode}
-      subtitle={label}
-      hideHeader={s.phase === "picking"}
+      /* On a tablet the handoff says whose turn it is with the seat strip,
+         and the held role has no header at all. */
+      subtitle={tablet && (s.phase === "cover" || s.phase === "role") ? undefined : label}
+      hideHeader={s.phase === "picking" || (tablet && s.phase === "role")}
+      layout={s.phase === "cover" || s.phase === "role" ? "secret" : "prompt"}
       /* The one screen in this game nobody else may read. */
-      isPrivate={s.phase === "role"}
+      isPrivate={!tablet && s.phase === "role"}
       onBack={onBack}
     >
       {/* ---------- Setup ---------- */}
       {s.phase === "setup" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="card imp-setup" ref={focalRef} tabIndex={-1}>
               <span className="card__eyebrow">Players</span>
@@ -229,7 +284,7 @@ export function Imposter({ mode, onBack }: Props) {
               Deal roles
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- Category picker ---------- */}
@@ -246,7 +301,7 @@ export function Imposter({ mode, onBack }: Props) {
       )}
 
       {/* ---------- Cover screen: nothing secret on it ---------- */}
-      {s.phase === "cover" && (
+      {!tablet && s.phase === "cover" && (
         <CardBody
           card={
             <div className="card" key={`cover-${s.at}`} ref={focalRef} tabIndex={-1}>
@@ -279,38 +334,11 @@ export function Imposter({ mode, onBack }: Props) {
       )}
 
       {/* ---------- The role itself ---------- */}
-      {s.phase === "role" && (
+      {!tablet && s.phase === "role" && (
         <CardBody
           card={
             <div className={isImposter ? "card imp-card--imposter" : "card"} ref={focalRef} tabIndex={-1}>
-              {isImposter ? (
-                <>
-                  <span className="card__eyebrow">No word for you</span>
-                  <p className="card__prompt">You're the Imposter</p>
-                  {s.showHint && s.hint ? (
-                    <p className="imp-hint">
-                      <span className="imp-hint__label">Hint</span>
-                      <span className="imp-hint__text">{s.hint}</span>
-                      <span className="imp-hint__rule">
-                        It isn't the word, and you can't use it as your clue.
-                        Listen hard, blend in, don't get caught.
-                      </span>
-                    </p>
-                  ) : (
-                    <p className="card__meta imp-card__meta">
-                      {s.showHint
-                        ? "No hint — someone typed this word in. Listen hard, give a clue that fits, don't get caught."
-                        : "Listen hard. Give a clue that fits. Don't get caught."}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <span className="card__eyebrow">The word is</span>
-                  <p className="card__prompt">{s.word}</p>
-                  <p className="card__meta">One clue each. Don't make it obvious.</p>
-                </>
-              )}
+              {roleFace}
             </div>
           }
         >
@@ -332,8 +360,59 @@ export function Imposter({ mode, onBack }: Props) {
       )}
 
       {/* ---------- Clues ---------- */}
+      {/* ---------- On a tablet: the handoff, and the role while held ---------- */}
+      {tablet && s.phase === "cover" && (
+        <SecretBody
+          top={<SeatStrip seats={seats} current={s.at} label={`Reveal ${s.at + 1} of ${s.count}`} />}
+          side={<HoldButton handlers={hold.handlers} state={hold.state} />}
+          foot={
+            <>
+              <button className="gfoot__skip" onClick={backToSetup}>
+                Start over
+              </button>
+              <span className="secret__aside">Rather keep it in your hands? Pass it to {nameOf(currentPlayer)}.</span>
+            </>
+          }
+        >
+          <div className="secret__intro" key={`cover-${s.at}`} ref={focalRef} tabIndex={-1}>
+            <h2 className="secret__name">{nameOf(currentPlayer)}, you're up</h2>
+            <p className="secret__lede">
+              Everyone else, look away. {nameOf(currentPlayer)}: hold the button to see your role. Let go and it's gone.
+            </p>
+          </div>
+        </SecretBody>
+      )}
+
+      {tablet && s.phase === "role" && (
+        <SecretBody
+          holding
+          top={
+            <>
+              <span>
+                {mode.title} · Reveal {s.at + 1} of {s.count}
+              </span>
+              <span>Only {nameOf(currentPlayer)} is looking</span>
+            </>
+          }
+          side={<HoldButton handlers={hold.handlers} state={hold.state} heldLabel="Let go to hide" />}
+          foot={
+            <span>
+              {s.at + 1 < s.count
+                ? `When you let go, ${nameOf(s.order[s.at + 1])} is up next`
+                : "When you let go, the clues start"}
+            </span>
+          }
+        >
+          <div className="secret__card">
+            <div className={isImposter ? "card imp-card--imposter" : "card"} ref={focalRef} tabIndex={-1}>
+              {roleFace}
+            </div>
+          </div>
+        </SecretBody>
+      )}
+
       {s.phase === "ready" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="card" ref={focalRef} tabIndex={-1}>
               <span className="card__eyebrow">Everyone's seen theirs</span>
@@ -351,6 +430,18 @@ export function Imposter({ mode, onBack }: Props) {
               </p>
             </div>
           }
+          /* The order the deal went round in, which is the order the clues
+             go round in: the roster cut at a random seat. */
+          rail={
+            <>
+              <span className="rail__live">Clues</span>
+              <ol className="rail__order">
+                {seats.map((name, i) => (
+                  <li key={`${name}-${i}`}>{name}</li>
+                ))}
+              </ol>
+            </>
+          }
         >
           <div className="actions">
             {/* The app deals the roles and gets out of the way. It has no
@@ -359,7 +450,7 @@ export function Imposter({ mode, onBack }: Props) {
               New game
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
     </GameScreen>
   );

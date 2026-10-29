@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { GameScreen, PromptBody } from "../components/GameScreen";
 import { PlayingCard } from "../components/PlayingCard";
 import { fadeOnScroll } from "../lib/scrollFade";
 import { PlayerPicker } from "../components/VotePad";
@@ -145,6 +145,21 @@ export function KingsCup({ mode, onBack }: Props) {
 
   const restart = useCallback(() => setS(initialState()), []);
 
+  /* Kings drawn and cards left. The header's status strip on a stacked
+     screen; the top of the rail on a board. */
+  const status = (
+    <div className="kc__status">
+      <span className="kc__kings" aria-label={`${s.kings} of ${TOTAL_KINGS} kings drawn`}>
+        {Array.from({ length: TOTAL_KINGS }, (_, i) => (
+          <span key={i} className="kc__king" data-drawn={i < s.kings || undefined}>
+            K
+          </span>
+        ))}
+      </span>
+      <span className="kc__left">{s.deck.length} left</span>
+    </div>
+  );
+
   // ---- What every card means ----
   if (rulesOpen) {
     return (
@@ -189,8 +204,8 @@ export function KingsCup({ mode, onBack }: Props) {
   // ---- Fourth king: the game is over ----
   if (s.finished) {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
-        <CardBody
+      <GameScreen mode={mode} layout="prompt" onBack={onBack}>
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">King's Cup</span>
@@ -206,7 +221,7 @@ export function KingsCup({ mode, onBack }: Props) {
               New game
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
@@ -214,8 +229,8 @@ export function KingsCup({ mode, onBack }: Props) {
   // ---- Opening screen ----
   if (!s.card) {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
-        <CardBody
+      <GameScreen mode={mode} layout="prompt" onBack={onBack}>
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">Kings Cup</span>
@@ -231,6 +246,7 @@ export function KingsCup({ mode, onBack }: Props) {
               </p>
             </div>
           }
+          rail={status}
         >
           {/* Before the first card, not during — a table reads the ruleset
               once, on the way in. */}
@@ -242,7 +258,7 @@ export function KingsCup({ mode, onBack }: Props) {
               Draw first card
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
@@ -250,22 +266,20 @@ export function KingsCup({ mode, onBack }: Props) {
   return (
     <GameScreen
       mode={mode}
+      layout="prompt"
       subtitle={hasRoster ? `${drawer}'s draw` : "Draw a card"}
-      aside={
-        <div className="kc__status">
-          <span className="kc__kings" aria-label={`${s.kings} of ${TOTAL_KINGS} kings drawn`}>
-            {Array.from({ length: TOTAL_KINGS }, (_, i) => (
-              <span key={i} className="kc__king" data-drawn={i < s.kings || undefined}>
-                K
-              </span>
-            ))}
-          </span>
-          <span className="kc__left">{s.deck.length} left</span>
-        </div>
-      }
+      aside={status}
       onBack={onBack}
     >
       <div className="focal kc">
+        {/* ON A BOARD the card stands at full height on the left and
+            everything else reads down a rail beside it: this strip, then the
+            rule under it, then Next card. Off a board the strip is the
+            header's and this is not shown. */}
+        <div className="rail">
+          {status}
+          <span className="rail__meta">{hasRoster ? `${drawer}'s draw` : "Draw a card"}</span>
+        </div>
         {/* Card and the copy under it form one centred block, and the block's
             lower half has a reserved height. That combination is what gets
             both things at once: the group sits centred, and because the space

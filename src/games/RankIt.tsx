@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { CardBody, GameScreen, PromptBody } from "../components/GameScreen";
+import { RankRows } from "../components/RankRows";
+import { shuffled } from "../lib/dragOrder";
+import { useTablet } from "../lib/useTablet";
 import { useDeck, randomItem } from "../lib/deck";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { ChoicePill } from "../components/ChoicePill";
@@ -80,14 +83,18 @@ export function RankIt({ mode, onBack }: Props) {
   const hits = order.filter((item, i) => guess[i] === item).length;
 
   /** Same tap-to-order interaction for both passes; only the target differs. */
-  const pick = useCallback(
-    (item: string, forGuess: boolean) => {
-      const set = forGuess ? setGuess : setOrder;
-      set((prev) => (prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]));
-      buzz(20);
-    },
-    [],
-  );
+  /**
+   * DRAGGED INTO ORDER, NOT TAPPED. Each pass deals the whole list shuffled
+   * and the player drags it into shape, so the list is always a complete
+   * order — changing your mind is another drag, not a Start over. The table's
+   * pass never opens on the Ranker's own order. See lib/dragOrder.
+   */
+  const tablet = useTablet();
+  const beginRanking = useCallback(() => {
+    if (!prompt) return;
+    setOrder(shuffled(prompt.items));
+    setPhase("ranking");
+  }, [prompt]);
 
   /**
    * A different list for the same Ranker, dealt at random.
@@ -141,7 +148,6 @@ export function RankIt({ mode, onBack }: Props) {
   if (!prompt) return null;
 
   const active = phase === "guessing" ? guess : order;
-  const complete = active.length === total;
 
   return (
     <GameScreen
@@ -164,12 +170,13 @@ export function RankIt({ mode, onBack }: Props) {
          spend the round guessing. The guessing pass next door is the
          opposite — it WANTS everyone reading it — and the two screens are
          otherwise identical, which is exactly why this is worth marking. */
-      isPrivate={phase === "ranking"}
+      isPrivate={!tablet && phase === "ranking"}
+      layout={phase === "picking" ? undefined : "prompt"}
       onBack={onBack}
     >
       {/* ---------- Hand the phone to the Ranker ---------- */}
       {phase === "handover" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">Ranker</span>
@@ -192,11 +199,11 @@ export function RankIt({ mode, onBack }: Props) {
             shuffleLabel="Random list"
           />
           <div className="actions">
-            <button className="btn btn--lg btn--block" onClick={() => setPhase("ranking")}>
+            <button className="btn btn--lg btn--block" onClick={beginRanking}>
               I've got it
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- Pick a list by name ---------- */}
@@ -225,104 +232,63 @@ export function RankIt({ mode, onBack }: Props) {
            the group's guess. Same interaction, different target — nobody has
            to learn a second way to order a list. */}
       {(phase === "ranking" || phase === "guessing") && (
-        <CardBody
+        <PromptBody
           /* `rank--ordering` and not just `rank`: the reveal below is also a
              `rank` screen and must keep the card slot exactly as it is, because
-             its rows slide in from outside it. Only the two screens you TAP
+             its rows slide in from outside it. Only the two ordering screens
              take the extra height. See the grid override in games.css. */
           className="rank rank--ordering"
           card={
             /* KEYED ON THE PHASE, so the list deals again when the phone
-               changes hands.
-
-               The Ranker's pass and the group's pass are the same markup, and
-               without a key React keeps every row mounted straight through the
-               handover: the positions blank themselves, the note under the
-               title changes from "X — privately" to "Everyone else", and
-               nothing else moves. The one screen in the app two different
-               people use back to back was the one that never said it had
-               changed hands.
-
-               A key is all it takes, because the deal on `li` below is a mount
-               animation — the same trick Say the Same Thing uses on its bare
-               card, and for the same reason. It costs nothing on a tap: only
-               the phase changes this key, so ordering the list does not
-               re-deal it. */
-            <ol className="rank__list" key={phase}>
-            {prompt.items.map((item, i) => {
-              const at = active.indexOf(item);
-              return (
-                /* Its place in the cascade. See .rank__list > li in games.css. */
-                <li key={item} style={{ ["--i" as string]: i }}>
-                  <button
-                    className="rank__item"
-                    data-ranked={at >= 0 || undefined}
-                    /* On the press, not the click — the same rule Letter Rip's
-                       letters follow, and for the same reason: a sound that
-                       waits for release reads as lag against the finger.
-
-                       Taking an item back out is an UNDO, not a refusal. The
-                       game did not say no, the player changed their mind, so
-                       it does not get `reject` — it gets the tap with the life
-                       taken out of it. `at` already knows which way this goes. */
-                    onPointerDown={() => audio.play(at >= 0 ? "undo" : "tap")}
-                    onClick={() => pick(item, phase === "guessing")}
-                  >
-                    <span className="rank__pos">{at >= 0 ? at + 1 : ""}</span>
-                    <span className="rank__label">{item}</span>
-                  </button>
-                </li>
-              );
-            })}
-            </ol>
+               changes hands — the one screen two different people use back to
+               back has to say it has changed hands. */
+            <div className="rank-card" key={phase}>
+              <RankRows
+                items={active}
+                onReorder={(next) => {
+                  (phase === "guessing" ? setGuess : setOrder)(next);
+                  buzz(20);
+                }}
+              />
+            </div>
+          }
+          /* On a board, the panel beside the list: whose pass, what is being
+             ranked, and what to do. Off a board the header carries the first
+             two, as it always has. */
+          rail={
+            <>
+              <span className="rank-panel__who">{phase === "ranking" ? `${ranker} only` : "Everyone else"}</span>
+              <span className="rank-panel__title">{prompt.title}</span>
+              <p className="rank-panel__how">
+                {phase === "ranking"
+                  ? "Drag them into your order. Nobody else looks."
+                  : `Argue it out and drag them into the order you think ${ranker} picked. ${ranker}, stay quiet.`}
+              </p>
+            </>
           }
         >
           <div className="actions">
             <button
               className="btn btn--lg btn--block"
-              /* It was `disabled`, and it carried a haptic for the incomplete
-                 press that could therefore never fire — a disabled button gets
-                 no click at all. So the button a table naturally reaches for
-                 said "Tap in order · 2/5" and then did nothing, silently, with
-                 no way to tell a limit from a missed tap.
-
-                 aria-disabled keeps it announced and greyed while letting the
-                 press be refused out loud. The phase change is guarded here
-                 rather than by the flag. */
-              aria-disabled={!complete || undefined}
-              data-off={!complete || undefined}
-              /* NOT the tap the items use. Ordering the list and declaring it
-                 finished are different things, and giving them one sound made
-                 the last item and the commit indistinguishable — you could not
-                 hear whether you had ranked a fifth thing or ended your turn.
-
-                 `advance` because that is what this press is: Lock it in ends
+              /* `advance` because that is what this press is: Lock it in ends
                  the Ranker's private pass and gives the phone to the table.
                  The same rising pair the phone makes everywhere it changes
                  hands. */
-              onPointerDown={() => audio.play(complete ? "advance" : "reject")}
+              onPointerDown={() => audio.play("advance")}
               onClick={() => {
-                if (!complete) return;
                 buzz([90, 60, 140]);
-                setPhase(phase === "ranking" ? "guessing" : "revealed");
+                if (phase === "ranking") {
+                  setGuess(shuffled(prompt.items, order));
+                  setPhase("guessing");
+                } else {
+                  setPhase("revealed");
+                }
               }}
             >
-              {complete
-                ? phase === "ranking"
-                  ? "Lock it in"
-                  : "Reveal"
-                : `Tap in order · ${active.length}/${total}`}
+              {phase === "ranking" ? "Lock it in" : "Reveal"}
             </button>
-            {active.length > 0 && (
-              <button
-                className="btn btn--ghost btn--block"
-                onClick={() => (phase === "guessing" ? setGuess([]) : setOrder([]))}
-              >
-                Start over
-              </button>
-            )}
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- Both orders, side by side ----------
@@ -330,7 +296,41 @@ export function RankIt({ mode, onBack }: Props) {
            two: the Ranker's order is the spine, and each row says what the
            group put there instead. A row that matches needs no explanation;
            a row that doesn't is the argument. */}
-      {phase === "revealed" && (
+      {/* On a tablet the reveal is the same rows in the same places, now in
+          the Ranker's order: a match is ticked, a miss says where the table
+          had it. */}
+      {tablet && phase === "revealed" && (
+        <PromptBody
+          className="rank rank--ordering"
+          card={
+            <div className="rank-card" key={phase}>
+              <RankRows items={order} guess={guess} />
+            </div>
+          }
+          rail={
+            <>
+              <span className="rank-panel__who">{ranker}'s order</span>
+              <span className="rank-panel__title">
+                {hits} of {total} right
+              </span>
+              {/* The heading has the score; this says only what it does not. */}
+              {(hits === total || tier > 0) && (
+                <p className="rank-panel__how">
+                  {hits === total ? `You know ${ranker} too well.` : `Drink ${total - hits}.`}
+                </p>
+              )}
+            </>
+          }
+        >
+          <div className="actions">
+            <button className="btn btn--lg btn--block" onClick={nextRound}>
+              New ranker
+            </button>
+          </div>
+        </PromptBody>
+      )}
+
+      {!tablet && phase === "revealed" && (
         <CardBody
           className="rank"
           card={

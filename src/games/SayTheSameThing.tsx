@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { CardBody, GameScreen, PromptBody } from "../components/GameScreen";
 import { Countdown } from "../components/Countdown";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { ChoicePill } from "../components/ChoicePill";
@@ -131,6 +131,11 @@ export function SayTheSameThing({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={phase === "pair" ? undefined : `Attempt ${attempt}`}
+      /* On a board the count-in and the answer are the whole width — the pair
+         is saying the word out loud to each other, not reading a card — and
+         the two answers sit side by side along the bottom. The pair and the
+         result keep the card with a rail beside it. */
+      layout={phase === "counting" || phase === "answer" ? "board" : "prompt"}
       onBack={onBack}
     >
       {/* The count-in takes the card's slot rather than the whole screen, so
@@ -138,7 +143,9 @@ export function SayTheSameThing({ mode, onBack }: Props) {
       {phase === "counting" ? (
         <CardBody card={<Countdown key={`${round}-${attempt}`} action="Say it" onDone={said} />} />
       ) : (
-        <CardBody
+        <SameBody
+          answer={phase === "answer"}
+          rail={phase === "matched" ? <span className="rail__live">Attempt {attempt}</span> : undefined}
           card={
             /* KEYED, or the card never turns over.
                Every other mode deals through PromptCard, which remounts on
@@ -241,8 +248,13 @@ export function SayTheSameThing({ mode, onBack }: Props) {
               </button>
             </div>
           )}
-        </CardBody>
+        </SameBody>
       )}
     </GameScreen>
   );
+}
+
+/** The answer is a board; the pair and the match are a prompt with a rail. */
+function SameBody({ answer, ...props }: Parameters<typeof PromptBody>[0] & { answer?: boolean }) {
+  return answer ? <CardBody card={props.card}>{props.children}</CardBody> : <PromptBody {...props} />;
 }

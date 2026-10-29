@@ -84,4 +84,35 @@ describe("Ballpark round", () => {
     expect(positionText(78, "Snack", "Meal")).toBe("78% of the way from Snack to Meal");
     expect(positionText(99, "Snack", "Meal")).toBe("all the way at Meal");
   });
+
+  describe("hold to reveal", () => {
+    it("shows the spot only while held, and letting go hands the dial to the table", () => {
+      const held = reduce(initialFlow(true), { type: "hold" });
+      expect(held.phase).toBe("reading");
+      expect(held.revealed).toBe(true);
+      const passed = reduce(held, { type: "letGo", reason: "let-go" });
+      expect(passed.phase).toBe("guessing");
+      expect(passed.revealed).toBe(false);
+    });
+
+    it("covers the spot without advancing when the page hides mid-hold, then holds again", () => {
+      const held = reduce(initialFlow(true), { type: "hold" });
+      const hidden = reduce(held, { type: "letGo", reason: "hidden" });
+      expect(hidden.phase).toBe("reading");
+      expect(hidden.revealed).toBe(false);
+      expect(reduce(hidden, { type: "hold" }).revealed).toBe(true);
+    });
+
+    it("a let go with nothing held changes nothing", () => {
+      const s = initialFlow(true);
+      expect(reduce(s, { type: "letGo", reason: "let-go" })).toBe(s);
+      const covered = run(s, { type: "hold" }, { type: "letGo", reason: "hidden" });
+      expect(reduce(covered, { type: "letGo", reason: "let-go" })).toBe(covered);
+    });
+
+    it("cannot be held from the dial or the result", () => {
+      const g = run(initialFlow(true), { type: "hold" }, { type: "letGo", reason: "let-go" });
+      expect(reduce(g, { type: "hold" })).toBe(g);
+    });
+  });
 });

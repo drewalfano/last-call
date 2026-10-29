@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { CardBody, PromptBody, GameScreen } from "../components/GameScreen";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import { READ_THE_ROOM } from "../data/readTheRoom";
@@ -32,6 +32,7 @@ import {
   type Writer,
 } from "./readTheRoomFlow";
 import "../styles/readTheRoom.css";
+import { useTablet } from "../lib/useTablet";
 
 /**
  * READ THE ROOM
@@ -157,6 +158,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
 
   const prompt = deck.current ? fillPrompt(deck.current, { other: round.other }) : "";
   const writingNow = flow.phase === "writeA" || flow.phase === "writeB";
+  const tablet = useTablet();
   /** Whoever holds the pen, on a writing screen. */
   const writer: Writer = flow.phase === "writeB" ? "B" : "A";
   const draft = currentDraft(flow);
@@ -265,7 +267,16 @@ export function ReadTheRoom({ mode, onBack }: Props) {
       /* Who is up, for the whole round. Public from the start: the secret in
          this mode is which line is whose, not who is writing. */
       subtitle={named && nameA && nameB && flow.phase !== "intro" ? `${nameA} vs ${nameB}` : undefined}
-      isPrivate={writingNow}
+      /* The phone's small private type is for a screen angled away in a hand;
+         a tablet goes dark instead, and its writer reads at table size. */
+      isPrivate={!tablet && writingNow}
+      layout={
+        flow.phase === "reveal" || flow.phase === "judge" || flow.phase === "result"
+          ? "board"
+          : writingNow
+            ? "board"
+            : "prompt"
+      }
       /* How to play, beside the X, on the matchup only: from the first
          keystroke on there is nothing left to explain. */
       onHelp={flow.phase === "matchup" ? () => act({ type: "howToPlay" }) : undefined}
@@ -273,7 +284,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
     >
       {/* ---------- How to play: once per phone, and on request ---------- */}
       {flow.phase === "intro" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="cardstage">
               <article
@@ -302,12 +313,12 @@ export function ReadTheRoom({ mode, onBack }: Props) {
               Got it
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- The matchup, face up for the table ---------- */}
       {flow.phase === "matchup" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="cardstage">
               <article
@@ -350,7 +361,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
               Start writing
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- A writer's screen ---------- */}
@@ -442,7 +453,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
 
       {/* ---------- The hand-over between the two writers ---------- */}
       {flow.phase === "pass" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="cardstage">
               <article
@@ -467,7 +478,7 @@ export function ReadTheRoom({ mode, onBack }: Props) {
               Start writing
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- Face up: the reveal, the judging and the result ----------

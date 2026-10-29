@@ -137,12 +137,14 @@ interface PromptBodyProps {
   rail?: ReactNode;
   /** The rail's foot: secondary controls, then the primary action last. */
   children?: ReactNode;
+  /** Extra class on the focal element, as for CardBody. */
+  className?: string;
 }
 
 /** The card on the left, a 360px rail on the right. */
-export function PromptBody({ card, rail, children }: PromptBodyProps) {
+export function PromptBody({ card, rail, children, className }: PromptBodyProps) {
   return (
-    <div className="focal focal--slot focal--prompt">
+    <div className={className ? `focal focal--slot focal--prompt ${className}` : "focal focal--slot focal--prompt"}>
       <div className="slot">{card}</div>
       <div className="gfoot">
         {rail && <div className="rail">{rail}</div>}

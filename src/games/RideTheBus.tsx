@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { PromptBody, GameScreen } from "../components/GameScreen";
 import { PlayingCard } from "../components/PlayingCard";
 import { deal, freshDeck, SUITS, type Card, type Suit } from "../lib/cards";
 import type { ModeDef } from "../data/modes";
@@ -178,6 +178,9 @@ export function RideTheBus({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={subtitle}
+      /* On a board the cards are the table and the choices run along the
+         bottom in one row; the result is a card with its action beside it. */
+      layout={s.phase === "results" ? "prompt" : "board"}
       /* Said once, before the first card, and only at Mild: the level changes
          prompts elsewhere, and this mode has no prompts to change. */
       note={
@@ -202,7 +205,7 @@ export function RideTheBus({ mode, onBack }: Props) {
       onBack={onBack}
     >
       {s.phase === "results" ? (
-        <CardBody
+        <PromptBody
           className="rtb"
           card={
             <div className="card">
@@ -227,7 +230,7 @@ export function RideTheBus({ mode, onBack }: Props) {
               {hasRoster ? `Hand to ${nextRider}` : "Next player"}
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       ) : (
         <div className="focal rtb">
             {/* Cards and verdict as ONE centred object. The felt used to

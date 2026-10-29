@@ -80,6 +80,22 @@ export function afterHide<S extends RoleState>(s: S): S {
 }
 
 /** The phases where leaving would throw a live round away. */
+/**
+ * HOLD TO REVEAL, on a tablet: the role is up only while a finger is on the
+ * button. Pressing turns this seat's cover over; letting go is the same
+ * hide-and-pass the phone's button does, straight to the next seat's cover.
+ * A hold that ended because the page hid is `onHidden` — the role goes back
+ * under the same seat's cover and has to be held for again. Every reveal is
+ * still bracketed by a cover; only the hand on it changed.
+ */
+export function onHold<S extends RoleState>(s: S): S {
+  return s.phase === "cover" ? { ...s, phase: "role" } : s;
+}
+
+export function onLetGo<S extends RoleState>(s: S, reason: "let-go" | "hidden"): S {
+  return reason === "hidden" ? onHidden(s) : afterHide(s);
+}
+
 export function isLive(phase: RolePhase): boolean {
   return phase === "cover" || phase === "role" || phase === "ready";
 }

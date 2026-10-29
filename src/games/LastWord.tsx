@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { GameScreen, PromptBody } from "../components/GameScreen";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
@@ -242,8 +242,8 @@ export function LastWord({ mode, onBack }: Props) {
 
   if (phase === "intro") {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
-        <CardBody
+      <GameScreen mode={mode} layout="prompt" onBack={onBack}>
+        <PromptBody
           card={
             /* Keyed on the category, so a new one TURNS OVER rather than
                swapping its text in place. `.slot > .card` already carries the
@@ -271,7 +271,7 @@ export function LastWord({ mode, onBack }: Props) {
               Start round
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
@@ -304,11 +304,11 @@ export function LastWord({ mode, onBack }: Props) {
          it with 55px of pink either side. A pill can't shrink to its own
          wrapped lines in CSS — it fills what it's given — so the fix is to
          stop asking a label chip to carry a sentence. */
-      <GameScreen mode={mode} subtitle={category} onBack={onBack}>
+      <GameScreen mode={mode} layout="prompt" subtitle={category} onBack={onBack}>
         {/* `lw-over` is only here so the stylesheet can tell this screen from
             the playing one and slide the category down into it — see
             `live-drop`. It carries no layout of its own. */}
-        <CardBody
+        <PromptBody
           className="lw-over"
           card={
             <div className="card">
@@ -325,6 +325,9 @@ export function LastWord({ mode, onBack }: Props) {
               <p className="card__meta">Whoever's turn it was drinks.</p>
             </div>
           }
+          /* On a board the category the round was played on heads the rail,
+             where the header's live line would be. */
+          rail={<span className="rail__live">{category}</span>}
         >
           {/* The same two ways out the intro card offers. Next round is the
               path a table usually wants — but a hand-picked category sticks
@@ -356,7 +359,7 @@ export function LastWord({ mode, onBack }: Props) {
               Next round
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
@@ -364,7 +367,7 @@ export function LastWord({ mode, onBack }: Props) {
   return (
     /* The category is the one thing a player has to keep in their head for
        the whole round — see GameHeader's `subtitle`. */
-    <GameScreen mode={mode} subtitle={category} onBack={onBack}>
+    <GameScreen mode={mode} layout="board" subtitle={category} onBack={onBack}>
       <div className="focal lw" data-leaving={leaving || undefined}>
         <div className="lw__board">
           {/* Its own row, not a centre overlay — a letter can't cover it. */}

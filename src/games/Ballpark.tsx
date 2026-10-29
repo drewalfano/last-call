@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { CardBody, GameScreen, PromptBody, SecretBody } from "../components/GameScreen";
+import { HoldButton, useHoldReveal } from "../components/HoldButton";
+import { useTablet } from "../lib/useTablet";
 import { Dial } from "../components/Dial";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { ChoicePill } from "../components/ChoicePill";
@@ -153,6 +155,23 @@ export function Ballpark({ mode, onBack }: Props) {
       ? "Dead on."
       : `${zoneFor(distance)?.name ?? "Not this time."} Off by ${degreesOff(distance)}°.`;
 
+  /**
+   * HOLD TO REVEAL, ON A TABLET. A propped screen is never handed over, so the
+   * spot is up only while the Reader's finger is on the button: pressing is
+   * `hold`, letting go is `letGo`, and the reducer turns those into the same
+   * reveal and hide-and-pass the phone's two taps make. A phone keeps the taps.
+   */
+  const tablet = useTablet();
+  const hold = useHoldReveal(tablet && (flow.phase === "handoff" || flow.phase === "reading"), (reason) => {
+    act({ type: "letGo", reason }, reason === "let-go" ? () => audio.play("advance") : undefined);
+    hold.reset();
+  });
+  const holding = hold.showing;
+  useEffect(() => {
+    if (holding) act({ type: "hold" }, () => audio.play("card"));
+  }, [holding, act]);
+  const heldSpot = tablet && flow.phase === "reading" && flow.revealed;
+
   /* Leaving mid-round costs the table its target; the setup screens cost nothing. */
   useExitGuard(isLive(flow.phase));
 
@@ -177,7 +196,7 @@ export function Ballpark({ mode, onBack }: Props) {
    * card rather than staying on a button that has just unmounted, and a
    * keyboard's next Tab reaches the primary action.
    */
-  const focalRef = useRef<HTMLDivElement>(null);
+  const focalRef = useRef<HTMLElement>(null);
   useEffect(() => {
     focalRef.current?.focus({ preventScroll: true });
   }, [flow.phase, flow.revealed]);
@@ -259,7 +278,17 @@ export function Ballpark({ mode, onBack }: Props) {
          The intro has its own example and does not carry it. */
       subtitle={flow.phase === "intro" ? undefined : spectrumLine}
       /* The Reader's card is the one thing in here one person reads. */
-      isPrivate={flow.phase === "reading"}
+      isPrivate={!tablet && flow.phase === "reading"}
+      /* Held, the screen is the Reader's alone: no header, nothing but the
+         spot and the button under their finger. */
+      hideHeader={heldSpot}
+      layout={
+        flow.phase === "intro"
+          ? "prompt"
+          : flow.phase === "guessing" || flow.phase === "reveal"
+            ? "board"
+            : "secret"
+      }
       /* The way back to the explanation, beside the X and only on the
          handoff: once the spot has been seen there is nothing to explain. */
       onHelp={flow.phase === "handoff" ? () => act({ type: "howToPlay" }) : undefined}
@@ -267,7 +296,7 @@ export function Ballpark({ mode, onBack }: Props) {
     >
       {/* ---------- How to play: once per phone, and on request ---------- */}
       {flow.phase === "intro" && (
-        <CardBody
+        <PromptBody
           className="bp bp-intro"
           card={
             <div className="cardstage">
@@ -301,11 +330,11 @@ export function Ballpark({ mode, onBack }: Props) {
               Got it
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- Whose turn, and the one action that reveals ---------- */}
-      {flow.phase === "handoff" && (
+      {!tablet && flow.phase === "handoff" && (
         <CardBody
           className="bp bp-handoff"
           card={
@@ -350,7 +379,7 @@ export function Ballpark({ mode, onBack }: Props) {
       )}
 
       {/* ---------- The Reader's screen ---------- */}
-      {flow.phase === "reading" && !flow.revealed && (
+      {!tablet && flow.phase === "reading" && !flow.revealed && (
         <CardBody
           className="bp bp-reading"
           card={
@@ -370,7 +399,7 @@ export function Ballpark({ mode, onBack }: Props) {
         </CardBody>
       )}
 
-      {flow.phase === "reading" && flow.revealed && (
+      {!tablet && flow.phase === "reading" && flow.revealed && (
         <CardBody
           className="bp bp-reading"
           card={
@@ -404,6 +433,70 @@ export function Ballpark({ mode, onBack }: Props) {
             </button>
           </div>
         </CardBody>
+      )}
+
+      {/* ---------- The Reader, on a tablet: hold to see ---------- */}
+      {tablet && flow.phase !== "intro" && flow.phase !== "guessing" && flow.phase !== "reveal" && !heldSpot && (
+        <SecretBody
+          side={<HoldButton handlers={hold.handlers} state={hold.state} />}
+          foot={
+            <>
+              {/* The spectrum is public, so it can change here; once the
+                  spot has been seen it cannot. Same control as the phone's. */}
+              {flow.phase === "handoff" && (
+                <ChoicePill
+                  value="Change spectrum"
+                  ariaLabel="Change spectrum"
+                  onOpen={() => act({ type: "pickSpectrum" })}
+                  onShuffle={drawRandom}
+                  shuffleLabel="Random spectrum"
+                />
+              )}
+              <span className="secret__aside">Rather keep it in your hands? Pass it to {reader}.</span>
+            </>
+          }
+        >
+          <section className="secret__intro" ref={focalRef} tabIndex={-1}>
+            <span className="secret__eyebrow">{flow.phase === "handoff" ? "The reader" : `${reader}'s spot`}</span>
+            <h2 className="secret__name">
+              {reader}, you're up
+            </h2>
+            <p className="secret__lede">
+              {flow.phase === "handoff"
+                ? `Everyone else, look away. ${reader}: hold to see the spot, say one clue that sits right there, then let go.`
+                : "Hidden again. Hold to see it when nobody else can see."}
+            </p>
+          </section>
+        </SecretBody>
+      )}
+
+      {heldSpot && (
+        <SecretBody
+          holding
+          top={
+            <>
+              <span>{mode.title}</span>
+              <span>Only {reader} is looking</span>
+            </>
+          }
+          side={<HoldButton handlers={hold.handlers} state={hold.state} heldLabel="Let go to hide" />}
+          foot={<span>Say it out loud, then let go. The table takes the dial.</span>}
+        >
+          <div className="secret__card">
+            <article className="card card--dealt bp-clue" key="held" ref={focalRef} tabIndex={-1}>
+              <span className="card__eyebrow">Your spot</span>
+              <Dial
+                value={target}
+                target={target}
+                showZones
+                left={prompt.left}
+                right={prompt.right}
+                description={`Your secret spot is ${positionText(target, prompt.left, prompt.right)}.`}
+              />
+              <p className="card__meta">Say one clue that sits right there.</p>
+            </article>
+          </div>
+        </SecretBody>
       )}
 
       {/* ---------- The table's dial ---------- */}

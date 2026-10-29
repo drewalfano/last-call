@@ -7,6 +7,8 @@ import {
   deal,
   isLive,
   onHidden,
+  onHold,
+  onLetGo,
   revealOrder,
   rosterNote,
 } from "../games/imposterLogic";
@@ -66,5 +68,41 @@ describe("Odd One Out privacy", () => {
     expect(isLive("cover")).toBe(true);
     expect(isLive("role")).toBe(true);
     expect(isLive("ready")).toBe(true);
+  });
+});
+
+describe("hold to reveal", () => {
+  const cover = { phase: "cover" as const, count: 3, at: 0 };
+
+  it("turns only a cover over, and only for the seat it is on", () => {
+    expect(onHold(cover)).toEqual({ ...cover, phase: "role" });
+    const ready = { ...cover, phase: "ready" as const };
+    expect(onHold(ready)).toBe(ready);
+  });
+
+  it("letting go passes straight to the next seat's cover, never the next role", () => {
+    const held = onHold(cover);
+    expect(onLetGo(held, "let-go")).toEqual({ ...cover, at: 1 });
+    expect(onLetGo(onHold({ ...cover, at: 2 }), "let-go")).toEqual({ ...cover, phase: "ready", at: 2 });
+  });
+
+  it("a hold the page ended goes back under the same seat's cover", () => {
+    expect(onLetGo(onHold(cover), "hidden")).toEqual(cover);
+  });
+
+  it("a let go with nothing held changes nothing", () => {
+    expect(onLetGo(cover, "let-go")).toBe(cover);
+  });
+
+  it("brackets every reveal by a cover through a whole deal", () => {
+    let s: { phase: "setup" | "picking" | "cover" | "role" | "ready"; count: number; at: number } = cover;
+    const seen: string[] = [];
+    while (s.phase !== "ready") {
+      seen.push(s.phase);
+      s = onHold(s);
+      seen.push(s.phase);
+      s = onLetGo(s, "let-go");
+    }
+    expect(seen).toEqual(["cover", "role", "cover", "role", "cover", "role"]);
   });
 });

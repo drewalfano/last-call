@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { GameScreen, PromptBody } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
+import { UpNext } from "../components/UpNext";
 import { shuffle, useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
 import type { ModeDef } from "../data/modes";
@@ -32,7 +33,7 @@ const TIER_LABEL = ["Warming up", "Getting personal", "Last call"] as const;
 
 export function LastCallGame({ mode, onBack }: Props) {
   const { mode: contentMode } = useContentMode();
-  const { currentPlayer, otherPlayer, advance, hasRoster } = useRoster();
+  const { players, currentPlayer, otherPlayer, advance, hasRoster } = useRoster();
   const pool = usePool(LAST_CALL, contentMode, "supplement");
   const deck = useDeck<Wildcard>(pool, escalating);
   const card = deck.current;
@@ -92,8 +93,8 @@ export function LastCallGame({ mode, onBack }: Props) {
 
   if (finished) {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
-        <CardBody
+      <GameScreen mode={mode} layout="prompt" onBack={onBack}>
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">That's the round</span>
@@ -109,21 +110,40 @@ export function LastCallGame({ mode, onBack }: Props) {
               New round
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
 
+  const liveLine = card
+    ? hasRoster
+      ? `${currentPlayer} · ${TIER_LABEL[card.intensity - 1]}`
+      : TIER_LABEL[card.intensity - 1]
+    : undefined;
+
+  const heat = card ? (
+    <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
+      {[1, 2, 3].map((n) => (
+        <span key={n} className="heat__pip" data-lit={n <= card.intensity || undefined} />
+      ))}
+    </span>
+  ) : undefined;
+
+  const counter = card ? (
+    <p className="counter">
+      {deck.position - tiers.before[card.intensity - 1]} of {tiers.size[card.intensity - 1]}
+    </p>
+  ) : null;
+
+  /* Whose turn the next card is: the seat after this one, in roster order —
+     the same step `advance` takes when Next player is pressed. */
+  const upNext = hasRoster && currentPlayer ? players[(players.indexOf(currentPlayer) + 1) % players.length] : null;
+
   return (
     <GameScreen
       mode={mode}
-      subtitle={
-        card
-          ? hasRoster
-            ? `${currentPlayer} · ${TIER_LABEL[card.intensity - 1]}`
-            : TIER_LABEL[card.intensity - 1]
-          : undefined
-      }
+      layout="prompt"
+      subtitle={liveLine}
       /* ------------------------------------------------------------
          THE INTENSITY PIPS BELONG TO THE LEVEL, NOT THE CARD.
 
@@ -139,18 +159,21 @@ export function LastCallGame({ mode, onBack }: Props) {
          adding them cannot move the line off the position every other
          mode shares.
          ------------------------------------------------------------ */
-      aside={
-        card ? (
-          <span className="heat" aria-label={`Intensity ${card.intensity} of 3`}>
-            {[1, 2, 3].map((n) => (
-              <span key={n} className="heat__pip" data-lit={n <= card.intensity || undefined} />
-            ))}
-          </span>
-        ) : undefined
-      }
+      aside={heat}
       onBack={onBack}
     >
-      <CardBody
+      {/* ON A BOARD THE LEVEL CHANGE IS THE WHOLE SCREEN, not a cover over
+          the card. Same words, same tap; it sits outside the card and the
+          rail so it can span them both, and only shows on a board — the
+          stacked layout keeps the cover inside the slot, below. */}
+      {crossing && card && (
+        <button className="lc-break" onClick={() => setCrossing(false)}>
+          {heat}
+          <span className="lc-break__label">{TIER_LABEL[card.intensity - 1]}</span>
+          <span className="lc-break__hint">Tap to carry on</span>
+        </button>
+      )}
+      <PromptBody
         card={
           /* The tier interstitial covers the card and nothing else. It lives
              in the slot because the slot is the positioned box it sizes
@@ -175,6 +198,17 @@ export function LastCallGame({ mode, onBack }: Props) {
             </PromptCard>
           </>
         }
+        /* The header's live line, pips and counter, moved beside the card on
+           a board, with whose turn comes next. Off a board this is not
+           shown and the header carries them, as it always has. */
+        rail={
+          <>
+            {liveLine && <span className="rail__live">{liveLine}</span>}
+            {heat}
+            {counter}
+            {upNext && <UpNext name={upNext} />}
+          </>
+        }
       >
         {/* No vote pad. A vote card used to deal a roster of tappable
             names, a reveal button and a running tally under the prompt —
@@ -184,12 +218,7 @@ export function LastCallGame({ mode, onBack }: Props) {
             outcome instead: the prompt says who to vote on, the footer
             says most votes drinks, and Next player is the only thing to
             press. */}
-        {card && (
-          <p className="counter">
-            {deck.position - tiers.before[card.intensity - 1]} of{" "}
-            {tiers.size[card.intensity - 1]}
-          </p>
-        )}
+        {counter}
         {/* Both actions go dead behind the interstitial.
 
             The level card covers the prompt and says "Tap to carry on", which
@@ -219,7 +248,7 @@ export function LastCallGame({ mode, onBack }: Props) {
             </button>
           )}
         </div>
-      </CardBody>
+      </PromptBody>
     </GameScreen>
   );
 }

@@ -247,14 +247,17 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   };
 
   return (
+    /* `--side`: on a landscape board the sheet stands up along the right edge,
+       next to whoever is sitting there — see SidePanel. Off a board both
+       classes do nothing and this is the centred sheet it always was. */
     <div
-      className="modal-backdrop"
+      className="modal-backdrop modal-backdrop--side"
       data-leaving={leaving || undefined}
       role="presentation"
       onClick={close}
     >
       <div
-        className="sheet"
+        className="sheet sheet--side"
         role="dialog"
         aria-modal="true"
         aria-label="Settings"

@@ -58,7 +58,10 @@
    and Stage Manager resize the window mid-session with no reload,
    so anything that reads a width in JS and keeps it goes stale; CSS
    re-evaluates for free. Nothing in this app reads
-   window.innerWidth into state, and nothing should start.
+   window.innerWidth into state, and nothing should start. The one
+   JS reader of a breakpoint is lib/useTablet, and it SUBSCRIBES to
+   --tablet's query rather than reading it once, for the one thing a
+   stylesheet cannot choose: hold-to-reveal against a tap.
    ---------------------------------------------------------------- */
 @custom-media --tablet (min-width: 640px) and (min-height: 600px);
 @custom-media --board (min-width: 900px) and (min-height: 600px) and (orientation: landscape);

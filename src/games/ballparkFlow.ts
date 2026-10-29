@@ -40,7 +40,9 @@ export type Action =
   | { type: "dial"; value: number }
   | { type: "lock" }
   | { type: "next" }
-  | { type: "hidden" };
+  | { type: "hidden" }
+  | { type: "hold" }
+  | { type: "letGo"; reason: "let-go" | "hidden" };
 
 export const MIDPOINT = 50;
 
@@ -98,6 +100,17 @@ export function reduce(s: Flow, a: Action): Flow {
             round: s.round + 1,
           }
         : s;
+    /* HOLD TO REVEAL, on a tablet. The same two transitions the tap path
+       makes, driven by one finger: pressing is the Reader taking the screen
+       and turning the spot over, and letting go is hiding it and handing the
+       dial to the table — the spot is never up without a hand on the button.
+       A hold that ended because the page hid is not a decision anyone made,
+       so it only covers the spot, exactly as `hidden` does, and the Reader
+       holds again. See lib/holdReveal for the gesture itself. */
+    case "hold":
+      return reduce(s, { type: "reveal" });
+    case "letGo":
+      return a.reason === "hidden" ? reduce(s, { type: "hidden" }) : reduce(s, { type: "hideAndPass" });
     /* The phone stopped being looked at. A target that is up goes down and
        stays down until the Reader reveals it again; nothing advances. */
     case "hidden":
