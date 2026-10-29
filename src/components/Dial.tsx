@@ -391,6 +391,13 @@ export function Dial({
             data-revealing={revealing || undefined}
             style={{ ["--v" as string]: lockedGuess }}
           >
+            {/* A casing where it crosses the track, and only there. Off by
+                default: on a card the guess is ink on a pale band and needs
+                no help. On a board the track is white and so is the guess,
+                and without an edge the line runs into the band and stops
+                reading as a needle. Short, so it never cuts into the
+                answer's needle where the two leave the hub together. */}
+            <line className="dial__guess-casing" x1={CX - (R - TRACK)} y1={CY} x2={CX - NEEDLE_R} y2={CY} />
             <line x1={CX} y1={CY} x2={CX - NEEDLE_R} y2={CY} />
           </g>
         )}

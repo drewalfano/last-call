@@ -8,6 +8,7 @@ import { unlockOnFirstGesture } from "./lib/audio";
 import { setInRound } from "./lib/swUpdate";
 import { ExitGuardProvider } from "./state/exitGuard";
 import { useWakeLock } from "./lib/wakeLock";
+import { useTablet } from "./lib/useTablet";
 import { EndRoundDialog } from "./components/EndRoundDialog";
 import { Home } from "./games/Home";
 import { LastCallGame } from "./games/LastCallGame";
@@ -196,6 +197,45 @@ const DISSOLVE_EASE = "cubic-bezier(0.7, 0, 1, 1)";
 const FACE_FROM_MS = 240;
 
 /**
+ * ON A TABLET'S GRID THE CLOSE IS TWO BEATS, AND NOTHING BETWEEN THEM.
+ *
+ * The screen closes into the tile, held TILE_LIFT_PX above its slot — the
+ * open's lift — and then the tile sets down into the slot. The phone does the
+ * same, and it is the joins that made the tablet's version feel laggy: the
+ * contraction's curve crawled for its last stretch, so it looked arrived long
+ * before it was, and the drop then waited on React to hear the colour had
+ * gone. So here:
+ *
+ * The contraction runs on a curve that is quick off the mark and keeps
+ * travelling until near its end — no hold at the start, no crawl at the
+ * finish (20% of the way at 10% of the time, 98% at 80%). Measured against
+ * the open's curve, which is 95% of the way there at HALF its time: right for
+ * colour reaching the screen's edges, wrong for landing on a card.
+ *
+ * And the colour never fades, because it does not need to: it lands just
+ * inside the tile's own 2px edge carrying the tile's writing, so the shape
+ * that lands IS the card.
+ * Fading it was a third beat between the two, and read as the rectangle
+ * freezing while the card finished without it. Instead the colour, its copy
+ * of the tile and the real tile under it set down into the slot together on
+ * one clock, and the overlay is simply taken away at the end, on top of an
+ * identical card. The drop starts TILE_DROP_LEAD_MS before the landing ends,
+ * so one flows into the other. Driven from here, so no frame waits on React.
+ */
+const TILE_CLOSE_MS = 400;
+const TILE_CLOSE_EASE = "cubic-bezier(0.25, 0.5, 0.4, 1)";
+/** The set-down begins this long before the landing ends, while the sides
+    are still closing in, so the landing flows into it rather than stopping. */
+const TILE_DROP_LEAD_MS = 70;
+/** The set-down: gentle off the mark, soft into the slot. */
+const TILE_DROP_MS = 280;
+const TILE_DROP_EASE = "cubic-bezier(0.33, 0, 0.2, 1)";
+const TILE_LIFT_PX = 14;
+/** The writing comes up on the colour well before it lands, as on the open. */
+const TILE_FACE_FROM_MS = 110;
+const TILE_FACE_FADE_MS = 170;
+
+/**
  * How long the overlay is given before it is retired regardless.
  *
  * The animation's `onfinish` is the ordinary path; this is the guarantee. A
@@ -204,7 +244,7 @@ const FACE_FROM_MS = 240;
  * live line's exit and Letter Rip's board are both written to avoid, and worse
  * here, because there is no screen underneath to press.
  */
-const CLOSE_FAILSAFE_MS = CLOSE_MS + 120;
+const CLOSE_FAILSAFE_MS = Math.max(CLOSE_MS, TILE_CLOSE_MS + TILE_DROP_MS) + 120;
 
 /**
  * WHAT REDUCED MOTION GETS INSTEAD, AND WHY IT IS NOT NOTHING.
@@ -244,14 +284,47 @@ const FULL_SCREEN_RECT = { top: 0, left: 0, right: 0, bottom: 0 };
 interface Launch {
   id: ModeId;
   /** Where on screen the tapped card was, in viewport pixels. */
-  rect: { top: number; left: number; right: number; bottom: number };
+  rect: { top: number; left: number; right: number; bottom: number; radius?: number };
   /** No travel, just a dip through the colour. See REDUCED_MS. */
   reduced?: boolean;
+}
+
+/**
+ * THE COLOUR AS A TILE-SIZED LAYER, on a tablet's grid: just inside the
+ * tile's 2px edge, so the tile's own stroke frames it and the colour carries
+ * no outline of its own. The open scales it out from here and the close
+ * scales it back in to here — see the close in App for why on a tablet it is
+ * a scaled layer and not a clip.
+ */
+const TILE_EDGE = 2;
+function tileLayer(rect: Launch["rect"]) {
+  return {
+    left: rect.left + TILE_EDGE,
+    top: rect.top + TILE_EDGE,
+    width: rect.right - rect.left - TILE_EDGE * 2,
+    height: rect.bottom - rect.top - TILE_EDGE * 2,
+    round: Math.max((rect.radius ?? 0) - TILE_EDGE, 0),
+  };
+}
+function tileLayerStyle(rect: Launch["rect"]) {
+  const t = tileLayer(rect);
+  return {
+    inset: "auto",
+    top: t.top,
+    left: t.left,
+    width: t.width,
+    height: t.height,
+    borderRadius: t.round,
+    transformOrigin: "0 0",
+    clipPath: "none",
+    willChange: "transform",
+  };
 }
 
 export default function App() {
   const [screen, setScreen] = useState<ModeId | null>(null);
   const [launch, setLaunch] = useState<Launch | null>(null);
+  const tablet = useTablet();
   /** The mode whose colour is still on screen, contracting, after it closed. */
   const [closing, setClosing] = useState<ModeId | null>(null);
   /**
@@ -499,6 +572,7 @@ export default function App() {
        of colour that is not moving yet, which is the launch's own argument for
        swapping under its overlay rather than before it. */
     const raf = requestAnimationFrame(() => {
+      let span = CLOSE_MS;
       if (card) {
         /* WHERE THE CARD WILL BE, AND ONLY THE PART OF IT YOU CAN SEE.
 
@@ -528,8 +602,20 @@ export default function App() {
         const slide = card.closest(".screen");
         const drift = slide ? new DOMMatrix(getComputedStyle(slide).transform).m42 : 0;
         const r = card.getBoundingClientRect();
-        const under = card.nextElementSibling?.getBoundingClientRect().top;
+        /* Only where the next card really is in front of this one. In the
+           tablet's grid the next card sits BESIDE it, and clamping to its
+           top — level with this card's resting top, which the raise has
+           lifted 14px clear of — shrank the landing to a 14px sliver. So
+           the overlap is read from layout, which the raise does not move. */
+        const after = card.nextElementSibling as HTMLElement | null;
+        const covers =
+          !!after && after.offsetTop > card.offsetTop && after.offsetTop < card.offsetTop + card.offsetHeight;
+        const under = covers ? after.getBoundingClientRect().top : undefined;
         const bottom = Math.min(r.bottom, under ?? r.bottom) - drift;
+        /* A dealt-out tile is rounded all round and nothing covers it, so
+           the colour lands on its corners exactly. */
+        const tile = card.parentElement ? getComputedStyle(card.parentElement).display === "grid" : false;
+        if (tile) span = TILE_CLOSE_MS - TILE_DROP_LEAD_MS + TILE_DROP_MS;
         /* ROUNDED ON ALL FOUR, THE WHOLE WAY, AND IT NEVER SQUARES OFF.
 
            The card's own radius is `28px 28px 0 0` — square at the bottom —
@@ -555,7 +641,7 @@ export default function App() {
            And it is right for the last card in the deck too, which is rounded
            on all four and has nothing in front of it.
            --------------------------------------------------------------- */
-        const radius = "28px";
+        const radius = tile ? getComputedStyle(card).borderTopLeftRadius : "28px";
 
         /* The card is RAISED right now — Home lifted it on mount, without a
            transition, precisely so this measurement is of where the colour
@@ -573,8 +659,109 @@ export default function App() {
            radius, so the corners are already the right shape when they
            arrive and only the two at the bottom have to square off — and
            they do it over the whole contraction rather than at the end. */
+        /* From the screen's own square corners to the tile's round ones, over
+           the whole contraction — the shape morphs into the card instead of
+           the screen's corners rounding off in a single frame. */
+        if (tile) {
+          const lifted = r.top - drift - TILE_LIFT_PX;
+          const h = bottom - (r.top - drift);
+          const total = TILE_CLOSE_MS - TILE_DROP_LEAD_MS + TILE_DROP_MS;
+          const land = (TILE_CLOSE_MS - TILE_DROP_LEAD_MS) / total;
+          const timing = { duration: total, fill: "forwards" as const };
+          /* ---------------------------------------------------------------
+             THE COLOUR IS A LAYER THE SIZE OF THE TILE, SCALED — NOT A CLIP.
+
+             A clip-path animation is the one kind a browser cannot hand to
+             the compositor, so it is drawn on the main thread, frame by
+             frame. On the open nothing else is happening and that is fine.
+             On the close Home is mounting underneath, all twelve tiles at
+             once, and on a tablet that work arrived in the middle of the
+             contraction: the colour's frames came late and in clumps, which
+             is stop-motion. A transform runs on the compositor whatever the
+             page is doing.
+
+             So this is how iOS closes an app into its icon. The colour is
+             laid out as the tile — just inside its 2px edge, so the tile's
+             own stroke frames it on landing and no outline rides in the
+             colour on the way — and starts scaled up to exactly the screen.
+             A scale would scale its corners too, into bulbous ones mid-flight,
+             so the corners run on their own: square at the start, as the
+             screen is, and up to the tile's radius as it shrinks, growing as
+             the square of the progress so that, multiplied by the shrinking
+             scale, they never balloon. That one is a paint, not a transform;
+             if the page is busy it is the corners that lag, never the
+             movement. The drop is a separate `translate`,
+             which composes with the shrink rather than replacing it, so the
+             set-down can begin before the landing has quite finished.
+             --------------------------------------------------------------- */
+          const edge = 2;
+          const W = window.innerWidth;
+          const H = window.innerHeight;
+          const L = r.left + edge;
+          const T = lifted + edge;
+          const w = r.right - r.left - edge * 2;
+          const hh = h - edge * 2;
+          const round = Math.max(parseFloat(radius) - edge, 0);
+          const sx = W / w;
+          const sy = H / hh;
+          Object.assign(el.style, {
+            inset: "auto",
+            top: `${T}px`,
+            left: `${L}px`,
+            width: `${w}px`,
+            height: `${hh}px`,
+            borderRadius: "0px",
+            transformOrigin: "0 0",
+            clipPath: "none",
+            willChange: "transform",
+          });
+          el.animate(
+            [
+              { transform: `translate(${-L}px, ${-T}px) scale(${sx}, ${sy})` },
+              { transform: "translate(0px, 0px) scale(1, 1)" },
+            ],
+            { duration: TILE_CLOSE_MS, easing: TILE_CLOSE_EASE, fill: "forwards" },
+          );
+          // Offsets are in the eased progress, so radius = round × progress².
+          el.animate(
+            [0, 0.25, 0.5, 0.75, 1].map((q) => ({ offset: q, borderRadius: `${round * q * q}px` })),
+            { duration: TILE_CLOSE_MS, easing: TILE_CLOSE_EASE, fill: "forwards" },
+          );
+          const drop: Keyframe[] = [
+            { offset: 0, translate: "0px 0px" },
+            { offset: land, translate: "0px 0px", easing: TILE_DROP_EASE },
+            { offset: 1, translate: `0px ${TILE_LIFT_PX}px` },
+          ];
+          anim = el.animate(drop, timing);
+          // The tile, under it, held up while the colour lands and set down
+          // with it on the same keyframes.
+          card.animate(
+            [
+              { offset: 0, transform: `translateY(-${TILE_LIFT_PX}px)` },
+              { offset: land, transform: `translateY(-${TILE_LIFT_PX}px)`, easing: TILE_DROP_EASE },
+              { offset: 1, transform: "translateY(0px)" },
+            ],
+            { duration: total },
+          );
+          // The writing is its own layer above the colour, never scaled: it
+          // comes up where the tile is and goes down with it.
+          const face = faceRef.current;
+          if (face) {
+            face.style.top = `${lifted}px`;
+            face.style.left = `${r.left}px`;
+            face.style.width = `${r.right - r.left}px`;
+            face.style.height = `${h}px`;
+            face.animate([{ opacity: 0 }, { opacity: 1 }], {
+              duration: TILE_FACE_FADE_MS,
+              delay: TILE_FACE_FROM_MS,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              fill: "forwards",
+            });
+            face.animate(drop, timing);
+          }
+        } else {
         anim = el.animate([{ clipPath: "inset(0px round 28px)" }, { clipPath: onRaised }], {
-          duration: CLOSE_MS,
+          duration: span,
           easing: CLOSE_EASE,
           fill: "forwards",
         });
@@ -635,7 +822,7 @@ export default function App() {
            three, and the two that are left never overlap. */
         el.animate([{ opacity: 1 }, { opacity: 0 }], {
           duration: CLOSE_MS - DISSOLVE_FROM_MS,
-          delay: DISSOLVE_FROM_MS,
+          delay: span - (CLOSE_MS - DISSOLVE_FROM_MS),
           easing: DISSOLVE_EASE,
           fill: "forwards",
         });
@@ -651,11 +838,12 @@ export default function App() {
           face.style.left = `${r.left}px`;
           face.style.width = `${r.right - r.left}px`;
           face.animate([{ opacity: 0 }, { opacity: 1 }], {
-            duration: CLOSE_MS - FACE_FROM_MS,
+            duration: span - FACE_FROM_MS,
             delay: FACE_FROM_MS,
             easing: "cubic-bezier(0.16, 1, 0.3, 1)",
             fill: "forwards",
           });
+        }
         }
       } else {
         anim = el.animate([{ opacity: 1 }, { opacity: 0 }], {
@@ -668,7 +856,7 @@ export default function App() {
          own, and Home owns it — see `settleAfter`. */
       anim.onfinish = done;
       anim.oncancel = done;
-      closeTimer.current = window.setTimeout(done, CLOSE_MS);
+      closeTimer.current = window.setTimeout(done, span);
     });
 
     // The guarantee, not the ordinary path. See CLOSE_FAILSAFE_MS.
@@ -802,12 +990,44 @@ export default function App() {
     const { top, left, right, bottom } = launch.rect;
     const from = `inset(${top}px ${window.innerWidth - right}px ${
       window.innerHeight - bottom
-    }px ${left}px round 22px)`;
+    }px ${left}px round ${launch.rect.radius ?? 22}px)`;
 
-    const anim = el.animate(
-      [{ clipPath: from }, { clipPath: "inset(0px round 0px)" }],
-      { duration: LAUNCH_MS, easing: LAUNCH_EASE, fill: "forwards" },
-    );
+    /* ON A TABLET'S GRID, THE CLOSE'S OWN MACHINERY RUN FORWARDS: the
+       colour is a layer the size of the tile, just inside its 2px edge, and
+       it scales out to the screen on the compositor while its corners
+       square off on their own clock — see the close for why a clip will
+       not do on a tablet. Same curve, same length as ever. */
+    const tileRect = launch.rect.radius !== undefined ? tileLayer(launch.rect) : null;
+    const extra: Animation[] = [];
+    const anim = tileRect
+      ? el.animate(
+          [
+            { transform: "translate(0px, 0px) scale(1, 1)" },
+            {
+              transform: `translate(${-tileRect.left}px, ${-tileRect.top}px) scale(${
+                window.innerWidth / tileRect.width
+              }, ${window.innerHeight / tileRect.height})`,
+            },
+          ],
+          { duration: LAUNCH_MS, easing: LAUNCH_EASE, fill: "forwards" },
+        )
+      : el.animate([{ clipPath: from }, { clipPath: "inset(0px round 0px)" }], {
+          duration: LAUNCH_MS,
+          easing: LAUNCH_EASE,
+          fill: "forwards",
+        });
+    if (tileRect) {
+      // Offsets are in the eased progress: the corners square off as it grows.
+      extra.push(
+        el.animate(
+          [0, 0.25, 0.5, 0.75, 1].map((q) => ({
+            offset: q,
+            borderRadius: `${tileRect.round * (1 - q) * (1 - q)}px`,
+          })),
+          { duration: LAUNCH_MS, easing: LAUNCH_EASE, fill: "forwards" },
+        ),
+      );
+    }
 
     /* The writing clears while the colour is still growing. Its own clock
        rather than a keyframe on the overlay, because the two are different
@@ -842,7 +1062,7 @@ export default function App() {
        time, at its current position, with no measuring and nothing to
        recompute. See `reverseLaunch`.
        --------------------------------------------------------------- */
-    launchAnims.current = faceAnim ? [anim, faceAnim] : [anim];
+    launchAnims.current = faceAnim ? [anim, ...extra, faceAnim] : [anim, ...extra];
 
     const finish = () => {
       /* A reversed run finishes too, and it must not open the mode it
@@ -1004,15 +1224,17 @@ export default function App() {
                carry no clip at all. */
             ...(launch.reduced
               ? { opacity: 0 }
-              : {
-                  clipPath: `inset(${launch.rect.top}px ${
-                    window.innerWidth - launch.rect.right
-                  }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round 22px)`,
-                }),
+              : launch.rect.radius !== undefined
+                ? tileLayerStyle(launch.rect)
+                : {
+                    clipPath: `inset(${launch.rect.top}px ${
+                      window.innerWidth - launch.rect.right
+                    }px ${window.innerHeight - launch.rect.bottom}px ${launch.rect.left}px round ${launch.rect.radius ?? 22}px)`,
+                  }),
           }}
           aria-hidden="true"
         >
-          {!launch.reduced && (
+          {!launch.reduced && launch.rect.radius === undefined && (
           <>
           {/* THE CARD'S OWN WRITING, CARRIED OUT OF THE DECK.
 
@@ -1044,6 +1266,9 @@ export default function App() {
               top: launch.rect.top,
               left: launch.rect.left,
               width: launch.rect.right - launch.rect.left,
+              /* A tile's writing is laid out against its height — the count
+                 sits on the tagline at the foot — so the copy needs it too. */
+              height: launch.rect.radius === undefined ? undefined : launch.rect.bottom - launch.rect.top,
               opacity: 1,
             }}
           >
@@ -1051,6 +1276,26 @@ export default function App() {
           </div>
           </>
           )}
+        </div>
+      )}
+      {/* On a tablet the colour is scaled, so the writing it carries out is a
+          layer of its own above it, at the tile's size, as on the close. */}
+      {launch && !launch.reduced && launch.rect.radius !== undefined && (
+        <div
+          className="launch__face launch__face--free"
+          data-open
+          ref={faceInRef}
+          style={{
+            ...categoryStyle(MODE_BY_ID[launch.id].color),
+            top: launch.rect.top,
+            left: launch.rect.left,
+            width: launch.rect.right - launch.rect.left,
+            height: launch.rect.bottom - launch.rect.top,
+            opacity: 1,
+          }}
+          aria-hidden="true"
+        >
+          <DeckFace mode={MODE_BY_ID[launch.id]} />
         </div>
       )}
       {/* The colour on its way back into its card. Covering on the first
@@ -1068,14 +1313,30 @@ export default function App() {
                from a rounded clip, so a square one here is a different shape
                for the frame between this painting and the animation taking
                over — one frame of hard corners before they round off. The
-               launch ENDS at full screen, so square is right for that one. */
-            clipPath: "inset(0px round 28px)",
+               launch ENDS at full screen, so square is right for that one.
+               On a tablet the contraction starts square and rounds on the way
+               to the tile, so this starts square to match. */
+            clipPath: tablet ? "none" : "inset(0px round 28px)",
           }}
           aria-hidden="true"
         >
-          <div className="launch__face" ref={faceRef}>
-            <DeckFace mode={MODE_BY_ID[closing]} />
-          </div>
+          {!tablet && (
+            <div className="launch__face" ref={faceRef}>
+              <DeckFace mode={MODE_BY_ID[closing]} />
+            </div>
+          )}
+        </div>
+      )}
+      {/* On a tablet the colour is scaled, so its writing cannot ride inside
+          it: it is a layer of its own above, at the tile's size. */}
+      {closing && tablet && (
+        <div
+          className="launch__face launch__face--free"
+          ref={faceRef}
+          style={categoryStyle(MODE_BY_ID[closing].color)}
+          aria-hidden="true"
+        >
+          <DeckFace mode={MODE_BY_ID[closing]} />
         </div>
       )}
     </div>

@@ -26,7 +26,10 @@
   --hold-size: 168px;
   --hold-ring: 12px;
 
-  --rail-w: clamp(300px, 30vw, 400px);
+  /* Never under 340: the rail's primary is set at the table's size, and the
+     longest label in the app — "Stop the clock" — needs 290 of it inside
+     the button's padding. At 30vw a 1133-wide board gave it 288. */
+  --rail-w: clamp(340px, 30vw, 400px);
   --board-gutter: clamp(40px, 5vw, 72px);
 }
 
@@ -98,6 +101,20 @@
 
 .rank-rows__slot { display: flex; min-height: 0; }
 
+/* NO WIDER THAN ITS CARD. A label that does not fit is cut with an ellipsis,
+   but its unwrapped width still counted toward the list's own, so on a
+   320x568 — where the card is a 202px square — the rows ran 100px out of
+   the card and the page scrolled sideways. */
+.rank-rows { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+
+/* AND ON THE ONE SCREEN WHERE FIVE ROWS CANNOT FIT, THEY SCROLL, as the list
+   they replaced did — see .rank__list in games.css for the arithmetic. Only
+   there: a scrolling box clips, and everywhere else the lifted row's tilt and
+   shadow need to reach past the list's edge. */
+@media (max-height: 600px) and (max-width: 639px) {
+  .rank-rows { overflow-y: auto; overscroll-behavior: contain; }
+}
+
 .rank-rows__row {
   position: relative;
   display: flex;
@@ -126,6 +143,14 @@
 }
 
 button.rank-rows__row { cursor: grab; }
+/* The frame a drop lands on: no row MOVES — see `landing` in RankRows — but
+   the lifted row's tilt and shadow still ease off rather than snap. */
+.rank-rows[data-landing] .rank-rows__row {
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+/* And the dropped row stays above the others while it glides home. */
+.rank-rows__row[data-landed] { position: relative; z-index: 2; }
 
 /* A round well of its own size, centred on the row — stretched to the row it
    became a blob as soon as the rows were taller than they were in a list. */
@@ -384,6 +409,14 @@ button.rank-rows__row { cursor: grab; }
 .secret__main { display: flex; flex-direction: column; justify-content: center; gap: var(--sp-4); flex: 1 1 auto; min-height: 0; }
 .secret__side { display: grid; place-items: center; flex: none; padding: var(--hold-ring); }
 .secret__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-4); flex: none; }
+/* A foot holding only the spectrum control centres it on the screen. */
+.secret__foot:has(> .choice-row:only-child) { justify-content: center; }
+/* Ride the Bus's verdict beside its button is the board's; a phone keeps the
+   one under the cards. */
+.rtb__verdict-line { display: none; }
+@media (--board) {
+  .screen[data-layout="board"] .focal.rtb .rtb__verdict-line { display: block; }
+}
 
 /* The handoff's words: whose turn, said big enough to read from the
    chair across the table, and what to do, said once. */
@@ -405,7 +438,9 @@ button.rank-rows__row { cursor: grab; }
   text-wrap: balance;
 }
 .secret__lede { margin: 0; max-width: 34em; font-size: var(--fs-lg); line-height: var(--lh-snug); }
-.secret__aside { font-size: var(--fs-sm); opacity: 0.8; }
+/* Moving on, once the secret has been seen: always the far end of the foot,
+   on the hold button's side, whatever else the foot is carrying. */
+.secret__next { margin-left: auto; }
 
 /* The secret, held: a square card, as every card is, sized to the screen
    it has to itself. */
@@ -420,6 +455,10 @@ button.rank-rows__row { cursor: grab; }
    person looking: sized to the card. */
 .secret__card .card__prompt { font-size: 11cqi; }
 .secret__card .card:has(.imp-hint) .card__prompt { font-size: 7cqi; }
+/* The Reader's dial, held, is the widest thing on any card: the card's own
+   inset left the arc's ends and the spectrum's names on its edge. A margin
+   in proportion to the card, so it reads as a dial on a card at any size. */
+.secret__card .bp-clue { padding-inline: 9cqi; }
 
 /* Held: the whole display goes dark, whatever the pack. */
 .app:has(.secret[data-holding]) {
@@ -452,6 +491,9 @@ button.rank-rows__row { cursor: grab; }
   .home__deck {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* Every row as tall as the tallest, so the deck is one card size: a
+       two-line name grows all twelve, not just its own row. */
+    grid-auto-rows: 1fr;
     gap: var(--sp-4);
     padding-bottom: var(--sp-6);
   }
@@ -464,10 +506,46 @@ button.rank-rows__row { cursor: grab; }
     box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.5);
   }
   .home__deck .deck-card:not(:first-child) { margin-top: 0; }
-  /* Sized to the tile, so the longest name fits its column, and the player
-     count drops under the name when the two will not share a line. */
-  .home__deck .deck-card__title { flex-wrap: wrap; row-gap: var(--sp-1); font-size: min(var(--fs-xl), 12.5cqi); }
-  .home__deck .deck-card__tagline { margin-top: auto; white-space: normal; text-wrap: pretty; font-size: var(--fs-md); }
+  /* A closing mode's tile is not raised by the stylesheet: App lifts it and
+     lets it down itself, on the same timeline as the colour landing on it,
+     so the two move as one thing. See TILE_LAND in App.tsx. */
+  .home__deck .deck-card[data-returning] {
+    transform: none;
+    box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.5);
+  }
+  /* Sized to the tile, so the longest name fits its column. The name has
+     the top of the tile to itself; the player count leaves its corner for
+     its own line, left, sitting on the tagline. The title row still holds
+     it (DeckFace is the phone's peek too), so the row fills the tile and
+     pushes its last line, the count, to the bottom. The tagline keeps two
+     lines' room either way, so every count in a row is on one level. */
+  .home__deck .deck-card__title,
+  .launch__face .deck-card__title {
+    flex: 1 0 auto;
+    flex-wrap: wrap;
+    align-content: space-between;
+    row-gap: var(--sp-3);
+    font-size: min(var(--fs-xl), 12.5cqi);
+  }
+  .home__deck .deck-card__players,
+  .launch__face .deck-card__players { flex-basis: 100%; margin-left: 0; }
+  .home__deck .deck-card__line,
+  .launch__face .deck-card__line { display: block; }
+  /* THE COPY THE COLOUR CARRIES OUT, AND BACK IN, LAID OUT AS THE TILE IS.
+     It sits on the tile's own box (App sets the height from the rect), so
+     with the tile's inset — plus the 2px stroke it does not draw — and the
+     tile's rules above, its writing lands on the tile's writing to the
+     pixel. The stroke it leaves to the tile itself: the close lands just
+     inside it, so no outline floats in the colour on the way. */
+  .launch__face,
+  .launch__face[data-open] {
+    padding: calc(var(--sp-5) + 2px) calc(var(--sp-6) + 2px);
+    container-type: inline-size;
+  }
+  /* The close's writing, outside the scaled colour: fixed, above it. */
+  .launch__face--free { position: fixed; z-index: 101; pointer-events: none; }
+  .home__deck .deck-card__tagline,
+  .launch__face .deck-card__tagline { min-height: 2lh; margin-top: var(--sp-1); white-space: normal; text-wrap: pretty; font-size: var(--fs-md); }
 }
 
 @media (--board) {
@@ -488,10 +566,15 @@ button.rank-rows__row { cursor: grab; }
   .screen.home > .home__head,
   .screen.home > .home__fit-line,
   .screen.home > .home__deck { grid-column: 1 / -1; }
-  .screen.home > .pick-me { align-self: stretch; margin: 0 0 var(--gutter); }
+  /* The deck sits a step under the pair, not a gutter: the gutter is the
+     board's side margin, and spent here it pushed the third row off. */
+  .screen.home > .pick-me { align-self: stretch; margin: 0 0 var(--sp-6); }
+  .screen.home > .roster { margin-bottom: var(--sp-6); }
   .home__deck { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .home__deck .deck-card,
   .home__deck .deck-card:last-child { min-height: 7.5rem; padding-block: var(--sp-4); }
+  .launch__face,
+  .launch__face[data-open] { padding-block: calc(var(--sp-4) + 2px); }
 }
 
 /* ----------------------------------------------------------------
@@ -517,7 +600,9 @@ button.rank-rows__row { cursor: grab; }
     position: fixed;
     z-index: 4;
     left: 50%;
-    bottom: calc(var(--action-inset) + var(--control-md) + var(--sp-8));
+    /* Clear of the footer's tallest control, the full-size Next once a
+       secret has been seen, so the pin is the same before and after. */
+    bottom: calc(var(--action-inset) + var(--action-height) + var(--sp-8));
     padding: 0;
     translate: -50% 0;
   }
@@ -529,7 +614,6 @@ button.rank-rows__row { cursor: grab; }
      type is set for the table at every tablet size, not only on a board. */
   .screen[data-layout] .seats__label { font-size: var(--fs-md); }
   .screen[data-layout] .seats__seat { min-height: var(--control-md); padding-inline: var(--sp-5); font-size: var(--fs-md); }
-  .screen[data-layout] .secret__aside { font-size: var(--fs-md); }
   .screen[data-layout] .secret__foot .gfoot__skip { margin: 0; min-height: var(--control-md); font-size: var(--fs-md); }
   .screen[data-layout] .secret[data-holding] .secret__top,
   .screen[data-layout] .secret[data-holding] .secret__foot { font-size: var(--fs-md); }
@@ -586,10 +670,14 @@ button.rank-rows__row { cursor: grab; }
     height: 100%;
     container-type: size;
   }
-  /* Square to whichever of the row's two sides is shorter, from the left. */
+  /* Square to whichever of the row's two sides is shorter, from the left —
+     and from the BOTTOM, so its lower edge is level with the primary at the
+     foot of the rail whichever side ran out. Where the row is taller than
+     the card is wide, the spare height opens under the header rather than
+     between the card's edge and the button's. */
   .screen[data-layout="prompt"] .focal--prompt > .slot > .card,
   .screen[data-layout="prompt"] .focal--prompt > .slot .cardstage > .card {
-    inset: 0 auto auto 0;
+    inset: auto auto 0 0;
     width: min(100cqw, 100cqh);
     height: min(100cqw, 100cqh);
   }
@@ -869,6 +957,13 @@ button.rank-rows__row { cursor: grab; }
     letter-spacing: var(--tracking-wide);
   }
   .screen[data-layout="board"] .focal.bp-reveal .dial__guess line { stroke: #FFFFFF; }
+  /* White on the white track needs the edge the answer's needle has: the
+     field's own colour either side, nine against five. */
+  .screen[data-layout="board"] .focal.bp-reveal .dial__guess line.dial__guess-casing {
+    display: inline;
+    stroke: var(--card-surface);
+    stroke-width: 9;
+  }
   .screen[data-layout="board"] .focal.bp-reveal .bp-legend__item--spot::before { background: var(--category-ink); }
   .screen[data-layout="board"] .focal.bp-reveal .bp-legend__item--guess::before { background: #FFFFFF; }
   /* The result, above the dial and never over it: the line that says how it
@@ -980,17 +1075,39 @@ button.rank-rows__row { cursor: grab; }
     row-gap: var(--sp-6);
   }
   .screen[data-layout="board"]:has(.focal.rtb) > .gheader { min-height: 0; padding-bottom: 0; }
+
+  /* THE TALLY DOES NOT MOVE BETWEEN ROUNDS. It hung under the live line, so
+     a two-line round ("Round 1 / Red or black") put it a line lower than the
+     bus's one. It is pinned to the top of the live line instead, as tall as
+     one line of it and sat on that line's foot — and every round's title
+     starts on that same line, so the drinks and the streak are in one place
+     all game. */
+  .screen[data-layout="board"]:has(.focal.rtb) .gheader__live > .gheader__aside {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: flex-end;
+    height: calc(var(--fs-2xl) * var(--lh-tight));
+    margin-top: 0;
+    pointer-events: none;
+  }
+  .screen[data-layout="board"]:has(.focal.rtb) .rtb__tally { width: 100%; align-items: baseline; }
+
+  /* The verdict in the question's place, above the button — the one under
+     the cards is the phone's. */
+  .screen[data-layout="board"] .focal.rtb .rtb__table > .rtb__verdict { display: none; }
   .screen[data-layout="board"] .focal.rtb .rtb__row { gap: var(--sp-6); }
   .screen[data-layout="board"] .focal.rtb .rtb__row .pcard { width: clamp(120px, 15vw, 180px); height: auto; }
   .screen[data-layout="board"] .focal.rtb .rtb__felt > .pcard { height: min(38vh, 320px); }
   /* The rider and the round are two lines by design; at the board's larger
      live-line size they stacked into three and crowded the cards. */
   .screen[data-layout="board"]:has(.focal.rtb) .gheader__now { font-size: var(--fs-2xl); }
-  .screen[data-layout="board"] .rtb__tally { font-size: var(--fs-sm); }
-  .screen[data-layout="board"] .rtb__tally strong { font-size: var(--fs-xl); }
+  .screen[data-layout="board"] .rtb__tally { font-size: var(--fs-md); }
+  .screen[data-layout="board"] .rtb__tally strong { margin-left: 0.3em; font-size: var(--fs-xl); }
   .screen[data-layout="board"] .focal.rtb .rtb__choice[data-suit] { font-size: 2.75rem; }
   .screen[data-layout="board"] .focal.rtb .rtb__verdict,
   .screen[data-layout="board"] .focal.rtb .rtb__ask { font-size: var(--fs-xl); }
+
   .screen[data-layout="board"] .focal.rtb > .actions { width: 100%; margin-inline: 0; gap: var(--sp-4); }
   .screen[data-layout="board"] .focal.rtb > .actions > .btn:only-child { align-self: center; width: min(100%, 540px); }
   .screen[data-layout="board"] .focal.rtb .rtb__choices { flex-wrap: nowrap; gap: 20px; }
@@ -1087,4 +1204,216 @@ button.rank-rows__row { cursor: grab; }
   /* Held: the card centred in the space the name had, beside the button,
      which has not moved. */
   .screen[data-layout="secret"] .secret[data-holding] .secret__main { justify-self: center; }
+}
+
+/* ----------------------------------------------------------------
+   THE PICKER, ON A TABLET: A SCREEN ON THE GAME'S OWN COLOUR.
+
+   The phone's picker is a column of cards with a floating Back over
+   them. On a tablet it is laid out like the game's other screens: the
+   title and the X at the top, then the two ways not to pick from the
+   list — write your own, and Random — half each, and then the choices
+   four across. The halves are the grid's own: two cards and a gap
+   each, so the row lines up with the cards under it. With nothing to
+   write, Random leads the grid instead, two cards wide and still a
+   pill, so it reads as the button it is rather than another choice.
+
+   No sheet: it sits straight on the pack colour, so it reads as the
+   game's own screen, and the white cards stand off it. Type at the
+   table's size — 18px — rather than a phone's, in the body face, bold.
+   ---------------------------------------------------------------- */
+.picker__top,
+.picker__row,
+.picker__random--card { display: none; }
+
+@media (--tablet) {
+  .picker { --picker-cols: 2; gap: var(--sp-4); }
+  .picker__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    flex: none;
+  }
+  .picker__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-black);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--category-ink);
+  }
+  .picker__close { flex: none; margin-left: 0; }
+
+  /* The phone's furniture, which the top and the row replace. */
+  .picker__heading,
+  .picker__card--write,
+  .picker__card--any,
+  .picker > .actions,
+  .picker__depth { display: none; }
+
+  .picker__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+    flex: none;
+  }
+  .picker__own {
+    min-width: 0;
+    height: var(--control-md);
+    padding: 0 var(--sp-5);
+    border: 2px solid rgba(20, 20, 20, 0.18);
+    border-radius: var(--radius-pill);
+    background: #FFFFFF;
+    color: #141414;
+    font-family: var(--font-body);
+    font-size: var(--fs-md);
+  }
+  .picker__row-note { grid-column: 1 / -1; color: var(--category-ink); }
+
+  .picker__random {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    height: var(--control-md);
+    padding: 0 var(--sp-5);
+    border: 2px solid var(--category-ink);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--category-ink);
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: var(--fw-black);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) ease-out;
+  }
+  .picker__random-hint { font-weight: var(--fw-bold); opacity: 0.75; }
+  .picker__random:active { transform: scale(var(--press-scale)); opacity: var(--press-dim); }
+  .picker__random svg {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .picker__grid {
+    grid-template-columns: repeat(var(--picker-cols), minmax(0, 1fr));
+    gap: var(--sp-3);
+    padding-bottom: var(--sp-8);
+  }
+  .picker__card {
+    min-height: calc(var(--fs-md) * var(--lh-tight) * 2 + var(--sp-3) * 2 + 4px);
+    padding: var(--sp-3) var(--sp-5);
+    border: 2px solid rgba(20, 20, 20, 0.18);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-body);
+    font-size: var(--fs-md);
+    font-weight: var(--fw-bold);
+    /* Fills the line before it breaks: balanced, a four-word name broke
+       early onto a third line and made its whole row taller. */
+    text-wrap: pretty;
+    box-shadow: none;
+  }
+  /* Mixed: a choice, so it stays a card, outlined in the ink like Random
+     because it is the other choice that is not one name. */
+  .picker__card.picker__card--pinned {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--sp-2);
+    border-color: var(--category-ink);
+  }
+  .picker__card.picker__card--pinned svg { width: 20px; height: 20px; flex: none; }
+  .picker__card.picker__random--card {
+    display: flex;
+    grid-column: span 2;
+    /* The Random in the row's own height, not a card's, wherever it leads
+       the grid — alone on a portrait row or beside two cards on a board. */
+    min-height: var(--control-md);
+    height: var(--control-md);
+    align-self: center;
+    border-color: var(--category-ink);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--category-ink);
+    font-family: var(--font-display);
+    font-weight: var(--fw-black);
+  }
+}
+/* Four across where four cards still hold a two-line name at 18px; a
+   portrait tablet keeps two, because the row's halves and Random's two
+   columns need an even count to land on the grid. */
+@media (--tablet) and (min-width: 1000px) {
+  .picker { --picker-cols: 4; }
+}
+/* Every picker on a board takes the board: its whole width at the board's
+   gutter, whichever layout the game's screen otherwise asks for. Odd One
+   Out's ran edge to edge and the rest sat in the phone's 980px column. */
+@media (--board) {
+  .app__frame:has(.picker) { max-width: none; }
+  .screen:has(.picker) { --gutter: var(--board-gutter); padding-top: 28px; }
+}
+
+/* ----------------------------------------------------------------
+   OVERBID'S BIDDING, ACROSS THE BOARD. The question is the header's;
+   under it the bids and then the names, each a button somebody across
+   the table reaches for, so they are sized for that: the bid chips a
+   control tall, the names the picker's cards in centred rows of up to
+   four, and Change category its own width in the middle, as Ballpark's
+   is, rather than a bar across the foot.
+   ---------------------------------------------------------------- */
+@media (--board) {
+  .screen[data-layout="board"] .focal.num { gap: var(--sp-8); }
+  .screen[data-layout="board"] .focal.num .num__dares { justify-content: center; gap: var(--sp-3); }
+  .screen[data-layout="board"] .focal.num .num__dares .chip {
+    min-height: var(--control-md);
+    min-width: var(--control-md);
+    padding-inline: var(--sp-5);
+    font-size: var(--fs-lg);
+  }
+  .screen[data-layout="board"] .focal.num .num__other { font-size: var(--fs-md); }
+  .screen[data-layout="board"] .focal.num .num__count {
+    width: 6rem;
+    min-height: var(--control-md);
+    font-size: var(--fs-lg);
+  }
+  .screen[data-layout="board"] .focal.num .num__seats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sp-3);
+  }
+  .screen[data-layout="board"] .focal.num .num__seats > .num__seat,
+  .screen[data-layout="board"] .focal.num .num__seats > :last-child:nth-child(odd) {
+    flex: 0 1 calc((100% - var(--sp-3) * 3) / 4);
+    width: auto;
+    grid-column: auto;
+  }
+  .screen[data-layout="board"] .focal.num > .choice-row { align-self: center; }
+  .screen[data-layout="board"] .focal.num > .actions > .btn:only-child { align-self: center; width: min(100%, 540px); }
+}
+
+/* A rail's primary is one line. The rail is sized so the longest label fits;
+   a label that ever outgrows it should be shortened, not broken in two. */
+@media (--board) {
+  .screen[data-layout="prompt"] .focal--prompt > .gfoot .actions .btn--lg { white-space: nowrap; }
+
+  /* Most Likely To's count-in is the whole screen's, not the card's: the
+     card has left its square and there is no rail beside it, so the numbers
+     take the full width and land in the middle of the display. */
+  .screen[data-layout="prompt"] .focal--prompt:has(> .slot > .countdown) > .slot {
+    grid-column: 1 / -1;
+    display: grid;
+    place-items: center;
+  }
+  .screen[data-layout="prompt"] .focal--prompt:has(> .slot > .countdown) > .gfoot { display: none; }
+  .screen[data-layout="prompt"] .focal--prompt > .slot > .countdown { min-height: 0; height: 100%; margin: 0; }
 }

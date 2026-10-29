@@ -61,6 +61,8 @@ export interface RoleState {
   phase: RolePhase;
   count: number;
   at: number;
+  /** This seat has held its role up at least once. Tablet only; see onLetGo. */
+  seen?: boolean;
 }
 
 /**
@@ -82,18 +84,26 @@ export function afterHide<S extends RoleState>(s: S): S {
 /** The phases where leaving would throw a live round away. */
 /**
  * HOLD TO REVEAL, on a tablet: the role is up only while a finger is on the
- * button. Pressing turns this seat's cover over; letting go is the same
- * hide-and-pass the phone's button does, straight to the next seat's cover.
- * A hold that ended because the page hid is `onHidden` — the role goes back
- * under the same seat's cover and has to be held for again. Every reveal is
- * still bracketed by a cover; only the hand on it changed.
+ * button. Pressing turns this seat's cover over, and letting go — or the page
+ * hiding mid-hold — puts it back under the SAME seat's cover, marked seen.
+ * Nothing advances on a let go: a word glimpsed once is often a word wanted
+ * twice, so the seat can hold again as often as it likes, and moving on is
+ * its own press, `onNext`, offered only once the role has been seen. Every
+ * reveal is still bracketed by a cover; only the hand on it changed.
  */
 export function onHold<S extends RoleState>(s: S): S {
   return s.phase === "cover" ? { ...s, phase: "role" } : s;
 }
 
-export function onLetGo<S extends RoleState>(s: S, reason: "let-go" | "hidden"): S {
-  return reason === "hidden" ? onHidden(s) : afterHide(s);
+export function onLetGo<S extends RoleState>(s: S): S {
+  return s.phase === "role" ? { ...s, phase: "cover", seen: true } : s;
+}
+
+/** On to the next seat's cover, unseen, or to the table once everyone has seen theirs. */
+export function onNext<S extends RoleState>(s: S): S {
+  if (s.phase !== "cover" || !s.seen) return s;
+  const next = s.at + 1;
+  return next >= s.count ? { ...s, phase: "ready", seen: false } : { ...s, at: next, seen: false };
 }
 
 export function isLive(phase: RolePhase): boolean {

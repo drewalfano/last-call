@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { GameScreen, PromptBody } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { Countdown } from "../components/Countdown";
 import { useDeck } from "../lib/deck";
@@ -46,13 +46,13 @@ export function MostLikelyTo({ mode, onBack }: Props) {
   }, []);
 
   return (
-    <GameScreen mode={mode} onBack={onBack}>
+    <GameScreen mode={mode} layout="prompt" onBack={onBack}>
       {/* The count-in takes the card's slot rather than the whole screen, so
           the numbers land on the same spot the prompt just left. */}
       {phase === "counting" ? (
-        <CardBody card={<Countdown key={deck.drawCount} action="Point" onDone={pointed} />} />
+        <PromptBody card={<Countdown key={deck.drawCount} action="Point" onDone={pointed} />} />
       ) : (
-        <CardBody
+        <PromptBody
           card={
             <PromptCard
               eyebrow="Most likely to…"
@@ -88,7 +88,7 @@ export function MostLikelyTo({ mode, onBack }: Props) {
                   count-in.
 
                   Under the card, not beside the action: it rejects the PROMPT,
-                  where Everyone ready commits the table to it. Same control as
+                  where Ready commits the table to it. Same control as
                   Hot Seat's New question and Overbid's New category, and the
                   draw sounds itself through the deck.
 
@@ -109,12 +109,12 @@ export function MostLikelyTo({ mode, onBack }: Props) {
                   onClick={() => setPhase("counting")}
                   disabled={!deck.current}
                 >
-                  Everyone ready
+                  Ready
                 </button>
               </div>
             </>
           )}
-        </CardBody>
+        </PromptBody>
       )}
     </GameScreen>
   );

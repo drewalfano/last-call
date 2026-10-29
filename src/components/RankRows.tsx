@@ -51,6 +51,33 @@ const ordinal = (n: number) => `${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 
  */
 export function RankRows({ items, onReorder, guess, still }: RankRowsProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
+  /**
+   * THE DROP LANDS WHERE THE FINGER LEFT IT. Reordering moves every row to its
+   * new slot in the DOM, and a row still carrying a translate from before the
+   * move would be offset from the WRONG slot: the dropped one flew past its
+   * place, out of the card, and slid back, and the rows it had pushed aside
+   * jumped a step and returned. So every row is measured where it is on
+   * screen the moment the finger lifts — the dropped one under the finger,
+   * the others wherever their slide aside has got to — and for one frame each
+   * is drawn exactly there, as an offset from its new slot, with nothing
+   * animating. The frame after, they all glide home from where they were.
+   */
+  const [landing, setLanding] = useState<{ item: string; offsets: Record<string, number> } | null>(null);
+  // The row gliding home after the landing frame, kept on top until it is.
+  const [settling, setSettling] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    if (!landing) return;
+    const frame = requestAnimationFrame(() => {
+      setSettling(landing.item);
+      setLanding(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [landing]);
+  useLayoutEffect(() => {
+    if (!settling) return;
+    const done = window.setTimeout(() => setSettling(null), 320);
+    return () => window.clearTimeout(done);
+  }, [settling]);
   const [said, setSaid] = useState("");
   const listRef = useRef<HTMLOListElement>(null);
 
@@ -105,25 +132,34 @@ export function RankRows({ items, onReorder, guess, still }: RankRowsProps) {
     setDrag(null);
     if (!drag.live) return;
     const at = slotFor(drag.index, drag.dy, step, items.length);
+    const next = move(items, drag.index, at);
+    const list = listRef.current;
+    const slot0 = (list?.children[0] as HTMLElement | undefined)?.getBoundingClientRect().top ?? 0;
+    const offsets: Record<string, number> = {};
+    list?.querySelectorAll<HTMLElement>(".rank-rows__row").forEach((row, i) => {
+      offsets[items[i]] = row.getBoundingClientRect().top - (slot0 + next.indexOf(items[i]) * step);
+    });
+    setLanding({ item: items[drag.index], offsets });
     if (at !== drag.index) {
-      onReorder?.(move(items, drag.index, at));
+      onReorder?.(next);
       audio.play("tap");
     }
   };
 
   return (
     <>
-      <ol className="rank-rows" ref={listRef}>
+      <ol className="rank-rows" ref={listRef} data-landing={landing ? "" : undefined}>
         {items.map((item, i) => {
           const lifted = shown?.live && shown.index === i;
           const shift = shown?.live ? shiftFor(i, shown.index, to) : 0;
-          const y = lifted ? shown.dy : shift * step;
+          const y = lifted ? shown.dy : landing ? (landing.offsets[item] ?? 0) : shift * step;
           return (
             <li key={item} className="rank-rows__slot">
               <button
                 type="button"
                 className="rank-rows__row"
                 data-lifted={lifted || undefined}
+                data-landed={landing?.item === item || settling === item || undefined}
                 data-focus={still?.focus === i || undefined}
                 style={y ? { translate: `0 ${y}px` } : undefined}
                 aria-label={`${item}, ${i + 1} of ${items.length}`}

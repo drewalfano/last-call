@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { GameScreen, PromptBody } from "../components/GameScreen";
 import { PromptCard } from "../components/PromptCard";
 import { useDeck } from "../lib/deck";
 import { usePool } from "../data/pools";
@@ -75,8 +75,8 @@ export function HotSeat({ mode, onBack }: Props) {
 
   if (phase === "pick") {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
-        <CardBody
+      <GameScreen mode={mode} layout="prompt" onBack={onBack}>
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">Hot seat</span>
@@ -122,15 +122,15 @@ export function HotSeat({ mode, onBack }: Props) {
               </button>
             </form>
           )}
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
 
   if (phase === "rotate") {
     return (
-      <GameScreen mode={mode} onBack={onBack}>
-        <CardBody
+      <GameScreen mode={mode} layout="prompt" onBack={onBack}>
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">Seat's free</span>
@@ -144,7 +144,7 @@ export function HotSeat({ mode, onBack }: Props) {
               New hot seat
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       </GameScreen>
     );
   }
@@ -157,12 +157,23 @@ export function HotSeat({ mode, onBack }: Props) {
     <GameScreen
       mode={mode}
       subtitle={`${name} · ${asked} of ${ROUND_LENGTH}`}
+      layout="prompt"
       onBack={onBack}
     >
-      <CardBody
+      <PromptBody
+        /* On a board the header's line is the rail's: who is in the seat,
+           and how far through their questions they are. */
+        rail={
+          <>
+            <span className="rail__live">{name}</span>
+            <span className="rail__meta">
+              {asked} of {ROUND_LENGTH}
+            </span>
+          </>
+        }
         card={
           <PromptCard
-            eyebrow={toGroup ? "Everyone but them answers" : `${name} answers`}
+            eyebrow={toGroup ? "The table answers" : `${name} answers`}
             dealKey={deck.drawCount}
             small
             footer={toGroup ? "Vote out loud, then let them respond." : "No deflecting."}
@@ -186,7 +197,7 @@ export function HotSeat({ mode, onBack }: Props) {
             {asked >= ROUND_LENGTH ? "End round" : "Next question"}
           </button>
         </div>
-      </CardBody>
+      </PromptBody>
     </GameScreen>
   );
 }

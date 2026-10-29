@@ -114,6 +114,7 @@ export function SayTheSameThing({ mode, onBack }: Props) {
         <CategoryPicker
           categories={pool}
           customNoun="starting word"
+          title="Pick a starting word"
           onPick={(c) => {
             setChosen(c);
             setAttempt(1);

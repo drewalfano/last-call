@@ -9,6 +9,7 @@ import {
   onHidden,
   onHold,
   onLetGo,
+  onNext,
   revealOrder,
   rosterNote,
 } from "../games/imposterLogic";
@@ -80,29 +81,39 @@ describe("hold to reveal", () => {
     expect(onHold(ready)).toBe(ready);
   });
 
-  it("letting go passes straight to the next seat's cover, never the next role", () => {
-    const held = onHold(cover);
-    expect(onLetGo(held, "let-go")).toEqual({ ...cover, at: 1 });
-    expect(onLetGo(onHold({ ...cover, at: 2 }), "let-go")).toEqual({ ...cover, phase: "ready", at: 2 });
+  it("letting go puts the role back under the same seat's cover, seen", () => {
+    expect(onLetGo(onHold(cover))).toEqual({ ...cover, seen: true });
   });
 
-  it("a hold the page ended goes back under the same seat's cover", () => {
-    expect(onLetGo(onHold(cover), "hidden")).toEqual(cover);
+  it("the same seat can hold again as often as it likes", () => {
+    const again = onLetGo(onHold(onLetGo(onHold(cover))));
+    expect(again).toEqual({ ...cover, seen: true });
+    expect(onHold(again)).toEqual({ ...cover, phase: "role", seen: true });
+  });
+
+  it("moves on only from a seen cover, never from an unseen one or a held role", () => {
+    expect(onNext(cover)).toBe(cover);
+    const held = onHold(cover);
+    expect(onNext(held)).toBe(held);
+    expect(onNext(onLetGo(held))).toEqual({ ...cover, at: 1, seen: false });
+    expect(onNext(onLetGo(onHold({ ...cover, at: 2 })))).toEqual({ ...cover, phase: "ready", at: 2, seen: false });
   });
 
   it("a let go with nothing held changes nothing", () => {
-    expect(onLetGo(cover, "let-go")).toBe(cover);
+    expect(onLetGo(cover)).toBe(cover);
   });
 
   it("brackets every reveal by a cover through a whole deal", () => {
-    let s: { phase: "setup" | "picking" | "cover" | "role" | "ready"; count: number; at: number } = cover;
-    const seen: string[] = [];
+    let s: { phase: "setup" | "picking" | "cover" | "role" | "ready"; count: number; at: number; seen?: boolean } = cover;
+    const phases: string[] = [];
     while (s.phase !== "ready") {
-      seen.push(s.phase);
+      phases.push(s.phase);
       s = onHold(s);
-      seen.push(s.phase);
-      s = onLetGo(s, "let-go");
+      phases.push(s.phase);
+      s = onLetGo(s);
+      phases.push(s.phase);
+      s = onNext(s);
     }
-    expect(seen).toEqual(["cover", "role", "cover", "role", "cover", "role"]);
+    expect(phases).toEqual(["cover", "role", "cover", "cover", "role", "cover", "cover", "role", "cover"]);
   });
 });

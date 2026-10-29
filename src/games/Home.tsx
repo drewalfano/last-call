@@ -11,7 +11,7 @@ import { DeckFace } from "../components/DeckFace";
 
 interface HomeProps {
   /** The rect lets App expand the mode's color out from the card you tapped. */
-  onPick: (id: ModeId, rect?: { top: number; left: number; right: number; bottom: number }) => void;
+  onPick: (id: ModeId, rect?: { top: number; left: number; right: number; bottom: number; radius?: number }) => void;
   /**
    * A mode that is closing back into its card, which arrives RAISED.
    *
@@ -386,6 +386,22 @@ const RING_MS = 603;
 const REVEAL_MS = 240;
 
 /**
+ * A TAPPED TILE RISES BEFORE IT OPENS, on a tablet's grid.
+ *
+ * The stacked deck needs no lift: its card already sits proud of the ones
+ * below it, and the colour can leave from where it is. A tile on a grid sits
+ * flat among eleven others, and the colour taking the screen straight off it
+ * read as the board flashing rather than one card being chosen. So it lifts
+ * first, on the same spring the pick uses, and the colour leaves from the
+ * raised tile — the close lands on it raised and lets it down, which is the
+ * other half of the same gesture.
+ *
+ * Long enough for the spring to have carried it up — it reaches the top of
+ * its rise around here — and no longer: this is latency on a tap.
+ */
+const TILE_LIFT_MS = 150;
+
+/**
  * The two sweeps. Both reach the stylesheet as custom properties, so this file
  * is the only place the flourish is described and the two cannot drift.
  *
@@ -559,6 +575,8 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   const [settling, setSettling] = useState<ModeId | null>(null);
   const wasReturning = useRef<ModeId | null>(null);
   const deckRef = useRef<HTMLElement>(null);
+  const pickRef = useRef<HTMLButtonElement>(null);
+  const ringRef = useRef<SVGSVGElement>(null);
   const timer = useRef<number>(undefined);
   const raf = useRef<number>(undefined);
 
@@ -582,9 +600,29 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
   const openCard = useCallback(
     (id: ModeId, el: HTMLElement) => {
       const r = el.getBoundingClientRect();
-      onPick(id, { top: r.top, left: r.left, right: r.right, bottom: r.bottom });
+      /* Dealt out flat on a tablet, the card is rounded all round, and the
+         colour should leave on its corners. The stacked deck keeps its own. */
+      const tile = el.parentElement ? getComputedStyle(el.parentElement).display === "grid" : false;
+      const radius = tile ? parseFloat(getComputedStyle(el).borderTopLeftRadius) : undefined;
+      onPick(id, { top: r.top, left: r.left, right: r.right, bottom: r.bottom, radius });
     },
     [onPick],
+  );
+
+  const tapCard = useCallback(
+    (id: ModeId, el: HTMLElement) => {
+      const tile = el.parentElement ? getComputedStyle(el.parentElement).display === "grid" : false;
+      const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (!tile || still) {
+        openCard(id, el);
+        return;
+      }
+      // One lift at a time: a second tap while it rises is the same choice.
+      if (revealed) return;
+      setRevealed(id);
+      timer.current = window.setTimeout(() => openCard(id, el), TILE_LIFT_MS);
+    },
+    [openCard, revealed],
   );
 
   /**
@@ -816,6 +854,44 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
     return () => window.clearTimeout(t);
   }, [sweeping]);
 
+  /**
+   * THE RING IS DRAWN TO THE BUTTON IT IS ON, NOT TO THE BUTTON IT USUALLY IS.
+   *
+   * The pill's corners are half its height, and the ring took that height
+   * from --control-height, which is only true while the button sits at its
+   * own minimum. On a board it shares a row with Who's playing and stretches
+   * to match — taller again the moment the roster opens — and a ring with
+   * the old radius on a taller pill comes out squarer than the edge it is
+   * meant to trace. So the button is measured, here and every time it
+   * resizes, and the ring gets the radius it actually has, and the point
+   * its sweep crosses: the bottom midpoint, which moves round the path as
+   * the pill's proportions change.
+   */
+  const ringOn = !!(picked || sweeping);
+  useLayoutEffect(() => {
+    const button = pickRef.current;
+    const ring = ringRef.current;
+    if (!ringOn || !button || !ring) return;
+    const fit = () => {
+      // The line's rect is the border box inset by half the 2px stroke.
+      const w = button.offsetWidth - 2;
+      const h = button.offsetHeight - 2;
+      const r = Math.min(w, h) / 2;
+      const straight = w - 2 * r;
+      const perimeter = 2 * straight + 2 * Math.PI * r;
+      // The rect's path starts at the top edge's left end, clockwise: the top
+      // straight and the right cap, then half the bottom straight.
+      const start = (1.5 * straight + Math.PI * r) / perimeter;
+      ring.style.setProperty("--ring-r", `${r}px`);
+      ring.style.setProperty("--hole-r", `${Math.max(r - 1, 0)}px`);
+      ring.style.setProperty("--ring-start", start.toFixed(4));
+    };
+    fit();
+    const watch = new ResizeObserver(fit);
+    watch.observe(button);
+    return () => watch.disconnect();
+  }, [ringOn]);
+
   return (
     <div className="screen home">
       <header className="home__head">
@@ -832,13 +908,14 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
 
       <RosterBar />
 
-      <button className="pick-me" onClick={pickForMe} disabled={!!picked}>
+      <button className="pick-me" ref={pickRef} onClick={pickForMe} disabled={!!picked}>
         {/* One line running round the button's grey edge, a third of the way
             round, graded through all eleven packs — see .pick-me__ring. The
             grey stroke is the button's own border and stays put; this only
             travels over it. */}
         {(picked || sweeping) && (
           <svg
+            ref={ringRef}
             className="pick-me__ring"
             style={{
               ["--deal-delay" as string]: DEAL_DELAY_MS,
@@ -981,7 +1058,7 @@ export function Home({ onPick, returning, aborted = 0 }: HomeProps) {
               zIndex: i + 1,
               ["--i" as string]: MODES.length - 1 - i,
             }}
-            onClick={(e) => openCard(mode.id, e.currentTarget)}
+            onClick={(e) => tapCard(mode.id, e.currentTarget)}
           >
             <DeckFace mode={mode} />
           </button>

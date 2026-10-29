@@ -18,6 +18,9 @@ import { playersCount, playersLabel } from "../lib/fit";
  * The classes stay `deck-card__*` because the styling belongs to the card and
  * both users want exactly it. See .launch__face for the overlay's copy.
  */
+/** Fits one line of the narrowest tablet tile, so it would leave the second empty. */
+const SHORT = 26;
+
 export function DeckFace({ mode }: { mode: ModeDef }) {
   return (
     <>
@@ -49,7 +52,19 @@ export function DeckFace({ mode }: { mode: ModeDef }) {
           </svg>
         </span>
       </span>
-      <span className="deck-card__tagline">{mode.tagline}</span>
+      {/* A SHORT TAGLINE, SENTENCE BY SENTENCE, so a tablet tile can give
+          each its own line — "Two lines." over "One winner." — and fill the
+          two lines every other tile fills by wrapping. Only the short ones:
+          a long one already wraps, and broken at its full stop as well it
+          runs to three. Inline everywhere else, where it is the one line. */}
+      <span className="deck-card__tagline">
+        {(mode.tagline.length <= SHORT ? mode.tagline.split(/(?<=\.) /) : [mode.tagline]).map((line, i) => (
+          <span key={i} className="deck-card__line">
+            {i > 0 && " "}
+            {line}
+          </span>
+        ))}
+      </span>
     </>
   );
 }

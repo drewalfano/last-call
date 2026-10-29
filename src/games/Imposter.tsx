@@ -25,6 +25,7 @@ import {
   onHidden,
   onHold,
   onLetGo,
+  onNext,
   rosterNote,
   type RolePhase,
 } from "./imposterLogic";
@@ -60,6 +61,8 @@ interface State {
   order: number[];
   /** How far through the reveal order we are. */
   at: number;
+  /** This seat has held its role up at least once, on a tablet. */
+  seen?: boolean;
   /** Chosen word category, or null for Mixed — a new one every deal. */
   category: string | null;
 }
@@ -119,7 +122,7 @@ export function Imposter({ mode, onBack }: Props) {
       const [word, hint] = isCustom
         ? ([prev.category!, ""] as const)
         : randomItem(wordsFor(contentMode, prev.category));
-      return { ...prev, phase: "cover", word, hint, ...deal(prev.count), at: 0 };
+      return { ...prev, phase: "cover", word, hint, ...deal(prev.count), at: 0, seen: false };
     });
   }, [contentMode, categories]);
 
@@ -144,15 +147,21 @@ export function Imposter({ mode, onBack }: Props) {
   /* The new card is what to read next, so it takes focus as it arrives. */
   /**
    * HOLD TO REVEAL, ON A TABLET. The role is up only while this seat's finger
-   * is on the button, and letting go passes straight to the next seat's
-   * cover — see onHold and onLetGo. A phone keeps its two buttons.
+   * is on the button. Letting go puts it back under the same seat's cover, so
+   * a seat can look twice, and moving on is its own press — see onLetGo and
+   * onNext. A phone keeps its two buttons.
    */
   const tablet = useTablet();
-  const hold = useHoldReveal(tablet && (s.phase === "cover" || s.phase === "role"), (reason) => {
-    if (reason === "let-go") audio.play(s.at + 1 < s.count ? "advance" : "go");
-    setS((prev) => onLetGo(prev, reason));
+  const hold = useHoldReveal(tablet && (s.phase === "cover" || s.phase === "role"), () => {
+    setS(onLetGo);
     hold.reset();
   });
+  /* Sounded from the press that moves on, as the phone's is: the last one
+     starts the round rather than passing on, so it takes `go`. */
+  const next = () => {
+    audio.play(s.at + 1 < s.count ? "advance" : "go");
+    setS(onNext);
+  };
   const holding = hold.showing;
   useEffect(() => {
     if (holding) setS(onHold);
@@ -294,6 +303,7 @@ export function Imposter({ mode, onBack }: Props) {
           customNoun="word"
           customNote="Whoever types this will see it, and can still be dealt the Imposter. Your table, your call."
           anyLabel="Mixed"
+          anyHint="new every round"
           onAny={() => setS((prev) => ({ ...prev, category: null, phase: "setup" }))}
           onPick={(c) => setS((prev) => ({ ...prev, category: c, phase: "setup" }))}
           onCancel={() => setS((prev) => ({ ...prev, phase: "setup" }))}
@@ -370,14 +380,22 @@ export function Imposter({ mode, onBack }: Props) {
               <button className="gfoot__skip" onClick={backToSetup}>
                 Start over
               </button>
-              <span className="secret__aside">Rather keep it in your hands? Pass it to {nameOf(currentPlayer)}.</span>
+              {s.seen && (
+                <button className="btn btn--lg secret__next" onClick={next}>
+                  {s.at + 1 < s.count ? `Next: ${nameOf(s.order[s.at + 1])}` : "Start the clues"}
+                </button>
+              )}
             </>
           }
         >
           <div className="secret__intro" key={`cover-${s.at}`} ref={focalRef} tabIndex={-1}>
             <h2 className="secret__name">{nameOf(currentPlayer)}, you're up</h2>
             <p className="secret__lede">
-              Everyone else, look away. {nameOf(currentPlayer)}: hold the button to see your role. Let go and it's gone.
+              {s.seen
+                ? `Hidden again. Hold to look as often as you need, then ${
+                    s.at + 1 < s.count ? `pass to ${nameOf(s.order[s.at + 1])}` : "start the clues"
+                  }.`
+                : `Everyone else, look away. ${nameOf(currentPlayer)}: hold the button to see your role. Let go and it's gone.`}
             </p>
           </div>
         </SecretBody>
@@ -395,13 +413,7 @@ export function Imposter({ mode, onBack }: Props) {
             </>
           }
           side={<HoldButton handlers={hold.handlers} state={hold.state} heldLabel="Let go to hide" />}
-          foot={
-            <span>
-              {s.at + 1 < s.count
-                ? `When you let go, ${nameOf(s.order[s.at + 1])} is up next`
-                : "When you let go, the clues start"}
-            </span>
-          }
+          foot={<span>Got it? Let go.</span>}
         >
           <div className="secret__card">
             <div className={isImposter ? "card imp-card--imposter" : "card"} ref={focalRef} tabIndex={-1}>

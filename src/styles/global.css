@@ -196,6 +196,13 @@ button { font: inherit; color: inherit; }
   font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+  /* Set as a heading is, not as a paragraph: a label that has to wrap — a
+     long one in a narrow rail — reads as one label on two lines, not two
+     lines with a gap between. One line is unaffected; the height is the
+     control's, not the text's. */
+  line-height: var(--lh-tight);
+  text-align: center;
+  text-wrap: balance;
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out),
               opacity var(--dur-press) ease-out,

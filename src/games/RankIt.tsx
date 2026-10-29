@@ -177,6 +177,10 @@ export function RankIt({ mode, onBack }: Props) {
       {/* ---------- Hand the phone to the Ranker ---------- */}
       {phase === "handover" && (
         <PromptBody
+          /* On a board the header gives its live line to the rail, so the
+             list goes here — what the Ranker is about to rank, beside the
+             card that names them, above the control that changes it. */
+          rail={<span className="rail__live">{prompt.title}</span>}
           card={
             <div className="card">
               <span className="card__eyebrow">Ranker</span>

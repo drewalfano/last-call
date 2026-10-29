@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import type { ModeDef } from "../data/modes";
 import { categoryStyle } from "../lib/style";
 import { GameHeader, type LiveLine } from "./GameHeader";
@@ -193,11 +193,51 @@ interface SecretBodyProps {
 
 /** The handoff and the private hold. */
 export function SecretBody({ top, children, side, foot, holding }: SecretBodyProps) {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const sideRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * ON THE BUTTON'S LINE. On a board the hold button is pinned to the middle
+   * of the display — it may not move — and the name, or the held card, sits
+   * beside it. Centred in its own row instead, it landed wherever that game's
+   * header and footer left it: Ballpark's spectrum pushed it low, the held
+   * screen's thin header left it high. So it is moved onto the button's
+   * centre, as far as its row allows and no further: on a short board the
+   * header wins, and the text stops just under it rather than running in.
+   * Off the board the button is below the text, not beside it, and nothing
+   * moves.
+   */
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    const button = sideRef.current;
+    const content = main?.firstElementChild as HTMLElement | null;
+    if (!main || !button || !content) return;
+    const fit = () => {
+      content.style.translate = "";
+      const row = main.getBoundingClientRect();
+      const at = content.getBoundingClientRect();
+      const hold = button.getBoundingClientRect();
+      if (hold.left < row.right) return;
+      const want = (hold.top + hold.bottom) / 2 - (at.top + at.bottom) / 2;
+      const shift = Math.min(Math.max(want, row.top - at.top), row.bottom - at.bottom);
+      content.style.translate = `0 ${Math.round(shift)}px`;
+    };
+    fit();
+    const watch = new ResizeObserver(fit);
+    watch.observe(main);
+    watch.observe(content);
+    window.addEventListener("resize", fit);
+    return () => {
+      watch.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, [holding]);
+
   return (
     <div className="focal secret" data-holding={holding || undefined}>
       {top && <div className="secret__top">{top}</div>}
-      <div className="secret__main">{children}</div>
-      {side && <div className="secret__side">{side}</div>}
+      <div className="secret__main" ref={mainRef}>{children}</div>
+      {side && <div className="secret__side" ref={sideRef}>{side}</div>}
       {foot && <div className="secret__foot">{foot}</div>}
     </div>
   );

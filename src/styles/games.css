@@ -1119,8 +1119,10 @@
   y: 1px;
   width: calc(100% - 2px);
   height: calc(100% - 2px);
-  rx: calc(var(--control-height) / 2);
-  ry: calc(var(--control-height) / 2);
+  /* --ring-r is the button MEASURED — see the ring's effect in Home.tsx. The
+     token is only the fallback for the frame before that lands. */
+  rx: var(--ring-r, calc(var(--control-height) / 2));
+  ry: var(--ring-r, calc(var(--control-height) / 2));
   fill: none;
   /* 2 for the line; the halo goes wider because a blur thins what it spreads. */
   stroke-width: var(--stroke, 2);
@@ -1191,8 +1193,8 @@
   y: 2px;
   width: calc(100% - 4px);
   height: calc(100% - 4px);
-  rx: calc(var(--control-height) / 2);
-  ry: calc(var(--control-height) / 2);
+  rx: var(--hole-r, calc(var(--control-height) / 2));
+  ry: var(--hole-r, calc(var(--control-height) / 2));
   fill: #000;
 }
 
@@ -1408,12 +1410,16 @@
   display: flex;
   flex: none;
   justify-content: space-between;
+  /* The app's own face, as every other label and count is — it was the only
+     line of the game still in the body font. */
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
   font-size: var(--fs-xs);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: color-mix(in srgb, var(--category-ink) 72%, transparent);
 }
-.rtb__tally strong { color: var(--category-ink); font-size: var(--fs-md); }
+.rtb__tally strong { color: var(--category-ink); font-size: var(--fs-md); font-weight: var(--fw-black); }
 
 /* Cards and verdict as one block, centred together. The felt carried
    .focal__center itself until the verdict moved out of the button row, and
@@ -4951,6 +4957,8 @@
 .dial__guess {
   rotate: calc(var(--v) * 1.8deg);
 }
+/* Only a board turns this on — see the casing in Dial.tsx. */
+.dial__guess line.dial__guess-casing { display: none; }
 
 /* --- the zones -----------------------------------------------------------
 

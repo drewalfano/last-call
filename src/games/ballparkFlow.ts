@@ -42,7 +42,8 @@ export type Action =
   | { type: "next" }
   | { type: "hidden" }
   | { type: "hold" }
-  | { type: "letGo"; reason: "let-go" | "hidden" };
+  | { type: "letGo" }
+  | { type: "pass" };
 
 export const MIDPOINT = 50;
 
@@ -100,17 +101,19 @@ export function reduce(s: Flow, a: Action): Flow {
             round: s.round + 1,
           }
         : s;
-    /* HOLD TO REVEAL, on a tablet. The same two transitions the tap path
-       makes, driven by one finger: pressing is the Reader taking the screen
-       and turning the spot over, and letting go is hiding it and handing the
-       dial to the table — the spot is never up without a hand on the button.
-       A hold that ended because the page hid is not a decision anyone made,
-       so it only covers the spot, exactly as `hidden` does, and the Reader
-       holds again. See lib/holdReveal for the gesture itself. */
+    /* HOLD TO REVEAL, on a tablet. Pressing is the Reader taking the screen
+       and turning the spot over, the same reveal the phone's tap makes.
+       Letting go only covers it again — the spot is never up without a hand
+       on the button — and nothing advances, so a Reader who wants a second
+       look holds again. Handing the dial to the table is its own press,
+       `pass`, from the covered screen. A hold the page ended lands in the
+       same place. See lib/holdReveal for the gesture itself. */
     case "hold":
       return reduce(s, { type: "reveal" });
     case "letGo":
-      return a.reason === "hidden" ? reduce(s, { type: "hidden" }) : reduce(s, { type: "hideAndPass" });
+      return reduce(s, { type: "hidden" });
+    case "pass":
+      return s.phase === "reading" && !s.revealed ? { ...s, phase: "guessing" } : s;
     /* The phone stopped being looked at. A target that is up goes down and
        stays down until the Reader reveals it again; nothing advances. */
     case "hidden":

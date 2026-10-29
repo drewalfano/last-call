@@ -37,7 +37,40 @@ interface CategoryPickerProps {
    */
   anyLabel?: string;
   onAny?: () => void;
+  /**
+   * What the pinned choice means, said beside it on a tablet, where it takes
+   * Random's place in the row — "new every round". A random category and a
+   * new category every round are both the app choosing, and two buttons for
+   * that read as one button twice; Mixed is the one worth having.
+   */
+  anyHint?: string;
+  /**
+   * The tablet's title over the grid — "Pick a category" unless the game
+   * says otherwise. Where there is a `heading`, the heading is the title.
+   */
+  title?: string;
 }
+
+/** Chasing arrows: keeps changing — Mixed, a new category every round. */
+const CYCLE = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  </svg>
+);
+
+/** Crossed arrows: pick one, now. Mixed's chasing arrows mean "keep changing". */
+const SHUFFLE = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="m18 14 4 4-4 4" />
+    <path d="m18 2 4 4-4 4" />
+    <path d="M2 18h1.97a4 4 0 0 0 3.3-1.7l5.45-7.6A4 4 0 0 1 16.03 7H22" />
+    <path d="M2 6h1.97a4 4 0 0 1 3.3 1.7l.4.6" />
+    <path d="M22 18h-6a4 4 0 0 1-3.3-1.7l-.4-.6" />
+  </svg>
+);
 
 /**
  * Browse-and-choose for the modes built on categories. The fast path is still
@@ -57,9 +90,20 @@ export function CategoryPicker({
   heading,
   anyLabel,
   onAny,
+  anyHint,
+  title,
 }: CategoryPickerProps) {
   const [custom, setCustom] = useState("");
   const [writing, setWriting] = useState(false);
+  const pickRandom = () => {
+    audio.play("tap");
+    onPick(categories[Math.floor(Math.random() * categories.length)]);
+  };
+  const submitCustom = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = custom.trim();
+    if (clean) onPick(clean);
+  };
   /** How many of the grid's first cards are Any / Write your own. */
   const pinned = (anyLabel && onAny ? 1 : 0) + (allowCustom ? 1 : 0);
 
@@ -95,10 +139,62 @@ export function CategoryPicker({
         </form>
       ) : (
         <>
+          {/* ON A TABLET, A SCREEN OF ITS OWN ON THE GAME'S COLOUR: the title
+              and a way out at the top, then the two ways not to pick from the
+              list side by side, half each — write your own, or let the app
+              choose — on the grid's own columns. Rendered everywhere and shown
+              only on a tablet, so the phone's picker is untouched. */}
+          <div className="picker__top">
+            <h2 className="picker__title">{title ?? heading ?? "Pick a category"}</h2>
+            <button className="gheader__back picker__close" onClick={onCancel} aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+          {allowCustom && (
+            <form className="picker__row" onSubmit={submitCustom}>
+              <input
+                className="picker__own"
+                value={custom}
+                onChange={(e) => setCustom(e.target.value)}
+                placeholder="Write your own"
+                aria-label={`Your own ${customNoun}`}
+                maxLength={48}
+                enterKeyHint="done"
+              />
+              {anyLabel && onAny ? (
+                <button type="button" className="picker__random" onClick={onAny}>
+                  {CYCLE}
+                  {anyLabel}
+                  {anyHint && <span className="picker__random-hint">· {anyHint}</span>}
+                </button>
+              ) : (
+                <button type="button" className="picker__random" onClick={pickRandom}>
+                  {SHUFFLE}
+                  Random
+                </button>
+              )}
+              {customNote && custom.trim() && <p className="picker__note picker__row-note">{customNote}</p>}
+            </form>
+          )}
+
           {heading && <p className="picker__heading">{heading}</p>}
 
           <div className="picker__scroll" onScroll={fadeOnScroll}>
             <div className="picker__grid">
+              {/* With nothing to write, Random leads the grid instead, two
+                  cards wide — a tablet's only. */}
+              {!allowCustom && (
+                <button
+                  className="picker__card picker__random picker__random--card"
+                  style={{ ["--i" as string]: 0 }}
+                  onClick={pickRandom}
+                >
+                  {SHUFFLE}
+                  Random
+                </button>
+              )}
               {/* THE TWO WAYS NOT TO PICK FROM THE LIST, as the first cards
                   in it. Same size and shape as a category, set apart by
                   being drawn in outline on the pack's colour rather than
@@ -109,7 +205,7 @@ export function CategoryPicker({
                   kind of thing. */}
               {anyLabel && onAny && (
                 <button
-                  className="picker__card picker__card--pinned"
+                  className="picker__card picker__card--pinned picker__card--any"
                   style={{ ["--i" as string]: 0 }}
                   onClick={onAny}
                 >
@@ -128,7 +224,7 @@ export function CategoryPicker({
               )}
               {allowCustom && (
                 <button
-                  className="picker__card picker__card--pinned"
+                  className="picker__card picker__card--pinned picker__card--write"
                   style={{ ["--i" as string]: pinned - 1 }}
                   onClick={() => setWriting(true)}
                 >

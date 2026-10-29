@@ -158,12 +158,13 @@ export function Ballpark({ mode, onBack }: Props) {
   /**
    * HOLD TO REVEAL, ON A TABLET. A propped screen is never handed over, so the
    * spot is up only while the Reader's finger is on the button: pressing is
-   * `hold`, letting go is `letGo`, and the reducer turns those into the same
-   * reveal and hide-and-pass the phone's two taps make. A phone keeps the taps.
+   * `hold`, letting go is `letGo` and only covers it again, so the Reader can
+   * look twice. Handing the dial over is a press of its own, `pass`, from the
+   * covered screen. A phone keeps its two taps.
    */
   const tablet = useTablet();
-  const hold = useHoldReveal(tablet && (flow.phase === "handoff" || flow.phase === "reading"), (reason) => {
-    act({ type: "letGo", reason }, reason === "let-go" ? () => audio.play("advance") : undefined);
+  const hold = useHoldReveal(tablet && (flow.phase === "handoff" || flow.phase === "reading"), () => {
+    act({ type: "letGo" });
     hold.reset();
   });
   const holding = hold.showing;
@@ -452,7 +453,11 @@ export function Ballpark({ mode, onBack }: Props) {
                   shuffleLabel="Random spectrum"
                 />
               )}
-              <span className="secret__aside">Rather keep it in your hands? Pass it to {reader}.</span>
+              {flow.phase !== "handoff" && (
+                <button className="btn btn--lg secret__next" onClick={() => act({ type: "pass" }, () => audio.play("advance"))}>
+                  Pass to the table
+                </button>
+              )}
             </>
           }
         >
@@ -464,7 +469,7 @@ export function Ballpark({ mode, onBack }: Props) {
             <p className="secret__lede">
               {flow.phase === "handoff"
                 ? `Everyone else, look away. ${reader}: hold to see the spot, say one clue that sits right there, then let go.`
-                : "Hidden again. Hold to see it when nobody else can see."}
+                : "Hidden again. Hold to look as often as you need, then pass to the table for the dial."}
             </p>
           </section>
         </SecretBody>
@@ -480,7 +485,7 @@ export function Ballpark({ mode, onBack }: Props) {
             </>
           }
           side={<HoldButton handlers={hold.handlers} state={hold.state} heldLabel="Let go to hide" />}
-          foot={<span>Say it out loud, then let go. The table takes the dial.</span>}
+          foot={<span>Say it out loud, then let go.</span>}
         >
           <div className="secret__card">
             <article className="card card--dealt bp-clue" key="held" ref={focalRef} tabIndex={-1}>

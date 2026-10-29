@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CardBody, GameScreen } from "../components/GameScreen";
+import { PromptBody, GameScreen } from "../components/GameScreen";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { ChoicePill } from "../components/ChoicePill";
 import { Stepper } from "../components/Stepper";
@@ -397,6 +397,10 @@ export function NumberGame({ mode, onBack }: Props) {
          being the destructive one, is the thing `hideHeader` exists to stop.
          Same call Letter Rip and Ballpark make on the same screen. */
       hideHeader={phase === "picking"}
+      /* On a board: the cards beside a rail, and the bidding across the
+         whole width — the names are the table, and every one of them is a
+         button somebody across it has to reach. */
+      layout={phase === "picking" ? undefined : phase === "bidding" ? "board" : "prompt"}
       subtitle={phase === "bidding" ? question : phase === "count" ? undefined : category}
       /* Under the question, the state it is being asked against. */
       note={
@@ -414,7 +418,7 @@ export function NumberGame({ mode, onBack }: Props) {
     >
       {/* ---------- How many of you ---------- */}
       {phase === "count" && (
-        <CardBody
+        <PromptBody
           card={
             <div className="card">
               <span className="card__eyebrow">How many playing?</span>
@@ -449,7 +453,7 @@ export function NumberGame({ mode, onBack }: Props) {
               Start
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- The whole list ---------- */}
@@ -628,7 +632,13 @@ export function NumberGame({ mode, onBack }: Props) {
 
       {/* ---------- The challenge ---------- */}
       {phase === "challenge" && (
-        <CardBody
+        <PromptBody
+          rail={
+            <>
+              <span className="rail__live">{category}</span>
+              <span className="rail__meta">Prove it</span>
+            </>
+          }
           card={
             <div className="card">
               <span className="card__eyebrow">
@@ -651,12 +661,18 @@ export function NumberGame({ mode, onBack }: Props) {
               {timer.expired ? "Settle it" : "Stop the clock"}
             </button>
           </div>
-        </CardBody>
+        </PromptBody>
       )}
 
       {/* ---------- Who drinks ---------- */}
       {phase === "verdict" && (
-        <CardBody
+        <PromptBody
+          rail={
+            <>
+              <span className="rail__live">{category}</span>
+              <span className="rail__meta">Result</span>
+            </>
+          }
           card={
             <div className="card">
               {/* "Did they get 7? If they did, X drinks, if they didn't, Y
@@ -686,7 +702,7 @@ export function NumberGame({ mode, onBack }: Props) {
             onShuffle={drawRandom}
             shuffleLabel="Random category"
           />
-        </CardBody>
+        </PromptBody>
       )}
     </GameScreen>
   );

@@ -281,6 +281,13 @@ export function RideTheBus({ mode, onBack }: Props) {
 
             {s.verdict ? (
               <div className="actions">
+                {/* On a board the verdict takes the question's place above
+                    the button, so the line under the cards is the same spot
+                    whether it asks or answers. Off a board it stays with the
+                    cards, above. */}
+                <p className="rtb__ask rtb__verdict-line" data-good={s.verdict.correct || undefined}>
+                  {s.verdict.text}
+                </p>
                 <button
                   className="btn btn--lg btn--block"
                   onClick={s.phase === "bus" ? clearVerdict : continueSetup}
