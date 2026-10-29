@@ -263,6 +263,16 @@ export function Imposter({ mode, onBack }: Props) {
             </div>
           }
         >
+          {/* On a board the round's one option leaves the card and joins the
+              other settings here, above Deal roles, so the rail is one block
+              of controls beside the card. Off a board this one is not drawn
+              and the switch stays on the card. */}
+          <Switch
+            className="switch--rail"
+            checked={s.showHint}
+            onChange={(next) => setS((prev) => ({ ...prev, showHint: next }))}
+            label="Imposter hint"
+          />
           {/* ONE CONTROL FOR THE CATEGORY. It used to be two pills, Random
               and Categories, given the same weight as each other and nearly
               the weight of Deal roles — for a setting most tables never
@@ -391,11 +401,9 @@ export function Imposter({ mode, onBack }: Props) {
           <div className="secret__intro" key={`cover-${s.at}`} ref={focalRef} tabIndex={-1}>
             <h2 className="secret__name">{nameOf(currentPlayer)}, you're up</h2>
             <p className="secret__lede">
-              {s.seen
-                ? `Hidden again. Hold to look as often as you need, then ${
-                    s.at + 1 < s.count ? `pass to ${nameOf(s.order[s.at + 1])}` : "start the clues"
-                  }.`
-                : `Everyone else, look away. ${nameOf(currentPlayer)}: hold the button to see your role. Let go and it's gone.`}
+              {/* The name is the heading and the button says hold, so the line
+                  only says what neither of them does. */}
+              {s.seen ? "Hidden again. Hold to look again." : "Everyone else, look away."}
             </p>
           </div>
         </SecretBody>

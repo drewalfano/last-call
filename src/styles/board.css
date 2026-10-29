@@ -566,7 +566,14 @@ button.rank-rows__row { cursor: grab; }
   .screen.home > .home__deck { grid-column: 1 / -1; }
   /* The deck sits a step under the pair, not a gutter: the gutter is the
      board's side margin, and spent here it pushed the third row off. */
-  .screen.home > .pick-me { align-self: stretch; margin: 0 0 var(--sp-6); }
+  /* ONE HEIGHT FOR THE PAIR, NAMED ONCE: the roster's shut height — its two
+     lines, padding and edge, measured at 78. The shut roster holds it as a
+     floor and the pick holds it exactly, at the top of the row, so the two
+     match at rest and the pick stays put when the roster opens to two or
+     three times that with names in it, rather than stretching with it. */
+  .screen.home { --home-pair-h: 78px; }
+  .screen.home > .roster { min-height: var(--home-pair-h); }
+  .screen.home > .pick-me { align-self: start; height: var(--home-pair-h); margin: 0 0 var(--sp-6); }
   .screen.home > .roster { margin-bottom: var(--sp-6); }
   .home__deck { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   /* The foot matches the sides, so the writing sits in the tile rather than
@@ -1440,4 +1447,83 @@ button.rank-rows__row { cursor: grab; }
   }
   .screen[data-layout="prompt"] .focal--prompt:not(.rank) > .gfoot:not(:has(> .rail)) > :first-child { margin-top: auto; }
   .screen[data-layout="prompt"] .focal--prompt:not(.rank) > .gfoot:not(:has(> .rail)) > :last-child { margin-bottom: auto; }
+}
+
+/* The hint's board copy; a phone keeps the one on the card. Doubled, because
+   global.css's `.switch` loads after this file and would otherwise show it. */
+.switch.switch--rail { display: none; }
+
+/* ----------------------------------------------------------------
+   ODD ONE OUT'S SETUP ON A BOARD. The hint joins the rail's controls, so the card
+   is the count alone — and only the count grows into the room that
+   leaves. The eyebrow and the line under it stay the sizes every other
+   game's card uses; the steps stay a step's size relative to the number
+   (the phone's ratio, about half its height) and close beside it, the
+   number reserving exactly the two digits "10" needs, so they do not
+   move when it gets there.
+   ---------------------------------------------------------------- */
+@media (--board) {
+  .screen[data-layout="prompt"] .imp-setup > .switch--card { display: none; }
+  .screen[data-layout="prompt"] .imp-setup > :first-child { margin-top: auto; }
+  .screen[data-layout="prompt"] .imp-setup > .card__meta { margin-bottom: auto; }
+  .screen[data-layout="prompt"] .imp-setup .stepper { gap: 3cqi; }
+  .screen[data-layout="prompt"] .imp-setup .stepper__n { min-width: 2ch; font-size: 30cqi; }
+  .screen[data-layout="prompt"] .imp-setup .stepper__step {
+    width: 13cqi;
+    height: 13cqi;
+    border-width: 3px;
+  }
+  /* The glyph at the phone's share of its circle — the line is 14 of the
+     svg's 24 units, so a 48%-wide svg draws a sign about 28% of the button,
+     as 22px does in a 48px step — and a stroke a touch heavier than the
+     ring, as there. The svg's own stroke scales with it; this pins it. */
+  .screen[data-layout="prompt"] .imp-setup .stepper__step svg { width: 6.2cqi; height: 6.2cqi; }
+  .screen[data-layout="prompt"] .imp-setup .stepper__step svg path { stroke-width: 2.2; }
+
+  /* THE HINT, WITH THE OTHER SETTINGS, IS THE CATEGORY PILL'S TWIN: the same height,
+     edge and inset as the pill under it, and its one line set as that
+     pill's value — the track says on or off, so the name is all it needs.
+     The track keeps an even ring: the right inset is whatever the row
+     leaves round it, top and bottom. */
+  .gfoot > .switch.switch--rail {
+    display: flex;
+    align-self: stretch;
+    min-height: calc(var(--control-md) + var(--sp-1));
+    padding: var(--sp-1)
+      calc((var(--control-md) + var(--sp-1) - var(--border-width) * 2 - var(--track-h)) / 2)
+      var(--sp-1) var(--sp-6);
+    border-color: color-mix(in srgb, var(--category-ink) 30%, transparent);
+  }
+  .switch--rail .switch__name {
+    font-size: var(--fs-md);
+    letter-spacing: normal;
+    line-height: var(--lh-tight);
+    text-transform: none;
+  }
+}
+
+/* HOME FILLS THE BOARD. The tiles' rows were as tall as their writing, so the
+   deck ended wherever that did and a 13" kept a band of empty screen under
+   it. The deck takes the rest of the height instead, down to the board's
+   side margin, and its three rows share it; where the writing needs more
+   than that — a shorter board — the rows grow to it and Home scrolls, as
+   before. */
+@media (--board) {
+  /* The fifth row is `1fr`, which cannot go below what the tiles need: with
+     the roster open the deck has less room, and a row that could shrink
+     past its content cut the taglines off. It overflows and Home scrolls. */
+  /* The first four rows are `max-content`, not `auto`. Where the screen is
+     shorter than Home, a grid sizes `auto` rows to their MIN-content, and an
+     open roster's min-content is its 78px floor — its field rides a 0fr→1fr
+     track that collapses there — so the field hung out below it, over the
+     tiles. Max-content gives the roster its whole height whatever is left. */
+  .screen.home {
+    grid-template-rows: max-content max-content max-content max-content 1fr;
+    align-content: stretch;
+    padding-bottom: var(--gutter);
+  }
+  .screen.home > .home__fit-line,
+  .screen.home > .update-offer { grid-column: 1 / -1; }
+  .screen.home > .update-offer { grid-row: 4; }
+  .screen.home > .home__deck { grid-row: 5; padding-bottom: 0; }
 }

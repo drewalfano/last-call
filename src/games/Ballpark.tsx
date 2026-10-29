@@ -467,9 +467,10 @@ export function Ballpark({ mode, onBack }: Props) {
               {reader}, you're up
             </h2>
             <p className="secret__lede">
+              {/* As Odd One Out's: only what the heading and the button do not say. */}
               {flow.phase === "handoff"
-                ? `Everyone else, look away. ${reader}: hold to see the spot, say one clue that sits right there, then let go.`
-                : "Hidden again. Hold to look as often as you need, then pass to the table for the dial."}
+                ? "Everyone else, look away. Then give one clue for the spot."
+                : "Hidden again. Hold to look again."}
             </p>
           </section>
         </SecretBody>

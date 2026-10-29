@@ -2453,6 +2453,9 @@
   transition: height var(--dur-base) var(--ease-glide),
               margin-bottom var(--dur-base) var(--ease-glide);
 }
+/* Its first height is not a change: see `settled` in RosterBar. Doubled so
+   it outranks the open rule's transition below. */
+.roster__chipwrap.roster__chipwrap:not([data-settled]) { transition: none; }
 
 /* AND --ease-out ON THE WAY OPEN, WHICH IS NOT A STYLE PREFERENCE.
 

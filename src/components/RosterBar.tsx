@@ -318,6 +318,19 @@ export function RosterBar() {
   );
 
   const [rowHeight, setRowHeight] = useState(0);
+  /**
+   * ARRIVES AT ITS HEIGHT; ONLY CHANGES ANIMATE. The first measurement lands
+   * with no transition, so a Home mounting with names already in it shows the
+   * row open on its first frame instead of growing to it. Growing on mount
+   * pushed the deck down a beat after the screen appeared — exactly when a
+   * closing game had measured where its tile was, so the colour landed on a
+   * spot the tile had already left.
+   */
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setSettled(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   /**
    * THE ROW'S HEIGHT IS MEASURED, NOT `0fr -> 1fr`.
@@ -537,6 +550,7 @@ export function RosterBar() {
         <div
           className="roster__chipwrap"
           data-open={rowOpen || undefined}
+          data-settled={settled || undefined}
           style={{ height: rowOpen ? rowHeight : 0 }}
         >
           <div className="roster__chips" ref={chipsRef}>
