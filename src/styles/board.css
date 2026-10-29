@@ -1027,6 +1027,10 @@ button.rank-rows__row { cursor: grab; }
     box-shadow: none;
     color: var(--category-ink);
     animation: none;
+    /* The card's own clip was for its own stock. It has none here — the two
+       tiles are the cards — and it was cutting their shadows off flat along
+       their bottom edge, which is its bottom edge. */
+    overflow: visible;
   }
   .screen[data-layout="board"] .rr-lines > .card__prompt {
     grid-column: 1 / -1;
@@ -1034,7 +1038,10 @@ button.rank-rows__row { cursor: grab; }
     font-size: var(--fs-2xl);
   }
   .screen[data-layout="board"] .rr-lines .rr-tile {
-    height: 100%;
+    /* Square to whichever runs out first: the row's height, or half the
+       card's width less the gap between the two. 100cqw is the card's own
+       width — it is an inline-size container on a tablet. */
+    height: min(100%, calc((100cqw - var(--sp-8)) / 2));
     width: auto;
     max-width: 100%;
     aspect-ratio: 1;
@@ -1050,12 +1057,34 @@ button.rank-rows__row { cursor: grab; }
     font-size: var(--fs-3xl);
     line-height: var(--lh-tight);
   }
+  /* THE PICK CHANGES WHAT IS ON THE CARDS, NOT THE CARDS. The phone fills
+     the winner with the pack colour; here the cards stand on that colour, so
+     any fill or ring either vanishes into the ground or changes the card's
+     shape — an outer ring made it 6px bigger, an inner one 6px smaller, and
+     both broke its shadow. So the cards stay as they were: the winner says
+     so in its label, and the other line's words dim — words, not the card,
+     because opacity faded its shadow too. */
   .screen[data-layout="board"] .rr-lines .rr-tile[data-outcome="won"] {
     background: var(--card-surface);
+    border-color: transparent;
     color: var(--card-ink);
-    box-shadow: 0 0 0 6px var(--category-ink), 0 20px 46px -16px rgba(0, 0, 0, 0.45);
   }
-  .screen[data-layout="board"] .rr-lines .rr-tile[data-outcome="lost"] { opacity: 0.6; }
+  /* The line that lost also sets down: no shadow, flat on the colour, so the
+     winner is the one card still raised off the table. A draw keeps both. */
+  .screen[data-layout="board"] .rr-lines .rr-tile[data-outcome="lost"] {
+    opacity: 1;
+    color: var(--card-ink-muted);
+    box-shadow: none;
+  }
+  .screen[data-layout="board"] .rr-lines .rr-tile { transition: box-shadow var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out); }
+  /* And the cards keep one size through the pick: the footer under them
+     holds the judging footer's height — Call it a draw over the two lines,
+     152 at every board size — when it is only Next matchup, so the row the
+     cards are square to does not grow when the verdict lands. */
+  .screen[data-layout="board"] .focal--slot:has(.rr-lines) > .gfoot {
+    min-height: 152px;
+    justify-content: flex-end;
+  }
   .screen[data-layout="board"] .rr-lines .rr-tile__by { font-size: var(--fs-md); }
   /* Room for the lines: the matchup is already on the tiles' signatures and
      in "Dev and Sam don't vote", and the instruction needs one line, not a
